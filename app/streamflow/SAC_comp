@@ -1,0 +1,151 @@
+# read camels simulation flow: NLDAS
+import os
+import pandas as pd
+import numpy as np
+import datetime as dt
+from hydroDL import utils, pathCamels
+from pandas.api.types import is_numeric_dtype, is_string_dtype
+import time
+import json
+from hydroDL.data import camels
+from hydroDL.post import plot, stat
+import matplotlib.pyplot as plt
+
+gageInfo = camels.gageDict
+gageID = gageInfo['id']
+tRange = [19801001, 20150101]
+tLst = utils.time.tRange2Array(tRange)
+nt = len(tLst)
+
+## read the given NSE statistics
+# nseFile = '/mnt/sdb/Data/Camels/basin_timeseries_v1p2_modelOutput_daymet/model_output_daymet/' \
+#           'model_output/basin_stats/basin_nse_nldas.txt'
+# data = pd.read_csv(nseFile, sep='\t')
+
+SACdir = pathCamels['DB'] + '/basin_timeseries_v1p2_modelOutput_nldas/model_output_nldas/' \
+                            'model_output/flow_timeseries/nldas/'
+
+flowAll = np.empty([len(gageID), 10, nt, 2])
+
+def readgageflow(usgsId):
+    seedID = [94, 80, 72, 66, 59, 48, 33, 27, 11, 5]
+    ind = np.argwhere(gageID == usgsId)[0][0]
+    huc = gageInfo['huc'][ind]
+    dataFolder = os.path.join(SACdir, str(huc).zfill(2))
+    gagetemp = np.empty([10, nt, 2])
+    for k in range(10):
+        filename = os.path.join(dataFolder, '%08d_%02d_model_output.txt' % (usgsId, seedID[k]))
+        dataTemp = pd.read_csv(filename, sep=r'\s+', header=0)
+        simtemp = dataTemp[['MOD_RUN', 'OBS_RUN']].values
+        if simtemp.shape[0] != nt:
+            out = np.full([nt, 2], np.nan)
+            dfDate = dataTemp[['YR', 'MNTH', 'DY']]
+            dfDate.columns = ['year', 'month', 'day']
+            date = pd.to_datetime(dfDate).values.astype('datetime64[D]')
+            [C, ind1, ind2] = np.intersect1d(date, tLst, return_indices=True)
+            out[ind2, :] = simtemp
+        else:
+            out = simtemp
+        gagetemp[k, :, :] = out
+    return gagetemp
+
+for k in range(len(gageID)):
+    gagedata = readgageflow(gageID[k])
+    flowAll[k, :, :, :] = gagedata
+
+# select the best calibrated model
+temptRange=[19801001, 19950930]
+temptarray=utils.time.tRange2Array(temptRange)
+C, ind1, ind2 = np.intersect1d(temptarray, tLst, return_indices=True)
+bestind = np.empty(len(gageID))
+for k in range(len(gageID)):
+    tempsim = flowAll[k, :, ind2, 0]
+    tempobs = flowAll[k, :, ind2, 1]
+    RMSE = np.sqrt(np.nanmean((tempsim - tempobs) ** 2, axis=0))
+    bestind[k] = np.nanargmin(RMSE)
+bestind = bestind.astype(int)
+
+# load DA results
+dafile = '/parameter_optim/change_basinnorm/change_loss/NSElosstest/epochs200_batch100_rho365_hiddensize256_Tstart19991001_Tend20081001'
+fname_damean = pathCamels['Out'] + dafile + '/evaluation.npy'
+stadic_da= np.load(fname_damean, allow_pickle=True).tolist()
+
+# calculate the nse
+testtRange=[19891001, 19991001]
+testtarray=utils.time.tRange2Array(testtRange)
+C, ind1, ind2 = np.intersect1d(testtarray, tLst, return_indices=True)
+pred = np.empty([len(gageID), len(testtarray)])
+obs = np.empty([len(gageID), len(testtarray)])
+for k in range(len(gageID)):
+    pred[k,:] = flowAll[k, bestind[k], ind2, 0]
+    obs[k,:] = flowAll[k, bestind[k], ind2, 1]
+# transform runoff into flow rate
+fname_obs = pathCamels['Out'] + dafile + '/obs.npy'
+obsusgs= np.load(fname_obs, allow_pickle=True)
+factor = obsusgs.squeeze()/obs
+areafa = np.full((factor.shape[0],1), np.nan)
+for ii in range(factor.shape[0]):
+    tempdata = factor[ii,:]
+    tempdata = tempdata[~np.isinf(tempdata)]
+    tempdata = tempdata[~np.isnan(tempdata)]
+    areafa[ii,0] = np.nanmean(tempdata)
+areamat = np.tile(areafa,(1, obs.shape[1]))
+pred = pred*areamat
+obs = obs*areamat
+teststatDict = stat.statError(pred, obs)
+
+# read the subset gageindex
+nseFile = '/mnt/sdb/Data/Camels/Subset/camelssubset.csv'
+subsetdata = pd.read_csv(nseFile, sep=',').values
+subsetID = subsetdata[:, 1].astype('int64')
+[C, ind1, subind] = np.intersect1d(subsetID, gageID, return_indices=True)
+staframe = pd.DataFrame(teststatDict)
+stasubsac = staframe.loc[subind, ['Bias', 'NSE', 'FLV', 'FHV']]
+stasubdicsac = {col:stasubsac[col].values for col in stasubsac.columns}
+staframe = pd.DataFrame(stadic_da[0])
+stasublstm = staframe.loc[subind, ['Bias', 'NSE', 'FLV', 'FHV']]
+stasubdiclstm = {col:stasublstm[col].values for col in stasublstm.columns}
+staframe = pd.DataFrame(stadic_da[1])
+stasubda = staframe.loc[subind, ['Bias', 'NSE', 'FLV', 'FHV']]
+stasubdicda = {col:stasubda[col].values for col in stasubda.columns}
+staframe = pd.DataFrame(stadic_da[2])
+stasubda3 = staframe.loc[subind, ['Bias', 'NSE', 'FLV', 'FHV']]
+stasubdicda3 = {col:stasubda3[col].values for col in stasubda.columns}
+
+# plot the CDF
+plt.rcParams['font.size'] = 13
+plt.rcParams['font.family'] = 'Times New Roman'
+plotDictLst = [teststatDict, stadic_da[0], stadic_da[1], stasubdicsac, stasubdiclstm, stasubdicda]
+keyLst=['Bias', 'NSE', 'FLV', 'FHV']
+fig, axes = plt.subplots(2,2, figsize=(9,8), constrained_layout=True)
+axes = axes.flat
+subtitle = ['(a)', '(b)', '(c)', '(d)']
+xlabels = ['Bias ($\mathregular{m^3}$/s)', 'NSE', 'FLV(%)', 'FHV(%)']
+xlims = [None, [0,1], [-100, 200], [-100, 200]]
+for iS in range(len(keyLst)):
+    statStr = keyLst[iS]
+    temp = list()
+    for k in range(len(plotDictLst)):
+        data = plotDictLst[k][statStr]
+        if statStr == 'FLV':
+            data=data[~np.isinf(data)]
+            data[np.isnan(data)] = 0
+        else:
+            data = data[~np.isnan(data)]
+        temp.append(data)
+    if iS == 0:
+        plot.plotCDF(temp, ax=axes[iS], title=subtitle[iS],
+                legendLst=['SAC-SMA', 'LSTM', 'DI(1)', 'SAC-SMA-Sub', 'LSTM-Sub', 'DI(1)-Sub'],
+                cLst='kbrkbr',
+                ref=None,
+                xlabel=xlabels[iS],
+                ylabel='CDF',
+                showDiff=None,
+                xlim=xlims[iS],
+                linespec=['-','-','-',':',':',':'])
+    else:
+        plot.plotCDF(temp, ax=axes[iS], title=subtitle[iS], cLst='kbrkbr', ref=None, xlabel=xlabels[iS],
+                ylabel='CDF', showDiff=None, xlim=xlims[iS],linespec=['-','-','-','--','--','--'])
+# plt.savefig(pathCamels['Out'] + "/CDFplots_addsub_noinf.png", dpi=600)
+
+
