@@ -79,6 +79,20 @@ class statSigma(object):
             xx = np.stack((x1.flatten(), x2.flatten(),
                            x3.flatten()), axis=1)
             yy = y.flatten().reshape(-1, 1)
+        elif opt == 5:
+            x1 = np.square(statSigma.sigmaMC_mat)
+            x2 = np.square(statSigma.sigmaX_mat)
+            x3 = statSigma.sigmaMC_mat*statSigma.sigmaX_mat
+            y = np.square(dsReg.LSTM-dsReg.SMAP)
+            xx = np.stack((x1.flatten(), x2.flatten(),
+                           x3.flatten()), axis=1)
+            yy = y.flatten().reshape(-1, 1)
+        elif opt == 6:
+            x1 = np.square(statSigma.sigmaMC_mat)
+            x2 = np.square(statSigma.sigmaX_mat)
+            y = np.square(dsReg.LSTM-dsReg.SMAP)
+            xx = np.stack((x1.flatten(), x2.flatten()), axis=1)
+            yy = y.flatten().reshape(-1, 1)
 
         ind = np.where(~np.isnan(yy))[0]
         xf = xx[ind, :]
@@ -89,7 +103,7 @@ class statSigma(object):
         w = result.params
         if fTest is not None:
             ftestP = list()
-            ftestF = list()            
+            ftestF = list()
             for k in range(len(w)):
                 ww = w.copy()
                 ww[k] = fTest[k]
@@ -130,6 +144,17 @@ class statSigma(object):
                 np.square(self.sigmaMC_mat) * w[0] +
                 np.square(self.sigmaX_mat) * w[1] +
                 np.ones(self.sigmaX_mat.shape)*w[2])
+            out = w
+        elif opt == 5:
+            self.sigmaReg_mat = np.sqrt(
+                np.square(self.sigmaMC_mat) * w[0] +
+                np.square(self.sigmaX_mat) * w[1] +
+                self.sigmaMC_mat*self.sigmaX_mat * w[2])
+            out = w
+        elif opt == 6:
+            self.sigmaReg_mat = np.sqrt(
+                np.square(self.sigmaMC_mat) * w[0] +
+                np.square(self.sigmaX_mat) * w[1])
             out = w
         self.sigmaReg = np.sqrt(np.mean(self.sigmaReg_mat**2, axis=1))
         if fTest is None:

@@ -14,16 +14,21 @@ trainName = 'CONUSv2f1'
 out = trainName+'_y15_Forcing_dr60'
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
-saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma')
+saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma', 'regComb')
 
 doOpt = []
 doOpt.append('loadData')
 doOpt.append('plotConf')
-doOpt.append('plotCorr')
+# doOpt.append('plotCorr')
 # doOpt.append('plotTemp')
 # doOpt.append('plotBin')
 # doOpt.append('plotProb')
-optLst = [3, 4]
+optLst = [3, 4, 5, 6]
+optEquLst = [
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx + {:.5f}',
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.5f}',
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx',
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2']
 fTestLst = [[1, 1, 0, 0], [1, 1, 0]]
 
 matplotlib.rcParams.update({'font.size': 12})
@@ -34,11 +39,13 @@ plt.tight_layout()
 #################################################
 # load data
 if 'loadData' in doOpt:
-    statSigmaLst = list()
-    statConfLst = list()
+    testSigmaLst = list()
+    testConfLst = list()
+    valSigmaLst = list()
+    valConfLst = list()
     wLst = list()
-    testName = 'CONUSv2f2'
-    yr = [2015]
+    testName = 'CONUSv2f1'
+    yr = [2017]
     valName = 'CONUSv2f1'
     valYr = [2016]
 
@@ -52,36 +59,44 @@ if 'loadData' in doOpt:
     dsVal.readData(var='SMAP_AM', field='SMAP')
     dsVal.readPred(rootOut=rootOut, out=out, drMC=100, field='LSTM')
 
-    statErr = ds.statCalError(predField='LSTM', targetField='SMAP')
-
+    testErr = ds.statCalError(predField='LSTM', targetField='SMAP')
     for k in range(len(optLst)):
-        statSigma = ds.statCalSigma(field='LSTM')
-        w = statSigma.regComb(dsVal, opt=optLst[k], fTest=fTestLst[k])
-        statConf = ds.statCalConf(
+        testSigma = ds.statCalSigma(field='LSTM')
+        w = testSigma.regComb(dsVal, opt=optLst[k])
+        testConf = ds.statCalConf(
             predField='LSTM', targetField='SMAP', rmBias=True)
-        statSigmaLst.append(statSigma)
-        statConfLst.append(statConf)
+        valSigma = dsVal.statCalSigma(field='LSTM')
+        valConf = dsVal.statCalConf(
+            predField='LSTM', targetField='SMAP', rmBias=True)
+        testSigmaLst.append(testSigma)
+        testConfLst.append(testConf)
+        valSigmaLst.append(testSigma)
+        valConfLst.append(testConf)
         wLst.append(w)
+
+for k in range(len(optLst)):
+    print('opt {}: '.format(optLst[k])+optEquLst[k].format(*wLst[k].tolist()))
 
 #################################################
 # plot confidence figure
 if 'plotConf' in doOpt:
-    figTitleLst = ['option '+str(x) for x in optLst]
+    figTitleLst = ['Validation', 'Temporal test']
     fig, axes = plt.subplots(
         ncols=len(figTitleLst), figsize=(12, 6), sharey=True)
-    sigmaStrLst = ['sigmaX', 'sigmaMC', 'sigma', 'sigmaReg']
-    legendLst = [r'$p_{x}$', r'$p_{mc}$', r'$p_{comb}$', r'$p_{reg}$']
-    for iFig in range(0, len(optLst)):
-        statConf = statConfLst[iFig]
-        figTitle = figTitleLst[iFig]
+    sigmaStrLst = ['sigmaX', 'sigmaMC', 'sigma']
+    legLst = [r'$p_{x}$', r'$p_{mc}$', r'$p_{comb}$'] +\
+        [r'$p_{reg}$ opt '+str(x) for x in optLst]
+    for iFig in range(0, len(figTitleLst)):
+        statConfLst = testConfLst if iFig == 1 else valConfLst
         plotLst = list()
-        for k in range(0, len(sigmaStrLst)):
-            plotLst.append(getattr(statConf, 'conf_'+sigmaStrLst[k]))
-
+        for sigmaStr in sigmaStrLst:
+            plotLst.append(getattr(statConfLst[0], 'conf_'+sigmaStr))
+        for statConf in statConfLst:
+            plotLst.append(getattr(statConfLst[0], 'conf_sigmaReg'))
         _, _, out = rnnSMAP.funPost.plotCDF(
-            plotLst, ax=axes[iFig], legendLst=legendLst, cLst='grbm',
+            plotLst, ax=axes[iFig], legendLst=legLst, cLst='grbmcyk',
             xlabel='Error Exceedance Probablity', ylabel=None, showDiff='KS')
-        axes[iFig].set_title(figTitle)
+        axes[iFig].set_title(figTitleLst[iFig])
         print(out['rmseLst'])
     axes[0].set_ylabel('Frequency')
     # axes[1].get_legend().remove()
@@ -90,6 +105,8 @@ if 'plotConf' in doOpt:
     saveFile = os.path.join(saveFolder, 'regComb_conf')
     fig.savefig(saveFile)
     # fig.savefig(saveFile+'.eps')
+
+
 
 
 if 'plotCorr' in doOpt:
