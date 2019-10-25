@@ -25,15 +25,15 @@ lat, lon = df.getGeo()
 
 # calculate inside poligon
 # indLst=gis.pointInPoly(lat,lon,shapeLst)
-# df.saveDataConst(indLst, 'ecoShapeInd', bStat=False)
+# df.saveDataConst(indLst, 'ecoShapeInd', bWriteStat=True)
 indLst = df.getDataConst('ecoShapeInd').squeeze().astype(int).tolist()
 shapeCodeLst = [shapeRecLst[x]['NA_L3CODE'].split('.') for x in indLst]
 for k in range(3):
     data = [int(x[k]) for x in shapeCodeLst]
-    df.saveDataConst(data, 'ecoRegionL'+str(k+1), bStat=False)
+    # df.saveDataConst(data, 'ecoRegionL'+str(k+1), bCalStat=False)
 
 # subset
-codeLst = [df.getDataConst(
-    'ecoRegionL'+str(k+1)).squeeze().astype(int) for x in range(3)]
+fieldLst = ['ecoRegionL'+str(x+1) for x in range(3)]
+codeLst = df.getDataConst(fieldLst, doNorm=False, rmNan=False)
 dataGrid, uy, ux = grid.array2grid(codeLst[0], lat=lat, lon=lon)
-fig,ax = plot.plotMap(dataGrid, lat=uy, lon=ux)
+fig, ax = plot.plotMap(dataGrid, lat=uy, lon=ux)

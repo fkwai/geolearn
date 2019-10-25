@@ -9,13 +9,13 @@ def crd2grid(y, x):
     minDy = np.min(uy[1:] - uy[0:-1])
     maxDx = np.max(ux[1:] - ux[0:-1])
     maxDy = np.max(uy[1:] - uy[0:-1])
-    if maxDx > minDx * 2:
-        print("skipped rows")
+    if maxDx >= minDx * 2:
+        raise Exception('TODO:skipped rows')
     #     indMissX=np.where((ux[1:]-ux[0:-1])>minDx*2)[0]
     #     insertX=(ux[indMissX+1]+ux[indMissX])/2
     #     ux=np.insert(ux,indMissX,insertX)
-    if maxDy > minDy * 2:
-        print("skipped coloums")
+    if maxDy >= minDy * 2:
+        raise Exception('TODO:skipped coloums')
     #     indMissY=np.where((uy[1:]-uy[0:-1])>minDy*2)
     #     raise Exception('skipped coloums or rows')
 
@@ -37,3 +37,17 @@ def array2grid(data, *, lat, lon):
         grid = np.full([ny, nx], np.nan)
         grid[indY, indX] = data
     return grid, uy, ux
+
+
+def intersectGrid(lat1, lon1, lat2, lon2, ndigit=8):
+    # lat1=np.around(lat1,decimals=ndigit)    
+    indLst1 = list()
+    indLst2 = list()
+    for k in range(len(lat1)):
+        ind = np.where((lat2 == lat1[k]) & (lon2 == lon1[k]))[0]
+        if len(ind) == 1:
+            indLst1.append(k)
+            indLst2.append(ind[0])
+        if len(ind) > 1:
+            raise Exception('Repeated crd')
+    return np.array(indLst1), np.array(indLst2)

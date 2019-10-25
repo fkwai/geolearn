@@ -18,7 +18,7 @@ saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma', 'regComb')
 
 doOpt = []
 doOpt.append('loadData')
-doOpt.append('plotConf')
+# doOpt.append('plotConf')
 # doOpt.append('plotCorr')
 # doOpt.append('plotTemp')
 # doOpt.append('plotBin')
@@ -43,7 +43,7 @@ if 'loadData' in doOpt:
     testConfLst = list()
     valSigmaLst = list()
     valConfLst = list()
-    wLst = list()
+    modelLst = list()
     testName = 'CONUSv2f1'
     yr = [2017]
     valName = 'CONUSv2f1'
@@ -62,7 +62,7 @@ if 'loadData' in doOpt:
     testErr = ds.statCalError(predField='LSTM', targetField='SMAP')
     for k in range(len(optLst)):
         testSigma = ds.statCalSigma(field='LSTM')
-        w = testSigma.regComb(dsVal, opt=optLst[k])
+        model = testSigma.regComb(dsVal, opt=optLst[k])
         testConf = ds.statCalConf(
             predField='LSTM', targetField='SMAP', rmBias=True)
         valSigma = dsVal.statCalSigma(field='LSTM')
@@ -72,10 +72,13 @@ if 'loadData' in doOpt:
         testConfLst.append(testConf)
         valSigmaLst.append(testSigma)
         valConfLst.append(testConf)
-        wLst.append(w)
+        modelLst.append(model)
 
 for k in range(len(optLst)):
-    print('opt {}: '.format(optLst[k])+optEquLst[k].format(*wLst[k].tolist()))
+    wLst = modelLst[k].params.tolist()
+    print('opt {}: '.format(optLst[k]) +
+        #   optEquLst[k].format(*wLst) +
+          ' SSR = {}'.format(modelLst[k].ssr))
 
 #################################################
 # plot confidence figure
@@ -107,8 +110,6 @@ if 'plotConf' in doOpt:
     # fig.savefig(saveFile+'.eps')
 
 
-
-
 if 'plotCorr' in doOpt:
     figTitleLst = ['option '+str(x) for x in optLst]
     fig, axes = plt.subplots(
@@ -125,45 +126,19 @@ if 'plotCorr' in doOpt:
     saveFile = os.path.join(saveFolder, 'regComb_corr')
     # fig.savefig(saveFile)
 
-#################################################
-# plot confidence figure
-if 'plotTemp' in doOpt:
-    figTitleLst = [r'$\sigma_{mc}$ vs $\sigma_{x}$',
-                   r'$a*\sigma_{mc}$ vs $\sigma_{true}$']
-    fig, axes = plt.subplots(
-        ncols=len(figTitleLst), figsize=(12, 6))
+if doTest in doOpt:
+    import statsmodels.api as sm
+    dsReg = dsVal
+    field = 'LSTM'
+    statSigma = dsReg.statCalSigma(field=field)
+    x1 = np.square(statSigma.sigmaMC_mat)
+    x2 = np.square(statSigma.sigmaX_mat)
+    y = np.square(dsReg.LSTM-dsReg.SMAP)
+    xx = np.stack((x1.flatten(), x2.flatten()), axis=1)
+    yy = y.flatten().reshape(-1, 1)
+    ind = np.where(~np.isnan(yy))[0]
+    xf = xx[ind, :]
+    yf = yy[ind]
 
-    sigmaTrue_mat = statSigma.sigmaX_mat-w[1]*statSigma.sigmaMC_mat
-    sigmaTrue = np.mean(sigmaTrue_mat, axis=1)
-    rnnSMAP.funPost.plotVS(
-        statSigma.sigmaMC, statSigma.sigmaX, ax=axes[0], title=figTitleLst[0])
-    rnnSMAP.funPost.plotVS(statSigma.sigmaMC*w[0], sigmaTrue,
-                           ax=axes[1], title=figTitleLst[1])
-    fig.tight_layout()
-    fig.show()
-    saveFile = os.path.join(saveFolder, 'CONUS_regComb_corr_opt'+str(opt))
-    # fig.savefig(saveFile, dpi=100)
-    # fig.savefig(saveFile+'.eps')
-
-# statSigma = dsVal.statCalSigma(field='LSTM')
-# x1 = np.square(statSigma.sigmaMC_mat)
-# x2 = np.square(statSigma.sigmaX_mat)
-# x3 = statSigma.sigmaMC_mat*statSigma.sigmaX_mat
-# x4 = np.ones(x1.shape)
-# y = np.square(dsVal.LSTM-dsVal.SMAP)
-# xx = np.stack((x1.flatten(), x2.flatten(),
-#                x3.flatten(), x4.flatten()), axis=1)
-# yy = y.flatten().reshape(-1, 1)
-
-# ind = np.where(~np.isnan(yy))[0]
-# xf = xx[ind, :]
-# yf = yy[ind]
-# w, _, _, _ = np.linalg.lstsq(xf, yf)
-# model = sm.OLS(yf, xf)
-# result = model.fit()
-# ww = result.params
-# ff=result.f_test([1, ww[1], ww[2], ww[3]])
-# result.f_test([ww[0], 1, ww[2], ww[3]])
-# result.f_test([ww[0], ww[1], 0, ww[3]])
-# result.f_test([ww[0], ww[1], ww[2], 0])
-# result.f_test(np.array([w,w]))
+    model = sm.OLS(yf, xf)
+    result = model.fit()

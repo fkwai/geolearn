@@ -158,7 +158,7 @@ class statSigma(object):
             out = w
         self.sigmaReg = np.sqrt(np.mean(self.sigmaReg_mat**2, axis=1))
         if fTest is None:
-            return out
+            return result
         else:
             return (out, ftestP, ftestF)
 

@@ -2,9 +2,8 @@
 :dataset: db.dataset is a container of data
 """
 
-
 class Dataframe(object):
-    def getGeo(self):
+    def getGeo(self, ndigit=8):
         return self.lat, self.lon
 
     def getT(self):
@@ -14,6 +13,3 @@ class Dataframe(object):
 class DataModel():
     def getDataTrain(self):
         return self.x, self.y, self.c
-
-
-from .dbCsv import DataframeCsv, DataModelCsv
