@@ -88,16 +88,16 @@ def calStat(data, bCalStat=True):
     return stat
 
 
-def transNorm(data, stat, fromRaw=True):
-    if fromRaw is True:
+def transNorm(data, stat, toNorm=True):
+    if toNorm is True:
         dataOut = (data - stat[2]) / stat[3]
     else:
         dataOut = data * stat[3] + stat[2]
     return (dataOut)
 
 
-def transNormSigma(data, stat, fromRaw=True):
-    if fromRaw is True:
+def transNormSigma(data, stat, toNorm=True):
+    if toNorm is True:
         dataOut = np.log((data / stat[3])**2)
     else:
         dataOut = np.sqrt(np.exp(data)) * stat[3]

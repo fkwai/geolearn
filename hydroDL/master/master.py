@@ -399,24 +399,11 @@ def test(out,
             target = optData['target']
             if type(optData['target']) is not list:
                 target = [target]
-            nTar = len(target)
-            for k in range(nTar):
-                pred[:, :, k] = hydroDL.data.dbCsv.transNorm(
-                    pred[:, :, k],
-                    rootDB=optData['rootDB'],
-                    fieldName=target[k],
-                    fromRaw=False)
-                obs[:, :, k] = hydroDL.data.dbCsv.transNorm(
-                    obs[:, :, k],
-                    rootDB=optData['rootDB'],
-                    fieldName=target[k],
-                    fromRaw=False)
-                if isSigmaX is True:
-                    sigmaX[:, :, k] = hydroDL.data.dbCsv.transNormSigma(
-                        sigmaX[:, :, k],
-                        rootDB=optData['rootDB'],
-                        fieldName=target[k],
-                        fromRaw=False)
+            pred = df.transform(pred, fieldLst=target, toNorm=False)
+            obs = df.transform(obs, fieldLst=target, toNorm=False)
+            if isSigmaX is True:
+                sigmaX = df.transform(
+                    sigmaX, fieldLst=target, toNorm=False, opt='sigma')
         elif eval(optData['name']) is hydroDL.data.camels.DataframeCamels:
             pred = hydroDL.data.camels.transNorm(
                 pred, 'usgsFlow', toNorm=False)

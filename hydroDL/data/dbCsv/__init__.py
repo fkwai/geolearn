@@ -74,10 +74,20 @@ class DataframeCsv(Dataframe):
         writeDataConst(data, fieldName, rootDB=self.rootDB,
                        subset=self.subset, ndigit=ndigit, bCalStat=bCalStat)
 
-    def transNorm(self, data, fieldName, *,  isConst, fromRaw=True):
-        stat = readStat(rootDB=self.rootDB,
-                        fieldName=fieldName, isConst=isConst)
-        transNorm(data, stat)
+    def transform(self, data, fieldLst, *,  toNorm=True, opt='data'):
+        if type(fieldLst) is not list:
+            fieldLst = [fieldLst]
+        out = np.ndarray(data.shape)
+        for k in range(len(fieldLst)):
+            temp = data[:, :, k]
+            isConst = True if temp.shape[1] == 1 else False
+            stat = readStat(rootDB=self.rootDB,
+                            fieldName=fieldLst[k], isConst=isConst)
+            if opt == 'data':
+                out[:, :, k] = transNorm(temp, stat, toNorm=toNorm)
+            elif opt == 'sigma':
+                out[:, :, k] = transNormSigma(temp, stat, toNorm=toNorm)
+        return out
 
     def subsetData(self, subset, *, var=None, varC=None):
         divideSubset(self, subset=subset, var=var, varC=varC)

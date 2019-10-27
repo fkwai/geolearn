@@ -31,7 +31,8 @@ for case in caseLst:
         # df.subsetInit(subsetPattern.format(subset), ind=ind)
 
 # train
-cid = 0
+cid = 2
+caseLst=['080305+080400+080500']
 for case in caseLst:
     subsetLst = [subsetPattern.format(x) for x in case.split('+')]
     outName = subsetPattern.format(case) + '_Forcing'
