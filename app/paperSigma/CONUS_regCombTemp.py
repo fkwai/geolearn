@@ -6,6 +6,7 @@ import numpy as np
 import scipy
 import imp
 import statsmodels.api as sm
+from rnnSMAP.funPost import regComb
 
 imp.reload(rnnSMAP)
 rnnSMAP.reload()
@@ -18,17 +19,19 @@ saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma', 'regComb')
 
 doOpt = []
 doOpt.append('loadData')
-# doOpt.append('plotConf')
+doOpt.append('plotConf')
 # doOpt.append('plotCorr')
 # doOpt.append('plotTemp')
 # doOpt.append('plotBin')
 # doOpt.append('plotProb')
-optLst = [3, 4, 5, 6]
+optLst = [3, 4, 5, 6, 7, 8]
 optEquLst = [
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx + {:.5f}',
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.5f}',
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx',
-    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2']
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2',
+    '{:.2f} sigma_mc^2',
+    '{:.2f} sigma_x^2']
 fTestLst = [[1, 1, 0, 0], [1, 1, 0]]
 
 matplotlib.rcParams.update({'font.size': 12})
@@ -45,9 +48,9 @@ if 'loadData' in doOpt:
     valConfLst = list()
     modelLst = list()
     testName = 'CONUSv2f1'
-    yr = [2017]
+    yr = [2016]
     valName = 'CONUSv2f1'
-    valYr = [2016]
+    valYr = [2017]
 
     ds = rnnSMAP.classDB.DatasetPost(
         rootDB=rootDB, subsetName=testName, yrLst=yr)
@@ -61,24 +64,27 @@ if 'loadData' in doOpt:
 
     testErr = ds.statCalError(predField='LSTM', targetField='SMAP')
     for k in range(len(optLst)):
-        testSigma = ds.statCalSigma(field='LSTM')
-        model = testSigma.regComb(dsVal, opt=optLst[k])
+        testSigma, model = ds.statRegSigma(dsVal, opt=optLst[k])
         testConf = ds.statCalConf(
             predField='LSTM', targetField='SMAP', rmBias=True)
-        valSigma = dsVal.statCalSigma(field='LSTM')
+        valSigma, _ = dsVal.statRegSigma(dsVal, opt=optLst[k])
         valConf = dsVal.statCalConf(
             predField='LSTM', targetField='SMAP', rmBias=True)
         testSigmaLst.append(testSigma)
         testConfLst.append(testConf)
-        valSigmaLst.append(testSigma)
-        valConfLst.append(testConf)
+        valSigmaLst.append(valSigma)
+        valConfLst.append(valConf)
         modelLst.append(model)
 
 for k in range(len(optLst)):
     wLst = modelLst[k].params.tolist()
     print('opt {}: '.format(optLst[k]) +
-        #   optEquLst[k].format(*wLst) +
           ' SSR = {}'.format(modelLst[k].ssr))
+
+for k in range(len(optLst)):
+    wLst = modelLst[k].params.tolist()
+    print('opt {}: '.format(optLst[k]) +
+          optEquLst[k].format(*wLst))
 
 #################################################
 # plot confidence figure
@@ -89,15 +95,15 @@ if 'plotConf' in doOpt:
     sigmaStrLst = ['sigmaX', 'sigmaMC', 'sigma']
     legLst = [r'$p_{x}$', r'$p_{mc}$', r'$p_{comb}$'] +\
         [r'$p_{reg}$ opt '+str(x) for x in optLst]
-    for iFig in range(0, len(figTitleLst)):
+    for iFig in range(len(figTitleLst)):
         statConfLst = testConfLst if iFig == 1 else valConfLst
         plotLst = list()
         for sigmaStr in sigmaStrLst:
             plotLst.append(getattr(statConfLst[0], 'conf_'+sigmaStr))
         for statConf in statConfLst:
-            plotLst.append(getattr(statConfLst[0], 'conf_sigmaReg'))
+            plotLst.append(getattr(statConf, 'conf_sigmaReg'))
         _, _, out = rnnSMAP.funPost.plotCDF(
-            plotLst, ax=axes[iFig], legendLst=legLst, cLst='grbmcyk',
+            plotLst, ax=axes[iFig], legendLst=legLst,
             xlabel='Error Exceedance Probablity', ylabel=None, showDiff='KS')
         axes[iFig].set_title(figTitleLst[iFig])
         print(out['rmseLst'])
@@ -126,7 +132,7 @@ if 'plotCorr' in doOpt:
     saveFile = os.path.join(saveFolder, 'regComb_corr')
     # fig.savefig(saveFile)
 
-if doTest in doOpt:
+if 'doTest' in doOpt:
     import statsmodels.api as sm
     dsReg = dsVal
     field = 'LSTM'

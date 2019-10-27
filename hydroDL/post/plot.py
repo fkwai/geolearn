@@ -199,8 +199,7 @@ def plotMap(data,
             shape=None,
             pts=None,
             figsize=(8, 4),
-            clbar=True,
-            cRangeint=False,
+            cbar=True,            
             cmap=plt.cm.jet,
             bounding=None,
             prj='cyl',
@@ -213,9 +212,6 @@ def plotMap(data,
         temp = flatData(data)
         vmin = np.percentile(temp, 5)
         vmax = np.percentile(temp, 95)
-        if cRangeint is True:
-            vmin = int(round(vmin))
-            vmax = int(round(vmax))
     if ax is None:
         fig = plt.figure(figsize=figsize)
         ax = fig.subplots()
@@ -252,7 +248,7 @@ def plotMap(data,
                         y,
                         c=data,
                         s=30,
-                        cmap=plt.cm.jet,
+                        cmap=cmap,
                         vmin=vmin,
                         vmax=vmax)
 
@@ -276,7 +272,7 @@ def plotMap(data,
                      pts[0][k],
                      string.ascii_uppercase[k],
                      fontsize=18)
-    if clbar is True:
+    if cbar is True:
         mm.colorbar(cs, location='bottom', pad='5%')
 
     if title is not None:
@@ -284,7 +280,7 @@ def plotMap(data,
     if returnAll is True:
         return fig, ax, mm, cs
     else:
-        return fig, ax
+        return ax
 
 
 def plotTsMap(dataMap,

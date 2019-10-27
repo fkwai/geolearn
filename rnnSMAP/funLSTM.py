@@ -6,6 +6,7 @@ import shutil
 import numpy as np
 import pandas as pd
 from argparse import Namespace
+import statsmodels.api as sm
 
 from . import classLSTM
 from . import classDB

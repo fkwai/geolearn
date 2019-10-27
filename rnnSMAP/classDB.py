@@ -208,6 +208,13 @@ class DatasetPost(Dataset):
         setattr(self, 'statSigma_'+field, statSigma)
         return statSigma
 
+    def statRegSigma(self, dsReg, *, field='LSTM', opt=1, fTest=None):
+        statSigma = self.statCalSigma(field=field)
+        model = statSigma.regComb(
+            dsReg, field=field, opt=opt, fTest=fTest)
+        setattr(self, 'statSigma_'+field, statSigma)
+        return statSigma, model
+
     def statCalConf(self, *, predField='LSTM', targetField='SMAP', rmBias=False):
         dataPred = getattr(self, predField)
         dataTarget = getattr(self, targetField)

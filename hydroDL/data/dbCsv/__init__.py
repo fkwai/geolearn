@@ -74,8 +74,23 @@ class DataframeCsv(Dataframe):
         writeDataConst(data, fieldName, rootDB=self.rootDB,
                        subset=self.subset, ndigit=ndigit, bCalStat=bCalStat)
 
+    def transNorm(self, data, fieldName, *,  isConst, fromRaw=True):
+        stat = readStat(rootDB=self.rootDB,
+                        fieldName=fieldName, isConst=isConst)
+        transNorm(data, stat)
+
     def subsetData(self, subset, *, var=None, varC=None):
-        divideSubset(self, subset, var, varC)
+        divideSubset(self, subset=subset, var=var, varC=varC)
+
+    def subsetInit(self, subset, *, ind=None):
+        rootName, indSub = readSubset(rootDB=self.rootDB, subset=subset)
+        if rootName is None:
+            if indSub is not None:
+                writeSubset(rootDB=self.rootDB, rootName=self.subset,
+                            subset=subset, ind=ind)
+            else:
+                raise Exception(
+                    'TODO: check if the existed subset and the wrtting one are identical')
 
 
 class DataModelCsv(DataModel):

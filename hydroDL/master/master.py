@@ -4,6 +4,7 @@ from collections import OrderedDict
 import numpy as np
 import json
 from hydroDL import utils
+import hydroDL.model
 import datetime as dt
 import pandas as pd
 
@@ -35,10 +36,11 @@ def writeMasterFile(mDict):
 
 def fixRootDB(rootDB):
     if '/' in rootDB:
-        nameDB=rootDB.split('/')[-1]
+        nameDB = rootDB.split('/')[-1]
     elif '\\' in rootDB:
-        nameDB=rootDB.split('/')[-1]
+        nameDB = rootDB.split('/')[-1]
     return os.path.join(hydroDL.pathSMAP['dirDB'], nameDB)
+
 
 def loadModel(out, epoch=None):
     if epoch is None:
@@ -84,6 +86,7 @@ def namePred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
         filePathLst.append(filePath)
     return filePathLst
 
+
 def readPred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
     mDict = readMasterFile(out)
     dataPred = np.ndarray([obs.shape[0], obs.shape[1], len(filePathLst)])
@@ -98,6 +101,7 @@ def readPred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
         sigmaX = dataPred[:, :, 1::2]
     else:
         pred = dataPred
+
 
 def mvobs(data, mvday, rmNan=True):
     obslen = data.shape[1] - mvday + 1  # The length of training daily data
@@ -346,7 +350,7 @@ def test(out,
 
     optData = mDict['data']
     if not os.path.isdir(optData['rootDB']):
-        optData['rootDB']=fixRootDB(optData['rootDB'])
+        optData['rootDB'] = fixRootDB(optData['rootDB'])
     optData['subset'] = subset
     optData['tRange'] = tRange
     if 'damean' not in optData.keys():
@@ -427,6 +431,6 @@ def test(out,
             obs = hydroDL.data.camels.basinNorm(
                 obs, gageid=gageid, toNorm=False)
     if isSigmaX is True:
-            return df, pred, obs, sigmaX
+        return df, pred, obs, sigmaX
     else:
-            return df, pred, obs
+        return df, pred, obs

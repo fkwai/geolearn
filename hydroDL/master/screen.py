@@ -20,10 +20,10 @@ def runTrain(masterDict, *, screen='test', cudaID):
 
     codePath = os.path.realpath(__file__)
     if screen is None:
-        cmd = 'CUDA_VISIBLE_DEVICES={} python {} -F {} -M {}'.format(
+        cmd = 'CUDA_VISIBLE_DEVICES={} nice -n 31 python {} -F {} -M {}'.format(
             cudaID, codePath, 'train', mFile)
     else:
-        cmd = 'CUDA_VISIBLE_DEVICES={} screen -dmS {} python {} -F {} -M {}'.format(
+        cmd = 'CUDA_VISIBLE_DEVICES={} screen -dmS {} nice -n 31 python {} -F {} -M {}'.format(
             cudaID, screen, codePath, 'train', mFile)
 
     print(cmd)

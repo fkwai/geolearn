@@ -7,7 +7,7 @@ import time
 def readDBtime(*, rootDB, rootName, yrLst):
     tnum = np.empty(0, dtype=np.datetime64)
     for yr in yrLst:
-        timeFile = os.path.join(rootDB, rootName, str(yr), "timeStr.csv")
+        timeFile = os.path.join(rootDB, rootName, str(yr), 'timeStr.csv')
         temp = (pd.read_csv(timeFile, dtype=str, header=None).astype(
             np.datetime64).values.flatten())
         tnum = np.concatenate([tnum, temp], axis=0)
@@ -15,7 +15,7 @@ def readDBtime(*, rootDB, rootName, yrLst):
 
 
 def readVarLst(*, rootDB, varLst):
-    varFile = os.path.join(rootDB, "Variable", varLst + ".csv")
+    varFile = os.path.join(rootDB, 'Variable', varLst + '.csv')
     varLst = pd.read_csv(
         varFile, header=None, dtype=str).values.flatten().tolist()
     return varLst
@@ -31,20 +31,20 @@ def readDataTS(*, rootDB, rootName, indSub, indSkip, yrLst, fieldName):
     k1 = 0
     for yr in yrLst:
         t1 = time.time()
-        dataFile = os.path.join(rootDB, rootName, str(yr), fieldName + ".csv")
+        dataFile = os.path.join(rootDB, rootName, str(yr), fieldName + '.csv')
         dataTemp = pd.read_csv(
             dataFile, dtype=np.float, skiprows=indSkip, header=None).values
         k2 = k1 + dataTemp.shape[1]
         data[:, k1:k2] = dataTemp
         k1 = k2
-        print("read " + dataFile, time.time() - t1)
+        print('read ' + dataFile, time.time() - t1)
     data[np.where(data == -9999)] = np.nan
     return data
 
 
 def readDataConst(*, rootDB, rootName, indSub, indSkip, fieldName):
     # read data
-    dataFile = os.path.join(rootDB, rootName, "const", fieldName + ".csv")
+    dataFile = os.path.join(rootDB, rootName, 'const', fieldName + '.csv')
     data = pd.read_csv(
         dataFile, dtype=np.float, skiprows=indSkip,
         header=None).values.flatten()
@@ -54,10 +54,10 @@ def readDataConst(*, rootDB, rootName, indSub, indSkip, fieldName):
 
 def readStat(*, rootDB, fieldName, isConst=False):
     if isConst is False:
-        statFile = os.path.join(rootDB, "Statistics", fieldName + "_stat.csv")
+        statFile = os.path.join(rootDB, 'Statistics', fieldName + '_stat.csv')
     else:
-        statFile = os.path.join(rootDB, "Statistics",
-                                "const_" + fieldName + "_stat.csv")
+        statFile = os.path.join(rootDB, 'Statistics',
+                                'const_' + fieldName + '_stat.csv')
     stat = pd.read_csv(statFile, dtype=np.float, header=None).values.flatten()
     return stat
 

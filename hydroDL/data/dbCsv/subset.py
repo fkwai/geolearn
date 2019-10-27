@@ -4,6 +4,7 @@ import numpy as np
 from hydroDL.utils import grid
 from .io import writeDataConst
 
+
 def readDBinfo(*, rootDB, subset):
     if type(subset) is list:
         indSubLst = list()
@@ -21,7 +22,7 @@ def readDBinfo(*, rootDB, subset):
     else:
         rootName, indSub = readSubset(rootDB=rootDB, subset=subset)
 
-    crdFile = os.path.join(rootDB, rootName, "crd.csv")
+    crdFile = os.path.join(rootDB, rootName, 'crd.csv')
     crdRoot = pd.read_csv(crdFile, dtype=np.float, header=None).values
 
     indAll = np.arange(0, crdRoot.shape[0], dtype=np.int64)
@@ -36,15 +37,28 @@ def readDBinfo(*, rootDB, subset):
 
 
 def readSubset(*, rootDB, subset):
-    subsetFile = os.path.join(rootDB, "Subset", subset + ".csv")
-    print('reading subset ' + subsetFile)
-    dfSubset = pd.read_csv(subsetFile, dtype=np.int64, header=0)
-    rootName = dfSubset.columns.values[0]
-    indSub = dfSubset.values.flatten() - 1
+    subsetFile = os.path.join(rootDB, 'Subset', subset + '.csv')
+    if os.path.isfile(subsetFile):
+        print('reading subset ' + subsetFile)
+        dfSubset = pd.read_csv(subsetFile, dtype=np.int64, header=0)
+        rootName = dfSubset.columns.values[0]
+        indSub = dfSubset.values.flatten() - 1
+    else:
+        rootName = None
+        indSub = None
     return rootName, indSub
 
 
-def divideSubset(df, subset, var=None, varC=None):
+def writeSubset(*, rootDB, rootName, subset, ind):
+    subsetFile = os.path.join(rootDB, 'Subset', subset+'.csv')
+    print('reading subset ' + subsetFile)
+    if type(ind) is list:
+        ind = np.array(ind)
+    pdf = pd.DataFrame(ind+1, dtype=int, columns=[rootName])
+    pdf.to_csv(subsetFile, index=False)
+
+
+def divideSubset(df, *, subset, var=None, varC=None):
     rootName, crd, indSub, indSkip = readDBinfo(
         rootDB=df.rootDB, subset=subset)
     if rootName != df.subset:
