@@ -1,4 +1,4 @@
-# %% initial
+# initial
 from hydroDL import pathSMAP, master
 import os
 from hydroDL.data import dbCsv
@@ -11,7 +11,7 @@ caseLst1 = ['Local', 'CONUS']
 caseLst2 = ['Forcing', 'Soilm']
 saveFolder = os.path.join(pathSMAP['dirResult'], 'regionalization')
 
-# %% load data and calculate stat
+# load data and calculate stat
 statLst = list()
 tRange = [20160401, 20180401]
 for k in range(len(subsetLst)):
@@ -29,7 +29,7 @@ for k in range(len(subsetLst)):
             tempLst.append(temp)
     statLst.append(tempLst)
 
-# %% plot box
+# plot box
 keyLst = stat.keyLst
 caseLst = list()
 for case1 in caseLst1:
@@ -50,26 +50,35 @@ for k in range(len(keyLst)):
     saveFile = os.path.join(saveFolder, 'ecoRegion_box_' + key)
     fig.savefig(saveFile)
 
-# %% improvement from model vs CONUS
-keyLst = ['RMSE', 'ubRMSE', 'Corr']
-fig, axes = plt.subplots(1, len(keyLst),figsize=(18,6))
+#  improvement from model vs CONUS
+keyLst = ['RMSE', 'Corr']
+fig, axes = plt.subplots(1, len(keyLst), figsize=(12, 6))
 for kk in range(len(keyLst)):
-    key=keyLst[kk]
+    key = keyLst[kk]
     px = list()
     py = list()
     for ss in statLst:
         a = ss[0][key]
         b = ss[1][key]
         c = ss[2][key]
-        px.append(np.nanmean((b-a)/a))
-        py.append(np.nanmean((c-a)/a))
-        # px=px+((b-a)/a).tolist()
-        # py = py+((c-a)/a).tolist()
-    plot.plotVS(px, py, ax=axes[kk], title=key,xlabel='improve from CONUS',ylabel='improve from Model')
-    dist = np.square(px-np.mean(px))+np.square(py-np.mean(py))
-    ind=np.argsort(-dist)[:4]
+        if key == 'Corr':
+            px.append(np.nanmean((b / a)))
+            py.append(np.nanmean((c / a)))
+            titleStr = 'Correlation ratio'
+        elif key == 'RMSE':
+            px.append(np.nanmean((b - a)))
+            py.append(np.nanmean((c - a)))
+            titleStr = 'RMSE difference'
+    plot.plotVS(px,
+                py,
+                ax=axes[kk],
+                title=titleStr,
+                xlabel='improve from CONUS',
+                ylabel='improve from Model')
+    dist = np.square(px - np.mean(px)) + np.square(py - np.mean(py))
+    ind = np.argsort(-dist)[:4]
     for k in ind:
-        axes[kk].text(px[k], py[k], '{:02d}'.format(k+1))
+        axes[kk].text(px[k], py[k], '{:02d}'.format(k + 1))
 saveFile = os.path.join(saveFolder, 'ecoRegion_vs')
 fig.savefig(saveFile)
 fig.show()

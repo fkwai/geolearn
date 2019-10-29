@@ -139,13 +139,7 @@ def plotVS(x,
            titleCorr=True,
            plot121=True,
            doRank=False,
-           rmNan=True,
            figsize=(8, 6)):
-    # rm nans
-    if rmNan:
-        ind = np.where(~np.isnan(x) & ~np.isnan(y))
-        x = x[ind]
-        y = y[ind]
 
     if doRank is True:
         x = scipy.stats.rankdata(x)
@@ -199,7 +193,7 @@ def plotMap(data,
             shape=None,
             pts=None,
             figsize=(8, 4),
-            cbar=True,            
+            cbar=True,
             cmap=plt.cm.jet,
             bounding=None,
             prj='cyl',
@@ -209,13 +203,16 @@ def plotMap(data,
         vmin = cRange[0]
         vmax = cRange[1]
     else:
-        temp = flatData(data)
-        vmin = np.percentile(temp, 5)
-        vmax = np.percentile(temp, 95)
+        if data is not None:
+            temp = flatData(data)
+            vmin = np.percentile(temp, 5)
+            vmax = np.percentile(temp, 95)
+        else:
+            (vmin, vmax) = (None, None)
     if ax is None:
         fig = plt.figure(figsize=figsize)
         ax = fig.subplots()
-    if len(data.squeeze().shape) == 1:
+    if len(lat.squeeze().shape) == 1:
         isGrid = False
     else:
         isGrid = True
@@ -244,13 +241,7 @@ def plotMap(data,
         #     vmax=vmax,
         #     extent=[x[0], x[-1], y[0], y[-1]])
     else:
-        cs = mm.scatter(x,
-                        y,
-                        c=data,
-                        s=30,
-                        cmap=cmap,
-                        vmin=vmin,
-                        vmax=vmax)
+        cs = mm.scatter(x, y, c=data, cmap=cmap, s=30, vmin=vmin, vmax=vmax)
 
     if shape is not None:
         crd = np.array(shape.points)
