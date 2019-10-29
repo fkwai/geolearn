@@ -24,7 +24,7 @@ def initPath():
             'PROJ_LIB'] = r'/home/kxf227/anaconda3/pkgs/proj4-5.2.0-he6710b0_1/share/proj/'
     elif hostName == 'AW-m17':
         dirDB = os.path.join(os.path.sep, 'D:', 'rnnSMAP', 'Database_SMAPgrid')
-        dirOut = os.path.join(os.path.sep, 'D:', 'rnnSMAP', 'Model_SMAPgrid')
+        dirOut = os.path.join(os.path.sep, 'D:', 'rnnSMAP', 'Output_SMAPgrid')
         dirResult = os.path.join(os.path.sep, 'D:', 'rnnSMAP',
                                  'Result_SMAPgrid')
         os.environ[
@@ -41,7 +41,9 @@ def initPath():
         Out_L4_CONUS=os.path.join(dirOut, 'L4_CONUS'),
         Out_L4_NA=os.path.join(dirOut, 'L4_NA'),
         OutSigma_L3_NA=os.path.join(dirOut, 'L3_NA_sigma'),
-        dirResult=dirResult)
+        dirResult=dirResult,
+        dirDB=dirDB,
+        dirOut=dirOut)
     return kPath
 
 

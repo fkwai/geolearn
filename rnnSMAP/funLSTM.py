@@ -30,6 +30,8 @@ def loadOptLSTM(outFolder):
     opt = classLSTM.optLSTM(**optTemp)
     if opt['rootDB'] is None:
         opt['rootDB'] = kPath.DBSMAP_L3_Global
+    if not os.path.isdir(opt['rootDB']):
+        opt['rootDB'] = fixRootDB(opt['rootDB'])
     if opt['rootOut'] is None:
         opt['rootOut'] = kPath.OutSMAP_L3_Global
     return opt
@@ -48,6 +50,13 @@ def saveOptLSTM(outFolder, opt: classLSTM.optLSTM):
             else:
                 ff.write(key+': '+str(opt[key]))
             i = i+1
+
+def fixRootDB(rootDB):
+    if '/' in rootDB:
+        nameDB = rootDB.split('/')[-1]
+    elif '\\' in rootDB:
+        nameDB = rootDB.split('/')[-1]
+    return os.path.join(kPath['dirDB'], nameDB)
 
 
 def trainLSTM(optDict: classLSTM.optLSTM):
