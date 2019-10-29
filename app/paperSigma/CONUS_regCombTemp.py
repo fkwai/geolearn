@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 import imp
 import statsmodels.api as sm
-from rnnSMAP.funPost import regComb
+from rnnSMAP.funPost import distCDF
 
 imp.reload(rnnSMAP)
 rnnSMAP.reload()
@@ -20,18 +20,21 @@ saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma', 'regComb')
 doOpt = []
 doOpt.append('loadData')
 doOpt.append('plotConf')
+# doOpt.append('doTest')
 # doOpt.append('plotCorr')
 # doOpt.append('plotTemp')
 # doOpt.append('plotBin')
 # doOpt.append('plotProb')
-optLst = [3, 4, 5, 6, 7, 8]
+# optLst = [3, 4, 5, 6, 7, 8,9]
+optLst = [9]
 optEquLst = [
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx + {:.5f}',
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.5f}',
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx',
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2',
     '{:.2f} sigma_mc^2',
-    '{:.2f} sigma_x^2']
+    '{:.2f} sigma_x^2',
+    'sigma_mc^2 + sigma_x^2 + {:.5f}' ]
 fTestLst = [[1, 1, 0, 0], [1, 1, 0]]
 
 matplotlib.rcParams.update({'font.size': 12})
@@ -47,10 +50,10 @@ if 'loadData' in doOpt:
     valSigmaLst = list()
     valConfLst = list()
     modelLst = list()
-    testName = 'CONUSv2f1'
-    yr = [2016]
-    valName = 'CONUSv2f1'
-    valYr = [2017]
+    testName = 'CONUSv2fy2'
+    yr = [2015]
+    valName = 'CONUSv2fx2'
+    valYr = [2015]
 
     ds = rnnSMAP.classDB.DatasetPost(
         rootDB=rootDB, subsetName=testName, yrLst=yr)
@@ -63,47 +66,68 @@ if 'loadData' in doOpt:
     dsVal.readPred(rootOut=rootOut, out=out, drMC=100, field='LSTM')
 
     testErr = ds.statCalError(predField='LSTM', targetField='SMAP')
-    for k in range(len(optLst)):
-        testSigma, model = ds.statRegSigma(dsVal, opt=optLst[k])
-        testConf = ds.statCalConf(
-            predField='LSTM', targetField='SMAP', rmBias=True)
-        valSigma, _ = dsVal.statRegSigma(dsVal, opt=optLst[k])
-        valConf = dsVal.statCalConf(
-            predField='LSTM', targetField='SMAP', rmBias=True)
-        testSigmaLst.append(testSigma)
-        testConfLst.append(testConf)
-        valSigmaLst.append(valSigma)
-        valConfLst.append(valConf)
-        modelLst.append(model)
+    valErr = dsVal.statCalError(predField='LSTM', targetField='SMAP')
+    for (dsTemp, sigmaTempLst, confTempLst) in zip([ds, dsVal], [testSigmaLst, valSigmaLst], [testConfLst, valConfLst]):
+        sigmaTemp = dsTemp.statCalSigma(field='LSTM')
+        confTemp = dsTemp.statCalConf(predField='LSTM', targetField='SMAP')
+        for sigmaStr in ['sigmaMC', 'sigmaX', 'sigma']:
+            sigmaTempLst.append(getattr(sigmaTemp, sigmaStr+'_mat'))
+            confTempLst.append(getattr(confTemp, 'conf_'+sigmaStr))
+        for opt in optLst:
+            print('doing option '+str(opt))
+            sigmaTemp, model = dsTemp.statRegSigma(dsVal, opt=opt)
+            confTemp = dsTemp.statCalConf(predField='LSTM', targetField='SMAP')
+            sigmaTempLst.append(sigmaTemp.sigmaReg_mat)
+            confTempLst.append(confTemp.conf_sigmaReg)
+            modelLst.append(model)
 
-for k in range(len(optLst)):
-    wLst = modelLst[k].params.tolist()
-    print('opt {}: '.format(optLst[k]) +
-          ' SSR = {}'.format(modelLst[k].ssr))
+labelLst = ['sigmaMC', 'sigmaX', 'sigmaComb'] +\
+    ['sigmaReg opt '+str(x) for x in optLst]
+
+# calculate cdf distance
+testRmseLst, testKsdLst = distCDF(testConfLst)
+valRmseLst, valKsdLst = distCDF(valConfLst)
 
 for k in range(len(optLst)):
     wLst = modelLst[k].params.tolist()
     print('opt {}: '.format(optLst[k]) +
           optEquLst[k].format(*wLst))
 
+# residual
+valSsrLst = list()
+testSsrLst = list()
+for (ssrLst, sigmaLst, dsTemp) in zip([testSsrLst, valSsrLst], [testSigmaLst, valSigmaLst], [ds, dsVal]):
+    for (sigma, label) in zip(sigmaLst, labelLst):
+        res = np.square(dsTemp.LSTM-dsTemp.SMAP)-np.square(sigma)
+        ssr = np.nansum(np.square(res.flatten()))
+        ssrLst.append(ssr)
+
+for k in range(len(valSigmaLst)):
+    print('validation {}: SSR = {:.4f}, KS = {:.4f}'.format(
+        labelLst[k], valSsrLst[k], valKsdLst[k]))
+for k in range(len(testSigmaLst)):
+    print('test {}: SSR = {:.4f}, KS = {:.4f}'.format(
+        labelLst[k], testSsrLst[k], testKsdLst[k]))
+
+
+
+for k in range(len(optLst)):
+    wLst = modelLst[k].params.tolist()
+    print('opt {}: KS = {}'.format(optLst[k], ksdLst[k]))
+
 #################################################
 # plot confidence figure
 if 'plotConf' in doOpt:
-    figTitleLst = ['Validation', 'Temporal test']
+    figTitleLst = ['Validation yr'+str(valYr[0]), 'Test yr'+str(yr[0])]
     fig, axes = plt.subplots(
         ncols=len(figTitleLst), figsize=(12, 6), sharey=True)
     sigmaStrLst = ['sigmaX', 'sigmaMC', 'sigma']
-    legLst = [r'$p_{x}$', r'$p_{mc}$', r'$p_{comb}$'] +\
+    legLst = [r'$p_{mc}$', r'$p_{x}$',  r'$p_{comb}$'] +\
         [r'$p_{reg}$ opt '+str(x) for x in optLst]
     for iFig in range(len(figTitleLst)):
         statConfLst = testConfLst if iFig == 1 else valConfLst
-        plotLst = list()
-        for sigmaStr in sigmaStrLst:
-            plotLst.append(getattr(statConfLst[0], 'conf_'+sigmaStr))
-        for statConf in statConfLst:
-            plotLst.append(getattr(statConf, 'conf_sigmaReg'))
         _, _, out = rnnSMAP.funPost.plotCDF(
-            plotLst, ax=axes[iFig], legendLst=legLst,
+            statConfLst, ax=axes[iFig], legendLst=legLst,
             xlabel='Error Exceedance Probablity', ylabel=None, showDiff='KS')
         axes[iFig].set_title(figTitleLst[iFig])
         print(out['rmseLst'])
@@ -111,40 +135,43 @@ if 'plotConf' in doOpt:
     # axes[1].get_legend().remove()
     fig.tight_layout()
     fig.show()
-    saveFile = os.path.join(saveFolder, 'regComb_conf')
+    saveFile = os.path.join(saveFolder, 'regComb_conf_reg')
     fig.savefig(saveFile)
     # fig.savefig(saveFile+'.eps')
 
+# if 'doTest' in doOpt:
 
-if 'plotCorr' in doOpt:
-    figTitleLst = ['option '+str(x) for x in optLst]
-    fig, axes = plt.subplots(
-        ncols=len(figTitleLst), figsize=(12, 6))
-    y = getattr(statErr, 'ubRMSE')
-    for iFig in range(0, len(optLst)):
-        x = getattr(statSigmaLst[iFig], 'sigmaX')
-        ind = np.where(~np.isnan(x) & ~np.isnan(y))
-        axes[iFig].set_aspect('equal', 'box')
-        rnnSMAP.funPost.plotVS(x[ind], y[ind], ax=axes[iFig],
-                               xlabel=r'$\sigma_{reg}$', ylabel='ubRMSE', title=figTitleLst[iFig])
-    fig.tight_layout()
-    fig.show()
-    saveFile = os.path.join(saveFolder, 'regComb_corr')
-    # fig.savefig(saveFile)
+# import statsmodels.api as sm
+# dsReg = dsVal
+# field = 'LSTM'
+# statSigma = dsReg.statCalSigma(field=field)
+# x1 = np.square(statSigma.sigmaMC_mat)
+# x2 = np.square(statSigma.sigmaX_mat)
+# y = np.square(dsReg.LSTM-dsReg.SMAP)
+# xx = np.stack((x1.flatten(), x2.flatten()), axis=1)
+# yy = y.flatten().reshape(-1, 1)
+# ind = np.where(~np.isnan(yy))[0]
+# xf = xx[ind, :]
+# yf = yy[ind]
+# model = sm.OLS(yf, xf)
+# result = model.fit()
+# yp = result.predict(xf).flatten().astype(np.float32)
+# yf = yf.flatten().astype(np.float32)
+# ssr = np.nansum(np.square(yf-yp))
 
-if 'doTest' in doOpt:
-    import statsmodels.api as sm
-    dsReg = dsVal
-    field = 'LSTM'
-    statSigma = dsReg.statCalSigma(field=field)
-    x1 = np.square(statSigma.sigmaMC_mat)
-    x2 = np.square(statSigma.sigmaX_mat)
-    y = np.square(dsReg.LSTM-dsReg.SMAP)
-    xx = np.stack((x1.flatten(), x2.flatten()), axis=1)
-    yy = y.flatten().reshape(-1, 1)
-    ind = np.where(~np.isnan(yy))[0]
-    xf = xx[ind, :]
-    yf = yy[ind]
+# w = result.params
+# sigmaSq = np.square(statSigma.sigmaMC_mat) * w[0] +\
+# np.square(statSigma.sigmaX_mat) * w[1]
+# yp2=sigmaSq.flatten()
+# yp3=result.predict(xx)
+# res = y-sigmaSq
+# ssr = np.nansum(np.square(res.flatten()))
 
-    model = sm.OLS(yf, xf)
-    result = model.fit()
+# res = y-np.square(valSigmaLst[3])
+# ssr = np.nansum(np.square(res.flatten()))
+
+# res = np.square(dsVal.LSTM-dsVal.SMAP)-np.square(valSigmaLst[3])
+# ssr = np.nansum(np.square(res.flatten()))
+
+# res = np.square(dsTemp.LSTM-dsTemp.SMAP)-np.square(sigma)
+# ssr = np.nansum(np.square(res.flatten()))

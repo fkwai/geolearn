@@ -103,12 +103,19 @@ class statSigma(object):
             y = np.square(dsReg.LSTM-dsReg.SMAP)
             xx = x1.flatten().reshape(-1, 1)
             yy = y.flatten().reshape(-1, 1)
+        elif opt == 9:
+            x1 = np.ones(statSigma.sigma_mat.shape)
+            y = np.square(dsReg.LSTM-dsReg.SMAP) - \
+                np.square(statSigma.sigma_mat)
+            xx = x1.flatten().reshape(-1, 1)
+            yy = y.flatten().reshape(-1, 1)
 
         ind = np.where(~np.isnan(yy))[0]
         xf = xx[ind, :]
         yf = yy[ind]
         # w, _, _, _ = np.linalg.lstsq(xf, yf)
-        model = sm.OLS(yf, xf)
+        # model = sm.OLS(yf, xf)
+        model = sm.RLM(yf, xf)
         result = model.fit()
         w = result.params
         if fTest is not None:
@@ -168,11 +175,15 @@ class statSigma(object):
             out = w
         elif opt == 7:
             self.sigmaReg_mat = np.sqrt(
-                np.square(self.sigmaMC_mat) * 2.63)
+                np.square(self.sigmaMC_mat) * w[0])
             out = w
         elif opt == 8:
             self.sigmaReg_mat = np.sqrt(
-                np.square(self.sigmaX_mat) * 0.87)
+                np.square(self.sigmaX_mat) * w[0])
+            out = w
+        elif opt == 9:
+            self.sigmaReg_mat = np.sqrt(
+                np.square(self.sigma_mat) + w[0])
             out = w
         self.sigmaReg = np.sqrt(np.mean(self.sigmaReg_mat**2, axis=1))
         if fTest is None:

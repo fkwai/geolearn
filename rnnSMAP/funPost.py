@@ -188,6 +188,19 @@ def plotCDF(xLst, *, ax=None, title=None, legendLst=None, figsize=(8, 6),
     return fig, ax, out
 
 
+def distCDF(xLst):
+    rmseLst = list()
+    ksdLst = list()
+    for x in xLst:
+        xSort = flatData(x)
+        yRef = np.arange(len(xSort))/float(len(xSort)-1)
+        rmse = np.sqrt(((xSort - yRef) ** 2).mean())
+        ksd = np.max(np.abs(xSort-yRef))
+        rmseLst.append(rmse)
+        ksdLst.append(ksd)
+    return rmseLst, ksdLst
+
+
 def flatData(x):
     xArrayTemp = x.flatten()
     xArray = xArrayTemp[~np.isnan(xArrayTemp)]
@@ -240,5 +253,3 @@ def plotTwinBox(ax, xdata, ydata, xerror, yerror, facecolor='r',
                           fmt='None', ecolor='k')
 
     return artists
-
-    
