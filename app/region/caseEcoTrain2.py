@@ -5,10 +5,10 @@ from hydroDL.data import dbCsv
 from hydroDL.master import default, wrapMaster, runTrain, train
 
 
-# caseLst = ['080305', '090301', '090303',
-#            '090401', '090402', '100105', '100204']
+caseLst = ['080305', '090301', '090303',
+           '090401', '090402', '100105', '100204']
 
-caseLst = ['090301', '090303', '090401', '090402', '100105', '100204']
+# caseLst = ['090301', '090303', '090401', '090402', '100105', '100204']
 
 # init
 rootDB = pathSMAP['DB_L3_NA']
