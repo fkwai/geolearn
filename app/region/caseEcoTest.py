@@ -59,15 +59,17 @@ for caseLst in caseLstTup:
     cLst = 'rbkgcmy'
     cC = 'lightgrey'
     nCase = len(caseLst)
-    fig, ax= plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(8, 4))
     data = np.tile(np.array(to_rgb('lightgrey')), (latC.shape[0], 1))
-    for k in range(1,nCase):
-        case=caseLst[k]
+    for k in range(1, nCase):
+        case = caseLst[k]
         subsetLst = [subsetPattern.format(x) for x in case.split('+')]
-        dfsub = dbCsv.DataframeCsv(rootDB=rootDB, subset=subsetLst, tRange=tRange)
+        dfsub = dbCsv.DataframeCsv(rootDB=rootDB,
+                                   subset=subsetLst,
+                                   tRange=tRange)
         data[dfsub.indSub, :] = np.array(to_rgb(cLst[k]))
     data[df.indSub, :] = np.array(to_rgb('r'))
     plot.plotMap(data, lat=latC, lon=lonC, ax=ax, cbar=False)
     fig.show()
-    saveFile = os.path.join(saveFolder, 'case_' + caseLst[0]+'_map')
+    saveFile = os.path.join(saveFolder, 'case_' + caseLst[0] + '_map')
     fig.savefig(saveFile)
