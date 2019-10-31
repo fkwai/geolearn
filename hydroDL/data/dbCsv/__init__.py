@@ -94,13 +94,12 @@ class DataframeCsv(Dataframe):
 
     def subsetInit(self, subset, *, ind=None):
         rootName, indSub = readSubset(rootDB=self.rootDB, subset=subset)
-        if rootName is None:
-            if indSub is None:
-                writeSubset(rootDB=self.rootDB, rootName=self.subset,
-                            subset=subset, ind=ind)
-            else:
-                raise Exception(
-                    'Subset existed. TODO: check if the existed subset and the wrtting one are identical')
+        if indSub is None:
+            writeSubset(rootDB=self.rootDB, rootName=self.subset,
+                        subset=subset, ind=ind)
+        else:
+            raise Exception(
+                'Subset existed. TODO: check if the existed subset and the wrtting one are identical')
 
 
 class DataModelCsv(DataModel):

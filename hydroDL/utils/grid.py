@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def crd2grid(y, x):
+def crd2grid(y, x, fillMiss=True):
     ux, indX0, indX = np.unique(x, return_index=True, return_inverse=True)
     uy, indY0, indY = np.unique(y, return_index=True, return_inverse=True)
 
@@ -9,11 +9,10 @@ def crd2grid(y, x):
     minDy = np.min(uy[1:] - uy[0:-1])
     maxDx = np.max(ux[1:] - ux[0:-1])
     maxDy = np.max(uy[1:] - uy[0:-1])
-    if maxDx >= minDx * 2:
-        raise Exception('TODO:skipped rows')
-    #     indMissX=np.where((ux[1:]-ux[0:-1])>minDx*2)[0]
-    #     insertX=(ux[indMissX+1]+ux[indMissX])/2
-    #     ux=np.insert(ux,indMissX,insertX)
+    if maxDx >= minDx * 2 and fillMiss is True:
+        indMissX = np.where((ux[1:]-ux[0:-1]) > minDx*2)[0]
+        insertX = (ux[indMissX+1]+ux[indMissX])/2
+        ux = np.insert(ux, indMissX+1, insertX)
     if maxDy >= minDy * 2:
         raise Exception('TODO:skipped coloums')
     #     indMissY=np.where((uy[1:]-uy[0:-1])>minDy*2)
@@ -25,8 +24,8 @@ def crd2grid(y, x):
     return (uy, ux, indY, indX)
 
 
-def array2grid(data, *, lat, lon):
-    (uy, ux, indY, indX) = crd2grid(lat, lon)
+def array2grid(data, *, lat, lon, fillMiss=True):
+    (uy, ux, indY, indX) = crd2grid(lat, lon, fillMiss=fillMiss)
     ny = len(uy)
     nx = len(ux)
     if data.ndim == 2:
@@ -40,7 +39,8 @@ def array2grid(data, *, lat, lon):
 
 
 def intersectGrid(lat1, lon1, lat2, lon2, ndigit=8):
-    # lat1=np.around(lat1,decimals=ndigit)    
+    # for efficiency, 1 should be the smaller than 2
+    # lat1=np.around(lat1,decimals=ndigit)
     indLst1 = list()
     indLst2 = list()
     for k in range(len(lat1)):

@@ -14,3 +14,10 @@ def fillNan(mat, mask):
     temp = mat.copy()
     temp[~mask] = np.nan
     return temp
+
+
+def flatData(x):
+    xArrayTemp = x.flatten()
+    xArray = xArrayTemp[~np.isnan(xArrayTemp)]
+    xSort = np.sort(xArray)
+    return xSort
