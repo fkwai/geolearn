@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 import imp
 import statsmodels.api as sm
-from rnnSMAP import funPost
+from rnnSMAP.funPost import distCDF
 
 imp.reload(rnnSMAP)
 rnnSMAP.reload()
@@ -50,10 +50,10 @@ if 'loadData' in doOpt:
     valSigmaLst = list()
     valConfLst = list()
     modelLst = list()
-    testName = 'CONUSv2f1'
-    yr = [2016]
-    valName = 'CONUSv2f1'
-    valYr = [2017]
+    testName = 'CONUSv2fy2'
+    yr = [2015]
+    valName = 'CONUSv2fx2'
+    valYr = [2015]
 
     ds = rnnSMAP.classDB.DatasetPost(rootDB=rootDB,
                                      subsetName=testName,
@@ -89,8 +89,8 @@ labelLst = ['sigmaMC', 'sigmaX', 'sigmaComb'] +\
     ['sigmaReg opt '+str(x) for x in optLst]
 
 # calculate cdf distance
-testRmseLst, testKsdLst = funPost.distCDF(testConfLst)
-valRmseLst, valKsdLst = funPost.distCDF(valConfLst)
+testRmseLst, testKsdLst = distCDF(testConfLst)
+valRmseLst, valKsdLst = distCDF(valConfLst)
 
 for k in range(len(optLst)):
     wLst = modelLst[k].params.tolist()
@@ -114,6 +114,8 @@ for k in range(len(testSigmaLst)):
     print('test {}: SSR = {:.4f}, KS = {:.4f}'.format(labelLst[k],
                                                       testSsrLst[k],
                                                       testKsdLst[k]))
+
+
 
 #################################################
 # plot confidence figure

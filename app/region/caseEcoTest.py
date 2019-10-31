@@ -57,7 +57,6 @@ for caseLst in caseLstTup:
 
     # plot maps
     cLst = 'rbkgcmy'
-    cC = 'lightgrey'
     nCase = len(caseLst)
     fig, ax = plt.subplots(figsize=(8, 4))
     data = np.tile(np.array(to_rgb('lightgrey')), (latC.shape[0], 1))

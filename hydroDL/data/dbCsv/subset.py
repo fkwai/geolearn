@@ -54,7 +54,7 @@ def writeSubset(*, rootDB, rootName, subset, ind):
     print('reading subset ' + subsetFile)
     if type(ind) is list:
         ind = np.array(ind)
-    pdf = pd.DataFrame(ind+1, dtype=int, columns=[rootName])
+    pdf = pd.DataFrame(np.sort(ind)+1, dtype=int, columns=[rootName])
     pdf.to_csv(subsetFile, index=False)
 
 

@@ -197,7 +197,8 @@ def plotMap(data,
             cmap=plt.cm.jet,
             bounding=None,
             prj='cyl',
-            returnAll=False):
+            returnAll=False,
+            plotPoint=False):
 
     if cRange is not None:
         vmin = cRange[0]
@@ -212,7 +213,7 @@ def plotMap(data,
     if ax is None:
         fig = plt.figure(figsize=figsize)
         ax = fig.subplots()
-    if len(lat.squeeze().shape) == 1:
+    if len(data.squeeze().shape) == 1 or plotPoint is True:
         isGrid = False
     else:
         isGrid = True
@@ -241,7 +242,8 @@ def plotMap(data,
         #     vmax=vmax,
         #     extent=[x[0], x[-1], y[0], y[-1]])
     else:
-        cs = mm.scatter(x, y, c=data, cmap=cmap, s=30, vmin=vmin, vmax=vmax)
+        cs = mm.scatter(x, y, c=data, cmap=cmap, s=10,
+                        marker='*', vmin=vmin, vmax=vmax)
 
     if shape is not None:
         crd = np.array(shape.points)
