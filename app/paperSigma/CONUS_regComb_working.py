@@ -19,21 +19,24 @@ saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma', 'regComb')
 
 doOpt = []
 doOpt.append('loadData')
-doOpt.append('plotConf')
+doOpt.append('print')
+# doOpt.append('plotConf')
 # doOpt.append('doTest')
 # doOpt.append('plotCorr')
 # doOpt.append('plotTemp')
 # doOpt.append('plotBin')
 # doOpt.append('plotProb')
-# optLst = [3, 4, 5, 6, 7, 8,9]
-optLst = [5, 6]
+optLst = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+# optLst = [5, 6]
 
 optEquLst = [
-    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx + {:.5f}',
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_mc * sigma_x^2 + sigma_x^2',
+    '{:.2f} sigma_mc^2 + sigma_x^2',
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_x + {:.5f}',
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.5f}',
-    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_mx',
+    '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2 + {:.2f} sigma_mc * sigma_x',
     '{:.2f} sigma_mc^2 + {:.2f} sigma_x^2', '{:.2f} sigma_mc^2',
-    '{:.2f} sigma_x^2', 'sigma_mc^2 + sigma_x^2 + {:.5f}'
+    '{:.2f} sigma_x^2', 'sigma_mc^2 + sigma_x^2 + {:.8f}'
 ]
 fTestLst = [[1, 1, 0, 0], [1, 1, 0]]
 
@@ -50,10 +53,10 @@ if 'loadData' in doOpt:
     valSigmaLst = list()
     valConfLst = list()
     modelLst = list()
-    testName = 'CONUSv2f1'
-    yr = [2016]
-    valName = 'CONUSv2f1'
-    valYr = [2017]
+    testName = 'CONUSv2f2'
+    yr = [2015]
+    valName = 'CONUSv2fy2'
+    valYr = [2015]
 
     ds = rnnSMAP.classDB.DatasetPost(rootDB=rootDB,
                                      subsetName=testName,
@@ -79,41 +82,57 @@ if 'loadData' in doOpt:
             confTempLst.append(getattr(confTemp, 'conf_' + sigmaStr))
         for opt in optLst:
             print('doing option ' + str(opt))
-            sigmaTemp, model = dsTemp.statRegSigma(dsVal, opt=opt)
+            sigmaTemp, model = dsTemp.statRegSigma2(dsVal, opt=opt)
             confTemp = dsTemp.statCalConf(predField='LSTM', targetField='SMAP')
             sigmaTempLst.append(sigmaTemp.sigmaReg_mat)
             confTempLst.append(confTemp.conf_sigmaReg)
             modelLst.append(model)
 
-labelLst = ['sigmaMC', 'sigmaX', 'sigmaComb'] +\
-    ['sigmaReg opt '+str(x) for x in optLst]
+if 'print' in doOpt:
+    labelLst = ['sigmaMC', 'sigmaX', 'sigmaComb'] +\
+        ['sigmaReg opt '+str(x) for x in optLst]
 
-# calculate cdf distance
-testRmseLst, testKsdLst = funPost.distCDF(testConfLst)
-valRmseLst, valKsdLst = funPost.distCDF(valConfLst)
+    # calculate cdf distance
+    testRmseLst, testKsdLst = funPost.distCDF(testConfLst)
+    valRmseLst, valKsdLst = funPost.distCDF(valConfLst)
 
-for k in range(len(optLst)):
-    wLst = modelLst[k].params.tolist()
-    print('opt {}: '.format(optLst[k]) + optEquLst[k].format(*wLst))
+    print('# Regressed equation')
+    for k in range(len(optLst)):
+        wLst = modelLst[k].params.tolist()
+        print('opt {}: '.format(optLst[k]) + optEquLst[k].format(*wLst))
 
-# residual
-valSsrLst = list()
-testSsrLst = list()
-for (ssrLst, sigmaLst, dsTemp) in zip([testSsrLst, valSsrLst],
-                                      [testSigmaLst, valSigmaLst],
-                                      [ds, dsVal]):
-    for (sigma, label) in zip(sigmaLst, labelLst):
-        res = np.square(dsTemp.LSTM - dsTemp.SMAP) - np.square(sigma)
-        ssr = np.nansum(np.square(res.flatten()))
-        ssrLst.append(ssr)
+    # residual
+    valSsrLst = list()
+    testSsrLst = list()
+    for (ssrLst, sigmaLst, dsTemp) in zip([testSsrLst, valSsrLst],
+                                        [testSigmaLst, valSigmaLst],
+                                        [ds, dsVal]):
+        for (sigma, label) in zip(sigmaLst, labelLst):
+            res = np.square(dsTemp.LSTM - dsTemp.SMAP) - np.square(sigma)
+            ssr = np.nansum(np.square(res.flatten()))
+            ssrLst.append(ssr)
 
-for k in range(len(valSigmaLst)):
-    print('validation {}: SSR = {:.4f}, KS = {:.4f}'.format(
-        labelLst[k], valSsrLst[k], valKsdLst[k]))
-for k in range(len(testSigmaLst)):
-    print('test {}: SSR = {:.4f}, KS = {:.4f}'.format(labelLst[k],
-                                                      testSsrLst[k],
-                                                      testKsdLst[k]))
+    # corr
+    valCorrLst = list()
+    testCorrLst = list()
+    for (corrLst, sigmaLst, err) in zip([testCorrLst, valCorrLst],
+                                        [testSigmaLst, valSigmaLst],
+                                        [testErr, valErr]):
+        for (sigma, label) in zip(sigmaLst, labelLst):
+            ubRMSE = err.ubRMSE
+            corr = np.corrcoef(ubRMSE, np.nanmean(sigma, axis=1))[0, 1]
+            corrLst.append(corr)
+            # print('{}: R(ubRMSE,sigma) = {}'.format(label, corr))
+
+    print('# Validation set')
+    for k in range(len(valSigmaLst)):
+        print('validation {}: R = {:.4f}, KS = {:.4f}'.format(
+            labelLst[k], valCorrLst[k], valKsdLst[k]))
+    print('# testing set')
+    for k in range(len(testSigmaLst)):
+        print('test {}: R = {:.4f}, KS = {:.4f}'.format(labelLst[k],
+                                                        testCorrLst[k],
+                                                        testKsdLst[k]))
 
 #################################################
 # plot confidence figure
@@ -145,39 +164,47 @@ if 'plotConf' in doOpt:
     fig.savefig(saveFile)
     # fig.savefig(saveFile+'.eps')
 
-# if 'doTest' in doOpt:
+if 'doTest' in doOpt:
 
-# import statsmodels.api as sm
-# dsReg = dsVal
-# field = 'LSTM'
-# statSigma = dsReg.statCalSigma(field=field)
-# x1 = np.square(statSigma.sigmaMC_mat)
-# x2 = np.square(statSigma.sigmaX_mat)
-# y = np.square(dsReg.LSTM-dsReg.SMAP)
-# xx = np.stack((x1.flatten(), x2.flatten()), axis=1)
-# yy = y.flatten().reshape(-1, 1)
-# ind = np.where(~np.isnan(yy))[0]
-# xf = xx[ind, :]
-# yf = yy[ind]
-# model = sm.OLS(yf, xf)
-# result = model.fit()
-# yp = result.predict(xf).flatten().astype(np.float32)
-# yf = yf.flatten().astype(np.float32)
-# ssr = np.nansum(np.square(yf-yp))
+    # import statsmodels.api as sm
+    testName = 'CONUSv2f1'
+    yr = [2016]
+    valName = 'CONUSv2f1'
+    valYr = [2017]
 
-# w = result.params
-# sigmaSq = np.square(statSigma.sigmaMC_mat) * w[0] +\
-# np.square(statSigma.sigmaX_mat) * w[1]
-# yp2=sigmaSq.flatten()
-# yp3=result.predict(xx)
-# res = y-sigmaSq
-# ssr = np.nansum(np.square(res.flatten()))
+    trainName = 'CONUSv2f1'
+    out = trainName + '_y15_Forcing_dr60'
+    rootDB = rnnSMAP.kPath['DB_L3_NA']
+    rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 
-# res = y-np.square(valSigmaLst[3])
-# ssr = np.nansum(np.square(res.flatten()))
+    ds = rnnSMAP.classDB.DatasetPost(rootDB=rootDB,
+                                     subsetName=testName,
+                                     yrLst=yr)
+    ds.readData(var='SMAP_AM', field='SMAP')
+    ds.readPred(rootOut=rootOut, out=out, drMC=100, field='LSTM')
 
-# res = np.square(dsVal.LSTM-dsVal.SMAP)-np.square(valSigmaLst[3])
-# ssr = np.nansum(np.square(res.flatten()))
+    dsVal = rnnSMAP.classDB.DatasetPost(rootDB=rootDB,
+                                        subsetName=valName,
+                                        yrLst=valYr)
+    dsVal.readData(var='SMAP_AM', field='SMAP')
+    dsVal.readPred(rootOut=rootOut, out=out, drMC=100, field='LSTM')
 
-# res = np.square(dsTemp.LSTM-dsTemp.SMAP)-np.square(sigma)
-# ssr = np.nansum(np.square(res.flatten()))
+    dsReg = dsVal
+    predField = 'LSTM'
+    targetField = 'SMAP'
+    statSigma = dsReg.statCalSigma(field=predField)
+    statErr = ds.statCalError(predField=predField, targetField=targetField)
+    y = statErr.ubRMSE
+
+    x1 = np.square(statSigma.sigmaMC)
+    x2 = statSigma.sigmaMC * statSigma.sigmaX
+    xx = np.stack((x1, x2), axis=1)
+    yy = y - np.square(statSigma.sigmaX)
+
+    ind = np.where(~np.isnan(yy))[0]
+    xf = xx[ind, :]
+    yf = yy[ind]
+    model = sm.OLS(yf, xf)
+    result = model.fit()
+    yp = result.predict(xf).flatten().astype(np.float32)
+    yf = yf.flatten().astype(np.float32)
