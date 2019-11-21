@@ -26,6 +26,7 @@ for case in caseLst:
     errLst = list()
     for k in levLst:
         if k in [0, 1]:
+        # if k in [-1]:
             subset = 'ecoReg_{}_L{}_sampleLin'.format(case, k)
         else:
             subset = subsetPattern.format(case, k)
@@ -51,8 +52,9 @@ for case in caseLst:
                         figsize=(12, 4), colorLst=cLst,
                         sharey=False)
     # plt.subplots_adjust(wspace=0, hspace=0)
+    plt.tight_layout()
     fig.show()
-    saveFile = os.path.join(saveFolder, 'case_{}_box'.format(case))
+    saveFile = os.path.join(saveFolder, 'case_{}_sample_box'.format(case))
     fig.savefig(saveFile)
 
     # plot maps
@@ -60,6 +62,7 @@ for case in caseLst:
     data = np.tile(np.array(to_rgb('lightgrey')), (latC.shape[0], 1))
     for k, c in zip(reversed(levLst), reversed(cLst)):
         if k in [0, 1]:
+        # if k in [-1]:
             subset = 'ecoReg_{}_L{}_sampleLin'.format(case, k)
         else:
             subset = subsetPattern.format(case, k)
@@ -68,6 +71,7 @@ for case in caseLst:
         data[dfsub.indSub, :] = np.array(to_rgb(c))
     plot.plotMap(data, lat=latC, lon=lonC, ax=ax, plotPoint=True,
                 cbar=False, title='map of '+case)
+    plt.tight_layout()
     fig.show()
-    saveFile = os.path.join(saveFolder, 'case_{}_map'.format(case))
+    saveFile = os.path.join(saveFolder, 'case_{}_sample_map'.format(case))
     fig.savefig(saveFile)

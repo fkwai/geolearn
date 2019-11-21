@@ -64,8 +64,8 @@ def plotTS(t,
            tBar=None,
            figsize=(12, 4),
            cLst='rbkgcmy',
-           markerLst=None,
-           linespec=None,
+           mLst=None,
+           lsLst=None,
            legLst=None,
            title=None,
            linewidth=2,
@@ -75,41 +75,25 @@ def plotTS(t,
         fig = plt.figure(figsize=figsize)
         ax = fig.subplots()
         newFig = True
-
     if type(y) is np.ndarray:
         y = [y]
+    if mLst is None:
+        mLst = '*' * len(y)
+    if lsLst is None:
+        lsLst = '-' * len(y)
+
     for k in range(len(y)):
         tt = t[k] if type(t) is list else t
         yy = y[k]
         legStr = None
         if legLst is not None:
             legStr = legLst[k]
-        if markerLst is None:
-            if True in np.isnan(yy):
-                ax.plot(tt, yy, '*', color=cLst[k], label=legStr)
-            else:
-                ax.plot(tt,
-                        yy,
-                        color=cLst[k],
-                        label=legStr,
-                        linewidth=linewidth)
-        else:
-            if markerLst[k] is '-':
-                if linespec is not None:
-                    ax.plot(tt,
-                            yy,
-                            color=cLst[k],
-                            label=legStr,
-                            linestyle=linespec[k],
-                            lw=1.5)
-                else:
-                    ax.plot(tt, yy, color=cLst[k], label=legStr, lw=1.5)
-            else:
-                ax.plot(tt,
-                        yy,
-                        color=cLst[k],
-                        label=legStr,
-                        marker=markerLst[k])
+        ax.plot(tt,
+                yy,
+                color=cLst[k],
+                label=legStr,
+                ls=lsLst[k],
+                marker=mLst[k])
         if ylabel is not None:
             ax.set_ylabel(ylabel)
         # ax.set_xlim([np.min(tt), np.max(tt)])
@@ -242,8 +226,14 @@ def plotMap(data,
         #     vmax=vmax,
         #     extent=[x[0], x[-1], y[0], y[-1]])
     else:
-        cs = mm.scatter(x, y, c=data, cmap=cmap, s=10,
-                        marker='*', vmin=vmin, vmax=vmax)
+        cs = mm.scatter(x,
+                        y,
+                        c=data,
+                        cmap=cmap,
+                        s=10,
+                        marker='*',
+                        vmin=vmin,
+                        vmax=vmax)
 
     if shape is not None:
         crd = np.array(shape.points)
