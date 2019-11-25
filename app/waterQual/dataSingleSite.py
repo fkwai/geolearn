@@ -6,13 +6,14 @@ from hydroDL.post import plot
 
 nwisCode = ['00060', '00608', '00625', '00631', '00665', '80154']
 workDir = r'C:\Users\geofk\work\waterQuality'
-siteNo = '04086120'
+# siteNo = '04086120'
+siteNo = '053416972'
 
 # download data
 saveFile = os.path.join(workDir, 'data', 'dailyTS', siteNo)
-# usgs.downloadDaily(siteNo, nwisCode, saveFile)
+usgs.downloadDaily(siteNo, nwisCode, saveFile)
 saveFile = os.path.join(workDir, 'data', 'sample', siteNo)
-# usgs.downloadSample(siteNo, saveFile)
+usgs.downloadSample(siteNo, saveFile)
 
 # read data
 dfDaily = usgs.readUsgsText(os.path.join(workDir, 'data', 'dailyTS', siteNo),
@@ -20,11 +21,12 @@ dfDaily = usgs.readUsgsText(os.path.join(workDir, 'data', 'dailyTS', siteNo),
 dfSample = usgs.readUsgsText(os.path.join(workDir, 'data', 'sample', siteNo),
                              dataType='sample')
 # forcing data
+# see extractForcing.py 
 
 # plot time series
 dfCode = usgs.readUsgsText(os.path.join(workDir, 'usgs_parameter_code'))
-fig, axes = plt.subplots(len(nwisCode), 1)
-for i, code in enumerate(nwisCode):
+fig, axes = plt.subplots(len(nwisCode)-1, 1)
+for i, code in enumerate(nwisCode[1:]):
     t1 = dfDaily['datetime'].values
     y1 = dfDaily[code].values
     t2 = dfSample['datetime'].values
