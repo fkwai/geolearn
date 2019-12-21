@@ -1,8 +1,8 @@
 {
-    "out": "/home/kxf227/work/GitHUB/hydroDL-dev/example/output/CONUSv4f1",
+    "out": "/home/kuaifang/GitHUB/geolearn/example/output/CONUSv4f1",
     "data": {
         "name": "hydroDL.data.dbCsv.DataframeCsv",
-        "rootDB": "/home/kxf227/work/GitHUB/hydroDL-dev/example/data",
+        "rootDB": "/home/kuaifang/GitHUB/geolearn/example/data",
         "subset": "CONUSv4f1",
         "varT": [
             "APCP_FORA",

@@ -8,6 +8,9 @@ def initPath():
     """initial shortcut for some import paths
     """
     hostName = socket.gethostname()
+    dirDB = 'UNKNOWN'
+    dirOut = 'UNKNOWN'
+    dirResult = 'UNKNOWN'
     if hostName == 'smallLinux':
         dirDB = os.path.join(os.path.sep, 'mnt', 'sdc', 'rnnSMAP',
                              'Database_SMAPgrid')
@@ -24,10 +27,9 @@ def initPath():
                                  'Result_SMAPgrid')
         os.environ[
             'PROJ_LIB'] = r'C:\Users\geofk\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
-    else:
-        dirDB = '/'
-        dirOut = '/'
-        dirResult = '/'
+    elif hostName[:4] == 'icme':
+        dirData = r'/home/kuaifang/Data/'
+        dirWQ = r'/home/kuaifang/waterQuality/'
 
     pathSMAP = collections.OrderedDict(
         DB_L3_Global=os.path.join(dirDB, 'Daily_L3'),
@@ -42,7 +44,11 @@ def initPath():
     pathCamels = collections.OrderedDict(
         DB=os.path.join(os.path.sep, 'mnt', 'sdb', 'Data', 'Camels'),
         Out=os.path.join(os.path.sep, 'mnt', 'sdb', 'rnnStreamflow'))
-    return pathSMAP, pathCamels
 
-pathSMAP, pathCamels = initPath()
+    pathUSGS = collections.OrderedDict(
+        dirData=dirData,
+        dirWQ=dirWQ)
+    return pathSMAP, pathCamels, pathUSGS
 
+
+pathSMAP, pathCamels, pathUSGS = initPath()
