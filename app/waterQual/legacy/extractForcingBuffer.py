@@ -43,7 +43,7 @@ imageLst = imageCol.toList(5)
 image = ee.Image(imageLst.get(0))
 temp = image.reduceRegion(ee.Reducer.median(), region).getInfo()
 print(temp)
-
+ 
 nd = 10
 t1 = sd
 if (ed - sd).days > nd:

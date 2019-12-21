@@ -1,25 +1,46 @@
-# read inventory of all sites
-from hydroDL.data import usgs
+from hydroDL.data import usgs, gageII
 import pandas as pd
+import numpy as np
 import time
+import os
+import matplotlib.pyplot as plt
+
 # read site inventory
-fileName = r'C:\Users\geofk\work\waterQuality\inventory_NWIS_sample'
-siteAll = usgs.readUsgsText(fileName)
-# codeLst = ['00608', '00625', '00631', '00665', '80154']
-# nS = 50
+workDir = r'C:\Users\geofk\work\waterQuality'
+modelDir = os.path.join(workDir, 'modelUsgs2')
+fileInvC = os.path.join(workDir, 'inventory_NWIS_sample')
+fileInvQ = os.path.join(workDir, 'inventory_NWIS_streamflow')
 
-# organize to code
-t0 = time.time()
-codeLst = pd.unique(
-    siteAll['parm_cd']).astype(str).tolist().sort(reverse=False)
-idLst = pd.unique(siteAll['site_no']).tolist()
+# look up sample for interested sample sites
+siteC = usgs.readUsgsText(fileInvC)
 
-mat = np.full([len(idLst), len(codeLst)], np.nan)
-# for j,id in enumerate(idLst):
+codeLst = \
+    ['00915', '00925', '00930', '00935', '00955', '00940', '00945']+\
+    ['00418','00419','39086','39087']+\
+    ['00301','00300','00618','00681','00653']+\
+    ['00010','00530','00094']+\
+    ['00403','00408']
 
-j = 0
-id = idLst[j]
-site = siteAll.loc[siteAll['site_no'] == id]
-code = site['parm_cd'].values
-count = site['count_nu'].values
-C, ind1, ind2 = np.intersect1d(code, codeLst, return_indices=True)
+codeSet1=sorted(set(siteC['parm_cd'].astype(int)))
+codeSet=sorted(set(siteC['parm_cd']))
+
+
+aa=siteC['parm_cd'].astype(str)
+
+aa=siteC.loc[(siteC['parm_cd'].astype(str) == '70')]
+aa['site_no'].astype(str)
+
+codeSet=sorted(set(siteC['parm_cd'].astype(str)))
+len(codeSet)
+
+dictTab = dict()
+for code in codeLst:
+    site = siteC.loc[(siteC['parm_cd'] == code) & (siteC['count_nu'] > 1)]
+    temp = dict(
+        zip(site['site_no'].tolist(),
+            site['count_nu'].astype(int).tolist()))
+    dictTab[code] = temp
+tabC = pd.DataFrame.from_dict(dictTab)
+tabC = tabC.rename_axis('site_no').reset_index()
+
+

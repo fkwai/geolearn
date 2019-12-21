@@ -1,5 +1,4 @@
 from . import time
-from . import grid
 from .interp import interpNan
 import numpy as np
 

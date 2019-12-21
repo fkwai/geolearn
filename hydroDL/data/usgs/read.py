@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+# fileName = r'C:\Users\geofk\work\waterQuality\USGS\dailyTS\08075400'
+
 
 def readUsgsText(fileName, dataType=None):
     with open(fileName) as f:
@@ -9,19 +11,21 @@ def readUsgsText(fileName, dataType=None):
         while line[0] == "#":
             line = f.readline()
             k = k + 1
-        headLst = line.split('\t')[:-1]
-        typeLst = f.readline().split('\t')[:-1]
-    pdf = pd.read_table(fileName, header=k).drop(0)
-    dictUsgs = dict(s=str, d=str, n=np.float)
-    dictType = dict()
-    for h, t in zip(headLst, typeLst):
-        dictType[h] = dictUsgs[t[-1]]
-    out = pdf.astype(dictType)
+        headLst = line[:-1].split('\t')
+        typeLst = f.readline()[:-1].split('\t')
+    pdf = pd.read_table(fileName, header=k, dtype=str).drop(0)
+    for i, x in enumerate(typeLst):
+        if x[-1] == 'n':
+            pdf[headLst[i]] = pd.to_numeric(pdf[headLst[i]], errors='coerce')
+        if x[-1] == 'd':
+            pdf[headLst[i]] = pd.to_datetime(pdf[headLst[i]], errors='coerce')
     # modify
     if dataType == 'dailyTS':
-        out = refineDailyTS(out)
+        out = refineDailyTS(pdf)
     elif dataType == 'sample':
-        out = refineSample(out)
+        out = refineSample(pdf)
+    else:
+        out = pdf
     return out
 
 
@@ -32,10 +36,10 @@ def refineDailyTS(pdf):
         temp = head.split('_')
         if temp[0].isdigit():
             if len(temp) == 3:
-                headLst[i] = temp[1]
+                headLst[i] = temp[1] + '_' + temp[2]
                 pdf[head] = pdf[head].astype(np.float)
             else:
-                headLst[i] = temp[1] + '_cd'
+                headLst[i] = temp[1] + '_' + temp[2] + '_cd'
     pdf.columns = headLst
     # time field
     pdf['datetime'] = pd.to_datetime(pdf['datetime'], format='%Y-%m-%d')

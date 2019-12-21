@@ -2,9 +2,9 @@ import numpy as np
 
 
 def crd2grid(y, x, fillMiss=True):
+    """ convert a list of points into grid """
     ux, indX0, indX = np.unique(x, return_index=True, return_inverse=True)
     uy, indY0, indY = np.unique(y, return_index=True, return_inverse=True)
-
     minDx = np.min(ux[1:] - ux[0:-1])
     minDy = np.min(uy[1:] - uy[0:-1])
     maxDx = np.max(ux[1:] - ux[0:-1])
@@ -17,7 +17,6 @@ def crd2grid(y, x, fillMiss=True):
         raise Exception('TODO:skipped coloums')
     #     indMissY=np.where((uy[1:]-uy[0:-1])>minDy*2)
     #     raise Exception('skipped coloums or rows')
-
     uy = uy[::-1]
     ny = len(uy)
     indY = ny - 1 - indY

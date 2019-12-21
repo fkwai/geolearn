@@ -19,6 +19,7 @@ def plotBoxFig(data,
                title=None,
                figsize=(8, 6),
                sharey=True,
+               widths=None,
                legOnly=False):
     nc = len(data)
     if legOnly is True:
@@ -38,7 +39,11 @@ def plotBoxFig(data,
                     temp[kk] = []
         else:
             temp = temp[~np.isnan(temp)]
-        bp = ax.boxplot(temp, patch_artist=True, notch=True, showfliers=False)
+        bp = ax.boxplot(temp,
+                        patch_artist=True,
+                        notch=True,
+                        showfliers=False,
+                        widths=widths)
         for kk in range(0, len(bp['boxes'])):
             plt.setp(bp['boxes'][kk], facecolor=colorLst[kk])
         if label1 is not None:

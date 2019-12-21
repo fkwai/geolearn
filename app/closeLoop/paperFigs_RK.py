@@ -135,10 +135,13 @@ for i in range(len(dataBox)):
         i+1, np.nanmean(dataBox[i][0]), np.nanmean(dataBox[i][1]),
         np.nanmean(dataBox[i][2]), np.nanmean(dataBox[i][3]),
         np.nanmean(dataBox[i][4])))
-    print('{}d forecast, median RMSE = {:.4f}; {:.4f}; {:.4f}; {:.4f}; {:.4f}'.format(
-        i+1, np.nanmedian(dataBox[i][0]), np.nanmedian(dataBox[i][1]),
-        np.nanmedian(dataBox[i][2]), np.nanmedian(dataBox[i][3]),
-        np.nanmedian(dataBox[i][4])))
+    vLst=[np.nanmean(dataBox[i][k]) for k in range(5)]
+    print('{}d forecast, mean RMSE = {:.4f}; {:.4f}; {:.4f}; improve {:.2f}%'.format(
+        i+1, vLst[0],vLst[3],vLst[4],(vLst[4]-vLst[3])/vLst[4]*100))
+    # print('{}d forecast, median RMSE = {:.4f}; {:.4f}; {:.4f}; {:.4f}; {:.4f}'.format(
+    #     i+1, np.nanmedian(dataBox[i][0]), np.nanmedian(dataBox[i][1]),
+    #     np.nanmedian(dataBox[i][2]), np.nanmedian(dataBox[i][3]),
+    #     np.nanmedian(dataBox[i][4])))
 
 # map forecast
 importlib.reload(plot)
