@@ -29,3 +29,9 @@ if hostName == 'AW-m17':
 elif hostName[:4] == 'icme':
     dirData = r'/home/kuaifang/Data/'
     dirWQ = r'/home/kuaifang/waterQuality/'
+    dirJob=r'/home/kuaifang/jobs/'
+elif hostName[:2] == 'sh':
+    dirData = r'/scratch/users/kuaifang/Data/'
+    dirWQ = r'/scratch/users/kuaifang/waterQuality/'
+    dirJob=r'/scratch/users/kuaifang/jobs/'
+

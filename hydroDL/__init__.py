@@ -27,9 +27,6 @@ def initPath():
                                  'Result_SMAPgrid')
         os.environ[
             'PROJ_LIB'] = r'C:\Users\geofk\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
-    elif hostName[:4] == 'icme':
-        dirData = r'/home/kuaifang/Data/'
-        dirWQ = r'/home/kuaifang/waterQuality/'
 
     pathSMAP = collections.OrderedDict(
         DB_L3_Global=os.path.join(dirDB, 'Daily_L3'),
@@ -45,10 +42,7 @@ def initPath():
         DB=os.path.join(os.path.sep, 'mnt', 'sdb', 'Data', 'Camels'),
         Out=os.path.join(os.path.sep, 'mnt', 'sdb', 'rnnStreamflow'))
 
-    pathUSGS = collections.OrderedDict(
-        dirData=dirData,
-        dirWQ=dirWQ)
-    return pathSMAP, pathCamels, pathUSGS
+    return pathSMAP, pathCamels
 
 
-pathSMAP, pathCamels, pathUSGS = initPath()
+pathSMAP, pathCamels = initPath()

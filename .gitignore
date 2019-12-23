@@ -3,3 +3,5 @@
 *mypy_cache*
 *.swp
 *.pyc
+geolearn.egg-info
+kuai-pytorch
