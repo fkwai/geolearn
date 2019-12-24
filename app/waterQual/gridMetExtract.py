@@ -1,6 +1,7 @@
 import importlib
 from hydroDL.data import gridMET
 from hydroDL.utils import gis
+from hydroDL import kPath
 import numpy as np
 import pandas as pd
 import os
@@ -8,9 +9,9 @@ import time
 import argparse
 
 workDir = kPath.dirWQ
-dataFolder = os.path.join(kPath.dirData,'gridMET')
-maskFolder = os.path.join(kPath.dirData,'USGS-mask')
-saveFolder = os.path.join(kPath.dirData,'USGS-gridMET','raw')
+dataFolder = os.path.join(kPath.dirData, 'gridMET')
+maskFolder = os.path.join(kPath.dirData, 'USGS-mask')
+saveFolder = os.path.join(kPath.dirData, 'USGS-gridMET', 'raw')
 
 
 # varLst = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
@@ -23,6 +24,7 @@ python /home/kuaifang/GitHUB/geolearn/app/waterQual/gridMetExtract.py -var pr
 
 """
 
+
 def extractData(var):
     fileSiteNo = os.path.join(workDir, 'modelUsgs2', 'siteNoSel')
     siteNoLst = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
@@ -32,7 +34,7 @@ def extractData(var):
     maskAll = np.load(file)
     print('load all mask time {}'.format(time.time()-t0))
 
-    for yr in range(syr, eyr):
+    for yr in range(1979, 2020):
         t0 = time.time()
         ncFile = os.path.join(dataFolder, '{}_{}.nc'.format(var, yr))
         data = gridMET.readNcData(ncFile)
@@ -88,4 +90,3 @@ np.save(file, maskAll)
 # for kk in list(np.where(np.isnan(aa))[0]):
 #     print(siteNoLst[kk])
 """
-

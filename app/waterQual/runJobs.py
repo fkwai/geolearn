@@ -5,8 +5,11 @@ from hydroDL import kPath
 """ extract data from gridMET """
 varLst = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
 for var in varLst:
-    cmd = 'python /home/kuaifang/GitHUB/geolearn/app/waterQual/gridMetExtract.py -var {}'
-    # cmd = 'python3 /home/users/kuaifang/GitHUB/geolearn/app/waterQual/gridMetExtract.py -var {}
+
+    if kPath.host == 'icme':
+        cmd = 'python /home/kuaifang/GitHUB/geolearn/app/waterQual/gridMetExtract.py -var {}'
+    elif kPath.host == 'sherlock':
+        cmd = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/gridMetExtract.py -var {}'
     cmdLine = cmd.format(var)
     jobName = var
     slurm.submitJob(jobName, cmdLine, nH=8, nM=16)
