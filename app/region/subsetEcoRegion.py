@@ -61,9 +61,16 @@ def codeReg(regLst):
 
 
 regLst = [
-    [9, 2, 3]
+    [8, 3, 0], [8, 4, 0], [9, 2, 0], [9, 3, 0], [10, 1, 0], [10, 2, 0]
+]
+
+regLst = [
+    [10, 1, 1],[10, 1, 2],[10, 1, 3]
 ]
 fig, ax = plt.subplots(figsize=(8, 6))
 data, legLst, indLst = codeReg(regLst)
-plot.plotMap(data, lat=lat, lon=lon, ax=ax, cRange=[0, len(legLst)])
+import matplotlib
+matplotlib.rcParams.update({'lines.markersize': 20})
+
+plot.plotMap(data, lat=lat, lon=lon, ax=ax, cRange=[0, len(legLst)],)
 fig.show()
