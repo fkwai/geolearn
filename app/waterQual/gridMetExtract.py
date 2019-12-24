@@ -7,10 +7,10 @@ import os
 import time
 import argparse
 
-workDir = r'/home/kuaifang/waterQuality/'
-dataFolder = r'/home/kuaifang/Data/gridMET/'
-maskFolder = r'/home/kuaifang/Data/USGS-mask/'
-saveFolder = r'/home/kuaifang/Data/USGS-gridMET/raw/'
+workDir = kPath.dirWQ
+dataFolder = os.path.join(kPath.dirData,'gridMET')
+maskFolder = os.path.join(kPath.dirData,'USGS-mask')
+saveFolder = os.path.join(kPath.dirData,'USGS-gridMET','raw')
 
 
 # varLst = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
