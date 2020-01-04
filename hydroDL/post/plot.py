@@ -235,7 +235,7 @@ def plotMap(data,
                         y,
                         c=data,
                         cmap=cmap,
-                        s=10,
+                        s=20,
                         marker='*',
                         vmin=vmin,
                         vmax=vmax)
