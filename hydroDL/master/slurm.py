@@ -20,4 +20,4 @@ def submitJob(jobName, cmdLine, nH=8, nM=16):
             fh.writelines(
                 'source /home/users/kuaifang/envs/pytorch/bin/activate\n')
         fh.writelines(cmdLine)
-    os.system("sbatch %s" % jobFile)
+    os.system('sbatch {}'.format(jobFile))
