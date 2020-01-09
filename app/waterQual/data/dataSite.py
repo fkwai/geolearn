@@ -65,15 +65,6 @@ for siteNo in siteNoLst:
 # ['08015500', '02245500', '07093700', '01651800']
 
 
-
-siteNo = '11383800'
-stateCd = siteQ['state_cd'].loc[siteQ['site_no'] == siteNo].values[0]
-state = tabState['short'].loc[tabState['code'] == int(stateCd)].values[0]
-saveFile = os.path.join(workDir, 'USGS', 'dailyTS', siteNo)
-aa=usgs.downloadDaily(siteNo, ['00060'], state, saveFile)
-saveFile = os.path.join(workDir, 'USGS', 'sample', siteNo)
-usgs.downloadSample(siteNo, state, saveFile)
-
 # download forcing
 ## wrap up a csv for sites
 sdLst = list()
@@ -94,4 +85,6 @@ outShapeFile = os.path.join(modelDir, 'basinSel.shp')
 siteNoLst = pd.read_csv(fileSel, header=None, dtype=str)[0].tolist()
 gageII.extractBasins(siteNoLst, outShapeFile)
 
-# extractForcingShape.py
+# gridMetMask.py
+# gridMetExtract.py
+# gridMetFromRaw.py

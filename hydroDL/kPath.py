@@ -26,6 +26,8 @@ if hostName == 'AW-m17':
     pathSMAP = initPathSMAP(dirDB, dirOut, dirResult)
     os.environ[
         'PROJ_LIB'] = r'C:\Users\geofk\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
+    dirData = r'C:\Users\geofk\work\database'
+    dirWQ = r'C:\Users\geofk\work\waterQuality'
 elif hostName[:4] == 'icme':
     host='icme'
     dirData = r'/home/kuaifang/Data/'
