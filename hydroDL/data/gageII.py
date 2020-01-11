@@ -10,10 +10,9 @@ dirTab = os.path.join(
     dirGageII, 'basinchar_and_report_sept_2011', 'spreadsheets-in-csv-format')
 dirShape = os.path.join(dirGageII, 'boundaries-shapefiles-by-aggeco')
 
-
-# varLst = ['NWIS_DRAIN_SQKM', 'SNOW_PCT_PRECIP', 'GEOL_REEDBUSH_DOM',
-#           'STREAMS_KM_SQ_KM', 'BFI_AVE', 'CONTACT', 'FORESTNLCD06', 'PLANTNLCD06',
-#           'NUTR_BAS_DOM', 'PERMAVE', 'WTDEPAVE', 'ROCKDEPAVE', 'SLOPE_PCT']
+lstWaterQuality = ['DRAIN_SQKM', 'SNOW_PCT_PRECIP', 'GEOL_REEDBUSH_DOM', 'STREAMS_KM_SQ_KM', 'PCT_1ST_ORDER',
+                   'BFI_AVE', 'CONTACT', 'FORESTNLCD06', 'PLANTNLCD06', 'NUTR_BAS_DOM', 'ECO3_BAS_DOM', 'HLR_BAS_DOM_100M',
+                   'ELEV_MEAN_M_BASIN', 'PERMAVE', 'WTDEPAVE', 'ROCKDEPAVE', 'SLOPE_PCT']
 
 
 def readTab(varType):
@@ -25,7 +24,7 @@ def readTab(varType):
 
 
 def getVariableDict(varLst=None):
-    """ get a dict of ggII variables 
+    """ get a dict of ggII variables
     Keyword Arguments:
         varLst {list} -- list of variable names (default: {None})
     Returns:
@@ -36,6 +35,8 @@ def getVariableDict(varLst=None):
     tab = pd.read_csv(fileDesc)
     tab = tab.drop(tab.loc[tab['VARIABLE_NAME'] == 'STAID'].index)
     tab = tab.drop(tab.loc[tab['VARIABLE_TYPE'] == 'X_Region_Names'].index)
+    tab = tab.drop(tab.loc[(tab['VARIABLE_TYPE'] == 'BasinID') & (
+        tab['VARIABLE_NAME'] == 'DRAIN_SQKM')].index)
     if varLst is not None:
         tab = tab.set_index('VARIABLE_NAME').loc[varLst].reset_index()[
             ['VARIABLE_TYPE', 'VARIABLE_NAME']]
@@ -76,7 +77,7 @@ def readData(*, varLst=None, siteNoLst=None):
 def updateCode(pdf):
     """update string fields of a ggII dataframe. lookup code will be write into a json file. 
     Arguments:
-        pdf {pandas.core.frame.DataFrame} -- input pdf        
+        pdf {pandas.core.frame.DataFrame} -- input pdf                
     Returns:
         pandas.core.frame.DataFrame -- output pdf
     """

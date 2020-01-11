@@ -1,2 +1,10 @@
-from .read import readUsgsText
-from .download import downloadDaily, downloadSample
+from .read import *
+from .download import *
+
+
+lstCodeSample = \
+    ['00915', '00925', '00930', '00935', '00955', '00940', '00945'] +\
+    ['00418', '00419', '39086', '39087'] +\
+    ['00301', '00300', '00618', '00681', '00653'] +\
+    ['00010', '00530', '00094'] +\
+    ['00403', '00408']

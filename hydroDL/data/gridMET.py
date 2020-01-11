@@ -1,5 +1,8 @@
 import netCDF4
+import os
 import numpy as np
+import pandas as pd
+from hydroDL import kPath
 
 
 def readNcInfo(file):
@@ -10,6 +13,7 @@ def readNcInfo(file):
     t = np.datetime64('1900-01-01') + np.array(day, dtype='timedelta64[D]')
     return t, lat, lon
 
+
 def readNcData(file):
     fh = netCDF4.Dataset(file)
     var = list(fh.variables.keys())[-1]
@@ -18,3 +22,18 @@ def readNcData(file):
     data[mask] = np.nan
     return data
 
+
+def readBasin(siteNo):
+    """read basin averaged forcing data, plenty of work is done before. See:
+    app\waterQual\data\gridMetExtract.py
+    app\waterQual\data\gridMetFromRaw.py
+    app\waterQual\data\gridMetMask.py
+    Arguments:
+        siteNo {str} -- usgs site number
+    Returns:
+        pandas.Dataframe -- output table
+    """
+    fileF = os.path.join(kPath.dirData, 'USGS', 'gridMet', siteNo)
+    dfF = pd.read_csv(fileF)
+    dfF = dfF.set_index('date')
+    return dfF

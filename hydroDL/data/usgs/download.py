@@ -1,4 +1,5 @@
 import urllib
+__all__ = ['downloadDaily', 'downloadSample']
 
 
 def downloadDaily(siteNo, nwisCode, state, saveFile):

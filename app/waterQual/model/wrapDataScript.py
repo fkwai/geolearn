@@ -1,79 +1,87 @@
 
 """wrap up data for the whole CONUS
+some spectial sites:
+'02465000' '08068450'
 """
 
+import time
+import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import numpy as np
+import json
 from hydroDL import kPath
-from hydroDL.data import usgs, gageII
+from hydroDL.data import usgs, gageII, gridMET
 import importlib
 
 # list of site
-codeLstC = \
-    ['00915', '00925', '00930', '00935', '00955', '00940', '00945'] +\
-    ['00418', '00419', '39086', '39087'] +\
-    ['00301', '00300', '00618', '00681', '00653'] +\
-    ['00010', '00530', '00094'] +\
-    ['00403', '00408']
 startDate = pd.datetime(1979, 1, 1)
 fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoSel')
-siteNoLst = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
+siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
+rho = 365
+nanLimit = 5
+
+# select referenced basins
+tabSel = gageII.readData(
+    varLst=['CLASS', 'ROADS_KM_SQ_KM'], siteNoLst=siteNoLstAll)
+tabSel = gageII.updateCode(tabSel)
+siteNoLst = tabSel[tabSel['CLASS'] == 1].index.tolist()
+
+caseName = 'refBasins'
+varC = usgs.lstCodeSample
+varG = gageII.lstWaterQuality
+
+dictCase = dict(caseName=caseName, rho=rho, nanLimit=nanLimit,
+                varG=varG, varC=varC, siteNoLst=siteNoLst)
 
 # gageII
-varCLst = ['NWIS_DRAIN_SQKM', 'SNOW_PCT_PRECIP', 'GEOL_REEDBUSH_DOM', 'GEOL_HUNT_DOM_CODE', 'STREAMS_KM_SQ_KM',
-           'BFI_AVE', 'CONTACT', 'FORESTNLCD06', 'PLANTNLCD06',
-           'NUTR_BAS_DOM', 'ECO3_BAS_DOM', 'PERMAVE', 'WTDEPAVE', 'ROCKDEPAVE', 'SLOPE_PCT']
-tabC = gageII.readData(varLst=varCLst, siteNoLst=siteNoLst)
-tabC=gageII.updateCode(tabC)
+tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLstAll)
+tabG = gageII.updateCode(tabG)
+# read dataand  merge to three ndarray
+# x=[nT,nP,nX], y=[nP,nY], c=[nP,nC]
+xLst = list()
+yLst = list()
+cLst = list()
+infoLst = list()
+dictSite = dict()
+for i, siteNo in enumerate(siteNoLst):
+    t0 = time.time()
+    dfC = usgs.readSample(siteNo, codeLst=varC, startDate=startDate)
+    dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
+    dfF = gridMET.readBasin(siteNo)
+    t1 = time.time()
+    # nTarget = 0
+    # tLst = list()
+    for k in range(len(dfC)):
+        yt = dfC.index[k]
+        if yt-pd.Timedelta(days=rho) < startDate:
+            continue
+        dfX = pd.DataFrame({'date': pd.date_range(
+            yt-pd.Timedelta(days=rho-1), yt)}).set_index('date')
+        dfX = dfX.join(dfQ)
+        dfX = dfX.join(dfF)
+        dfX = dfX.interpolate(limit=nanLimit, limit_direction='both')
+        if not dfX.isna().values.any():
+            xLst.append(dfX.values)
+            yLst.append(dfC.iloc[k].values)
+            cLst.append(tabG.loc[siteNo].values)
+            infoLst.append(dict(siteNo=siteNo, date=yt))
+            # nTarget = nTarget + 1
+            # tLst.append(yt)
+    t2 = time.time()
+    # if nTarget != 0:
+    #     dictSite[siteNo] = '{:6d} samples, {:%Y/%m/%d} - {:%Y/%m/%d}'.format(
+    #         nTarget, tLst[0], tLst[-1])
+    print('{} on site {} reading {:.3} processing {:.3}'.format(
+        i, siteNo, t1-t0, t2-t1))
+x = np.stack(xLst, axis=-1)
+y = np.stack(yLst, axis=-1)
+c = np.stack(cLst, axis=-1)
+info = pd.DataFrame(infoLst).values
 
-tabC = gageII.readData(varLst=['CLASS','NWIS_DRAIN_SQKM'], siteNoLst=siteNoLst)
-tabC=gageII.updateCode(tabC)
+saveFolder = os.path.join(kPath.dirWQ, 'tempData')
+saveFile = os.path.join(saveFolder, caseName+'.npz')
+np.savez(saveFile, x=x, y=y, c=c, info=info)
 
-import matplotlib.pyplot as plt
-a=tabC['CLASS'].values
-b=tabC['NWIS_DRAIN_SQKM'].values
-np.sum(a-1)
-
-# read data
-siteNo = '02465000'
-# sample
-fileC = os.path.join(kPath.dirData, 'USGS', 'sample', siteNo)
-dfC = usgs.readUsgsText(fileC, dataType='sample')
-dfC = dfC[dfC['date'] >= startDate]
-dfC = dfC[['date']+list(set(codeLstC) & set(dfC.columns.tolist()))]
-dfC = dfC.set_index('date').dropna(how='all')
-dfC = dfC.groupby(level=0).agg(lambda x: x.mean())
-
-# streamflow
-siteNo = '08068450'
-fileQ = os.path.join(kPath.dirData, 'USGS', 'dailyTS', siteNo)
-dfQ = usgs.readUsgsText(fileQ, dataType='streamflow')
-dfQ = dfQ[dfQ['date'] >= startDate]
-if '00060_00001' in dfQ.columns and '00060_00002' in dfQ.columns:
-    # fill nan using other two fields
-    avgQ = dfQ[['00060_00001', '00060_00002']].mean(axis=1, skipna=False)
-    dfQ['00060_00003'] = dfQ['00060_00003'].fillna(avgQ)
-    dfQ = dfQ[['date', '00060_00003']]
-else:
-    dfQ = dfQ[['date', '00060_00003']]
-
-
-# forcing
-fileF = os.path.join(kPath.dirData, 'USGS', 'gridMet', siteNo)
-dfF = pd.read_csv(fileF)
-
-
-# # fill nan of small gap
-# dfQ['00060_00003']=dfQ['00060_00003'].interpolate(limit=5)
-# dfQ.to_csv('temp.csv')
-
-
-# forcing
-fileF = os.path.join(kPath.dirData, 'USGS', 'gridMet', siteNo)
-dfF = pd.read_csv(fileF)
-
-# merge data
-
-# dfQ[['date', '00060_00003']]
-# temp = pd.merge(dfQ, dfC, how='outer', on='date')
+with open(os.path.join(saveFolder, caseName+'.json'), 'w') as fp:
+    json.dump(dictCase, fp, indent=4)

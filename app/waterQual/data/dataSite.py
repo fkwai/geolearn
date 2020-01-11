@@ -1,5 +1,6 @@
 # read inventory of all sites
 from hydroDL.data import usgs, gageII
+from hydroDL import kPath
 import pandas as pd
 import numpy as np
 import time
@@ -7,7 +8,7 @@ import os
 import matplotlib.pyplot as plt
 
 # read site inventory
-workDir = r'C:\Users\geofk\work\waterQuality'
+workDir =os.path.join(kPath.dirData,'USGS','inventory')
 modelDir = os.path.join(workDir, 'modelUsgs2')
 fileInvC = os.path.join(workDir, 'inventory_NWIS_sample')
 fileInvQ = os.path.join(workDir, 'inventory_NWIS_streamflow')
@@ -43,6 +44,10 @@ idLstQ = siteQ['site_no'].tolist()
 idLstG = tabGageII['STAID'].tolist()
 siteNoLst = list(
     set(idLstC).intersection(set(idLstQ)).intersection(set(idLstG)))
+
+# check if any field of no data
+tabSite=tabC.set_index('site_no').loc[siteNoLst]
+tabSite.isna().all() # all fields have some valid values
 
 # download C/Q data
 errLst = list()
