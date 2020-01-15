@@ -109,14 +109,26 @@ def renameDailyTS(pdf):
 def renameStreamflow(pdf):
     # pick the longest average Q field
     headLst = pdf.columns.tolist()
-    tempS = [head for head in headLst if head[-1] == '3']
-    tempN = [pdf[head].isna().sum() for head in headLst if head[-1] == '3']
-    ind = tempN.index(min(tempN))
-    code = int(tempS[ind].split('_')[0])
+    tempS = [head.split('_') for head in headLst if head[-1].isdigit()]
+    codeLst = list(set([int(s[0])-int(s[2]) for s in tempS]))
+    tempN = list()
+    for code in codeLst:
+        for k in range(3):
+            head = '{}_00060_{:05n}'.format(code+k+1, k+1)
+            if head not in headLst:
+                pdf[head] = np.nan
+                pdf[head+'_cd'] = 'N'
+        tempLst = ['{}_00060_{:05n}'.format(code+k+1, k+1) for k in range(3)]
+        temp = ((~pdf[tempLst[0]].isna()) & (~pdf[tempLst[1]].isna())) | (
+            ~pdf[tempLst[2]].isna())
+        tempN.append(temp.sum())
+    code = codeLst[tempN.index(max(tempN))]
     # (searched and no code of leading zero)
-    dictRename = {'{}_00060_{:05n}'.format(
-        code-2+x, x+1): '00060_{:05n}'.format(x+1) for x in range(3)}
-    pdf = pdf.rename(columns=dictRename)
+    pdf = pdf.rename(columns={'{}_00060_{:05n}'.format(
+        code+x+1, x+1): '00060_{:05n}'.format(x+1) for x in range(3)})
+    pdf = pdf.rename(columns={'{}_00060_{:05n}_cd'.format(
+        code+x+1, x+1): '00060_{:05n}_cd'.format(x+1) for x in range(3)})
+
     # time field
     pdf['date'] = pd.to_datetime(pdf['datetime'], format='%Y-%m-%d')
     return pdf

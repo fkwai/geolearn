@@ -14,6 +14,26 @@ lstWaterQuality = ['DRAIN_SQKM', 'SNOW_PCT_PRECIP', 'GEOL_REEDBUSH_DOM', 'STREAM
                    'BFI_AVE', 'CONTACT', 'FORESTNLCD06', 'PLANTNLCD06', 'NUTR_BAS_DOM', 'ECO3_BAS_DOM', 'HLR_BAS_DOM_100M',
                    'ELEV_MEAN_M_BASIN', 'PERMAVE', 'WTDEPAVE', 'ROCKDEPAVE', 'SLOPE_PCT']
 
+dictStat = dict(
+    DRAIN_SQKM='log-norm',
+    SNOW_PCT_PRECIP='norm',
+    GEOL_REEDBUSH_DOM='norm',
+    STREAMS_KM_SQ_KM='norm',
+    PCT_1ST_ORDER='norm',
+    BFI_AVE='norm',
+    CONTACT='log-norm',
+    FORESTNLCD06='norm',
+    PLANTNLCD06='norm',
+    NUTR_BAS_DOM='norm',
+    ECO3_BAS_DOM='norm',
+    HLR_BAS_DOM_100M='norm',
+    ELEV_MEAN_M_BASIN='norm',
+    PERMAVE='norm',
+    WTDEPAVE='norm',
+    ROCKDEPAVE='norm',
+    SLOPE_PCT='norm'
+)
+
 
 def readTab(varType):
     if varType == 'Flow_Record':

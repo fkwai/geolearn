@@ -33,6 +33,17 @@ class SigmaLoss(torch.nn.Module):
         return lossMean
 
 
+class RmseEnd(torch.nn.Module):
+    def __init__(self):
+        super(RmseEnd, self).__init__()
+
+    def forward(self, output, target):
+        mask = target == target
+        p=output[-1:,:,:][mask]
+        t=target[mask]
+        loss = torch.sqrt(((p - t)**2).mean())
+        return loss
+
 class RmseLoss(torch.nn.Module):
     def __init__(self):
         super(RmseLoss, self).__init__()
@@ -58,8 +69,8 @@ class MSELoss(torch.nn.Module):
         ny = target.shape[2]
         loss = 0
         for k in range(ny):
-            p0 = output[:, :, 0]
-            t0 = target[:, :, 0]
+            p0 = output[:, :, k]
+            t0 = target[:, :, k]
             mask = t0 == t0
             p = p0[mask]
             t = t0[mask]
