@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime as dt
 from random import randint
 
-# caseName = 'refBasins'
-caseName = 'temp'
+caseName = 'refBasins'
+# caseName = 'temp'
 nEpoch = 100
 modelFolder = os.path.join(kPath.dirWQ, 'modelA', caseName)
 dictData, info, x, y, c = waterQuality.loadData(caseName)
@@ -25,15 +25,53 @@ dfP = pd.read_csv(outFile, dtype={'siteNo': str})
 
 siteNoLst = dictData['siteNoLst']
 varC = dictData['varC']
-iS = randint(0,len(siteNoLst))
-iC = randint(0,21)
-a = dfT[dfT['siteNo'] == siteNoLst[iS]]
-b = dfP[dfP['siteNo'] == siteNoLst[iS]]
-# t1 = pd.to_datetime(a[a['train'] == 1]['date'].values[-1])
-# t2 = pd.to_datetime(a[a['train'] == 0]['date'].values[0])
-# tBar = t1+(t2-t1)/2
-var = varC[iC]
-fig, ax = plt.subplots(1, 1)
-fig, ax = plot.plotTS(t=a['date'], y=[a[var], b[var]], legLst=[
-                      var+'_obs', var+'_pred'])
-fig.show()
+bb = True
+while bb is True:
+    iS = randint(0, len(siteNoLst))
+    iC = randint(0, 20)
+    # iS = 0
+    # iC = 1
+    t = dfT[dfT['siteNo'] == siteNoLst[iS]]['date']
+    a = dfT[dfT['siteNo'] == siteNoLst[iS]][varC[iC]]
+    b = dfP[dfP['siteNo'] == siteNoLst[iS]][varC[iC]]
+    if not a.isna().all():
+        fig, ax = plt.subplots(1, 1)
+        fig, ax = plot.plotTS(t=t, y=[a, b], legLst=[
+            varC[iC]+' obs', varC[iC]+' pred'])
+        fig.show()
+        bb = False
+pass
+
+# time series map
+siteNoLst = dictData['siteNoLst']
+varC = dictData['varC']
+nP = len(siteNoLst)
+nC = len(varC)
+matRho1 = np.ndarray([nP, nC])
+matRho2 = np.ndarray([nP, nC])
+matRmse1 = np.ndarray([nP, nC])
+matRmse2 = np.ndarray([nP, nC])
+matN1 = np.ndarray([nP, nC])
+matN2 = np.ndarray([nP, nC])
+
+for iS, siteNo in enumerate(siteNoLst):
+    print(iS)
+    for iC, var in enumerate(varC):
+        obs = dfT[dfT['siteNo'] == siteNoLst[iS]][varC[iC]].values
+        pred = dfP[dfP['siteNo'] == siteNoLst[iS]][varC[iC]].values
+        bTrain = dfT[dfT['siteNo'] == siteNoLst[iS]
+                     ]['train'].values.astype(bool)
+        # obs[bTrain==1].corr(pred[bTrain==1])
+        # obs[bTrain==0].corr(pred[bTrain==0])
+        ind1 = np.where(~np.isnan(obs) & bTrain)[0]
+        ind2 = np.where(~np.isnan(obs) & ~bTrain)[0]
+        matRho1[iS, iC] = np.corrcoef(obs[ind1], pred[ind1])[0, 1]
+        matRho2[iS, iC] = np.corrcoef(obs[ind2], pred[ind2])[0, 1]
+        matRmse1[iS, iC] = np.sqrt(np.mean((obs[ind1]-pred[ind1])**2))
+        matRmse2[iS, iC] = np.sqrt(np.mean((obs[ind2]-pred[ind2])**2))
+        matN1[iS, iC] = len(ind1)
+        matN2[iS, iC] = len(ind2)
+saveFile = os.path.join(modelFolder, 'statResult_Ep{}.npz'.format(nEpoch))
+np.savez(saveFile, matRho1=matRho1, matRho2=matRho2, matRmse1=matRmse1, matRmse2=matRmse2, matN1=matN1, matN2=matN2)
+
+# plot map

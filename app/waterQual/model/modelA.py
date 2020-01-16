@@ -15,8 +15,9 @@ caseName = 'refBasins'
 ratioTrain = 0.8
 rho = 365
 batchSize = 1000
-nEpoch = 200
+nEpoch = 500
 saveEpoch = 100
+resumeEpoch = 200
 hiddenSize = 256
 modelFolder = os.path.join(kPath.dirWQ, 'modelA', caseName)
 if not os.path.exists(modelFolder):
@@ -73,7 +74,12 @@ def subset(x, y, c):
 
 
 # model
-model = rnn.CudnnLstmModel(nx=nx+nc, ny=ny, hiddenSize=hiddenSize)
+if resumeEpoch != 0:
+    modelFile = os.path.join(
+        modelFolder, 'model_Ep' + str(resumeEpoch) + '.pt')
+    model = torch.load(modelFile)
+else:
+    model = rnn.CudnnLstmModel(nx=nx+nc, ny=ny, hiddenSize=hiddenSize)
 lossFun = crit.RmseEnd()
 if torch.cuda.is_available():
     lossFun = lossFun.cuda()
@@ -91,7 +97,7 @@ t0 = time.time()
 model.train()
 model.zero_grad()
 # time.sleep(5)
-for iEp in range(1, nEpoch + 1):
+for iEp in range(resumeEpoch+1, nEpoch + 1):
     lossEp = 0
     t0 = time.time()
     for iIter in range(nIterEp):
@@ -135,7 +141,8 @@ for iEp in range(1, nEpoch + 1):
         temp = np.concatenate(yOutLst, axis=0)
         yOut = np.ndarray(temp.shape)
         for k in range(ny):
-            yOut[:, k] = transform.transOut(temp[:, k], mtdLstY[k], statLstY[k])
+            yOut[:, k] = transform.transOut(
+                temp[:, k], mtdLstY[k], statLstY[k])
 
         # save output
         dfOut = info
@@ -150,5 +157,5 @@ for iEp in range(1, nEpoch + 1):
         targetDf.to_csv(targetFile)
         outFile = os.path.join(modelFolder, 'output_Ep' + str(iEp) + '.csv')
         outDf = pd.merge(dfOut, pd.DataFrame(data=yOut, columns=varC),
-                        left_index=True, right_index=True)
+                         left_index=True, right_index=True)
         outDf.to_csv(outFile)
