@@ -10,10 +10,13 @@ from hydroDL.model import rnn, crit
 from hydroDL.data import usgs, gageII, transform
 
 caseName = 'refBasins'
+# caseName = 'temp'
+
 ratioTrain = 0.8
 rho = 365
 batchSize = 1000
-nEpoch = 100
+nEpoch = 200
+saveEpoch = 100
 hiddenSize = 256
 modelFolder = os.path.join(kPath.dirWQ, 'modelA', caseName)
 if not os.path.exists(modelFolder):
@@ -101,50 +104,51 @@ for iEp in range(1, nEpoch + 1):
             model.zero_grad()
             lossEp = lossEp + loss.item()
         except:
-            print('iteration Failed: iter {} ep {}'.format(iIter,iEp))
+            print('iteration Failed: iter {} ep {}'.format(iIter, iEp))
     lossEp = lossEp / nIterEp
     ct = time.time() - t0
     logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp, lossEp, ct)
     print(logStr)
     lossEpLst.append(lossEp)
-modelFile = os.path.join(modelFolder, 'modelSeq_Ep' + str(nEpoch) + '.pt')
-# torch.save(model, modelFile)
 
-# predict - point-by-point
-# modelFile = os.path.join(modelFolder, 'modelSeq_Ep' + str(nEpoch) + '.pt')
-# model = torch.load(modelFile)
-nt = dictData['rho']
-nd, ny = y.shape
-batchSize = 1000
-iS = np.arange(0, nd, batchSize)
-iE = np.append(iS[1:], nd)
-yOutLst = list()
-for k in range(len(iS)):
-    print('batch: '+str(k))
-    xT = torch.from_numpy(np.concatenate(
-        [xNorm[:, iS[k]:iE[k], :], np.tile(cNorm[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
-    if torch.cuda.is_available():
-        xT = xT.cuda()
-        model = model.cuda()
-    yT = model(xT)[-1, :, :]
-    yOutLst.append(yT.detach().cpu().numpy())
-temp = np.concatenate(yOutLst, axis=0)
-yOut=np.ndarray(temp.shape)
-for k in range(ny):
-    yOut[:, k] = transform.transOut(temp[:, k], mtdLstY[k], statLstY[k])
+    if iEp % saveEpoch == 0:
+        modelFile = os.path.join(modelFolder, 'model_Ep' + str(iEp) + '.pt')
+        torch.save(model, modelFile)
 
-# save output
-dfOut = info
-dfOut['train'] = np.nan
-dfOut['train'][indTrain] = 1
-dfOut['train'][indTest] = 0
-varC = dictData['varC']
-targetFile = os.path.join(modelFolder, 'target.csv')
-# if not os.path.exists(targetFile):
-targetDf = pd.merge(dfOut, pd.DataFrame(data=y, columns=varC),
-                    left_index=True, right_index=True)
-targetDf.to_csv(targetFile)
-outFile = os.path.join(modelFolder, 'output_Ep' + str(nEpoch) + '.csv')
-outDf = pd.merge(dfOut, pd.DataFrame(data=yOut, columns=varC),
-                 left_index=True, right_index=True)
-outDf.to_csv(outFile)
+        # predict - point-by-point
+        # modelFile = os.path.join(modelFolder, 'model_Ep' + str(nEpoch) + '.pt')
+        # model = torch.load(modelFile)
+        nt = dictData['rho']
+        nd, ny = y.shape
+        iS = np.arange(0, nd, batchSize)
+        iE = np.append(iS[1:], nd)
+        yOutLst = list()
+        for k in range(len(iS)):
+            print('batch: '+str(k))
+            xT = torch.from_numpy(np.concatenate(
+                [xNorm[:, iS[k]:iE[k], :], np.tile(cNorm[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
+            if torch.cuda.is_available():
+                xT = xT.cuda()
+                model = model.cuda()
+            yT = model(xT)[-1, :, :]
+            yOutLst.append(yT.detach().cpu().numpy())
+        temp = np.concatenate(yOutLst, axis=0)
+        yOut = np.ndarray(temp.shape)
+        for k in range(ny):
+            yOut[:, k] = transform.transOut(temp[:, k], mtdLstY[k], statLstY[k])
+
+        # save output
+        dfOut = info
+        dfOut['train'] = np.nan
+        dfOut['train'][indTrain] = 1
+        dfOut['train'][indTest] = 0
+        varC = dictData['varC']
+        targetFile = os.path.join(modelFolder, 'target.csv')
+        # if not os.path.exists(targetFile):
+        targetDf = pd.merge(dfOut, pd.DataFrame(data=y, columns=varC),
+                            left_index=True, right_index=True)
+        targetDf.to_csv(targetFile)
+        outFile = os.path.join(modelFolder, 'output_Ep' + str(iEp) + '.csv')
+        outDf = pd.merge(dfOut, pd.DataFrame(data=yOut, columns=varC),
+                        left_index=True, right_index=True)
+        outDf.to_csv(outFile)
