@@ -39,10 +39,37 @@ class RmseEnd(torch.nn.Module):
 
     def forward(self, output, target):
         mask = target == target
-        p=output[-1:,:,:][mask]
-        t=target[mask]
+        p = output[-1:, :, :][mask]
+        t = target[mask]
         loss = torch.sqrt(((p - t)**2).mean())
         return loss
+
+
+class RmseMix(torch.nn.Module):
+    def __init__(self):
+        super(RmseMix, self).__init__()
+
+    def forward(self, outTs, outC, tarTs, tarC):
+        nts = outTs.shape[-1]
+        nc = outC.shape[-1]
+        # for time series
+        lossTs = 0
+        for k in range(nts):
+            p0 = outTs[:, :, k]
+            t0 = tarTs[:, :, k]
+            mask = t0 == t0
+            p = p0[mask]
+            t = t0[mask]
+            temp = torch.sqrt(((p - t)**2).mean())
+            if temp == temp:
+                lossTs = lossTs + temp
+        # for constant
+        mask = tarC == tarC
+        p = outC[mask]
+        t = tarC[mask]
+        lossC = torch.sqrt(((p - t)**2).sum())
+        return (lossTs+lossC)/(nts+nc)
+
 
 class RmseLoss(torch.nn.Module):
     def __init__(self):
@@ -58,8 +85,10 @@ class RmseLoss(torch.nn.Module):
             p = p0[mask]
             t = t0[mask]
             temp = torch.sqrt(((p - t)**2).mean())
-            loss = loss + temp
-        return loss
+            if temp == temp:
+                loss = loss + temp
+        return loss/ny
+
 
 class MSELoss(torch.nn.Module):
     def __init__(self):
@@ -78,6 +107,7 @@ class MSELoss(torch.nn.Module):
             loss = loss + temp
         return loss
 
+
 class NSELoss(torch.nn.Module):
     def __init__(self):
         super(NSELoss, self).__init__()
@@ -90,7 +120,7 @@ class NSELoss(torch.nn.Module):
             p0 = output[:, ii, 0]
             t0 = target[:, ii, 0]
             mask = t0 == t0
-            if len(mask[mask==True])>0:
+            if len(mask[mask == True]) > 0:
                 p = p0[mask]
                 t = t0[mask]
                 tmean = t.mean()
@@ -99,10 +129,11 @@ class NSELoss(torch.nn.Module):
                     SSRes = torch.sum((t - p) ** 2)
                     temp = 1 - SSRes / SST
                     losssum = losssum + temp
-                    nsample = nsample +1
+                    nsample = nsample + 1
         # minimize the opposite average NSE
         loss = -(losssum/nsample)
         return loss
+
 
 class NSELosstest(torch.nn.Module):
     # Same as Fredrick 2019
@@ -117,7 +148,7 @@ class NSELosstest(torch.nn.Module):
             p0 = output[:, ii, 0]
             t0 = target[:, ii, 0]
             mask = t0 == t0
-            if len(mask[mask==True])>0:
+            if len(mask[mask == True]) > 0:
                 p = p0[mask]
                 t = t0[mask]
                 tmean = t.mean()
@@ -125,6 +156,6 @@ class NSELosstest(torch.nn.Module):
                 SSRes = torch.sum((t - p) ** 2)
                 temp = SSRes / ((torch.sqrt(SST)+0.1)**2)
                 losssum = losssum + temp
-                nsample = nsample +1
+                nsample = nsample + 1
         loss = losssum/nsample
         return loss

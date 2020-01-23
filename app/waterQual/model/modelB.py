@@ -19,54 +19,78 @@ nEpoch = 200
 saveEpoch = 100
 resumeEpoch = 0
 hiddenSize = 256
-modelFolder = os.path.join(kPath.dirWQ, 'modelA', caseName)
+modelFolder = os.path.join(kPath.dirWQ, 'modelB', caseName)
 if not os.path.exists(modelFolder):
     os.mkdir(modelFolder)
 
 # load data
 dictData, info, x, y, c = waterQuality.loadData(caseName)
-mtdLstX = ['log-norm', 'log-norm', 'norm', 'norm', 'norm', 'norm', 'norm']
-mtdLstY = list(usgs.dictStat.values())
-mtdLstC = list(gageII.dictStat.values())
+
+# add streamflow into y - temp code
+xc = c
+yc = y
+y = x[:, :, 0:1]
+x = x[:, :, 1:]
+
+mtdLstX = ['log-norm', 'norm', 'norm', 'norm', 'norm', 'norm', 'norm']
+mtdLstXC = list(gageII.dictStat.values())
+mtdLstY = ['log-norm']
+mtdLstYC = list(usgs.dictStat.values())
+
 
 # normalize
 xNorm = np.ndarray(x.shape)
-yNorm = np.ndarray(y.shape)
-cNorm = np.ndarray(c.shape)
+xcNorm = np.ndarray(xc.shape)
+yNorm = np.full(y.shape, np.nan)
+ycNorm = np.full(yc.shape, np.nan)
+statLstXC = list()
 statLstX = list()
+statLstYC = list()
 statLstY = list()
-statLstC = list()
 for k, mtd in enumerate(mtdLstX):
     xNorm[:, :, k], stat = transform.transIn(x[:, :, k], mtd)
     statLstX.append(stat)
 for k, mtd in enumerate(mtdLstY):
-    yNorm[:, k], stat = transform.transIn(y[:, k], mtd)
+    yNorm[:, :, k], stat = transform.transIn(y[:, :, k], mtd)
     statLstY.append(stat)
-for k, mtd in enumerate(mtdLstC):
-    cNorm[:, k], stat = transform.transIn(c[:, k], mtd)
-    statLstC.append(stat)
-dictStat = dict(mtdLstX=mtdLstX, statLstX=statLstX, mtdLstY=mtdLstY,
-                statLstY=statLstY, mtdLstC=mtdLstC, statLstC=statLstC)
+for k, mtd in enumerate(mtdLstXC):
+    xcNorm[:, k], stat = transform.transIn(xc[:, k], mtd)
+    statLstXC.append(stat)
+for k, mtd in enumerate(mtdLstYC):
+    ycNorm[:, k], stat = transform.transIn(yc[:, k], mtd)
+    statLstYC.append(stat)
+
+dictStat = dict(mtdLstX=mtdLstX, statLstX=statLstX, mtdLstXC=mtdLstXC, statLstXC=statLstXC,
+                mtdLstY=mtdLstY, statLstY=statLstY, mtdLstYC=mtdLstYC, statLstYC=statLstYC)
 with open(os.path.join(modelFolder, 'stat.json'), 'w') as fp:
     json.dump(dictStat, fp)
 
 # devide training/test
 indTrain, indTest = waterQuality.divideTrain(info, 0.8)
 xTrain = xNorm[:, indTrain, :]
-yTrain = yNorm[indTrain, :]
-cTrain = cNorm[indTrain, :]
+yTrain = yNorm[:, indTrain, :]
+xcTrain = xcNorm[indTrain, :]
+ycTrain = ycNorm[indTrain, :]
 nt, nd, nx = xTrain.shape
-nd, ny = yTrain.shape
-nd, nc = cTrain.shape
+nt, nd, ny = yTrain.shape
+nd, nxc = xcTrain.shape
+nd, nyc = ycTrain.shape
 
 
 # random subset
-def subset(x, y, c):
+
+
+def subset(x, xc, y, yc):
     iR = np.random.randint(0, nd, [batchSize])
-    yTensor = torch.from_numpy(y[None, iR, :]).float()
-    cTemp = np.tile(c[iR, :], [nt, 1, 1])
     xTemp = x[nt-rho:rho, iR, :]
-    xTensor = torch.from_numpy(np.concatenate([xTemp, cTemp], axis=-1)).float()
+    xcTemp = np.tile(xc[iR, :], [nt, 1, 1])
+    xTensor = torch.from_numpy(np.concatenate(
+        [xTemp, xcTemp], axis=-1)).float()
+    yTemp = y[nt-rho:rho, iR, :]
+    ycTemp = np.full([rho, batchSize, nyc], np.nan)
+    ycTemp[-1, :, :] = yc[iR, :]
+    yTensor = torch.from_numpy(np.concatenate(
+        [yTemp, ycTemp], axis=-1)).float()
     if torch.cuda.is_available():
         xTensor = xTensor.cuda()
         yTensor = yTensor.cuda()
@@ -79,8 +103,9 @@ if resumeEpoch != 0:
         modelFolder, 'model_Ep' + str(resumeEpoch) + '.pt')
     model = torch.load(modelFile)
 else:
-    model = rnn.CudnnLstmModel(nx=nx+nc, ny=ny, hiddenSize=hiddenSize)
-lossFun = crit.RmseEnd()
+    model = rnn.CudnnLstmModel(nx=nx+nxc, ny=ny+nyc, hiddenSize=hiddenSize)
+# lossFun = crit.RmseMix()
+lossFun = crit.RmseLoss()
 if torch.cuda.is_available():
     lossFun = lossFun.cuda()
     model = model.cuda()
@@ -101,9 +126,11 @@ for iEp in range(resumeEpoch+1, nEpoch + 1):
     lossEp = 0
     t0 = time.time()
     for iIter in range(nIterEp):
-        xT, yT = subset(xNorm, yNorm, cNorm)
+        xT, yT = subset(xNorm, xcNorm, yNorm, ycNorm)
         try:
             yP = model(xT)
+            # loss = lossFun(yP[:, :, 0:1], yP[-1, :, 1:],
+            #                yT[:, :, 0:1], yT[-1, :, 1:])
             loss = lossFun(yP, yT)
             loss.backward()
             optim.step()
@@ -118,33 +145,41 @@ for iEp in range(resumeEpoch+1, nEpoch + 1):
     lossEpLst.append(lossEp)
 
     if iEp % saveEpoch == 0:
+        model.eval()
         modelFile = os.path.join(modelFolder, 'model_Ep' + str(iEp) + '.pt')
         torch.save(model, modelFile)
-        model.eval()
 
         # predict - point-by-point
         # modelFile = os.path.join(modelFolder, 'model_Ep' + str(nEpoch) + '.pt')
+        # model = torch.load(modelFile)
         nt = dictData['rho']
-        nd, ny = y.shape
+        nd, nyc = yc.shape
         iS = np.arange(0, nd, batchSize)
         iE = np.append(iS[1:], nd)
-        yOutLst = list()
+        yPLst = list()
+        ycPLst = list()
         for k in range(len(iS)):
             print('batch: '+str(k))
             xT = torch.from_numpy(np.concatenate(
-                [xNorm[:, iS[k]:iE[k], :], np.tile(cNorm[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
+                [xNorm[:, iS[k]:iE[k], :], np.tile(xcNorm[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
             if torch.cuda.is_available():
                 xT = xT.cuda()
-                modelTest = modelTest.cuda()
-            yT = modelTest(xT)[-1, :, :]
-            yOutLst.append(yT.detach().cpu().numpy())
-        temp = np.concatenate(yOutLst, axis=0)
-        yOut = np.ndarray(temp.shape)
-        for k in range(ny):
-            yOut[:, k] = transform.transOut(
-                temp[:, k], mtdLstY[k], statLstY[k])
+                model = model.cuda()
+            # yT = model(xT)[:, :, 0]
+            ycT = model(xT)[-1, :, 1:]
+            # yPLst.append(yT.detach().cpu().numpy())
+            ycPLst.append(ycT.detach().cpu().numpy())
+        # yP = np.concatenate(yPLst, axis=1)
+        ycP = np.concatenate(ycPLst, axis=0)
+        # yOut = np.ndarray(yP.shape)
+        ycOut = np.ndarray(ycP.shape)
+        # yOut = transform.transOut(yP, mtdLstY[0], statLstY[0])
+        for k in range(nyc):
+            ycOut[:, k] = transform.transOut(
+                ycP[:, k], mtdLstYC[k], statLstYC[k])
 
         # save output
+        print(2)
         dfOut = info
         dfOut['train'] = np.nan
         dfOut['train'][indTrain] = 1
@@ -152,11 +187,11 @@ for iEp in range(resumeEpoch+1, nEpoch + 1):
         varC = dictData['varC']
         targetFile = os.path.join(modelFolder, 'target.csv')
         # if not os.path.exists(targetFile):
-        targetDf = pd.merge(dfOut, pd.DataFrame(data=y, columns=varC),
+        targetDf = pd.merge(dfOut, pd.DataFrame(data=yc, columns=varC),
                             left_index=True, right_index=True)
         targetDf.to_csv(targetFile)
         outFile = os.path.join(modelFolder, 'output_Ep' + str(iEp) + '.csv')
-        outDf = pd.merge(dfOut, pd.DataFrame(data=yOut, columns=varC),
+        outDf = pd.merge(dfOut, pd.DataFrame(data=ycOut, columns=varC),
                          left_index=True, right_index=True)
         outDf.to_csv(outFile)
         model.train()

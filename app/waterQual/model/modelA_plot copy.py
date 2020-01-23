@@ -17,7 +17,7 @@ from random import randint
 
 caseName = 'refBasins'
 # caseName = 'temp'
-nEpoch = 500
+nEpoch = 100
 modelFolder = os.path.join(kPath.dirWQ, 'modelA', caseName)
 dictData, info, x, y, c = waterQuality.loadData(caseName)
 

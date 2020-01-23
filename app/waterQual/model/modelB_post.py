@@ -15,7 +15,7 @@ from random import randint
 # caseName = 'refBasins'
 caseName = 'temp'
 nEpoch = 200
-modelFolder = os.path.join(kPath.dirWQ, 'modelA', caseName)
+modelFolder = os.path.join(kPath.dirWQ, 'modelB', caseName)
 dictData, info, x, y, c = waterQuality.loadData(caseName)
 
 targetFile = os.path.join(modelFolder, 'target.csv')
@@ -72,13 +72,12 @@ for iS, siteNo in enumerate(siteNoLst):
         matN1[iS, iC] = len(ind1)
         matN2[iS, iC] = len(ind2)
 saveFile = os.path.join(modelFolder, 'statResult_Ep{}.npz'.format(nEpoch))
-np.savez(saveFile, matRho1=matRho1, matRho2=matRho2, matRmse1=matRmse1, matRmse2=matRmse2, matN1=matN1, matN2=matN2)
-
-# plot map
+np.savez(saveFile, matRho1=matRho1, matRho2=matRho2,
+         matRmse1=matRmse1, matRmse2=matRmse2, matN1=matN1, matN2=matN2)
 
 mat = np.ndarray([4, nC])
 mat[0, :] = np.nanmean(matRho1, axis=0)
 mat[1, :] = np.nanmean(matRho2, axis=0)
 mat[2, :] = np.nanmean(matRmse1, axis=0)
 mat[3, :] = np.nanmean(matRmse2, axis=0)
-np.savetxt(os.path.join(modelFolder, 'temp1.csv'), mat, delimiter=',')
+np.savetxt(os.path.join(modelFolder, 'temp2.csv'), mat, delimiter=',')
