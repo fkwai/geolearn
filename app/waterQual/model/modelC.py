@@ -25,9 +25,10 @@ if not os.path.exists(modelFolder):
 
 # load data
 dictData, info, x, y, c = waterQuality.loadData(caseName)
-mtdLstX = ['log-norm', 'log-norm', 'norm', 'norm', 'norm', 'norm', 'norm', 'norm']
+mtdLstX = ['log-norm', 'norm', 'norm', 'norm', 'norm', 'norm', 'norm']
 mtdLstY = list(usgs.dictStat.values())
 mtdLstC = list(gageII.dictStat.values())
+x = x[:, :, 1:]
 
 # normalize
 xNorm = np.ndarray(x.shape)
