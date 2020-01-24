@@ -9,13 +9,13 @@ from hydroDL.app import waterQuality
 from hydroDL.model import rnn, crit
 from hydroDL.data import usgs, gageII, transform
 
-# caseName = 'refBasins'
-caseName = 'temp'
+caseName = 'refBasins'
+# caseName = 'temp'
 
 ratioTrain = 0.8
 rho = 365
-batchSize = 100
-nEpoch = 200
+batchSize = 1000
+nEpoch = 500
 saveEpoch = 100
 resumeEpoch = 0
 hiddenSize = 256
