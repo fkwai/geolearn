@@ -67,7 +67,7 @@ class RmseMix(torch.nn.Module):
         mask = tarC == tarC
         p = outC[mask]
         t = tarC[mask]
-        lossC = torch.sqrt(((p - t)**2).sum())
+        lossC = torch.sqrt(((p - t)**2).nansum())
         return (lossTs+lossC)/(nts+nc)
 
 

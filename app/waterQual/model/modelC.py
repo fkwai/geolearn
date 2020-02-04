@@ -19,7 +19,7 @@ nEpoch = 500
 saveEpoch = 100
 resumeEpoch = 0
 hiddenSize = 256
-modelFolder = os.path.join(kPath.dirWQ, 'modelA', caseName)
+modelFolder = os.path.join(kPath.dirWQ, 'modelC', caseName)
 if not os.path.exists(modelFolder):
     os.mkdir(modelFolder)
 

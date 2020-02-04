@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime as dt
 from random import randint
 
-# caseName = 'refBasins'
-caseName = 'temp'
-nEpoch = 200
+caseName = 'refBasins'
+# caseName = 'temp'
+nEpoch = 500
 modelFolder = os.path.join(kPath.dirWQ, 'modelB', caseName)
 dictData, info, x, y, c = waterQuality.loadData(caseName)
 
@@ -59,10 +59,7 @@ for iS, siteNo in enumerate(siteNoLst):
     for iC, var in enumerate(varC):
         obs = dfT[dfT['siteNo'] == siteNoLst[iS]][varC[iC]].values
         pred = dfP[dfP['siteNo'] == siteNoLst[iS]][varC[iC]].values
-        bTrain = dfT[dfT['siteNo'] == siteNoLst[iS]
-                     ]['train'].values.astype(bool)
-        # obs[bTrain==1].corr(pred[bTrain==1])
-        # obs[bTrain==0].corr(pred[bTrain==0])
+        bTrain = dfT[dfT['siteNo'] == siteNoLst[iS]]['train'].values.astype(bool)
         ind1 = np.where(~np.isnan(obs) & bTrain)[0]
         ind2 = np.where(~np.isnan(obs) & ~bTrain)[0]
         matRho1[iS, iC] = np.corrcoef(obs[ind1], pred[ind1])[0, 1]
@@ -74,10 +71,3 @@ for iS, siteNo in enumerate(siteNoLst):
 saveFile = os.path.join(modelFolder, 'statResult_Ep{}.npz'.format(nEpoch))
 np.savez(saveFile, matRho1=matRho1, matRho2=matRho2,
          matRmse1=matRmse1, matRmse2=matRmse2, matN1=matN1, matN2=matN2)
-
-mat = np.ndarray([4, nC])
-mat[0, :] = np.nanmean(matRho1, axis=0)
-mat[1, :] = np.nanmean(matRho2, axis=0)
-mat[2, :] = np.nanmean(matRmse1, axis=0)
-mat[3, :] = np.nanmean(matRmse2, axis=0)
-np.savetxt(os.path.join(modelFolder, 'temp2.csv'), mat, delimiter=',')

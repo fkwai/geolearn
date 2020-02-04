@@ -1,2 +1,2 @@
 from .stat import statError
-from . import plot
+from . import plot, axplot

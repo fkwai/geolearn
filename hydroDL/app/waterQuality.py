@@ -7,6 +7,35 @@ from hydroDL import kPath
 from hydroDL.data import usgs, gageII, gridMET
 
 
+matCodeUsgs=[
+    ['00915', 'Calcium', 'mg/l', 'Ca', 'Rock'],
+    ['00925', 'Magnesium', 'mg/l', 'Mg', 'Rock'],
+    ['00930', 'Sodium', 'mg/l', 'Na', 'Rock'],
+    ['00935', 'Potassium', 'mg/l', 'K', 'Rock'],
+    ['00955', 'Silica', 'mg/l', 'SiO2', 'Rock'],
+    ['00940', 'Chloride', 'mg/l', 'Cl', 'Rock'],
+    ['00945', 'Sulfate', 'mg/l', 'SO4', 'Rock'],
+    ['00418', 'Alkalinity, fixed endpoint', 'mg/l CaCO3', 'alk-A', 'Alkalinity'],
+    ['00419', 'Alkalinity, inflection-point, unfiltered',
+        'mg/l CaCO3', 'alk-B', 'Alkalinity'],
+    ['39086', 'Alkalinity, inflection-point, field, filtered',
+        'mg/l CaCO3', 'alk-C', 'Alkalinity'],
+    ['39087', 'Alkalinity, inflection-point, lab, filtered',
+        'mg/l CaCO3', 'alk-D', 'Alkalinity'],
+    ['00301', 'Oxygen saturation', '%', 'O%', 'Bio'],
+    ['00300', 'Oxygen', 'mg/l', 'O', 'Bio'],
+    ['00618', 'Nitrate', 'mg/l as N', 'NO3', 'Bio'],
+    ['00681', 'Organic carbon', 'mg/l', 'C', 'Bio'],
+    ['00653', 'Phosphate-phosphorus', 'mg/l', 'P/PO4', 'Bio'],
+    ['00010', 'Temperature water', 'deg C', 'temp', 'Physical'],
+    ['00530', 'Total suspended solids', 'mg/l', 'soild', 'Physical'],
+    ['00094', 'Specific conductance', 'uS/cm @25C', 'kappa', 'Physical'],
+    ['00403', 'pH, unfiltered', 'std units', 'pH-UF', 'Physical'],
+    ['00408', 'pH, filtered', 'std units', 'pH-F', 'Physical']]
+codePdf= pd.DataFrame(matCodeUsgs, columns=['code', 'fullName', 'unit', 'shortName', 'group']).set_index('code')
+codeLst= list(codePdf.index)
+
+
 def wrapData(caseName, siteNoLst, *, rho=365, nFill=5, varC=usgs.lstCodeSample, varG=gageII.lstWaterQuality, targetQ=False):
     """ wrap up input and target data for the model,as:
     x=[nT,nP,nX]
@@ -49,7 +78,7 @@ def wrapData(caseName, siteNoLst, *, rho=365, nFill=5, varC=usgs.lstCodeSample, 
         dfC = usgs.readSample(siteNo, codeLst=varC, startDate=startDate)
         dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
         dfF = gridMET.readBasin(siteNo)
-        
+
         t1 = time.time()
         for k in range(len(dfC)):
             yt = dfC.index[k]
@@ -78,32 +107,39 @@ def wrapData(caseName, siteNoLst, *, rho=365, nFill=5, varC=usgs.lstCodeSample, 
     np.savez(saveName, x=x, y=y, c=c)
     infoDf.to_csv(saveName+'.csv')
     dictData = dict(name=caseName, rho=rho, nFill=nFill,
-                    varG=varG, varC=varC, targetQ=False,
-                    siteNoLst=siteNoLst)
+                    varG = varG, varC = varC, targetQ = False,
+                    siteNoLst = siteNoLst)
     with open(saveName+'.json', 'w') as fp:
-        json.dump(dictData, fp, indent=4)
+        json.dump(dictData, fp, indent = 4)
 
 
 def loadData(caseName):
-    saveName = os.path.join(kPath.dirWQ, 'tempData', caseName)
-    npzFile = np.load(saveName+'.npz')
-    x = npzFile['x']
-    y = npzFile['y']
-    c = npzFile['c']
-    info = pd.read_csv(saveName+'.csv', index_col=0, dtype={'siteNo': str})
+    saveName=os.path.join(kPath.dirWQ, 'tempData', caseName)
+    npzFile=np.load(saveName+'.npz')
+    x=npzFile['x']
+    y=npzFile['y']
+    c=npzFile['c']
+    info=pd.read_csv(saveName+'.csv', index_col = 0, dtype = {'siteNo': str})
     with open(saveName+'.json', 'r') as fp:
-        dictData = json.load(fp)
+        dictData=json.load(fp)
     return dictData, info, x, y, c
 
+def loadInfo(caseName):
+    saveName=os.path.join(kPath.dirWQ, 'tempData', caseName)
+    info=pd.read_csv(saveName+'.csv', index_col = 0, dtype = {'siteNo': str})
+    with open(saveName+'.json', 'r') as fp:
+        dictData=json.load(fp)
+    return dictData, info
 
-def divideTrain(info, ratio=0.8):
+
+def divideTrain(info, ratio = 0.8):
     # devide training and testing - last 20% as testing
-    siteNoLst = info['siteNo'].unique().tolist()
-    trainIndLst = list()
-    testIndLst = list()
+    siteNoLst=info['siteNo'].unique().tolist()
+    trainIndLst=list()
+    testIndLst=list()
     for siteNo in siteNoLst:
-        indLst = info[info['siteNo'] == siteNo].index.tolist()
-        indSep = round(len(indLst)*0.8)
-        trainIndLst = trainIndLst+indLst[:indSep]
-        testIndLst = testIndLst+indLst[indSep:]
+        indLst=info[info['siteNo'] == siteNo].index.tolist()
+        indSep=round(len(indLst)*0.8)
+        trainIndLst=trainIndLst+indLst[:indSep]
+        testIndLst=testIndLst+indLst[indSep:]
     return trainIndLst, testIndLst

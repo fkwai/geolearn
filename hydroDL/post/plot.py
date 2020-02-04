@@ -9,7 +9,6 @@ import matplotlib.gridspec as gridspec
 from hydroDL import utils
 import string
 import os
-from mpl_toolkits import basemap
 
 
 def plotBoxFig(data,

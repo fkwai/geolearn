@@ -15,7 +15,7 @@ from hydroDL.data import usgs, gageII, gridMET
 from hydroDL.app import waterQuality
 import importlib
 
-# list of site
+# list of site - should not do this! wrap up code in one script
 startDate = pd.datetime(1979, 1, 1)
 fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoSel')
 siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
@@ -24,7 +24,7 @@ nFill = 5
 
 # select referenced basins
 tabSel = gageII.readData(
-    varLst=['CLASS', 'ROADS_KM_SQ_KM'], siteNoLst=siteNoLstAll)
+    varLst=['CLASS'], siteNoLst=siteNoLstAll)
 tabSel = gageII.updateCode(tabSel)
 siteNoLst = tabSel[tabSel['CLASS'] == 1].index.tolist()
 siteNoLst = siteNoLst[:5]
