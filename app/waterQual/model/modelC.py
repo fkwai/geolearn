@@ -136,8 +136,8 @@ for iEp in range(resumeEpoch+1, nEpoch + 1):
                 [xNorm[:, iS[k]:iE[k], :], np.tile(cNorm[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
             if torch.cuda.is_available():
                 xT = xT.cuda()
-                modelTest = modelTest.cuda()
-            yT = modelTest(xT)[-1, :, :]
+                model = model.cuda()
+            yT = model(xT)[-1, :, :]
             yOutLst.append(yT.detach().cpu().numpy())
         temp = np.concatenate(yOutLst, axis=0)
         yOut = np.ndarray(temp.shape)
