@@ -28,14 +28,15 @@ if hostName == 'AW-m17':
         'PROJ_LIB'] = r'C:\Users\geofk\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
     dirData = r'C:\Users\geofk\work\database'
     dirWQ = r'C:\Users\geofk\work\waterQuality'
+    dirCode=r'C:\Users\geofk\work\GitHUB\geolearn'
 elif hostName[:4] == 'icme':
     host='icme'
     dirData = r'/home/kuaifang/Data/'
     dirWQ = r'/home/kuaifang/waterQuality/'
-    dirJob=r'/home/kuaifang/jobs/'
+    dirJob=r'/home/kuaifang/jobs/'    
 elif hostName[:2] == 'sh':
     host='sherlock'
     dirData = r'/scratch/users/kuaifang/Data/'
     dirWQ = r'/scratch/users/kuaifang/waterQuality/'
     dirJob=r'/scratch/users/kuaifang/jobs/'
-
+    dirCode=r'/home/users/kuaifang/GitHUB/geolearn'
