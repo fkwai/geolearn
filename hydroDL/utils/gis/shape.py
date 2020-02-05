@@ -2,8 +2,11 @@ from shapely.geometry import Point, shape
 import time
 import numpy as np
 
-is_ascend = lambda a: np.all(a[:-1] < a[1:])
-is_descend = lambda a: np.all(a[:-1] > a[1:])
+
+def is_ascend(x): return np.all(x[:-1] < x[1:])
+
+
+def is_descend(x): return np.all(x[:-1] > x[1:])
 
 
 def pointInPoly(y, x, shapeLst):

@@ -11,7 +11,7 @@ def readNcInfo(file):
     lat = fh.variables['lat'][:].data
     day = fh.variables['day'][:].data
     t = np.datetime64('1900-01-01') + np.array(day, dtype='timedelta64[D]')
-    return t, lat, lon
+    return t, np.asarray(lat), np.asarray(lon)
 
 
 def readNcData(file):
