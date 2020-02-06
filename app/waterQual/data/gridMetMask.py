@@ -21,9 +21,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-S', dest='iStart', type=int, default=0)
     parser.add_argument('-E', dest='iEnd', type=int, default=10)
+    parser.add_argument('-R', dest='reMask', type=int, default=False)
     args = parser.parse_args()
     iStart = args.iStart
     iEnd = args.iEnd
+    reMask = args.reMask
 
 
 ncFile = os.path.join(kPath.dirData, 'gridMET', 'etr_1979.nc')
@@ -36,6 +38,15 @@ sf = shapefile.Reader(shpFile)
 shapeLst = sf.shapes()
 recLst = sf.records()
 siteNoLst = [rec[2] for rec in recLst]
+
+if reMask is False:
+    maskLst = [f[:-4] for f in os.listdir(saveDir) if f[-3:] == 'npy']
+    unMaskLst =list(set(siteNoLst)-set(maskLst))
+    siteNoLst=unMaskLst
+
+if iEnd == 0:  # do mask for every basin
+    iEnd = len(siteNoLst)
+    iStart = 0
 
 t0 = time.time()
 for k in range(iStart, iEnd):

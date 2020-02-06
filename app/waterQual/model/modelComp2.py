@@ -130,7 +130,7 @@ if 'plotTsMap' in doLst:
     for k in range(nMap):
         ax = fig.add_subplot(gs[0:gsR, k])
         axplot.plotMap(
-            ax, lat, lon, dataLst[k], dataNLst[k], title=mapTitleLst[k], vRange=vRange)
+            ax, lat, lon, dataLst[k], dataNLst[k], title=mapTitleLst[k])
         # plot ts
 
         def onclick(event):

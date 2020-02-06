@@ -18,7 +18,7 @@ nEpoch = 500
 modelLst = ['modelA', 'modelB', 'modelC']
 doLst = list()
 # doLst.append('calStat')
-# doLst.append('loadData')
+doLst.append('loadData')
 doLst.append('plotBox')
 doLst.append('plotTsMap')
 
