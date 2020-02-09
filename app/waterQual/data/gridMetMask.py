@@ -9,18 +9,10 @@ from hydroDL.data import gridMET
 from hydroDL.utils import gis
 from hydroDL import kPath
 
-""" script to run on ICME
-screen
-srun --exclusive --time 8:0:0 --pty bash
-source activate pytorch
-python /home/kuaifang/GitHUB/geolearn/app/waterQual/gridMetMask-job.py -S 1481 -E 1500
-"""
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-S', dest='iStart', type=int, default=0)
-    parser.add_argument('-E', dest='iEnd', type=int, default=10)
+    parser.add_argument('-E', dest='iEnd', type=int, default=0)
     parser.add_argument('-R', dest='reMask', type=int, default=False)
     args = parser.parse_args()
     iStart = args.iStart
@@ -58,3 +50,15 @@ for k in range(iStart, iEnd):
     outFile = os.path.join(saveDir, siteNoLst[k])
     np.save(outFile, mask)
 print('total time {}'.format(time.time() - t0))
+
+
+# """ script to run on ICME
+# screen
+# srun --exclusive --time 8:0:0 --pty bash
+# source activate pytorch
+# python /home/kuaifang/GitHUB/geolearn/app/waterQual/gridMetMask-job.py -S 1481 -E 1500
+# """
+
+# """ script to run on sherlock
+# app/waterQual/data/slurmScript.py
+# """
