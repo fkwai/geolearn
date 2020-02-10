@@ -1,4 +1,4 @@
-from shapely.geometry import Point, shape
+from shapely.geometry import Point, Polygon, shape
 import time
 import numpy as np
 
@@ -29,6 +29,7 @@ def pointInPoly(y, x, shapeLst):
 
 
 def gridMask(lat, lon, polygon, ns=4):
+    print('reload')
     if not is_ascend(lon) and is_descend(lat):
         raise ValueError('not ascended or descended')
     mask = np.zeros([len(lat), len(lon)])
@@ -45,16 +46,11 @@ def gridMask(lat, lon, polygon, ns=4):
             x2 = lon[i] + dx / 2
             y1 = lat[j] + dy / 2
             y2 = lat[j] - dy / 2
-            bLst = [
-                Point(x1, y1).within(polygon),
-                Point(x1, y2).within(polygon),
-                Point(x2, y1).within(polygon),
-                Point(x2, y2).within(polygon)
-            ]
-            if not any(bLst):
-                mask[j, i] = 0
-            elif all(bLst):
+            pp = Polygon([(x1, y1), (x1, y2), (x2, y1)])
+            if polygon.contains(pp):
                 mask[j, i] = 1
+            elif not polygon.intersects(pp):
+                mask[j, i] = 0
             else:
                 xm = np.linspace(x1 + dx / 2 / ns, x2 - dx / 2 / ns, ns)
                 ym = np.linspace(y1 - dy / 2 / ns, y2 + dy / 2 / ns, ns)
@@ -63,5 +59,8 @@ def gridMask(lat, lon, polygon, ns=4):
                     for yy in ym:
                         if Point(xx, yy).within(polygon):
                             z = z + 1
-                mask[j, i] = z / ns / ns
+                if z != 0:
+                    mask[j, i] = z / ns / ns
+                else:
+                    mask[j, i] = 1 / ns / ns
     return mask

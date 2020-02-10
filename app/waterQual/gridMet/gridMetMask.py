@@ -34,6 +34,7 @@ siteNoLst = [rec[2] for rec in recLst]
 if reMask is False:
     maskLst = [f[:-4] for f in os.listdir(saveDir) if f[-3:] == 'npy']
     unMaskLst =list(set(siteNoLst)-set(maskLst))
+    
     siteNoLst=unMaskLst
 
 if iEnd == 0:  # do mask for every basin
