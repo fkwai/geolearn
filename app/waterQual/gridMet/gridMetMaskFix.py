@@ -62,19 +62,20 @@ if nanMask[indY, indX]:
     print('error!')
 
 
-t0=time.time()
-mask = gis.gridMask(lat, lon, geog, ns=4)
+t0 = time.time()
+mask1 = gis.gridMask(lat, lon, geog, ns=4)
 print(time.time()-t0)
 
 
-t0=time.time()
+t0 = time.time()
+mask = np.zeros([len(lat), len(lon)])
 indX1 = np.where(lon < bb[0])[0][-1]
 indX2 = np.where(lon > bb[2])[0][0]
 indY1 = np.where(lat > bb[3])[0][-1]
 indY2 = np.where(lat < bb[1])[0][0]
 dx = (lon[indX2] - lon[indX1]) / (indX2 - indX1)
 dy = (lat[indY1] - lat[indY2]) / (indY2 - indY1)
-
+area = dx*dy
 ns = 4
 polygon = geog
 for i in range(indX1, indX2 + 1):
@@ -89,7 +90,6 @@ for i in range(indX1, indX2 + 1):
         elif not polygon.intersects(pp):
             mask[j, i] = 0
         else:
-            print(polygon.intersection(pp).area)
+            mask[j, i] = polygon.intersection(pp).area/dx/dy
 
 print(time.time()-t0)
-

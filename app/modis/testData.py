@@ -13,7 +13,7 @@ fileAllLst = [f for f in sorted(os.listdir(dataFolder)) if f[-3:] == 'hdf']
 tAllLst = [dt.strptime(f.split('.')[1][1:], '%Y%j').date() for f in fileAllLst]
 tAllAry = np.array(tAllLst, dtype='datetime64')
 sd = np.datetime64('2003-01-01')
-ed = np.datetime64('2003-02-01')
+ed = np.datetime64('2003-03-01')
 indFile = np.where((tAllAry >= sd) & (tAllAry <= ed))[0]
 tAry = tAllAry[indFile]
 fileLst = [fileAllLst[k] for k in indFile]

@@ -11,13 +11,13 @@ class Cnn1d(nn.Module):
         cOut, f, p = cp1
         self.conv1 = nn.Conv1d(nx, cOut, f)
         self.pool1 = nn.MaxPool1d(p)
-        lTmp = int(calConvSize(nt, f, 0, 1, 1) / p)
+        lTmp = int(calConvSize(nt, f) / p)
 
         cIn = cOut
         cOut, f, p = cp2
         self.conv2 = nn.Conv1d(cIn, cOut, f)
         self.pool2 = nn.MaxPool1d(p)
-        lTmp = int(calConvSize(lTmp, f, 0, 1, 1) / p)
+        lTmp = int(calConvSize(lTmp, f) / p)
 
         self.flatLength = int(cOut * lTmp)
         self.fc1 = nn.Linear(self.flatLength, cnnSize)
@@ -36,6 +36,6 @@ class Cnn1d(nn.Module):
         return x1
 
 
-def calConvSize(lin, kernel, padding, dilation, stride):
+def calConvSize(lin, kernel, padding=0, dilation=1, stride=1):
     lout = (lin + 2 * padding - dilation * (kernel - 1) - 1) / stride + 1
     return int(lout)
