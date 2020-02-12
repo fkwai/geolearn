@@ -12,7 +12,7 @@ iELst = iSLst[1:]+[nSite]
 for iS, iE in zip(iSLst, iELst):
     cmdLine = cmdPtn.format(codePath, iS, iE)
     jobName = 'mask_{}_{}'.format(iS, iE)
-    slurm.submitJob(jobName, cmdLine, nH=12, nM=16)
+    # slurm.submitJob(jobName, cmdLine, nH=12, nM=16)
 # os.system(cmdLine)
 
 
@@ -35,7 +35,7 @@ for var in varLst:
     for iS, iE in zip(iSLst, iELst):
         cmdLine = cmdPtn.format(codePath, var, 1979, 2020, iS, iE)
         jobName = '{}_{}_{}'.format(var, iS, iE)
-        # slurm.submitJob(jobName, cmdLine, nH=4, nM=64)
+        slurm.submitJob(jobName, cmdLine, nH=4, nM=64)
 
 # convert from raw to output
 codePath = os.path.join(kPath.dirCode, 'app',
