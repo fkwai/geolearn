@@ -6,86 +6,9 @@ import json
 from hydroDL import kPath
 from hydroDL.data import usgs, gageII, gridMET
 
-# matCodeUsgs=[
-#     ['00915', 'Calcium', 'mg/l', 'Ca', 'Rock'],
-#     ['00925', 'Magnesium', 'mg/l', 'Mg', 'Rock'],
-#     ['00930', 'Sodium', 'mg/l', 'Na', 'Rock'],
-#     ['00935', 'Potassium', 'mg/l', 'K', 'Rock'],
-#     ['00955', 'Silica', 'mg/l', 'SiO2', 'Rock'],
-#     ['00940', 'Chloride', 'mg/l', 'Cl', 'Rock'],
-#     ['00945', 'Sulfate', 'mg/l', 'SO4', 'Rock'],
-#     ['00418', 'Alkalinity, fixed endpoint', 'mg/l CaCO3', 'alk-A', 'Alkalinity'],
-#     ['00419', 'Alkalinity, inflection-point, unfiltered',
-#         'mg/l CaCO3', 'alk-B', 'Alkalinity'],
-#     ['39086', 'Alkalinity, inflection-point, field, filtered',
-#         'mg/l CaCO3', 'alk-C', 'Alkalinity'],
-#     ['39087', 'Alkalinity, inflection-point, lab, filtered',
-#         'mg/l CaCO3', 'alk-D', 'Alkalinity'],
-#     ['00301', 'Oxygen saturation', '%', 'O%', 'Bio'],
-#     ['00300', 'Oxygen', 'mg/l', 'O', 'Bio'],
-#     ['00618', 'Nitrate', 'mg/l as N', 'NO3', 'Bio'],
-#     ['00681', 'Organic carbon', 'mg/l', 'C', 'Bio'],
-#     ['00653', 'Phosphate-phosphorus', 'mg/l', 'P/PO4', 'Bio'],
-#     ['00010', 'Temperature water', 'deg C', 'temp', 'Physical'],
-#     ['00530', 'Total suspended solids', 'mg/l', 'soild', 'Physical'],
-#     ['00094', 'Specific conductance', 'uS/cm @25C', 'kappa', 'Physical'],
-#     ['00403', 'pH, unfiltered', 'std units', 'pH-UF', 'Physical'],
-#     ['00408', 'pH, filtered', 'std units', 'pH-F', 'Physical']]
-# codePdf= pd.DataFrame(matCodeUsgs, columns=['code', 'fullName', 'unit', 'shortName', 'group']).set_index('code')
-# codeLst= list(codePdf.index)
-
-
-matCodeUsgs = [
-    ['00010', "Temperature, water", 'Temp', 'Physical', 'deg C',
-        'Physical', "Temperature, water, degrees Celsius"],
-    ['00930', 'Sodium', 'Na', 'Rock', 'mg/l', "Inorganics, Major, Metals",
-        "Sodium, water, filtered, milligrams per liter"],
-    ['00095', 'Specific' 'conductance', 'kappa', 'Physical', 'uS/cm @25C', 'Physical',
-        "Specific conductance, water, unfiltered, microsiemens per centimeter at 25 degrees Celsius"],
-    ['00400', 'pH', 'pH', 'Physical', '[]', 'Physical',
-        "pH, water, unfiltered, field, standard units"],
-    ['80154', 'Suspended sediment concentration (SSC)', 'SSC', 'Physical', 'mg/l',
-     'Sediment', "Suspended sediment concentration, milligrams per liter"],
-    ['00940', 'Chloride', 'Cl', 'Rock', 'mg/l', "Inorganics, Major, Non-metals",
-        "Chloride, water, filtered, milligrams per liter"],
-    ['00945', 'Sulfate', 'SO4', 'Rock', 'mg/l', "Inorganics, Major, Non-metals",
-        "Sulfate, water, filtered, milligrams per liter"],
-    ['00405', 'Carbon' 'dioxide', 'CO2', 'Bio', 'mg/l', "Inorganics, Major, Non-metals",
-        "Carbon dioxide, water, unfiltered, milligrams per liter"],
-    ['70303', 'Total dissolved solids,TDS', 'Physical', 'tons/ac ft',
-        'Physical', "Dissolved solids, water, filtered, short tons per acre-foot"],
-    ['00915', 'Calcium', 'Ca', 'Rock', 'mg/l', "Inorganics, Major, Metals",
-        "Calcium, water, filtered, milligrams per liter"],
-    ['00300', 'Oxygen', 'O', 'Bio', 'mg/l', "Inorganics, Major, Non-metals",
-        "Dissolved oxygen, water, unfiltered, milligrams per liter"],
-    ['00925', 'Magnesium', 'Mg', 'Rock', 'mg/l', "Inorganics, Major, Metals",
-        "Magnesium, water, filtered, milligrams per liter"],
-    ['00660', 'Phosphate', 'PO4', 'Bio', 'mg/l', 'Nutrient',
-        "Orthophosphate, water, filtered, milligrams per liter as PO4"],
-    ['00955', 'Silica', 'SiO2', 'Rock', 'mg/l', "Inorganics, Major, Non-metals",
-        "Silica, water, filtered, milligrams per liter as SiO2"],
-    ['00935', 'Potassium', 'K', 'Bio', 'mg/l', "Inorganics, Major, Metals",
-        "Potassium, water, filtered, milligrams per liter"],
-    ['00618', 'Nitrate', 'NO3', 'Bio', 'mg/l as N', 'Nutrient',
-        "Nitrate, water, filtered, milligrams per liter as nitrogen"],
-    ['00950', 'Fluoride', 'F', 'Rock', 'mg/l', "Inorganics, Major, Non-metals",
-        "Fluoride, water, filtered, milligrams per liter"],
-    ['00410', 'Alkalinity', 'Alk', 'Rock', 'mg/l CaCO3', "Inorganics, Major, Non-metals",
-        "Acid neutralizing capacity, water, unfiltered, fixed endpoint (pH 4.5) titration, field, milligrams per liter as calcium carbonate"],
-    ['00681', 'Organic carbon', 'C', 'Bio', 'mg/l', "Organics, other",
-        "Organic carbon, water, filtered, milligrams per liter"],
-    ['00600', 'N total', 'Bio', 'mg/l', 'Nutrient', "Total nitrogen [nitrate + nitrite + ammonia + organic-N], water, unfiltered, milligrams per liter",
-        "Nitrogen, mixed forms (NH3), (NH4), organic, (NO2) and (NO3)"],
-    ['00440', 'Bicarbonate', 'CO3', 'Bio', 'mg/l', "Inorganics, Major, Non-metals",
-        "Bicarbonate, water, unfiltered, fixed endpoint (pH 4.5) titration, field, milligrams per liter"],
-    ['00665', 'Phosphorus', 'P', 'Rock', 'mg/l', 'Nutrient',
-        "Phosphorus, water, unfiltered, milligrams per liter as phosphorus"],
-    ['00605', 'Organic nitrogen', 'N organic', 'Bio', 'mg/l', 'Nutrient',
-        "Organic nitrogen, water, unfiltered, milligrams per liter as nitrogen"],
-    ['71846', 'Ammonia and ammonium', 'NH3 NH4', 'Bio', 'mg/l NH4', 'Nutrient', "Ammonia (NH3 + NH4+), water, filtered, milligrams per liter as NH4"]]
-codePdf = pd.DataFrame(matCodeUsgs, columns=['code', 'srsName', 'shortName', 'group', 'unit', 'usgsGroup','fullName']).set_index('code')
+fileCode=os.path.join(kPath.dirData,'USGS','inventory','codeWQ.csv')
+codePdf=pd.read_csv(fileCode,dtype=str).set_index('code')
 codeLst = list(codePdf.index)
-
 
 def wrapData(caseName, siteNoLst, *, rho=365, nFill=5, varC=usgs.lstCodeSample, varG=gageII.lstWaterQuality, targetQ=False):
     """ wrap up input and target data for the model,as:

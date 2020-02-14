@@ -26,6 +26,8 @@ def readSample(siteNo, codeLst, startDate=None):
     dfC = dfC[['date']+list(set(codeLst) & set(dfC.columns.tolist()))]
     dfC = dfC.set_index('date').dropna(how='all')
     dfC = dfC.groupby(level=0).agg(lambda x: x.mean())
+    if len(dfC.index) == 0:
+        return None
     return dfC.reindex(columns=codeLst)
 
 
@@ -39,8 +41,10 @@ def readStreamflow(siteNo, startDate=None):
     Returns:
         pandas.DataFrame -- [description]
     """
-    fileQ = os.path.join(kPath.dirData, 'USGS', 'dailyTS', siteNo)
+    fileQ = os.path.join(kPath.dirData, 'USGS', 'streamflow', siteNo)
     dfQ = readUsgsText(fileQ, dataType='streamflow')
+    if dfQ is None:
+        return None
     if startDate is not None:
         dfQ = dfQ[dfQ['date'] >= startDate]
     if '00060_00001' in dfQ.columns and '00060_00002' in dfQ.columns:

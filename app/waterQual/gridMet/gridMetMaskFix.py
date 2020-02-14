@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 import shapefile
-from shapely.geometry import shape, Polygon
+from shapely.geometry import shape, Polygon, box
 import os
 import time
 import argparse
@@ -46,7 +46,7 @@ data = gridMET.readNcData(ncFile)
 nanMaskAll = np.isnan(data)
 nanMask = nanMaskAll.any(axis=0)
 
-k = 0
+k = 1
 # siteNo = errLst[k]
 # geog = shape(errShpLst[k])
 siteNo = siteNoLst[k]
@@ -84,12 +84,17 @@ for i in range(indX1, indX2 + 1):
         x2 = lon[i] + dx / 2
         y1 = lat[j] + dy / 2
         y2 = lat[j] - dy / 2
-        pp = Polygon([(x1, y1), (x1, y2), (x2, y1)])
+        # pp = Polygon([(x1, y1), (x1, y2), (x2, y1)])
+        pp = box(x1, y2, x2, y1)
         if polygon.contains(pp):
             mask[j, i] = 1
         elif not polygon.intersects(pp):
             mask[j, i] = 0
         else:
             mask[j, i] = polygon.intersection(pp).area/dx/dy
-
 print(time.time()-t0)
+
+import matplotlib.pyplot as plt
+aa=mask[indY1:indY2+1,indX1:indX2+1]
+plt.imshow(aa)
+plt.show()
