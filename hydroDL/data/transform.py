@@ -41,3 +41,23 @@ def transOut(data, mtd, stat):
     elif mtd == 'stan':
         out = data*stat[1]+stat[0]
     return out
+
+
+def transInAll(data, mtdLst, statLst=None):
+    norm = np.full(data.shape, np.nan)
+    if statLst is None:
+        statLst = list()
+        for k, mtd in enumerate(mtdLst):
+            if len(data.shape) == 3:
+                norm[:, :, k], stat = transIn(data[:, :, k], mtd)
+            elif len(data.shape) == 2:
+                norm[:, k], stat = transIn(data[:, :, k], mtd)
+            statLst.append(stat)
+        return norm, statLst
+    else:
+        for k, mtd in enumerate(mtdLst):
+            if len(data.shape) == 3:
+                norm[:, :, k] = transIn(data[:, :, k], mtd, stat=statLst[k])
+            elif len(data.shape) == 2:
+                norm[:, k] = transIn(data[:, :, k], mtd, stat=statLst[k])
+        return norm, statLst

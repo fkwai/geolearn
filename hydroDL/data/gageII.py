@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import json
-import fiona
+# import fiona
 from hydroDL import kPath
 
 dirGageII = os.path.join(kPath.dirData, 'gageII')

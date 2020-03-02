@@ -17,11 +17,12 @@ def mapPoint(ax, lat, lon, data, title=None, vRange=None, cmap=plt.cm.jet, s=30,
                          projection='cyl', resolution='c', ax=ax)
     mm.drawcoastlines()
     mm.drawcountries(linestyle='dashed')
-    mm.drawstates(linestyle='dashed', color='0.5')
+    mm.drawstates(linestyle='dashed', linewidth=0.5)
     cs = mm.scatter(lon, lat, c=data, cmap=cmap,
                     s=s, marker=marker, vmin=vmin, vmax=vmax)
     mm.colorbar(cs, location='bottom', pad='5%')
     ax.set_title(title)
+    return mm
 
 
 def plotTS(ax, t, y, *, tBar=None, cLst='rbkgcmy', legLst=None, title=None, ylabel=None):

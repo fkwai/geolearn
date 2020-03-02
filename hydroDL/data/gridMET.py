@@ -33,7 +33,7 @@ def readBasin(siteNo):
     Returns:
         pandas.Dataframe -- output table
     """
-    fileF = os.path.join(kPath.dirData, 'USGS', 'gridMet', siteNo)
+    fileF = os.path.join(kPath.dirData, 'USGS', 'gridMet', 'output', siteNo)
     dfF = pd.read_csv(fileF)
     dfF = dfF.set_index('date')
     return dfF

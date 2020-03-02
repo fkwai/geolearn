@@ -7,7 +7,8 @@ from hydroDL import kPath
 
 __all__ = ['readSample', 'readStreamflow', 'readUsgsText']
 
-def readSample(siteNo, codeLst, startDate=None):
+
+def readSample(siteNo, codeLst, startDate=None, csv=True):
     """read USGS sample data, did:
     1. extract data of interested code and date
     2. average repeated daily observation
@@ -19,19 +20,25 @@ def readSample(siteNo, codeLst, startDate=None):
     Returns:
         pandas.DataFrame -- [description]
     """
-    fileC = os.path.join(kPath.dirData, 'USGS', 'sample', siteNo)
-    dfC = readUsgsText(fileC, dataType='sample')
-    if startDate is not None:
-        dfC = dfC[dfC['date'] >= startDate]
-    dfC = dfC[['date']+list(set(codeLst) & set(dfC.columns.tolist()))]
-    dfC = dfC.set_index('date').dropna(how='all')
-    dfC = dfC.groupby(level=0).agg(lambda x: x.mean())
-    if len(dfC.index) == 0:
-        return None
+    if csv is False:
+        fileC = os.path.join(kPath.dirData, 'USGS', 'sample', siteNo)
+        dfC = readUsgsText(fileC, dataType='sample')
+        if startDate is not None:
+            dfC = dfC[dfC['date'] >= startDate]
+        dfC = dfC[['date']+list(set(codeLst) & set(dfC.columns.tolist()))]
+        dfC = dfC.set_index('date').dropna(how='all')
+        dfC = dfC.groupby(level=0).agg(lambda x: x.mean())
+        if len(dfC.index) == 0:
+            return None
+    else:
+        fileC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csv', siteNo)
+        dfC = pd.read_csv(fileC)
+        dfC['date'] = pd.to_datetime(dfC['date'], format='%Y-%m-%d')
+        dfC = dfC.set_index('date')
     return dfC.reindex(columns=codeLst)
 
 
-def readStreamflow(siteNo, startDate=None):
+def readStreamflow(siteNo, startDate=None, csv=True):
     """read USGS streamflow (00060) data, did:
     1. fill missing average observation (00060_00003) by available max and min.    
     Arguments:
@@ -41,19 +48,26 @@ def readStreamflow(siteNo, startDate=None):
     Returns:
         pandas.DataFrame -- [description]
     """
-    fileQ = os.path.join(kPath.dirData, 'USGS', 'streamflow', siteNo)
-    dfQ = readUsgsText(fileQ, dataType='streamflow')
-    if dfQ is None:
-        return None
-    if startDate is not None:
-        dfQ = dfQ[dfQ['date'] >= startDate]
-    if '00060_00001' in dfQ.columns and '00060_00002' in dfQ.columns:
-        # fill nan using other two fields
-        avgQ = dfQ[['00060_00001', '00060_00002']].mean(axis=1, skipna=False)
-        dfQ['00060_00003'] = dfQ['00060_00003'].fillna(avgQ)
-        dfQ = dfQ[['date', '00060_00003']]
+    if csv is False:
+        fileQ = os.path.join(kPath.dirData, 'USGS', 'streamflow', siteNo)
+        dfQ = readUsgsText(fileQ, dataType='streamflow')
+        if dfQ is None:
+            return None
+        if startDate is not None:
+            dfQ = dfQ[dfQ['date'] >= startDate]
+        if '00060_00001' in dfQ.columns and '00060_00002' in dfQ.columns:
+            # fill nan using other two fields
+            avgQ = dfQ[['00060_00001', '00060_00002']].mean(
+                axis=1, skipna=False)
+            dfQ['00060_00003'] = dfQ['00060_00003'].fillna(avgQ)
+            dfQ = dfQ[['date', '00060_00003']]
+        else:
+            dfQ = dfQ[['date', '00060_00003']]
     else:
-        dfQ = dfQ[['date', '00060_00003']]
+        fileQ = os.path.join(kPath.dirData, 'USGS',
+                             'streamflow', 'csv', siteNo)
+        dfQ = pd.read_csv(fileQ)
+        dfQ['date'] = pd.to_datetime(dfQ['date'], format='%Y-%m-%d')
     return dfQ.set_index('date')
 
 

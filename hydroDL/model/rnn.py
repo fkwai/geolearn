@@ -368,9 +368,10 @@ class LstmCloseModel(torch.nn.Module):
             xt = torch.cat((x[t, :, :], yt), 1)
             x0 = F.relu(self.linearIn(xt))
             ht, ct = self.lstm(x0, hidden=(ht, ct), resetMask=resetMask)
-            yt = self.linearOut(ht)
+            yTemp = self.linearOut(ht)
+            yt = yTemp[:, 0]
             resetMask = False
-            out[t, :, :] = yt
+            out[t, :, :] = yTemp
         return out
 
 
