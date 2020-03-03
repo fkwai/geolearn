@@ -12,4 +12,4 @@ fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoLst-1979')
 siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
 
 waterQuality.wrapData('basinAll', siteNoLstAll)
-dictData, info, q, c, f, g = waterQuality.loadData('basinAll')
+# dictData, info, q, c, f, g = waterQuality.loadData('basinAll')

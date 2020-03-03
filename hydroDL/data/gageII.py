@@ -39,8 +39,9 @@ dictStat = dict(
 def readTab(varType):
     if varType == 'Flow_Record':
         varType = 'flowrec'
-    fileInv = os.path.join(dirTab, 'conterm_{}.txt'.format(varType))
-    tab = pd.read_csv(fileInv, encoding='ISO-8859-1', dtype={'STAID': str})
+    fileInv = os.path.join(dirTab, 'conterm_{}.txt'.format(varType.lower()))
+    tab = pd.read_csv(fileInv, encoding='ISO-8859-1',
+                      dtype={'STAID': str})
     return tab
 
 
@@ -115,7 +116,7 @@ def readData(*, varLst=None, siteNoLst=None):
         temp = tab[vExist]
         if siteNoLst is not None:
             temp = temp.loc[siteNoLst]
-        if 'FLOW_PCT_EST_VALUES' in vExist: # exception
+        if 'FLOW_PCT_EST_VALUES' in vExist:  # exception
             var = 'FLOW_PCT_EST_VALUES'
             temp[var] = temp[var].replace({'ND': np.nan}).astype(float)
         tempLst.append(temp)

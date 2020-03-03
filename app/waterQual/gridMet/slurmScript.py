@@ -35,11 +35,11 @@ for var in varLst:
     for iS, iE in zip(iSLst, iELst):
         cmdLine = cmdPtn.format(codePath, var, 1979, 2020, iS, iE)
         jobName = '{}_{}_{}'.format(var, iS, iE)
-        slurm.submitJob(jobName, cmdLine, nH=4, nM=64)
+        # slurm.submitJob(jobName, cmdLine, nH=4, nM=64)
 
 # convert from raw to output
 codePath = os.path.join(kPath.dirCode, 'app',
-                        'waterQual', 'data', 'gridMetFromRaw.py')
+                        'waterQual', 'gridMet', 'gridMetFromRaw.py')
 jobName = 'gridMetFromRaw'
 cmdLine = 'python {}'.format(codePath)
-slurm.submitJob(jobName, cmdLine, nH=2, nM=64)
+# slurm.submitJob(jobName, cmdLine, nH=2, nM=64)
