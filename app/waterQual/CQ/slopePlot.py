@@ -11,21 +11,22 @@ import importlib
 
 # read slope data
 dirCQ = os.path.join(kPath.dirWQ, 'C-Q')
-doLog = False
-if doLog is True:
-    mapFolder = os.path.join(dirCQ, 'slopeLogMap')
-    boxFolder = os.path.join(dirCQ, 'slopeLogBox')
-    dfS = pd.read_csv(os.path.join(dirCQ, 'slopeLog'), dtype={
-        'siteNo': str}).set_index('siteNo')
-else:
-    mapFolder = os.path.join(dirCQ, 'slopeMap')
-    boxFolder = os.path.join(dirCQ, 'slopeBox')
-    dfS = pd.read_csv(os.path.join(dirCQ, 'slope'), dtype={
-        'siteNo': str}).set_index('siteNo')
+mapFolder = os.path.join(dirCQ, 'slopeMap')
+boxFolder = os.path.join(dirCQ, 'slopeBox')
+dfSa = pd.read_csv(os.path.join(dirCQ, 'slope_a'), dtype={
+    'siteNo': str}).set_index('siteNo')
+dfSb = pd.read_csv(os.path.join(dirCQ, 'slope_b'), dtype={
+    'siteNo': str}).set_index('siteNo')
+dfCeq = pd.read_csv(os.path.join(dirCQ, 'kate_ceq'), dtype={
+    'siteNo': str}).set_index('siteNo')
+dfDw = pd.read_csv(os.path.join(dirCQ, 'kate_dw'), dtype={
+    'siteNo': str}).set_index('siteNo')
 dfN = pd.read_csv(os.path.join(dirCQ, 'nSample'), dtype={
                   'siteNo': str}).set_index('siteNo')
-siteNoLst = dfS.index.tolist()
-codeLst = dfS.columns.tolist()
+siteNoLst = dfN.index.tolist()
+codeLst = dfN.columns.tolist()
+dfPLst = [dfSa, dfSb, dfCeq, dfDw]
+strPLst = ['slope-a', 'slope-b', 'ceq', 'dw']
 
 if not os.path.exists(mapFolder):
     os.mkdir(mapFolder)
@@ -33,9 +34,10 @@ if not os.path.exists(boxFolder):
     os.mkdir(boxFolder)
 
 # code='00955'
-# slopeAry = dfS[code].values
+# v = dfSb[code].values
+# v = dfDw[code].values
 # fig, ax = plt.subplots(1, 1)
-# temp = slopeAry[~np.isnan(slopeAry)]
+# temp = v[~np.isnan(v)]
 # ax.hist(temp, bins=200, range=[
 #         np.percentile(temp, 5), np.percentile(temp, 95)])
 # fig.show()
@@ -46,22 +48,25 @@ codePdf = waterQuality.codePdf
 dfCrd = gageII.readData(varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
 
 for code in codeLst:
-    slopeAry = dfS[code].values
-    nSampleAry = dfN[code].values
-    strTitle = 'slope between Q [log ft3/s] and {} [log {}]'.format(
-        codePdf['srsName'][code], codePdf['unit'][code])
-    strFile = codePdf['shortName'][code]
-    ind = np.where((~np.isnan(slopeAry)) & (nSampleAry > 10))[0]
-    lat = dfCrd['LAT_GAGE'][ind]
-    lon = dfCrd['LNG_GAGE'][ind]
-    data = slopeAry[ind]
-    vr = np.max([np.abs(np.percentile(data, 5)),
-                 np.abs(np.percentile(data, 95))])
-    fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-    axplot.mapPoint(ax, lat, lon, data, title=strTitle, vRange=[-vr, vr], s=15)
-    fig.show()
-    fig.savefig(os.path.join(mapFolder, strFile))
+    for dfP, strP in zip(dfPLst, strPLst):
+        pAry = dfP[code].values
+        nAry = dfN[code].values
+        strTitle = '{} of {} [{}]'.format(
+            strP, codePdf['srsName'][code], codePdf['unit'][code])
+        strFile = strP+'_'+codePdf['shortName'][code]
+        ind = np.where((~np.isnan(pAry)) & (nAry > 10))[0]
+        lat = dfCrd['LAT_GAGE'][ind]
+        lon = dfCrd['LNG_GAGE'][ind]
+        data = pAry[ind]
+        vr = np.max([np.abs(np.percentile(data, 5)),
+                     np.abs(np.percentile(data, 95))])
+        fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+        axplot.mapPoint(ax, lat, lon, data, title=strTitle,
+                        vRange=[-vr, vr], s=15)
+        # fig.show()
+        fig.savefig(os.path.join(mapFolder, strFile))
 
+# plot box
 codePdf = waterQuality.codePdf
 groupLst = codePdf.group.unique().tolist()
 for group in groupLst:
@@ -69,25 +74,28 @@ for group in groupLst:
     codeLst = codePdf[codePdf.group == group].index.tolist()
     pos = list(range(0, len(codeLst)))
     for rmExtreme in [True, False]:
-        dataLst = list()
-        for code in codeLst:
-            slopeAry = dfS[code].values
-            nSampleAry = dfN[code].values
-            ind = np.where((~np.isnan(slopeAry)) & (nSampleAry > 10))[0]
-            vr = np.max([np.abs(np.percentile(slopeAry[ind], 10)),
-                         np.abs(np.percentile(slopeAry[ind], 90))])
+        for dfP, strP in zip(dfPLst, strPLst):
+            dataLst = list()
+            for code in codeLst:
+                pAry = dfP[code].values
+                nAry = dfN[code].values
+                ind = np.where((~np.isnan(pAry)) & (nAry > 10))[0]
+                vr = np.max([np.abs(np.percentile(pAry[ind], 10)),
+                             np.abs(np.percentile(pAry[ind], 90))])
+                if rmExtreme is True:
+                    ind = np.where((~np.isnan(pAry)) & (nAry > 10) & (
+                        pAry <= vr) & (pAry >= -vr))[0]
+                dataLst.append(pAry[ind])
+            fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+            ax.violinplot(dataLst, pos, points=500, widths=1,
+                          showmeans=True, showextrema=True)
+            ax.set_xticks(pos)
+            ax.set_xticklabels(codePdf.shortName[codeLst].tolist())
             if rmExtreme is True:
-                ind = np.where((~np.isnan(slopeAry)) & (nSampleAry > 10) & (
-                    slopeAry <= vr) & (slopeAry >= -vr))[0]
-            dataLst.append(slopeAry[ind])
-        fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-        ax.violinplot(dataLst, pos, points=500, widths=1,
-                      showmeans=True, showextrema=True)
-        ax.set_xticks(pos)
-        ax.set_xticklabels(codePdf.shortName[codeLst].tolist())
-        fig.show()
-        if rmExtreme is True:
-            fig.savefig(os.path.join(boxFolder, group+'_rmE'))
-        else:
-            fig.savefig(os.path.join(boxFolder, group))
+                ax.set_title('{} of {} variables, 10\%-90\%'.format(strP,group))
+                fig.savefig(os.path.join(boxFolder, group+'_'+strP+'_rmE'))
+            else:
+                ax.set_title('{} of {} variables'.format(strP,group))
+                fig.savefig(os.path.join(boxFolder, group+'_'+strP))
+            # fig.show()
 

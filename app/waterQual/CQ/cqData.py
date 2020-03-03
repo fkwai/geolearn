@@ -9,20 +9,41 @@ import matplotlib.pyplot as plt
 import time
 import os
 import pickle
+from scipy.optimize import curve_fit
 from scipy.stats import linregress
+
 import importlib
 
+
+def modelSlope(x, a, b):
+    return a*x**b
+
+
+def modelKate(x, a, b):
+    return a/(1+x/b)
+
+
 if True:
-    # load data - processed in dataProcess.py
+    # load data - processed in slopeCal.py
     dirCQ = os.path.join(kPath.dirWQ, 'C-Q')
     fileName = os.path.join(dirCQ, 'CQall')
     dictData = pickle.load(open(fileName, 'rb'))
-    dfS = pd.read_csv(os.path.join(dirCQ, 'slopeLog'), dtype={
+    dfSa = pd.read_csv(os.path.join(dirCQ, 'slope_a'), dtype={
+        'siteNo': str}).set_index('siteNo')
+    dfSb = pd.read_csv(os.path.join(dirCQ, 'slope_b'), dtype={
+        'siteNo': str}).set_index('siteNo')
+    dfCeq = pd.read_csv(os.path.join(dirCQ, 'kate_ceq'), dtype={
+        'siteNo': str}).set_index('siteNo')
+    dfDw = pd.read_csv(os.path.join(dirCQ, 'kate_dw'), dtype={
         'siteNo': str}).set_index('siteNo')
     dfN = pd.read_csv(os.path.join(dirCQ, 'nSample'), dtype={
         'siteNo': str}).set_index('siteNo')
-    siteNoLst = dfS.index.tolist()
-    codeLst = dfS.columns.tolist()
+    siteNoLst = dfN.index.tolist()
+    codeLst = dfN.columns.tolist()
+    dfPLst = [dfSa, dfSb, dfCeq, dfDw]
+    strPLst = ['slope-a', 'slope-b', 'ceq', 'dw']
+    pdfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
+    unitConv = 0.3048**3*365*24*60*60/1000**2
     dfCrd = gageII.readData(
         varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
 
@@ -35,39 +56,51 @@ dfNsel = dfN[codeSel]
 siteNoSel = dfNsel[(dfNsel > 100).all(axis=1)].index.tolist()
 lat = dfCrd['LAT_GAGE'][siteNoSel].values
 lon = dfCrd['LNG_GAGE'][siteNoSel].values
-figM, axM = plt.subplots(nCode,1, figsize=(8, 6))
-for i, code in enumerate(codeSel):
-    print(i)
-    slopeAry = dfS[code].values
-    dataMap = dfS[code][siteNoSel].values
-    strTitle = 'slope of {} '.format(codePdf['srsName'][code])
-    vr = np.max([np.abs(np.percentile(dataMap, 5)),
-                 np.abs(np.percentile(dataMap, 95))])
-    axplot.mapPoint(axM[i], lat, lon, dataMap, title=strTitle,
-                    vRange=[-vr, vr], s=15)
-figP, axP = plt.subplots(3, nCode, figsize=(8, 6))
+figM, axM = plt.subplots(nCode, 2, figsize=(8, 6))
+for j, code in enumerate(codeSel):
+    for i, (dfP, strP) in enumerate(zip([dfSb, dfDw], ['slope', 'Dw'])):
+        dataMap = dfP[code][siteNoSel].values
+        strTitle = '{} of {} '.format(strP, codePdf['srsName'][code])
+        vr = np.max([np.abs(np.percentile(dataMap[~np.isnan(dataMap)], 10)),
+                     np.abs(np.percentile(dataMap[~np.isnan(dataMap)], 90))])
+        axplot.mapPoint(axM[j, i], lat, lon, dataMap, title=strTitle,
+                        vRange=[-vr, vr], s=6)
+
+figP, axP = plt.subplots(nCode, 1, figsize=(8, 6))
 
 
 def onclick(event):
     xClick = event.xdata
     yClick = event.ydata
     iP = np.argmin(np.sqrt((xClick - lon)**2 + (yClick - lat)**2))
-    for ax in axM:
-        [p.remove() for p in reversed(ax.patches)]
-        circle = plt.Circle([lon[iP], lat[iP]], 1, color='black', fill=False)
-        ax.add_patch(circle)
+    for temp in axM:
+        for ax in temp:
+            [p.remove() for p in reversed(ax.patches)]
+            circle = plt.Circle([lon[iP], lat[iP]], 1,
+                                color='black', fill=False)
+            ax.add_patch(circle)
 
     siteNo = siteNoSel[iP]
-    q = dictData[siteNo]['00060_00003'].values
+    area = pdfArea.loc[siteNo].values[0]
+    q = dictData[siteNo]['00060_00003'].values/area*unitConv
     for k, code in enumerate(codeSel):
+        axP[k].clear()
         c = dictData[siteNo][code].values
-        axP[0, k, ].clear()
-        axP[1, k, ].clear()
-        axP[2, k].clear()
-        axP[0, k].plot(q, c, '*')
-        axP[1, k].plot(np.log10(q), c, '*')
-        axP[2, k].plot(np.log10(q), np.log10(c), '*')
-
+        x = 10**np.linspace(np.log10(np.min(q[q > 0])),
+                            np.log10(np.max(q[~np.isnan(q)])), 20)
+        sa = dfSa[code][siteNo]
+        sb = dfSb[code][siteNo]
+        ceq = dfCeq[code][siteNo]
+        dw = dfDw[code][siteNo]
+        ys = modelSlope(x, sa, sb)
+        yk = modelKate(x, ceq, dw)
+        axP[k].plot(np.log10(q), c, '*k',  label='obs')
+        axP[k].plot(np.log10(x), ys, '-b',
+                    label='{:.2f} q ^ {:.2f}'.format(sa, sb))
+        axP[k].plot(np.log10(x), yk, '-r',
+                    label='{:.2f} 1/(q/{:.2f}+1)'.format(ceq, dw))
+        axP[k].legend()
+    axP[0].set_title(siteNo)
     figM.canvas.draw()
     figP.canvas.draw()
 

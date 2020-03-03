@@ -80,7 +80,7 @@ def wrapData(caseName, siteNoLst, *, rho=365, nFill=5, varC=usgs.lstCodeSample, 
 
 
 def loadData(caseName):
-    saveName = os.path.join(kPath.dirWQ, 'tempData', caseName)
+    saveName = os.path.join(kPath.dirWQ, 'trainData', caseName)
     npzFile = np.load(saveName+'.npz')
     q = npzFile['q']
     f = npzFile['f']
@@ -93,7 +93,7 @@ def loadData(caseName):
 
 
 def loadInfo(caseName):
-    saveName = os.path.join(kPath.dirWQ, 'tempData', caseName)
+    saveName = os.path.join(kPath.dirWQ, 'trainData', caseName)
     info = pd.read_csv(saveName+'.csv', index_col=0, dtype={'siteNo': str})
     with open(saveName+'.json', 'r') as fp:
         dictData = json.load(fp)
