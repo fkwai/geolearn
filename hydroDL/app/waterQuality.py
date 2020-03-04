@@ -11,7 +11,7 @@ codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
 codeLst = list(codePdf.index)
 
 
-def wrapData(caseName, siteNoLst, *, rho=365, nFill=5, varC=usgs.lstCodeSample, varG=gageII.lstWaterQuality):
+def wrapData(caseName, siteNoLst, *, rho=365, nFill=5, varC=codeLst, varG=gageII.lstWaterQuality):
     """ wrap up input and target data for the model,as:
     x=[nT,nP,nX]
     y=[nP,nY]
