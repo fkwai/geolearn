@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import json
 from hydroDL import kPath
-from hydroDL.data import usgs, gageII, gridMET
+from hydroDL.data import usgs, gageII, gridMET, transform
 
 fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
 codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
@@ -15,6 +15,7 @@ class DataModelWQ():
     def __init__(self, caseName):
         self.caseName = caseName
         t0 = time.time()
+        # data
         saveName = os.path.join(kPath.dirWQ, 'trainData', caseName)
         npzFile = np.load(saveName+'.npz')
         self.q = npzFile['q']
@@ -22,11 +23,21 @@ class DataModelWQ():
         self.c = npzFile['c']
         self.g = npzFile['g']
         print('loading data {}'.format(time.time()-t0))
+        # info
+        with open(saveName+'.json', 'r') as fp:
+            dictData = json.load(fp)
+        self.siteNoLst = dictData['siteNoLst']
+        self.name = dictData['name']
+        self.rho = dictData['rho']
+        self.nFill = dictData['nFill']
+        self.varG = dictData['varG']
+        self.varC = dictData['varC']
+        self.varQ = ['00060']
+        self.varF = gridMET.varLst
         self.info = pd.read_csv(
             saveName+'.csv', index_col=0, dtype={'siteNo': str})
-        with open(saveName+'.json', 'r') as fp:
-            self.dictData = json.load(fp)
-        self.subset = self.loadSubset
+        self.subset = self.loadSubset()
+        # counting the dataset used for indexes - fairly fast
         self.dfCount = self.info['siteNo'].value_counts().rename(
             'count').to_frame().rename_axis(index='siteNo')
         rankSite = self.info.groupby('siteNo').cumcount().rename('rank')
@@ -43,12 +54,14 @@ class DataModelWQ():
                  nFill=nFill, varC=varC, varG=varG)
         return cls(caseName)
 
-    def indByRatio(self, ratio):
+    def indByRatio(self, ratio, first=True):
         # devide training and testing - last 20% as testing
         dfSite = self.dfSite
-        ind1 = dfSite[dfSite['pRank'] <= ratio].index.values
-        ind2 = dfSite[dfSite['pRank'] > ratio].index.values
-        return ind1, ind2
+        if first is True:
+            ind = dfSite[dfSite['pRank'] <= ratio].index.values
+        else:
+            ind = dfSite[dfSite['pRank'] > ratio].index.values
+        return ind
 
     def indByCount(self, count):
         dfSite = self.dfSite
@@ -57,7 +70,7 @@ class DataModelWQ():
 
     def indByComb(self, codeRm):
         # remove only have obs -> codeRm = ['00010', '00095']
-        codeLst = self.dictData['varC']
+        codeLst = self.varC
         indC1 = [codeLst.index(code) for code in codeRm]
         indC2 = [i for i in list(range(len(codeLst))) if i not in indC1]
         temp1 = self.c[:, indC1]
@@ -66,23 +79,23 @@ class DataModelWQ():
                          np.isnan(temp2).all(axis=1))[0]
         return indRm
 
-    def saveSubset(self, dictSubsetNew):
+    def saveSubset(self, nameLst, indLst):
+        dictNew = dict(zip(nameLst, indLst))
         # save to a subset file
         subsetFile = os.path.join(
             kPath.dirWQ, 'trainData', self.caseName+'_subset.json')
-        for key, value in dictSubsetNew.items():
-            dictSubsetNew[key] = value.tolist()
+        for key, value in dictNew.items():
+            dictNew[key] = value.tolist()
         if os.path.exists(subsetFile):
             with open(subsetFile, 'r') as fp:
                 dictSubset = json.load(fp)
-            dictSubset.update(dictSubsetNew)
+            dictSubset.update(dictNew)
         else:
-            dictSubset = dictSubsetNew
+            dictSubset = dictNew
         with open(subsetFile, 'w') as fp:
             json.dump(dictSubset, fp, indent=4)
 
     def loadSubset(self):
-        # save to a subset file
         subsetFile = os.path.join(
             kPath.dirWQ, 'trainData', self.caseName+'_subset.json')
         if os.path.exists(subsetFile):
@@ -93,6 +106,49 @@ class DataModelWQ():
         else:
             dictSubset = None
         return dictSubset
+
+    def extractSubset(self, subset):
+        ind = self.subset[subset]
+        q = self.q[:, ind, :]
+        c = self.c[ind, :]
+        f = self.f[:, ind, :]
+        g = self.g[ind, :]
+        return (f, g, q, c)
+
+    def transIn(self, subset=None):
+        # normalize data in
+        if subset is None:
+            (f, g, q, c) = (self.f, self.g, self.q, self.c)
+        else:
+            (f, g, q, c) = self.extractSubset(subset)
+        t0 = time.time()
+        x, statX = transform.transInAll(
+            f, [gridMET.dictStat[var] for var in self.varF])
+        t1 = time.time()-t0
+        xc, statXC = transform.transInAll(
+            g, [gageII.dictStat[var] for var in self.varG])
+        t2 = time.time()-t0
+        y, statY = transform.transInAll(
+            q, [usgs.dictStat[var] for var in self.varQ])
+        t3 = time.time()-t0
+        yc, statYC = transform.transInAll(
+            c, [usgs.dictStat[var] for var in self.varC])
+        t4 = time.time()-t0
+        print('transform in x->{:.3f} xc->{:.3f} y->{:.3f} yc->{:.3f}'.format(
+            t1, t2, t3, t4))
+        return (x, xc, y, yc), (statX, statXC, statY, statYC)
+
+    def transOut(self, y, yc, statY, statYC):
+        # normalize data out
+        t0 = time.time()
+        outY = transform.transOutAll(
+            y, [usgs.dictStat[var] for var in self.varQ],  statY)
+        t1 = time.time()-t0
+        outYC = transform.transOutAll(
+            yc, [usgs.dictStat[var] for var in self.varC], statYC)
+        t2 = time.time()-t0
+        print('transform out y->{:.3f} yc->{:.3f}'.format(t1, t2))
+        return outY, outYC
 
     def calComb(self):
         # calculate the combinations - could improve effeciency later
@@ -108,6 +164,16 @@ class DataModelWQ():
         tabComb = pd.DataFrame.from_dict(dictSum, orient='index')
         tabComb = tabComb.sort_values(0, ascending=False)
         return tabComb
+
+
+def exist(caseName):
+    fileName = os.path.join(kPath.dirWQ, 'trainData', caseName)
+    if os.path.exists(fileName+'.csv') and \
+            os.path.exists(fileName+'.json') and \
+            os.path.exists(fileName+'.npz'):
+        return True
+    else:
+        return False
 
 
 def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.lstWaterQuality):
@@ -126,8 +192,9 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.ls
         varG {list} -- list of constant variables in gageII (default: {gageII.lstWaterQuality})
         varQ and varF are fixed so far
     """
-    # add a start date to improve efficiency.
+    # add a start/end date to improve efficiency.
     startDate = pd.datetime(1979, 1, 1)
+    endDate = pd.datetime(2019, 12, 31)
 
     # gageII
     tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLst)
@@ -148,7 +215,7 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.ls
         for k in range(len(dfC)):
             ct = dfC.index[k]
             ctR = pd.date_range(ct-pd.Timedelta(days=rho-1), ct)
-            if ctR[0] < startDate:
+            if (ctR[0] < startDate) or (ctR[-1] > endDate):
                 continue
             tempQ = pd.DataFrame({'date': ctR}).set_index('date').join(
                 dfQ).interpolate(limit=nFill, limit_direction='both')
@@ -160,12 +227,12 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.ls
             gLst.append(tabG.loc[siteNo].values)
             infoLst.append(dict(siteNo=siteNo, date=ct))
         t2 = time.time()
-        print('{} on site {} reading {:.3} total {}'.format(
+        print('{} on site {} reading {:.3f} total {:.3f}'.format(
             i, siteNo, t2-t1, t2-t0))
-    q = np.stack(qLst, axis=-1).swapaxes(1, 2).astype(np.float64)
-    f = np.stack(fLst, axis=-1).swapaxes(1, 2).astype(np.float64)
-    g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float64)
-    c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float64)
+    q = np.stack(qLst, axis=-1).swapaxes(1, 2).astype(np.float32)
+    f = np.stack(fLst, axis=-1).swapaxes(1, 2).astype(np.float32)
+    g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
+    c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     infoDf = pd.DataFrame(infoLst)
 
     saveFolder = os.path.join(kPath.dirWQ, 'trainData')
@@ -176,3 +243,19 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.ls
                     varG=varG, varC=varC, siteNoLst=siteNoLst)
     with open(saveName+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)
+
+# find the distribution of data
+# for k, var in enumerate(wqData.varC):
+#     fig, axes = plt.subplots(2, 2)
+#     temp = wqData.c[:, k].flatten()
+#     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
+#                            (temp < np.nanpercentile(temp, 95)))]
+#     axes[0, 0].hist(temp, bins=100)
+#     axes[0, 1].hist(temp90, bins=100)
+#     try:
+#         axes[1, 0].hist(np.log(temp+1), bins=100)
+#         axes[1, 1].hist(np.log(temp90+1), bins=100)
+#     except(ValueError):
+#         print(var+' can not log')
+#     fig.suptitle(var)
+#     fig.show()

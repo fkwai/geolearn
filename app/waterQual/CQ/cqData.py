@@ -14,16 +14,7 @@ from scipy.stats import linregress
 
 import importlib
 
-
-def modelSlope(x, a, b):
-    return a*x**b
-
-
-def modelKate(x, a, b):
-    return a/(1+x/b)
-
-
-if True:
+if False:
     # load data - processed in slopeCal.py
     dirCQ = os.path.join(kPath.dirWQ, 'C-Q')
     fileName = os.path.join(dirCQ, 'CQall')
@@ -47,13 +38,18 @@ if True:
     dfCrd = gageII.readData(
         varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
 
+dfHBN = pd.read_csv(os.path.join(kPath.dirData, 'USGS', 'inventory', 'HBN.csv'), dtype={
+    'siteNo': str}).set_index('siteNo')
+siteNoSel= [siteNo for siteNo in dfHBN.index.tolist() if siteNo in siteNoLst]
+
+# dfNsel = dfN[codeSel]
+# siteNoSel = dfNsel[(dfNsel > 100).all(axis=1)].index.tolist()
+
 # plot click map
 codeSel = ['00955', '00940', '00915']
 nCode = len(codeSel)
 importlib.reload(axplot)
 codePdf = waterQuality.codePdf
-dfNsel = dfN[codeSel]
-siteNoSel = dfNsel[(dfNsel > 100).all(axis=1)].index.tolist()
 lat = dfCrd['LAT_GAGE'][siteNoSel].values
 lon = dfCrd['LNG_GAGE'][siteNoSel].values
 figM, axM = plt.subplots(nCode, 2, figsize=(8, 6))
@@ -92,8 +88,8 @@ def onclick(event):
         sb = dfSb[code][siteNo]
         ceq = dfCeq[code][siteNo]
         dw = dfDw[code][siteNo]
-        ys = modelSlope(x, sa, sb)
-        yk = modelKate(x, ceq, dw)
+        ys = sa*x**sb
+        yk = ceq/(1+x/dw)
         axP[k].plot(np.log10(q), c, '*k',  label='obs')
         axP[k].plot(np.log10(x), ys, '-b',
                     label='{:.2f} q ^ {:.2f}'.format(sa, sb))

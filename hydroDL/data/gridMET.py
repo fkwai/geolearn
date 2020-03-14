@@ -4,6 +4,11 @@ import numpy as np
 import pandas as pd
 from hydroDL import kPath
 
+varLst = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
+
+dictStat = dict(pr='log-norm', sph='norm', srad='norm',
+                tmmn='norm', tmmx='norm', pet='norm', etr='norm')
+
 
 def readNcInfo(file):
     fh = netCDF4.Dataset(file)
