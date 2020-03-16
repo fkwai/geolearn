@@ -10,7 +10,7 @@ import time
 fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoLst-1979')
 siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
 
-# case for all gages
+# # case for all gages
 # caseName = 'basinAll'
 # # wqData = waterQuality.DataModelWQ.new(caseName, siteNoLstAll)
 # wqData = waterQuality.DataModelWQ(caseName)
@@ -18,7 +18,7 @@ siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
 # ind2 = wqData.indByRatio(0.2, first=False)
 # wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
 
-# select referenced basins
+# # select referenced basins
 tabSel = gageII.readData(
     varLst=['CLASS'], siteNoLst=siteNoLstAll)
 tabSel = gageII.updateCode(tabSel)
