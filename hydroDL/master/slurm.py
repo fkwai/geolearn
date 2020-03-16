@@ -23,7 +23,7 @@ def submitJob(jobName, cmdLine, nH=8, nM=16):
     os.system('sbatch {}'.format(jobFile))
 
 
-def submitJobGPU(jobName, cmdLine, nH):
+def submitJobGPU(jobName, cmdLine, nH, nM=16):
     jobFile = os.path.join(kPath.dirJob, jobName)
     with open(jobFile, 'w') as fh:
         fh.writelines("#!/bin/bash\n")
@@ -33,6 +33,7 @@ def submitJobGPU(jobName, cmdLine, nH):
         fh.writelines('#SBATCH --output={}.out\n'.format(jobFile))
         fh.writelines('#SBATCH --error={}.err\n'.format(jobFile))
         fh.writelines('#SBATCH --time={}:0:0\n'.format(nH))
+        fh.writelines('#SBATCH --mem={}000\n'.format(nM))
         fh.writelines('#SBATCH --qos=normal\n')
         fh.writelines('#SBATCH --mail-type=ALL\n')
         fh.writelines('#SBATCH --mail-user=kuaifang@stanford.edu\n')

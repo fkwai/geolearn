@@ -1,5 +1,5 @@
 from hydroDL.master import basins
-basins.trainModelTS('basinAll', 'first80')
+basins.trainModelTS('basinRef', 'first80')
 
 # # predict - point-by-point
 # yOut = trainTS.testModel(model, x, xc)

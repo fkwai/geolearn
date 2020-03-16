@@ -38,8 +38,12 @@ class DataModelWQ():
             saveName+'.csv', index_col=0, dtype={'siteNo': str})
         self.subset = self.loadSubset()
         # counting the dataset used for indexes - fairly fast
+        # self.dfCount = self.info['siteNo'].value_counts().rename(
+        #     'count').to_frame().rename_axis(index='siteNo')
         self.dfCount = self.info['siteNo'].value_counts().rename(
-            'count').to_frame().rename_axis(index='siteNo')
+            'count').to_frame().rename_axis('siteNo', axis=0)
+        print(self.dfCount)
+
         rankSite = self.info.groupby('siteNo').cumcount().rename('rank')
         dfRank = self.info.join(rankSite)
         dfSite = pd.merge(dfRank, self.dfCount, on='siteNo')
