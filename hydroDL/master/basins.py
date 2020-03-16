@@ -84,4 +84,4 @@ def trainModelTS(dataName, trainName, saveName=None, modelName='CudnnLSTM',
         lossLst = lossLst.append(lossEp)
 
     lossFile = os.path.join(saveFolder, 'loss.csv')
-    df = pd.DataFrame(lossLst).to_csv(saveFile, index=False, header=False)
+    df = pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
