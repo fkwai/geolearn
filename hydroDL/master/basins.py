@@ -81,7 +81,7 @@ def trainModelTS(dataName, trainName, saveName=None, modelName='CudnnLSTM',
         torch.save(model, modelFile)
         modelFile = os.path.join(saveFolder, 'optim_ep{}'.format(k+saveEpoch))
         torch.save(model, modelFile)
-        lossLst = lossLst.append(lossEp)
+        lossLst = lossLst+lossEp
 
     lossFile = os.path.join(saveFolder, 'loss.csv')
-    df = pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
+    pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)

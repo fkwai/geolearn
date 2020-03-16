@@ -102,7 +102,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[100, 365], nEp=100, cE
                 print('iteration Failed: iter {} ep {}'.format(iIter, iEp+cEp))
         lossEp = lossEp / nIterEp
         ct = time.time() - t0
-        logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp, lossEp, ct)
+        logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp+cEp, lossEp, ct)
         print(logStr)
         lossEpLst.append(lossEp)
     return model, optim, lossEpLst
