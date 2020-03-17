@@ -14,7 +14,7 @@ import os
 
 # TRAIN MODEL
 
-# slurm.submitJobGPU('modelA','python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel1.py',nH=24)
+slurm.submitJobGPU('basinRef','python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel1.py',nH=24)
 
 slurm.submitJobGPU(
-    'modelAll', 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel2.py', nH=24, nM=64)
+    'basinAll', 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel2.py', nH=48, nM=64)
