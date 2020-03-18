@@ -21,17 +21,19 @@ def subsetRandom(dataLst, batchSize, sizeLst=None):
         [torch.Tensor torch.Tensor] -- training subset
     """
     [x, xc, y, yc] = dataLst
-    [nbatch, rho] = batchSize
-    [nx, nxc, ny, nyc, ns, nt] = sizeLst
+    [rho, nbatch] = batchSize
+    [nx, nxc, ny, nyc, nt, ns] = sizeLst
 
     iR = np.random.randint(0, ns, [nbatch])
     xTemp = x[nt-rho:rho, iR, :]
-    xcTemp = np.tile(xc[iR, :], [nt, 1, 1])
+    xcTemp = np.tile(xc[iR, :], [nt, 1, 1]
+                     ) if xc is not None else np.ndarray([rho, nbatch, 0])
     xTensor = torch.from_numpy(np.concatenate(
         [xTemp, xcTemp], axis=-1)).float()
-    yTemp = y[nt-rho:rho, iR, :]
+    yTemp = y[nt-rho:rho, iR,
+              :] if y is not None else np.ndarray([rho, nbatch, 0])
     ycTemp = np.full([rho, nbatch, nyc], np.nan)
-    ycTemp[-1, :, :] = yc[iR, :]
+    ycTemp[-1, :, :] = yc[iR, :] if yc is not None else np.nan
     yTensor = torch.from_numpy(np.concatenate(
         [yTemp, ycTemp], axis=-1)).float()
     if torch.cuda.is_available():
@@ -40,7 +42,48 @@ def subsetRandom(dataLst, batchSize, sizeLst=None):
     return xTensor, yTensor
 
 
-def trainModel(dataLst, model, lossFun, optim, batchSize=[100, 365], nEp=100, cEp=0):
+def getSize(dataLst):
+    # dataLst: [x,xc,y,yc]
+    sizeLst = list()
+    for data in dataLst:
+        if data is None:
+            sizeLst.append(0)
+        else:
+            sizeLst.append(data.shape[-1])
+    [nx, nxc, ny, nyc] = sizeLst
+    x, xc = dataLst[:2]
+    if x is not None:
+        nt = x.shape[0]
+        ns = x.shape[1]
+    else:
+        nt = 0
+        ns = xc.shape[0]
+    return (nx, nxc, ny, nyc, nt, ns)
+
+
+def dealNaN(dataTup, optNaN):
+    # check if any nan
+    rmLst = list()
+    dataLst = list()
+    for data, optN in zip(dataTup, optNaN):
+        if data is not None:
+            data[np.isinf(data)] = np.nan
+            indNan = np.where(np.isnan(data))
+            if len(indNan) > 0:
+                if optN == 1:
+                    data[indNan] = 0
+                    print('nan found and filled')
+                elif optN == 2:
+                    if data.ndim == 2:
+                        rmLst.append(indNan[0])
+                    if data.ndim == 3:
+                        rmLst.append(np.unique(np.where(np.isnan(data))[1]))
+                    print('nan found but not removed - later')
+        dataLst.append(data)
+    return dataLst
+
+
+def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, cEp=0):
     """[summary]    
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -48,7 +91,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[100, 365], nEp=100, cE
             xc {np.array} -- input constant of size [np,nxc]
             y {np.array} -- target time series of size [nt,np,ny]
             yc {np.array} -- target constant (or last time step) of size [np,nyc]
-        batchSize {list} -- [spatial batch size, temporal batch size]
+        batchSize {list} -- [spatial batch size, temporal batch size, None for use all]
         model {[type]} -- [description]
         lossFun {[type]} -- [description]
 
@@ -60,13 +103,14 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[100, 365], nEp=100, cE
     Returns:
         [type] -- [description]
     """
-    x, xc, y, yc = dataLst
-    nbatch, rho = batchSize
-    nt, ns, nx = x.shape
-    nt, ns, ny = y.shape
-    ns, nxc = xc.shape
-    ns, nyc = yc.shape
-    sizeLst = [nx, nxc, ny, nyc, ns, nt]
+    sizeLst = getSize(dataLst)
+    [nx, nxc, ny, nyc, nt, ns] = sizeLst
+    rho, nbatch = batchSize
+    if rho is None:
+        rho = nt
+    if nbatch is None:
+        nbatch = ns
+    batchSize = [rho, nbatch]
 
     # training
     if nbatch > ns:
@@ -108,12 +152,15 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[100, 365], nEp=100, cE
     return model, optim, lossEpLst
 
 
-def testModel(model, x, xc, batchSize=100):
+def testModel(model, x, xc, ny, batchSize=2000):
+    model.eval()
     nt, ns, nx = x.shape
-    ns, nxc = xc.shape
     iS = np.arange(0, ns, batchSize)
     iE = np.append(iS[1:], ns)
-    yOutLst = list()
+    yLst = list()
+    ycLst = list()
+    if batchSize > ns:
+        batchSize = ns
     for k in range(len(iS)):
         print('batch: '+str(k))
         xT = torch.from_numpy(np.concatenate(
@@ -121,10 +168,18 @@ def testModel(model, x, xc, batchSize=100):
         if torch.cuda.is_available():
             xT = xT.cuda()
             model = model.cuda()
+        if k == 0:
+            try:
+                yT = model(xT)
+            except:
+                print('first iteration failed again')
         yT = model(xT)
-        yOutLst.append(yT.detach().cpu().numpy())
-    yOut = np.concatenate(yOutLst, axis=1)
-    return yOut
+        out = yT.detach().cpu().numpy()
+        yLst.append(out[:, :, :ny])
+        ycLst.append(out[-1, :, ny:])
+    yOut = np.concatenate(yLst, axis=1)
+    ycOut = np.concatenate(ycLst, axis=0)
+    return yOut, ycOut
 
 
 def saveModel(model, modelFile):

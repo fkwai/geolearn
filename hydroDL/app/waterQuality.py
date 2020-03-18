@@ -42,7 +42,7 @@ class DataModelWQ():
         #     'count').to_frame().rename_axis(index='siteNo')
         self.dfCount = self.info['siteNo'].value_counts().rename(
             'count').to_frame().rename_axis('siteNo', axis=0)
-        
+
         rankSite = self.info.groupby('siteNo').cumcount().rename('rank')
         dfRank = self.info.join(rankSite)
         dfSite = pd.merge(dfRank, self.dfCount, on='siteNo')
@@ -118,7 +118,7 @@ class DataModelWQ():
         g = self.g[ind, :]
         return (f, g, q, c)
 
-    def transIn(self, subset=None):
+    def transIn(self, subset=None, optQ=1):
         # normalize data in
         if subset is None:
             (f, g, q, c) = (self.f, self.g, self.q, self.c)
@@ -139,16 +139,24 @@ class DataModelWQ():
         t4 = time.time()-t0
         print('transform in x->{:.3f} xc->{:.3f} y->{:.3f} yc->{:.3f}'.format(
             t1, t2, t3, t4))
-        return (x, xc, y, yc), (statX, statXC, statY, statYC)
+        dataLst, statLst = buildInput(
+            (x, xc, y, yc), (statX, statXC, statY, statYC), optQ)
+        return dataLst, statLst
 
     def transOut(self, y, yc, statY, statYC):
         # normalize data out
         t0 = time.time()
-        outY = transform.transOutAll(
-            y, [usgs.dictStat[var] for var in self.varQ],  statY)
+        if y.shape[-1] == 0:
+            outY = None
+        else:
+            outY = transform.transOutAll(
+                y, [usgs.dictStat[var] for var in self.varQ],  statY)
         t1 = time.time()-t0
-        outYC = transform.transOutAll(
-            yc, [usgs.dictStat[var] for var in self.varC], statYC)
+        if yc.shape[-1] == 0:
+            outYC = None
+        else:
+            outYC = transform.transOutAll(
+                yc, [usgs.dictStat[var] for var in self.varC], statYC)
         t2 = time.time()-t0
         print('transform out y->{:.3f} yc->{:.3f}'.format(t1, t2))
         return outY, outYC
@@ -177,6 +185,32 @@ def exist(caseName):
         return True
     else:
         return False
+
+
+def buildInput(dataLst, statLst, optInput):
+    (f, xc, q, yc) = dataLst
+    (sF, sXC, sQ, sYC) = statLst
+    if optInput == 1:
+        x = f
+        sX = sF
+        y = q
+        sY = sQ
+    elif optInput == 2:
+        x = np.concatenate([q, f], axis=2)
+        sX = sQ+sF
+        y = None
+        sY = None
+    elif optInput == 3:
+        x = f
+        sX = sF
+        y = None
+        sY = None
+    elif optInput == 4:
+        x = q
+        sX = sQ
+        y = None
+        sY = None
+    return (x, xc, y, yc), (sX, sXC, sY, sYC)
 
 
 def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.lstWaterQuality):
