@@ -23,7 +23,7 @@ def submitJob(jobName, cmdLine, nH=8, nM=16):
     os.system('sbatch {}'.format(jobFile))
 
 
-def submitJobGPU(jobName, cmdLine, nH, nM=16):
+def submitJobGPU(jobName, cmdLine, nH=8, nM=16):
     jobFile = os.path.join(kPath.dirJob, jobName)
     with open(jobFile, 'w') as fh:
         fh.writelines("#!/bin/bash\n")

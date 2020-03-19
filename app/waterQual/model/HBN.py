@@ -26,6 +26,6 @@ else:
     ind2 = wqData.indByRatio(0.2, first=False)
     wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
 
-basins.trainModelTS('HBN-30d', 'first80', batchSize=[200, None])
+basins.trainModelTS('HBN', 'first80', batchSize=[None, 500], saveName='HBN_opt1', optQ=1)
 
 a, b = [200, None]

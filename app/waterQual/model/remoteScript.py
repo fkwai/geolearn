@@ -14,7 +14,17 @@ import os
 
 # TRAIN MODEL
 
-slurm.submitJobGPU('basinRef','python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel1.py',nH=24)
+# slurm.submitJobGPU('basinRef','python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel1.py',nH=24)
 
-slurm.submitJobGPU(
-    'basinAll', 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel2.py', nH=48, nM=64)
+# slurm.submitJobGPU(
+#     'basinAll', 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/trainModel2.py', nH=48, nM=64)
+
+
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/runCmd.py -D {} -O {}'
+nameP = '{}-opt{}'
+dLst = ['HBN', 'HBN-30d']
+optLst = [1, 2, 3, 4]
+for d in dLst:
+    for opt in optLst:
+        print(cmdP.format(d, opt))
+        slurm.submitJobGPU(nameP.format(d, opt), cmdP.format(d, opt), nH=8)
