@@ -55,7 +55,11 @@ class DataModelWQ():
         print('creating data class')
         wrapData(caseName, siteNoLst, rho=rho,
                  nFill=nFill, varC=varC, varG=varG)
-        return cls(caseName)
+        wqData = cls(caseName)
+        ind1 = wqData.indByRatio(0.8)
+        ind2 = wqData.indByRatio(0.2, first=False)
+        wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
+        return wqData
 
     def indByRatio(self, ratio, first=True):
         # devide training and testing - last 20% as testing

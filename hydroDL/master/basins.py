@@ -75,15 +75,19 @@ def trainModelTS(saveName):
         model = model.cuda()
     optim = torch.optim.Adadelta(model.parameters())
     lossLst = list()
-    for k in range(0, dictP['nEpoch'], dictP['saveEpoch']):
-        model, optim, lossEp = trainTS.trainModel(dataTup, model, lossFun, optim, batchSize=dictP['batchSize'],
-                                                  nEp=dictP['saveEpoch'], cEp=k)
+    nEp = dictP['nEpoch']
+    sEp = dictP['saveEpoch']
+    logFile = os.path.join(saveFolder, 'log')
+    if os.path.exists(logFile):
+        os.remove(logFile)
+    for k in range(0, nEp, sEp):
+        model, optim, lossEp = trainTS.trainModel(
+            dataTup, model, lossFun, optim, batchSize=dictP['batchSize'],
+            nEp=sEp, cEp=k, logFile=logFile)
         # save model
-        modelFile = os.path.join(
-            saveFolder, 'model_ep{}'.format(k+dictP['saveEpoch']))
+        modelFile = os.path.join(saveFolder, 'model_ep{}'.format(k+sEp))
         torch.save(model, modelFile)
-        modelFile = os.path.join(
-            saveFolder, 'optim_ep{}'.format(k+dictP['saveEpoch']))
+        modelFile = os.path.join(saveFolder, 'optim_ep{}'.format(k+sEp))
         torch.save(model, modelFile)
         lossLst = lossLst+lossEp
 

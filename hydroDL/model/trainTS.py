@@ -83,7 +83,7 @@ def dealNaN(dataTup, optNaN):
     return dataLst
 
 
-def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, cEp=0):
+def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, cEp=0, logFile=None):
     """[summary]    
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -123,6 +123,9 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
     t0 = time.time()
     model.train()
     model.zero_grad()
+    if logFile is not None:
+        log = open(logFile, 'a')
+
     for iEp in range(1, nEp + 1):
         lossEp = 0
         t0 = time.time()
@@ -148,7 +151,10 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
         ct = time.time() - t0
         logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp+cEp, lossEp, ct)
         print(logStr)
+        # log.write(logStr+'\n')
+        print(logStr, file=log, flush=True)
         lossEpLst.append(lossEp)
+    log.close()
     return model, optim, lossEpLst
 
 

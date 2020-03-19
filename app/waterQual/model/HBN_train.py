@@ -17,13 +17,20 @@ siteNoHBN = [siteNo for siteNo in dfHBN.index.tolist()
              if siteNo in siteNoLstAll]
 
 # wrap up data
-caseName = 'HBN-30d'
-if not waterQuality.exist(caseName):
-    wqData = waterQuality.DataModelWQ.new(caseName, siteNoHBN, rho=30)
-    ind1 = wqData.indByRatio(0.8)
-    ind2 = wqData.indByRatio(0.2, first=False)
-    wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
+if not waterQuality.exist('HBN'):
+    wqData = waterQuality.DataModelWQ.new('HBN', siteNoHBN)
+if not waterQuality.exist('HBN-30d'):
+    wqData = waterQuality.DataModelWQ.new('HBN-30d', siteNoHBN, rho=30)
+if not waterQuality.exist('HBN-5s'):
+    wqData = waterQuality.DataModelWQ.new('HBN-5s', siteNoHBN[:5])
+if not waterQuality.exist('HBN-5s-30d'):
+    wqData = waterQuality.DataModelWQ.new('HBN-5s-30d', siteNoHBN[:5], rho=30)
 
-caseName = basins.wrapMaster('HBN-30d', 'first80',
-                             batchSize=[None, 200], optQ=1, saveName='HBN-30d-opt1')
+nE = 100
+sE = 50
+caseName = basins.wrapMaster('HBN-5s', 'first80', saveEpoch=sE, nEpoch=nE,
+                             batchSize=[None, 200], optQ=1, saveName='HBN-5s-opt1')
+basins.trainModelTS(caseName)
+caseName = basins.wrapMaster('HBN-5s-30d', 'first80', saveEpoch=sE, nEpoch=nE,
+                             batchSize=[None, 200], optQ=1, saveName='HBN-5s-30d-opt1')
 basins.trainModelTS(caseName)

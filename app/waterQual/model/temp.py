@@ -1,3 +1,5 @@
+import importlib
+from hydroDL.post import figplot
 import matplotlib.pyplot as plt
 from hydroDL.master import basins
 from hydroDL.app import waterQuality
@@ -11,8 +13,11 @@ import os
 import json
 import numpy as np
 
-# sE=50
-# nE=100
+sE = 50
+nE = 100
+master = basins.wrapMaster('temp10', 'first80', saveEpoch=sE,
+                           nEpoch=nE, saveName='temp1', optQ=1)
+basins.trainModelTS(master)
 # basins.trainModelTS('temp10', 'first80', saveEpoch=sE,
 #                     nEpoch=nE, saveName='temp1', optQ=1)
 # basins.trainModelTS('temp10', 'first80', saveEpoch=sE,
@@ -73,6 +78,8 @@ lon = dfCrd['LNG_GAGE'].values
 codeSel = ['00010', '00095']
 icLst = [wqData.varC.index(code) for code in codeSel]
 codePdf = waterQuality.codePdf
+
+
 def funcMap():
     figM, axM = plt.subplots(len(codeSel), 2, figsize=(8, 6))
     for k in range(len(codeSel)):
@@ -90,7 +97,5 @@ def funcPoint(iP, axP):
         axP[j].plot(cT[indS, j], cP[indS, j], '*')
 
 
-from hydroDL.post import figplot
-import importlib
 importlib.reload(figplot)
 figplot.clickMap(funcMap, funcPoint)
