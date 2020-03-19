@@ -19,32 +19,25 @@ siteNoHBN = [siteNo for siteNo in dfHBN.index.tolist()
 # wrap up data
 if not waterQuality.exist('HBN'):
     wqData = waterQuality.DataModelWQ.new('HBN', siteNoHBN)
-wqData = waterQuality.DataModelWQ('HBN')
-ind = wqData.subset['first80']
-indRm = wqData.indByComb(['00010', '00095'])
-indTrain = np.setdiff1d(ind, indRm)
-wqData.saveSubset('first80-rm2', indTrain)
+else:
+    wqData = waterQuality.DataModelWQ('HBN')
+if 'first80-rm2' not in wqData.subset.keys():
+    ind = wqData.subset['first80']
+    indRm = wqData.indByComb(['00010', '00095'])
+    indTrain = np.setdiff1d(ind, indRm)
+    wqData.saveSubset('first80-rm2', indTrain)
 
 
+caseLst=list()
 for opt in [1, 2, 3, 4]:
     for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
         saveName = 'HBN-opt'+str(opt)+trainStr
         caseName = basins.wrapMaster('HBN', trainName, batchSize=[
                                      None, 200], optQ=opt, saveName=saveName)
+        caseLst.append(caseName)
 
+from hydroDL.master import slurm
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M'
+for caseName in caseLst:
+    slurm.submitJobGPU(saveName, cmdP.format(caseName), nH=12)
 
-# if not waterQuality.exist('HBN-30d'):
-#     wqData = waterQuality.DataModelWQ.new('HBN-30d', siteNoHBN, rho=30)
-# if not waterQuality.exist('HBN-5s'):
-#     wqData = waterQuality.DataModelWQ.new('HBN-5s', siteNoHBN[:5])
-# if not waterQuality.exist('HBN-5s-30d'):
-#     wqData = waterQuality.DataModelWQ.new('HBN-5s-30d', siteNoHBN[:5], rho=30)
-
-# nE = 100
-# sE = 50
-# caseName = basins.wrapMaster('HBN-5s', 'first80', saveEpoch=sE, nEpoch=nE,
-#                              batchSize=[None, 200], optQ=1, saveName='HBN-5s-opt1')
-# basins.trainModelTS(caseName)
-# caseName = basins.wrapMaster('HBN-5s-30d', 'first80', saveEpoch=sE, nEpoch=nE,
-#                              batchSize=[None, 200], optQ=1, saveName='HBN-5s-30d-opt1')
-# basins.trainModelTS(caseName)

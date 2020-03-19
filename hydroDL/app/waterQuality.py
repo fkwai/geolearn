@@ -105,6 +105,7 @@ class DataModelWQ():
             dictSubset = dictNew
         with open(subsetFile, 'w') as fp:
             json.dump(dictSubset, fp, indent=4)
+        self.loadSubset()
 
     def loadSubset(self):
         subsetFile = os.path.join(
