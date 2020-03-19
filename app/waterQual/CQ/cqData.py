@@ -5,16 +5,14 @@ from hydroDL.post import axplot
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 import time
 import os
 import pickle
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
-
 import importlib
 
-if False:
+if True:
     # load data - processed in slopeCal.py
     dirCQ = os.path.join(kPath.dirWQ, 'C-Q')
     fileName = os.path.join(dirCQ, 'CQall')

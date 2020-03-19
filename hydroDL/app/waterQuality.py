@@ -111,12 +111,15 @@ class DataModelWQ():
         return dictSubset
 
     def extractSubset(self, subset):
-        ind = self.subset[subset]
-        q = self.q[:, ind, :]
-        c = self.c[ind, :]
-        f = self.f[:, ind, :]
-        g = self.g[ind, :]
-        return (f, g, q, c)
+        if subset is not None:
+            ind = self.subset[subset]
+            q = self.q[:, ind, :]
+            c = self.c[ind, :]
+            f = self.f[:, ind, :]
+            g = self.g[ind, :]
+            return (f, g, q, c)
+        else:
+            return (self.f, self.g, self.q, self.c)
 
     def transIn(self, subset=None, optQ=1):
         # normalize data in
@@ -175,6 +178,25 @@ class DataModelWQ():
         tabComb = pd.DataFrame.from_dict(dictSum, orient='index')
         tabComb = tabComb.sort_values(0, ascending=False)
         return tabComb
+
+    def calStatC(self, ycP, subset=None):
+        obsLst = self.extractSubset(subset=subset)
+        ycT = obsLst[3]
+        info = self.info.loc[self.subset[subset].tolist()].reset_index()
+        siteNoLst = self.info.siteNo.unique()
+        nc = ycT.shape[-1]
+        statMat = np.full([len(siteNoLst), nc, 2], np.nan)
+        for i, siteNo in enumerate(siteNoLst):
+            indS = info[info['siteNo'] == siteNo].index.values
+            for k in range(nc):
+                a = ycT[indS, k]
+                b = ycP[indS, k]
+                indV = np.where(~np.isnan(a))
+                rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
+                corr = np.corrcoef(a[indV], b[indV])[0, 1]
+                statMat[i, k, 0] = rmse
+                statMat[i, k, 1] = corr
+        return statMat
 
 
 def exist(caseName):

@@ -4,26 +4,16 @@ from hydroDL.app import waterQuality
 from hydroDL import kPath
 from hydroDL.model import trainTS
 from hydroDL.data import gageII
-from hydroDL.post import axplot
+from hydroDL.post import axplot,figplot
 
 import torch
 import os
 import json
 import numpy as np
 
-# sE=50
-# nE=100
-# basins.trainModelTS('temp10', 'first80', saveEpoch=sE,
-#                     nEpoch=nE, saveName='temp1', optQ=1)
-# basins.trainModelTS('temp10', 'first80', saveEpoch=sE,
-#                     nEpoch=nE, saveName='temp2', optQ=2)
-# basins.trainModelTS('temp10', 'first80', saveEpoch=sE,
-#                     nEpoch=nE, saveName='temp3', optQ=3)
-# basins.trainModelTS('temp10', 'first80', saveEpoch=sE,
-#                     nEpoch=nE, saveName='temp4', optQ=4)
 
 # load master
-modelName = 'temp1'
+modelName = 'HBN_opt1'
 modelFolder = os.path.join(kPath.dirWQ, 'model', modelName)
 masterFile = os.path.join(modelFolder, 'master.json')
 with open(masterFile, 'r') as fp:
@@ -36,23 +26,20 @@ statXC = dictStat['statXC']
 statY = dictStat['statY']
 statYC = dictStat['statYC']
 
-
-# load data
-testset = 'first80'
-wqData = waterQuality.DataModelWQ(master['dataName'])
-dataLst, statLst = wqData.transIn(subset='first80', optQ=master['optQ'])
-
 # load model
-nEpoch = 100
+nEpoch = 500
 modelFile = os.path.join(modelFolder, 'model_ep{}'.format(nEpoch))
 model = torch.load(modelFile)
+
+# load test data
+testset = 'last20'
+wqData = waterQuality.DataModelWQ(master['dataName'])
+dataLst, statLst = wqData.transIn(subset='first80', optQ=master['optQ'])
 sizeLst = trainTS.getSize(dataLst)
 dataLst = trainTS.dealNaN(dataLst, master['optNan'])
 x = dataLst[0]
 xc = dataLst[1]
 ny = sizeLst[2]
-
-# np.where(np.isnan(dataLst[0]))
 
 # test model - point by point
 yOut, ycOut = trainTS.testModel(model, x, xc, ny)
@@ -69,8 +56,8 @@ dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
 lat = dfCrd['LAT_GAGE'].values
 lon = dfCrd['LNG_GAGE'].values
-# codeSel = ['00955', '00940', '00915']
-codeSel = ['00010', '00095']
+codeSel = ['00955', '00940', '00915']
+# codeSel = ['00010', '00095']
 icLst = [wqData.varC.index(code) for code in codeSel]
 codePdf = waterQuality.codePdf
 def funcMap():
@@ -89,8 +76,4 @@ def funcPoint(iP, axP):
         indS = info[info['siteNo'] == siteNo].index.values
         axP[j].plot(cT[indS, j], cP[indS, j], '*')
 
-
-from hydroDL.post import figplot
-import importlib
-importlib.reload(figplot)
 figplot.clickMap(funcMap, funcPoint)
