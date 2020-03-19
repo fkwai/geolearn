@@ -19,18 +19,24 @@ siteNoHBN = [siteNo for siteNo in dfHBN.index.tolist()
 # wrap up data
 if not waterQuality.exist('HBN'):
     wqData = waterQuality.DataModelWQ.new('HBN', siteNoHBN)
-if not waterQuality.exist('HBN-30d'):
-    wqData = waterQuality.DataModelWQ.new('HBN-30d', siteNoHBN, rho=30)
-if not waterQuality.exist('HBN-5s'):
-    wqData = waterQuality.DataModelWQ.new('HBN-5s', siteNoHBN[:5])
-if not waterQuality.exist('HBN-5s-30d'):
-    wqData = waterQuality.DataModelWQ.new('HBN-5s-30d', siteNoHBN[:5], rho=30)
+wqData = waterQuality.DataModelWQ('HBN')
+ind = wqData.subset['first80']
+indRm = wqData.indByComb(['00010', '00095'])
+indTrain = np.setdiff1d(ind, indRm)
+wqData.saveSubset('first80-rm2', indTrain)
 
-nE = 100
-sE = 50
-caseName = basins.wrapMaster('HBN-5s', 'first80', saveEpoch=sE, nEpoch=nE,
-                             batchSize=[None, 200], optQ=1, saveName='HBN-5s-opt1')
-basins.trainModelTS(caseName)
-caseName = basins.wrapMaster('HBN-5s-30d', 'first80', saveEpoch=sE, nEpoch=nE,
-                             batchSize=[None, 200], optQ=1, saveName='HBN-5s-30d-opt1')
-basins.trainModelTS(caseName)
+# if not waterQuality.exist('HBN-30d'):
+#     wqData = waterQuality.DataModelWQ.new('HBN-30d', siteNoHBN, rho=30)
+# if not waterQuality.exist('HBN-5s'):
+#     wqData = waterQuality.DataModelWQ.new('HBN-5s', siteNoHBN[:5])
+# if not waterQuality.exist('HBN-5s-30d'):
+#     wqData = waterQuality.DataModelWQ.new('HBN-5s-30d', siteNoHBN[:5], rho=30)
+
+# nE = 100
+# sE = 50
+# caseName = basins.wrapMaster('HBN-5s', 'first80', saveEpoch=sE, nEpoch=nE,
+#                              batchSize=[None, 200], optQ=1, saveName='HBN-5s-opt1')
+# basins.trainModelTS(caseName)
+# caseName = basins.wrapMaster('HBN-5s-30d', 'first80', saveEpoch=sE, nEpoch=nE,
+#                              batchSize=[None, 200], optQ=1, saveName='HBN-5s-30d-opt1')
+# basins.trainModelTS(caseName)

@@ -87,6 +87,10 @@ class DataModelWQ():
         return indRm
 
     def saveSubset(self, nameLst, indLst):
+        if type(nameLst) is not list:
+            nameLst=[nameLst]
+        if type(indLst) is not list:
+            indLst=[indLst]
         dictNew = dict(zip(nameLst, indLst))
         # save to a subset file
         subsetFile = os.path.join(
