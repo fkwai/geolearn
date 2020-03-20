@@ -57,7 +57,7 @@ class DataModelWQ():
                  nFill=nFill, varC=varC, varG=varG)
         wqData = cls(caseName)
         ind1 = wqData.indByRatio(0.8)
-        ind2 = wqData.indByRatio(0.2, first=False)
+        ind2 = wqData.indByRatio(0.8, first=False)
         wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
         return wqData
 
@@ -88,9 +88,9 @@ class DataModelWQ():
 
     def saveSubset(self, nameLst, indLst):
         if type(nameLst) is not list:
-            nameLst=[nameLst]
+            nameLst = [nameLst]
         if type(indLst) is not list:
-            indLst=[indLst]
+            indLst = [indLst]
         dictNew = dict(zip(nameLst, indLst))
         # save to a subset file
         subsetFile = os.path.join(
@@ -130,29 +130,40 @@ class DataModelWQ():
         else:
             return (self.f, self.g, self.q, self.c)
 
-    def transIn(self, subset=None, optQ=1):
+    def extractSubsetInfo(self, subset):
+        info = self.info.loc[self.subset[subset].tolist()].reset_index()
+        return info
+
+    def transIn(self, statTup=None, subset=None, optQ=1):
         # normalize data in
         if subset is None:
-            (f, g, q, c) = (self.f, self.g, self.q, self.c)
+            dataTup = (self.f, self.g, self.q, self.c)
         else:
-            (f, g, q, c) = self.extractSubset(subset)
+            dataTup = self.extractSubset(subset)
         t0 = time.time()
-        x, statX = transform.transInAll(
-            f, [gridMET.dictStat[var] for var in self.varF])
-        t1 = time.time()-t0
-        xc, statXC = transform.transInAll(
-            g, [gageII.dictStat[var] for var in self.varG])
-        t2 = time.time()-t0
-        y, statY = transform.transInAll(
-            q, [usgs.dictStat[var] for var in self.varQ])
-        t3 = time.time()-t0
-        yc, statYC = transform.transInAll(
-            c, [usgs.dictStat[var] for var in self.varC])
-        t4 = time.time()-t0
-        print('transform in x->{:.3f} xc->{:.3f} y->{:.3f} yc->{:.3f}'.format(
-            t1, t2, t3, t4))
-        dataLst, statLst = buildInput(
-            (x, xc, y, yc), (statX, statXC, statY, statYC), optQ)
+        mtdTup = ([gridMET.dictStat[var] for var in self.varF],
+                  [gageII.dictStat[var] for var in self.varG],
+                  [usgs.dictStat[var] for var in self.varQ],
+                  [usgs.dictStat[var] for var in self.varC]
+                  )
+        outDataLst = list()
+        tLst = list()
+        if statTup is None:
+            outStatLst = list()
+            for (data, mtd) in zip(dataTup, mtdTup):
+                outData, outStat = transform.transInAll(data, mtd)
+                outDataLst.append(outData)
+                outStatLst.append(outStat)
+                tLst.append(time.time()-t0)
+        else:
+            outStatLst = list(statTup)
+            for (data, mtd, stat) in zip(dataTup, mtdTup, statTup):
+                outData = transform.transInAll(data, mtd, statLst=stat)
+                outDataLst.append(outData)
+                tLst.append(time.time()-t0)
+        print(
+            'transform time x->{:.3f} xc->{:.3f} y->{:.3f} yc->{:.3f}'.format(*tLst))
+        dataLst, statLst = buildInput(outDataLst, outStatLst, optQ)
         return dataLst, statLst
 
     def transOut(self, y, yc, statY, statYC):
@@ -188,7 +199,7 @@ class DataModelWQ():
         tabComb = tabComb.sort_values(0, ascending=False)
         return tabComb
 
-    def calStatC(self, ycP, subset=None):
+    def errBySite(self, ycP, subset=None):
         obsLst = self.extractSubset(subset=subset)
         ycT = obsLst[3]
         info = self.info.loc[self.subset[subset].tolist()].reset_index()
