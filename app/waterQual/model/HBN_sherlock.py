@@ -33,7 +33,7 @@ for opt in [1, 2, 3, 4]:
     for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
         saveName = 'HBN-opt'+str(opt)+trainStr
         caseName = basins.wrapMaster('HBN', trainName, batchSize=[
-                                     None, 200], optQ=opt, saveName=saveName)
+                                     None, 200], optQ=opt, outName=saveName)
         caseLst.append(caseName)
 
 from hydroDL.master import slurm
