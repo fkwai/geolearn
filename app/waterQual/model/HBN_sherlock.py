@@ -37,7 +37,7 @@ for opt in [1, 2, 3, 4]:
         caseLst.append(caseName)
 
 from hydroDL.master import slurm
-cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M'
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
-    slurm.submitJobGPU(saveName, cmdP.format(caseName), nH=12)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=4)
 
