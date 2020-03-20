@@ -49,9 +49,9 @@ def transInAll(data, mtdLst, statLst=None):
     indLog = [i for i, mtd in enumerate(mtdLst) if mtd.split('-')[0] == 'log']
     data[..., indLog] = np.log(data[..., indLog]+1)
     # calculate stat
-    statLst = list()
     vS = np.ndarray([data.shape[-1], 2])
     if noStat:
+        statLst = list()
         for i, mtd in enumerate(mtdLst):
             temp = mtd.split('-')
             if temp[-1] == 'norm':

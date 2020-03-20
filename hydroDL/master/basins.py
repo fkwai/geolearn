@@ -12,57 +12,102 @@ from hydroDL.app import waterQuality
 from hydroDL.model import rnn, crit, trainTS
 
 
-def wrapMaster(dataName, trainName, saveName=None, modelName='CudnnLSTM',
+def nameFolder(outName):
+    outFolder = os.path.join(kPath.dirWQ, 'model', outName)
+    return outFolder
+
+
+def wrapMaster(dataName, trainName, outName=None, modelName='CudnnLSTM',
                hiddenSize=256, batchSize=[365, 100], nEpoch=500, saveEpoch=100, resumeEpoch=0,
                optNaN=[1, 1, 0, 0], optQ=1, overwrite=True):
     # default parameters
-    dictPar = dict(dataName=dataName, trainName=trainName, saveName=saveName, modelName=modelName,
+    dictPar = dict(dataName=dataName, trainName=trainName, outName=outName, modelName=modelName,
                    hiddenSize=hiddenSize, batchSize=batchSize,
                    nEpoch=nEpoch, saveEpoch=saveEpoch, resumeEpoch=resumeEpoch,
                    optNaN=optNaN, optQ=optQ)
 
     # create model folder
-    if saveName is None:
-        saveName = dataName+'_'+trainName
-    saveFolder = os.path.join(kPath.dirWQ, 'model', saveName)
-    if os.path.exists(saveFolder):
+    if outName is None:
+        outName = dataName+'_'+trainName
+    outFolder = nameFolder(outName)
+    if os.path.exists(outFolder):
         if overwrite is False:
-            saveName = saveFolder+'_'+date.today().strftime("%Y%m%d")
-            saveFolder = os.path.join(kPath.dirWQ, 'model', saveName)
-            if os.path.exists(saveFolder):
-                print('overwrite in folder: '+saveName)
+            outName = outFolder+'_'+date.today().strftime("%Y%m%d")
+            outFolder = os.path.join(kPath.dirWQ, 'model', outName)
+            if os.path.exists(outFolder):
+                print('overwrite in folder: '+outName)
             else:
-                os.mkdir(saveFolder)
+                os.mkdir(outFolder)
     else:
-        os.mkdir(saveFolder)
-    dictPar['saveName'] = saveName
-    with open(os.path.join(saveFolder, 'master.json'), 'w') as fp:
+        os.mkdir(outFolder)
+    dictPar['outName'] = outName
+    with open(os.path.join(outFolder, 'master.json'), 'w') as fp:
         json.dump(dictPar, fp)
-    return saveName
+    return outName
 
 
-def loadMaster(saveName):
-    modelFolder = os.path.join(kPath.dirWQ, 'model', saveName)
+def loadMaster(outName):
+    modelFolder = os.path.join(kPath.dirWQ, 'model', outName)
     masterFile = os.path.join(modelFolder, 'master.json')
     with open(masterFile, 'r') as fp:
         master = json.load(fp)
     return master
 
 
-def trainModelTS(saveName):
-    saveFolder = os.path.join(kPath.dirWQ, 'model', saveName)
-    dictP = loadMaster(saveName)
+def wrapStat(outName, statTup):
+    outFolder = nameFolder(outName)
+    dictStat = dict(statX=statTup[0], statXC=statTup[1],
+                    statY=statTup[2], statYC=statTup[3])
+    with open(os.path.join(outFolder, 'stat.json'), 'w') as fp:
+        json.dump(dictStat, fp)
+
+
+def loadStat(outName):
+    outFolder = nameFolder(outName)
+    statFile = os.path.join(outFolder, 'stat.json')
+    with open(statFile, 'r') as fp:
+        dictStat = json.load(fp)
+        statX = dictStat['statX']
+        statXC = dictStat['statXC']
+        statY = dictStat['statY']
+        statYC = dictStat['statYC']
+    return statX, statXC, statY, statYC
+
+
+def loadModel(outName, ep=None, opt=False):
+    outFolder = nameFolder(outName)
+    if ep is None:
+        mDict = loadMaster(outName)
+        ep = mDict['nEpoch']
+    modelFile = os.path.join(outFolder, 'model_ep{}'.format(ep))
+    model = torch.load(modelFile)
+    if opt:
+        optFile = os.path.join(outFolder, 'optim_ep{}'.format(k+sEp))
+        optim = torch.load(optFile)
+        return model, optim
+    else:
+        return model
+
+
+def saveModel(outName, ep, model, optim=None):
+    outFolder = nameFolder(outName)
+    modelFile = os.path.join(outFolder, 'model_ep{}'.format(ep))
+    torch.save(model, modelFile)
+    if optim is not None:
+        optFile = os.path.join(outFolder, 'optim_ep{}'.format(ep))
+        torch.save(optim, optFile)
+
+
+def trainModelTS(outName):
+    outFolder = nameFolder(outName)
+    dictP = loadMaster(outName)
 
     # load data
     wqData = waterQuality.DataModelWQ(dictP['dataName'])
     dataTup, statTup = wqData.transIn(
         subset=dictP['trainName'], optQ=dictP['optQ'])
     dataTup = trainTS.dealNaN(dataTup, dictP['optNaN'])
-
-    dictStat = dict(statX=statTup[0], statXC=statTup[1],
-                    statY=statTup[2], statYC=statTup[3])
-    with open(os.path.join(saveFolder, 'stat.json'), 'w') as fp:
-        json.dump(dictStat, fp)
+    wrapStat(outName, statTup)
 
     # train model
     [nx, nxc, ny, nyc, nt, ns] = trainTS.getSize(dataTup)
@@ -77,7 +122,7 @@ def trainModelTS(saveName):
     lossLst = list()
     nEp = dictP['nEpoch']
     sEp = dictP['saveEpoch']
-    logFile = os.path.join(saveFolder, 'log')
+    logFile = os.path.join(outFolder, 'log')
     if os.path.exists(logFile):
         os.remove(logFile)
     for k in range(0, nEp, sEp):
@@ -85,11 +130,32 @@ def trainModelTS(saveName):
             dataTup, model, lossFun, optim, batchSize=dictP['batchSize'],
             nEp=sEp, cEp=k, logFile=logFile)
         # save model
-        modelFile = os.path.join(saveFolder, 'model_ep{}'.format(k+sEp))
-        torch.save(model, modelFile)
-        modelFile = os.path.join(saveFolder, 'optim_ep{}'.format(k+sEp))
-        torch.save(model, modelFile)
+        saveModel(outName, k+sEp, model, optim=optim)
         lossLst = lossLst+lossEp
 
-    lossFile = os.path.join(saveFolder, 'loss.csv')
+    lossFile = os.path.join(outFolder, 'loss.csv')
     pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
+
+
+def testModel(outName, testset, wqData=None):
+    # load master
+    master = loadMaster(outName)
+    statTup = loadStat(outName)
+    model = loadModel(outName)
+
+    # load test data
+    wqData = waterQuality.DataModelWQ(master['dataName'])
+    testDataLst, testStatLst = wqData.transIn(
+        subset=testset, statTup=statTup, optQ=master['optQ'])
+    sizeLst = trainTS.getSize(testDataLst)
+    testDataLst = trainTS.dealNaN(testDataLst, master['optNaN'])
+    x = testDataLst[0]
+    xc = testDataLst[1]
+    ny = sizeLst[2]
+
+    # test model - point by point
+    yOut, ycOut = trainTS.testModel(model, x, xc, ny)
+    qP, cP = wqData.transOut(yOut, ycOut, testStatLst[2], testStatLst[3])
+    obsLst = wqData.extractSubset(testset)
+    qT, cT = obsLst[2:]
+    return cP, cT
