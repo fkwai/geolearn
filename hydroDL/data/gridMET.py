@@ -28,7 +28,7 @@ def readNcData(file):
     return data
 
 
-def readBasin(siteNo):
+def readBasin(siteNo, varLst=varLst):
     """read basin averaged forcing data, plenty of work is done before. See:
     app\waterQual\data\gridMetExtract.py
     app\waterQual\data\gridMetFromRaw.py
