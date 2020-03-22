@@ -6,10 +6,6 @@ import json
 from hydroDL import kPath
 from hydroDL.data import usgs, gageII, gridMET, transform
 
-fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
-codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
-codeLst = list(codePdf.index)
-
 
 class DataModelWQ():
     def __init__(self, caseName):
@@ -51,7 +47,7 @@ class DataModelWQ():
         print('loading info {}'.format(time.time()-t0))
 
     @classmethod
-    def new(cls, caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.lstWaterQuality):
+    def new(cls, caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):
         print('creating data class')
         wrapData(caseName, siteNoLst, rho=rho,
                  nFill=nFill, varC=varC, varG=varG)
@@ -60,6 +56,61 @@ class DataModelWQ():
         ind2 = wqData.indByRatio(0.8, first=False)
         wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
         return wqData
+
+    def extractData(self, varTup=None, subset=None):
+        dataTup = self.extractVar(varTup)
+        dataTup = self.extractSubset(subset, dataTup=dataTup)
+        return dataTup
+
+    def extractVar(self, varTup=None):
+        if varTup is None:
+            varTup = (self.varF, self.varG, self.varQ, self.varC)
+        (varX, varXC, varY, varYC) = varTup
+        x = self.extractVarT(varX) if varX is not None else None
+        xc = self.extractVarC(varXC) if varXC is not None else None
+        y = self.extractVarT(varY) if varY is not None else None
+        yc = self.extractVarC(varYC) if varYC is not None else None
+        return (x, xc, y, yc)
+
+    def extractVarMtd(self, varLst):
+        mtdLst = list()
+        if varLst is None:
+            mtdLst = None
+        else:
+            for var in varLst:
+                if var in gridMET.dictStat.keys():
+                    mtd = gridMET.dictStat[var]
+                elif var in gageII.dictStat.keys():
+                    mtd = gageII.dictStat[var]
+                elif var in usgs.dictStat.keys():
+                    mtd = usgs.dictStat[var]
+                mtdLst.append(mtd)
+        return mtdLst
+
+    def extractVarT(self, varLst):
+        temp = list()
+        for var in varLst:
+            if var in self.varQ:
+                temp.append(self.q[:, :, 0])
+            elif var in self.varF:
+                ind = self.varF.index(var)
+                temp.append(self.f[:, :, ind])
+            else:
+                raise Exception('Variable {} not found!'.format(var))
+        return (np.stack(temp, axis=2))
+
+    def extractVarC(self, varLst):
+        temp = list()
+        for var in varLst:
+            if var in self.varC:
+                ind = self.varC.index(var)
+                temp.append(self.c[:, ind])
+            elif var in self.varG:
+                ind = self.varG.index(var)
+                temp.append(self.g[:, ind])
+            else:
+                raise Exception('Variable {} not found!'.format(var))
+        return (np.stack(temp, axis=1))
 
     def indByRatio(self, ratio, first=True):
         # devide training and testing - last 20% as testing
@@ -119,73 +170,72 @@ class DataModelWQ():
             dictSubset = None
         return dictSubset
 
-    def extractSubset(self, subset):
+    def extractSubset(self, subset, dataTup=None):
+        if dataTup is None:
+            dataTup = (self.f, self.g, self.q, self.c)
         if subset is not None:
             ind = self.subset[subset]
-            q = self.q[:, ind, :]
-            c = self.c[ind, :]
-            f = self.f[:, ind, :]
-            g = self.g[ind, :]
-            return (f, g, q, c)
+            outLst = list()
+            for data in dataTup:
+                if data is None:
+                    out = None
+                elif data.ndim == 3:
+                    out = data[:, ind, :]
+                elif data.ndim == 2:
+                    out = data[ind, :]
+                outLst.append(out)
+            return tuple(outLst)
         else:
-            return (self.f, self.g, self.q, self.c)
+            return dataTup
 
-    def extractSubsetInfo(self, subset):
+    def subsetInfo(self, subset):
         info = self.info.loc[self.subset[subset].tolist()].reset_index()
         return info
 
-    def transIn(self, statTup=None, subset=None, optQ=1):
+    def transIn(self, statTup=None, subset=None, varTup=None):
         # normalize data in
-        if subset is None:
-            dataTup = (self.f, self.g, self.q, self.c)
-        else:
-            dataTup = self.extractSubset(subset)
+        dataTup = self.extractData(varTup=varTup, subset=subset)
         t0 = time.time()
-        mtdTup = ([gridMET.dictStat[var] for var in self.varF],
-                  [gageII.dictStat[var] for var in self.varG],
-                  [usgs.dictStat[var] for var in self.varQ],
-                  [usgs.dictStat[var] for var in self.varC]
-                  )
-        outDataLst = list()
-        tLst = list()
         if statTup is None:
-            outStatLst = list()
-            for (data, mtd) in zip(dataTup, mtdTup):
-                outData, outStat = transform.transInAll(data, mtd)
+            [outDataLst, outStatLst] = [list(), list()]
+            for (data, var) in zip(dataTup, varTup):
+                if data is not None:
+                    mtd = self.extractVarMtd(var)
+                    outData, outStat = transform.transInAll(data, mtd)
+                else:
+                    (outData, outStat) = (None, None)
                 outDataLst.append(outData)
                 outStatLst.append(outStat)
-                tLst.append(time.time()-t0)
+            print('transform time {:.3f}'.format(time.time()-t0))
+            return outDataLst, outStatLst
         else:
-            outStatLst = list(statTup)
-            for (data, mtd, stat) in zip(dataTup, mtdTup, statTup):
-                outData = transform.transInAll(data, mtd, statLst=stat)
+            outDataLst = list()
+            for (data, var, stat) in zip(dataTup, varTup, statTup):
+                if data is not None:
+                    mtd = self.extractVarMtd(var)
+                    outData = transform.transInAll(data, mtd, statLst=stat)
+                else:
+                    outData = None
                 outDataLst.append(outData)
-                tLst.append(time.time()-t0)
-        print(
-            'transform time x->{:.3f} xc->{:.3f} y->{:.3f} yc->{:.3f}'.format(*tLst))
-        dataLst, statLst = buildInput(outDataLst, outStatLst, optQ)
-        return dataLst, statLst
+            print('transform time {:.3f}'.format(time.time()-t0))
+            return outDataLst
 
-    def transOut(self, y, yc, statY, statYC):
+    def transOut(self, data, stat, var):
+        mtd = self.extractVarMtd(var)
         # normalize data out
         t0 = time.time()
-        if y.shape[-1] == 0:
-            outY = None
+        if data.shape[-1] == 0:
+            out = None
         else:
-            outY = transform.transOutAll(
-                y, [usgs.dictStat[var] for var in self.varQ],  statY)
+            out = transform.transOutAll(
+                data, mtd,  stat)
         t1 = time.time()-t0
-        if yc.shape[-1] == 0:
-            outYC = None
-        else:
-            outYC = transform.transOutAll(
-                yc, [usgs.dictStat[var] for var in self.varC], statYC)
-        t2 = time.time()-t0
-        print('transform out y->{:.3f} yc->{:.3f}'.format(t1, t2))
-        return outY, outYC
+        print('transform out {}'.format(time.time()-t0))
+        return out
 
     def calComb(self):
         # calculate the combinations - could improve effeciency later
+        codeLst = self.varC
         t0 = time.time()
         dictSum = dict()
         iR, iC = np.where(~np.isnan(self.c))
@@ -229,33 +279,9 @@ def exist(caseName):
         return False
 
 
-def buildInput(dataLst, statLst, optInput):
-    (f, xc, q, yc) = dataLst
-    (sF, sXC, sQ, sYC) = statLst
-    if optInput == 1:
-        x = f
-        sX = sF
-        y = q
-        sY = sQ
-    elif optInput == 2:
-        x = np.concatenate([q, f], axis=2)
-        sX = sQ+sF
-        y = None
-        sY = None
-    elif optInput == 3:
-        x = f
-        sX = sF
-        y = None
-        sY = None
-    elif optInput == 4:
-        x = q
-        sX = sQ
-        y = None
-        sY = None
-    return (x, xc, y, yc), (sX, sXC, sY, sYC)
 
 
-def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.lstWaterQuality):
+def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):
     """ wrap up input and target data for the model,as:
     x=[nT,nP,nX]
     y=[nP,nY]
@@ -319,7 +345,8 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=codeLst, varG=gageII.ls
     np.savez(saveName, q=q, f=f, c=c, g=g)
     infoDf.to_csv(saveName+'.csv')
     dictData = dict(name=caseName, rho=rho, nFill=nFill,
-                    varG=varG, varC=varC, siteNoLst=siteNoLst)
+                    varG=varG, varC=varC, varQ=['00060'], varF=gridMET.varLst,
+                    siteNoLst=siteNoLst)
     with open(saveName+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)
 

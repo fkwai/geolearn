@@ -1,6 +1,14 @@
 from .read import *
 from .download import *
+from hydroDL import kPath
+import os
+import pandas as pd
 
+fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
+codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
+codeLst = list(codePdf.index)
+varC = codeLst
+varQ = ['00060']
 
 dictStat = {
     '00010': 'norm',

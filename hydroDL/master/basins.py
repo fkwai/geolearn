@@ -104,8 +104,9 @@ def trainModelTS(outName):
 
     # load data
     wqData = waterQuality.DataModelWQ(dictP['dataName'])
+    varTup = (dictP['varX'], dictP['varXC'], dictP['varY'], dictP['varYC'])
     dataTup, statTup = wqData.transIn(
-        subset=dictP['trainName'], optQ=dictP['optQ'])
+        subset=dictP['trainName'], varTup=varTup)
     dataTup = trainTS.dealNaN(dataTup, dictP['optNaN'])
     wrapStat(outName, statTup)
 
@@ -145,8 +146,10 @@ def testModel(outName, testset, wqData=None):
 
     # load test data
     wqData = waterQuality.DataModelWQ(master['dataName'])
-    testDataLst, testStatLst = wqData.transIn(
-        subset=testset, statTup=statTup, optQ=master['optQ'])
+    varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
+
+    testDataLst = wqData.transIn(
+        subset=testset, statTup=statTup, varTup=varTup)
     sizeLst = trainTS.getSize(testDataLst)
     testDataLst = trainTS.dealNaN(testDataLst, master['optNaN'])
     x = testDataLst[0]
@@ -155,7 +158,8 @@ def testModel(outName, testset, wqData=None):
 
     # test model - point by point
     yOut, ycOut = trainTS.testModel(model, x, xc, ny)
-    qP, cP = wqData.transOut(yOut, ycOut, testStatLst[2], testStatLst[3])
+    qP = wqData.transOut(yOut, statTup[2], master['varY'])
+    cP = wqData.transOut(ycOut, statTup[3], master['varYC'])
     obsLst = wqData.extractSubset(testset)
     qT, cT = obsLst[2:]
     return cP, cT

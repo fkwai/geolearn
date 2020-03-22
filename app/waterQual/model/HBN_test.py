@@ -2,7 +2,7 @@ from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath
 from hydroDL.model import trainTS
-from hydroDL.data import gageII
+from hydroDL.data import gageII, usgs
 from hydroDL.post import axplot, figplot
 
 import torch
@@ -11,23 +11,50 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
+# master = basins.loadMaster('HBN-opt2')
+# wqData = waterQuality.DataModelWQ(master['dataName'])
+# p1, o1 = basins.testModel('HBN-first50-opt2', 'first50', wqData=wqData)
 
-outName = 'HBN-opt1'
-trainSet = 'first80'
-testSet = 'last20'
+# outLst = ['HBN-opt1', 'HBN-opt2', 'HBN-opt3', 'HBN-opt4']
+# trainSet = 'first80'
+# testSet = 'last20'
+# outLst = ['HBN-first50-opt1', 'HBN-first50-opt2',
+#           'HBN-first50-opt3', 'HBN-first50-opt4']
+outLst = ['HBN-first50-opt1', 'HBN-first50-opt2']
+trainSet = 'first50'
+testSet = 'last50'
 
-master = basins.loadMaster(outName)
+pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]
+master = basins.loadMaster('HBN-opt1')
 wqData = waterQuality.DataModelWQ(master['dataName'])
-p1, o1 = basins.testModel(outName, trainSet, wqData=wqData)
-p2, o2 = basins.testModel(outName, testSet, wqData=wqData)
+for outName in outLst:
+    p1, o1 = basins.testModel(outName, trainSet, wqData=wqData)
+    p2, o2 = basins.testModel(outName, testSet, wqData=wqData)
+    errMat1 = wqData.errBySite(p1, subset=trainSet)
+    errMat2 = wqData.errBySite(p2, subset=testSet)
+    pLst1.append(p1)
+    pLst2.append(p2)
+    errMatLst1.append(errMat1)
+    errMatLst2.append(errMat2)
 
-errMat1 = wqData.errBySite(p1, subset=trainSet)
-errMat2 = wqData.errBySite(p2, subset=testSet)
 
 # box plot
+codePdf = usgs.codePdf
+groupLst = codePdf.group.unique().tolist()
+for group in groupLst:
+    codeLst = codePdf[codePdf.group == group].index.tolist()
+    indLst = [wqData.varC.index(code) for code in codeLst]
+    labLst = [codePdf.loc[code]['shortName']+'\n'+code for code in codeLst]
+    dataBox = list()
+    for ic in indLst:
+        temp = list()
+        for errMat in errMatLst2:
+            temp.append(errMat[:, ic, 1])
+        dataBox.append(temp)
+    fig = figplot.boxPlot(dataBox, label1=labLst)
+    fig.show()
 
-
-# plot
+ # plot
 # get location
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 dfCrd = gageII.readData(
@@ -36,7 +63,7 @@ lat = dfCrd['LAT_GAGE'].values
 lon = dfCrd['LNG_GAGE'].values
 codeSel = ['00955', '00940', '00915']
 icLst = [wqData.varC.index(code) for code in codeSel]
-codePdf = waterQuality.codePdf
+codePdf = usgs.codePdf
 
 
 def funcMap():

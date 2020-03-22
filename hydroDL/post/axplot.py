@@ -25,12 +25,13 @@ def mapPoint(ax, lat, lon, data, title=None, vRange=None, cmap=plt.cm.jet, s=30,
     return mm
 
 
-def plotTS(ax, t, y, *, tBar=None, cLst='rbkgcmy', legLst=None, title=None, ylabel=None):
+def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, title=None, ylabel=None):
     y = y if type(y) is list else [y]
     for k in range(len(y)):
         yy = y[k]
+        sty = '--*' if styLst is None else styLst[k]
         legStr = None if legLst is None else legLst[k]
-        ax.plot(t, yy, color=cLst[k], label=legStr, marker='*')
+        ax.plot(t, yy, sty, color=cLst[k], label=legStr)
         if ylabel is not None:
             ax.set_ylabel(ylabel)
     if tBar is not None:
