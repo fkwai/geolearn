@@ -1,6 +1,7 @@
+from hydroDL.master import slurm
 from hydroDL import kPath
 from hydroDL.app import waterQuality
-from hydroDL.data import gageII
+from hydroDL.data import gageII, usgs, gridMET
 from hydroDL.master import basins
 
 import pandas as pd
@@ -33,7 +34,7 @@ if 'first50' not in wqData.subset.keys():
     wqData.saveSubset(['first50', 'last50'], [ind1, ind2])
 
 
-caseLst=list()
+caseLst = list()
 # for opt in [1, 2, 3, 4]:
 #     for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
 #         saveName = 'HBN-opt'+str(opt)+trainStr
@@ -41,14 +42,39 @@ caseLst=list()
 #                                      None, 200], optQ=opt, outName=saveName)
 #         caseLst.append(caseName)
 
-for opt in [1, 2, 3, 4]:
-    saveName = 'HBN-first50-opt'+str(opt)
-    caseName = basins.wrapMaster('HBN', 'first50', batchSize=[
-                                    None, 200], optQ=opt, outName=saveName)
+# predict q only
+caseLst = list()
+saveName = 'HBN-first50-q'
+caseName = basins.wrapMaster(
+    dataName='HBN', trainName='first50', batchSize=[None, 200],
+    outName=saveName, varYC=None)
+caseLst.append(caseName)
+
+caseLst = list()
+saveName = 'HBN-first80-q'
+caseName = basins.wrapMaster(
+    dataName='HBN', trainName='first80', batchSize=[None, 200],
+    outName=saveName, varYC=None)
+caseLst.append(caseName)
+
+codePdf = usgs.codePdf
+groupLst = codePdf.group.unique().tolist()
+for group in groupLst[1:]:
+    # predict a group of c only
+    codeLst = codePdf[codePdf.group == group].index.tolist()
+    saveName = 'HBN-first50-opt1-'+group
+    caseName = basins.wrapMaster(
+        dataName='HBN', trainName='first50', batchSize=[None, 200],
+        outName=saveName, varYC=codeLst)
+    caseLst.append(caseName)
+
+    saveName = 'HBN-first50-opt2-'+group
+    caseName = basins.wrapMaster(
+        dataName='HBN', trainName='first50', batchSize=[None, 200],
+        outName=saveName, varYC=codeLst, varX=usgs.varQ+gridMET.varLst)
     caseLst.append(caseName)
 
 
-from hydroDL.master import slurm
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
     slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=4)

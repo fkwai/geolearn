@@ -28,8 +28,8 @@ class DataModelWQ():
         self.nFill = dictData['nFill']
         self.varG = dictData['varG']
         self.varC = dictData['varC']
-        self.varQ = ['00060']
-        self.varF = gridMET.varLst
+        self.varQ = ['00060']  # delete later
+        self.varF = gridMET.varLst  # delete later
         self.info = pd.read_csv(
             saveName+'.csv', index_col=0, dtype={'siteNo': str})
         self.subset = self.loadSubset()
@@ -277,8 +277,6 @@ def exist(caseName):
         return True
     else:
         return False
-
-
 
 
 def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):

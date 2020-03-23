@@ -21,10 +21,33 @@ wqData = waterQuality.DataModelWQ('HBN')
 varX = usgs.varQ+gridMET.varLst
 
 
-varF = gridMET.varLst
+varF = gridMET.varLst+['00060']
 varG = wqData.varG
 varQ = ['00060']
-varC = wqData.varC
+varC = wqData.varC[:3]
+varTup = (varF, varG, varQ, varC)
+dataTup, statTup = wqData.transIn(
+    subset=None, varTup=varTup)
 
-var = varX[0]
 
+defaultMaster = dict(
+    dataName='HBN', trainName='first50', outName=None, modelName='CudnnLSTM',
+    hiddenSize=256, batchSize=[None, 500], nEpoch=500, saveEpoch=100, resumeEpoch=0,
+    optNaN=[1, 1, 0, 0], overwrite=True,
+    varX=gridMET.varLst, varXC=gageII.lstWaterQuality,
+    varY=usgs.varQ, varYC=usgs.varC
+)
+
+
+def wrapMaster(**kw):
+    # default parameters
+    dictPar = defaultMaster.copy()
+    dictPar.update(kw)
+    return dictPar
+
+
+dictPar = wrapMaster(b=5,c=66,varXC=100)
+
+dictPar.keys()
+diff = list(set(dictPar) - set(defaultMaster))
+'adffaff '+' '.join(diff)

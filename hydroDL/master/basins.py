@@ -17,33 +17,41 @@ def nameFolder(outName):
     return outFolder
 
 
-def wrapMaster(dataName, trainName, outName=None, modelName='CudnnLSTM',
-               hiddenSize=256, batchSize=[365, 100], nEpoch=500, saveEpoch=100, resumeEpoch=0,
-               optNaN=[1, 1, 0, 0], optQ=1, overwrite=True):
+defaultMaster = dict(
+    dataName='HBN', trainName='first50', outName=None, modelName='CudnnLSTM',
+    hiddenSize=256, batchSize=[None, 500], nEpoch=500, saveEpoch=100, resumeEpoch=0,
+    optNaN=[1, 1, 0, 0], overwrite=True,
+    varX=gridMET.varLst, varXC=gageII.lstWaterQuality,
+    varY=usgs.varQ, varYC=usgs.varC
+)
+
+
+def wrapMaster(**kw):
     # default parameters
-    dictPar = dict(dataName=dataName, trainName=trainName, outName=outName, modelName=modelName,
-                   hiddenSize=hiddenSize, batchSize=batchSize,
-                   nEpoch=nEpoch, saveEpoch=saveEpoch, resumeEpoch=resumeEpoch,
-                   optNaN=optNaN, optQ=optQ)
+    dictPar = defaultMaster.copy()
+    dictPar.update(kw)
+    diff = list(set(dictPar) - set(defaultMaster))
+    if len(diff) > 0:
+        raise Exception('parameters not understand: '+' '.join(diff))
 
     # create model folder
-    if outName is None:
-        outName = dataName+'_'+trainName
-    outFolder = nameFolder(outName)
+    if dictPar['outName'] is None:
+        dictPar['outName'] = dictPar['dataName']+'_'+dictPar['trainName']
+    outFolder = nameFolder(dictPar['outName'])
     if os.path.exists(outFolder):
-        if overwrite is False:
+        if dictPar['overwrite'] is False:
             outName = outFolder+'_'+date.today().strftime("%Y%m%d")
             outFolder = os.path.join(kPath.dirWQ, 'model', outName)
             if os.path.exists(outFolder):
                 print('overwrite in folder: '+outName)
             else:
                 os.mkdir(outFolder)
+            dictPar['outName'] = outName
     else:
         os.mkdir(outFolder)
-    dictPar['outName'] = outName
     with open(os.path.join(outFolder, 'master.json'), 'w') as fp:
         json.dump(dictPar, fp)
-    return outName
+    return dictPar['outName']
 
 
 def loadMaster(outName):
