@@ -50,7 +50,6 @@ caseName = basins.wrapMaster(
     outName=saveName, varYC=None)
 caseLst.append(caseName)
 
-caseLst = list()
 saveName = 'HBN-first80-q'
 caseName = basins.wrapMaster(
     dataName='HBN', trainName='first80', batchSize=[None, 200],
@@ -59,7 +58,8 @@ caseLst.append(caseName)
 
 codePdf = usgs.codePdf
 groupLst = codePdf.group.unique().tolist()
-for group in groupLst[1:]:
+groupLst.reverse()
+for group in groupLst:
     # predict a group of c only
     codeLst = codePdf[codePdf.group == group].index.tolist()
     saveName = 'HBN-first50-opt1-'+group
