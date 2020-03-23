@@ -43,7 +43,8 @@ def transOut(data, mtd, stat):
     return out
 
 
-def transInAll(data, mtdLst, statLst=None):
+def transInAll(dataIn, mtdLst, statLst=None):
+    data = dataIn.copy()
     noStat = True if statLst is None else False
     # find colums that need to do log
     indLog = [i for i, mtd in enumerate(mtdLst) if mtd.split('-')[0] == 'log']
@@ -78,6 +79,7 @@ def transInAll(data, mtdLst, statLst=None):
 
 def transOutAll(data, mtdLst, statLst=list()):
     vS = np.ndarray([data.shape[-1], 2])
+    out = np.full(data.shape, np.nan)
     # calculate vS and out = (in-vS[0])/vS[1]
     for i, mtd in enumerate(mtdLst):
         temp = mtd.split('-')
@@ -87,9 +89,9 @@ def transOutAll(data, mtdLst, statLst=list()):
             vS[i, :] = [statLst[i][0], statLst[i][1]]
     # turn out to be faster than (data-vS0)/vS1
     for i in range(data.shape[-1]):
-        data[..., i] = data[..., i]*vS[i, 1]+vS[i, 0]
+        out[..., i] = data[..., i]*vS[i, 1]+vS[i, 0]
     # find colums that need to do log
     indLog = [i for i, mtd in enumerate(mtdLst) if mtd.split('-')[0] == 'log']
-    data[..., indLog] = np.exp(data[..., indLog])-1
+    out[..., indLog] = np.exp(out[..., indLog])-1
 
-    return data
+    return out

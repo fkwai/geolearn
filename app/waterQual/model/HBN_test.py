@@ -2,7 +2,7 @@ from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath
 from hydroDL.model import trainTS
-from hydroDL.data import gageII, usgs
+from hydroDL.data import gageII,
 from hydroDL.post import axplot, figplot
 
 import torch
@@ -11,9 +11,6 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-# master = basins.loadMaster('HBN-opt2')
-# wqData = waterQuality.DataModelWQ(master['dataName'])
-# p1, o1 = basins.testModel('HBN-first50-opt2', 'first50', wqData=wqData)
 
 # outLst = ['HBN-opt1', 'HBN-opt2', 'HBN-opt3', 'HBN-opt4']
 # trainSet = 'first80'
@@ -23,7 +20,6 @@ import matplotlib.pyplot as plt
 outLst = ['HBN-first50-opt1', 'HBN-first50-opt2']
 trainSet = 'first50'
 testSet = 'last50'
-
 pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]
 master = basins.loadMaster('HBN-opt1')
 wqData = waterQuality.DataModelWQ(master['dataName'])
