@@ -1,6 +1,6 @@
 from hydroDL import kPath
 from hydroDL.app import waterQuality
-from hydroDL.data import gageII
+from hydroDL.data import gageII, usgs, gridMET
 from hydroDL.master import basins
 
 import pandas as pd
@@ -28,9 +28,34 @@ if not waterQuality.exist('HBN-5s-30d'):
 
 nE = 100
 sE = 50
-caseName = basins.wrapMaster('HBN-5s', 'first80', saveEpoch=sE, nEpoch=nE,
-                             batchSize=[None, 200], optQ=1, saveName='HBN-5s-opt1')
-basins.trainModelTS(caseName)
-caseName = basins.wrapMaster('HBN-5s-30d', 'first80', saveEpoch=sE, nEpoch=nE,
-                             batchSize=[None, 200], optQ=1, saveName='HBN-5s-30d-opt1')
-basins.trainModelTS(caseName)
+
+caseLst = list()
+saveName = 'HBN-first50-q'
+caseName = basins.wrapMaster(
+    dataName='HBN', trainName='first50', batchSize=[None, 200],
+    outName=saveName, varYC=None, nEpoch=nE, saveEpoch=sE)
+caseLst.append(caseName)
+
+caseLst = list()
+saveName = 'HBN-first80-q'
+caseName = basins.wrapMaster(
+    dataName='HBN', trainName='first80', batchSize=[None, 200],
+    outName=saveName, varYC=None, nEpoch=nE, saveEpoch=sE)
+caseLst.append(caseName)
+# basins.trainModelTS(caseName)
+
+codePdf = usgs.codePdf
+groupLst = codePdf.group.unique().tolist()
+for group in groupLst[1:]:
+    codeLst = codePdf[codePdf.group == group].index.tolist()
+    saveName = 'HBN-first50-opt1-'+group
+    caseName = basins.wrapMaster(
+        dataName='HBN', trainName='first50', batchSize=[None, 200],
+        outName=saveName, varYC=codeLst)
+    caseLst.append(caseName)
+
+    saveName = 'HBN-first50-opt2-'+group
+    caseName = basins.wrapMaster(
+        dataName='HBN', trainName='first50', batchSize=[None, 200],
+        outName=saveName, varYC=codeLst, varX=usgs.varQ+gridMET.varLst)
+    caseLst.append(caseName)

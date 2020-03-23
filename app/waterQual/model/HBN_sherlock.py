@@ -1,3 +1,4 @@
+from hydroDL.master import slurm
 from hydroDL import kPath
 from hydroDL.app import waterQuality
 from hydroDL.data import gageII
@@ -28,15 +29,20 @@ if 'first80-rm2' not in wqData.subset.keys():
     wqData.saveSubset('first80-rm2', indTrain)
 
 
-caseLst=list()
-for opt in [1, 2, 3, 4]:
-    for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
-        saveName = 'HBN-opt'+str(opt)+trainStr
-        caseName = basins.wrapMaster('HBN', trainName, batchSize=[
-                                     None, 200], optQ=opt, outName=saveName)
-        caseLst.append(caseName)
+caseLst = list()
+# for opt in [1, 2, 3, 4]:
+#     for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
+#         saveName = 'HBN-opt'+str(opt)+trainStr
+#         caseName = basins.wrapMaster('HBN', trainName, batchSize=[
+#                                      None, 200], optQ=opt, outName=saveName)
+#         caseLst.append(caseName)
 
-from hydroDL.master import slurm
+saveName = 'HBN-first50-q'
+caseName = basins.wrapMaster(
+    'HBN', 'first50', batchSize=[None, 200], outName=saveName,
+    varX=)
+caseLst.append(caseName)
+
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
     slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=4)
