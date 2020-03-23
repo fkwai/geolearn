@@ -40,5 +40,6 @@ def readBasin(siteNo, varLst=varLst):
     """
     fileF = os.path.join(kPath.dirData, 'USGS', 'gridMET', 'output', siteNo)
     dfF = pd.read_csv(fileF)
+    dfF['date'] = pd.to_datetime(dfF['date'], format='%Y-%m-%d')
     dfF = dfF.set_index('date')
     return dfF[varLst]
