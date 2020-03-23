@@ -27,14 +27,26 @@ if 'first80-rm2' not in wqData.subset.keys():
     indTrain = np.setdiff1d(ind, indRm)
     wqData.saveSubset('first80-rm2', indTrain)
 
+if 'first50' not in wqData.subset.keys():
+    ind1 = wqData.indByRatio(0.5)
+    ind2 = wqData.indByRatio(0.5, first=False)
+    wqData.saveSubset(['first50', 'last50'], [ind1, ind2])
+
 
 caseLst=list()
+# for opt in [1, 2, 3, 4]:
+#     for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
+#         saveName = 'HBN-opt'+str(opt)+trainStr
+#         caseName = basins.wrapMaster('HBN', trainName, batchSize=[
+#                                      None, 200], optQ=opt, outName=saveName)
+#         caseLst.append(caseName)
+
 for opt in [1, 2, 3, 4]:
-    for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
-        saveName = 'HBN-opt'+str(opt)+trainStr
-        caseName = basins.wrapMaster('HBN', trainName, batchSize=[
-                                     None, 200], optQ=opt, outName=saveName)
-        caseLst.append(caseName)
+    saveName = 'HBN-first50-opt'+str(opt)
+    caseName = basins.wrapMaster('HBN', 'first50', batchSize=[
+                                    None, 200], optQ=opt, outName=saveName)
+    caseLst.append(caseName)
+
 
 from hydroDL.master import slurm
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
