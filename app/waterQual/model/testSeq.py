@@ -18,7 +18,7 @@ import time
 # p1, o1 = basins.testModel('HBN-first50-opt2', 'first50', wqData=wqData)
 
 
-outName = 'HBN-first80-opt2'
+outName = 'HBN-opt2'
 # testset = 'first50'
 master = basins.loadMaster(outName)
 statTup = basins.loadStat(outName)

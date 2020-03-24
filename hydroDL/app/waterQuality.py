@@ -156,7 +156,7 @@ class DataModelWQ():
             dictSubset = dictNew
         with open(subsetFile, 'w') as fp:
             json.dump(dictSubset, fp, indent=4)
-        self.loadSubset()
+        self.subset = self.loadSubset()
 
     def loadSubset(self):
         subsetFile = os.path.join(
@@ -249,17 +249,19 @@ class DataModelWQ():
         tabComb = tabComb.sort_values(0, ascending=False)
         return tabComb
 
-    def errBySite(self, ycP, subset=None):
+    def errBySite(self, ycP, varC=None, subset=None):
         obsLst = self.extractSubset(subset=subset)
         ycT = obsLst[3]
+        if varC is None:
+            varC = self.varC
+        indC = [self.varC.index(var) for var in varC]
         info = self.info.loc[self.subset[subset].tolist()].reset_index()
         siteNoLst = self.info.siteNo.unique()
-        nc = ycT.shape[-1]
-        statMat = np.full([len(siteNoLst), nc, 2], np.nan)
+        statMat = np.full([len(siteNoLst), len(indC), 2], np.nan)
         for i, siteNo in enumerate(siteNoLst):
             indS = info[info['siteNo'] == siteNo].index.values
-            for k in range(nc):
-                a = ycT[indS, k]
+            for k, iC in enumerate(indC):
+                a = ycT[indS, iC]
                 b = ycP[indS, k]
                 indV = np.where(~np.isnan(a))
                 rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))

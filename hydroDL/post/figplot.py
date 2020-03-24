@@ -15,12 +15,12 @@ def clickMap(funcMap, funcPoint):
             print('click on map plz')
             return
         iP = np.argmin(np.sqrt((xClick - xLoc)**2 + (yClick - yLoc)**2))
-        for temp in axM:
-            for ax in temp:
-                [p.remove() for p in reversed(ax.patches)]
-                circle = plt.Circle([xLoc[iP], yLoc[iP]], 1,
-                                    color='black', fill=False)
-                ax.add_patch(circle)
+        for ax in axM:
+            # for ax in temp:
+            [p.remove() for p in reversed(ax.patches)]
+            circle = plt.Circle([xLoc[iP], yLoc[iP]], 1,
+                                color='black', fill=False)
+            ax.add_patch(circle)
         for ax in axP.reshape(-1):
             ax.clear()
         funcPoint(iP, axP)
