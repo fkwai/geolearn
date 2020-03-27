@@ -16,10 +16,19 @@ dfHBN = pd.read_csv(os.path.join(kPath.dirData, 'USGS', 'inventory', 'HBN.csv'),
 siteNoHBN = [siteNo for siteNo in dfHBN.index.tolist()
              if siteNo in siteNoLstAll]
 
+# # select referenced basins
+tabSel = gageII.readData(
+    varLst=['CLASS'], siteNoLst=siteNoLstAll)
+tabSel = gageII.updateCode(tabSel)
+siteNoRef = tabSel[tabSel['CLASS'] == 1].index.tolist()
+
 # shapefiles
 usgsDir = os.path.join(kPath.dirData, 'USGS')
 outShapeFile = os.path.join(usgsDir, 'basins', 'HBN.shp')
 # gageII.extractBasins(siteNoHBN, outShapeFile)
+usgsDir = os.path.join(kPath.dirData, 'USGS')
+outShapeFile = os.path.join(usgsDir, 'basins', 'basinRef.shp')
+gageII.extractBasins(siteNoRef, outShapeFile)
 
 # wrap up data
 if not waterQuality.exist('HBN'):

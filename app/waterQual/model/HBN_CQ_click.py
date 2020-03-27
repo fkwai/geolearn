@@ -38,7 +38,8 @@ lat = dfCrd['LAT_GAGE'].values
 lon = dfCrd['LNG_GAGE'].values
 icLst = [wqData.varC.index(code) for code in codeSel]
 codePdf = usgs.codePdf
-
+pdfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
+unitConv = 0.3048**3*365*24*60*60/1000**2
 
 def funcMap():
     figM, axM = plt.subplots(len(codeSel), 1, figsize=(8, 6))
@@ -62,7 +63,7 @@ def funcPoint(iP, axP):
     # ct = np.concatenate([o1[ind1], o2[ind2]])
     # q = wqData.q[-1, np.concatenate([ind1, ind2]), 0]
     cLst = [o2[ind2]]+[p[ind2] for p in pLst2]
-    q = wqData.q[-1, ind2, 0]
+    q = wqData.q[-1, ind2, 0]/area*unitConv
 
     x = 10**np.linspace(np.log10(np.min(q[q > 0])),
                         np.log10(np.max(q[~np.isnan(q)])), 20)

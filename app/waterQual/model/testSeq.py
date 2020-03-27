@@ -1,4 +1,3 @@
-from hydroDL.post import axplot
 from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath
@@ -130,15 +129,4 @@ t = dfY.index.values.astype('datetime64[D]')
 
 fig, ax = plt.subplots(1, 1)
 axplot.plotTS(ax, t, [qX, q], legLst=['obs', 'pred'])
-fig.show()
-
-
-
-iS = 10
-siteNo = siteNoLst[iS]
-q1 = outLst[10][:, 0]
-q2 = outLst[20][:, 0]
-
-fig, ax = plt.subplots(1, 1)
-axplot.plotTS(ax, t, [q1, q2], legLst=['obs', 'pred'])
 fig.show()

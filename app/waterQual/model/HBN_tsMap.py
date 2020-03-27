@@ -29,8 +29,8 @@ for outName in outLst:
     errMatLst2.append(errMat2)
 
 # plot
-# codeSel = ['00955', '00940', '00915']
-codeSel = ['00600', '00605', '00405']
+codeSel = ['00955', '00940', '00915']
+# codeSel = ['00600', '00605', '00405']
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
@@ -78,7 +78,8 @@ def funcPoint(iP, axP):
         title = '{} {} {}'.format(siteNo, shortName, code)
         xTS = [x[:, ic] for x in dataLst]
         axplot.plotTS(axP[k], t, xTS, styLst=styLst, tBar=tBar,
-                      title=title, legLst=['opt1', 'opt2', 'obs'])
+                      legLst=['opt1', 'opt2', 'obs'])
+        axP[k].set_title(title)
 
 
 figplot.clickMap(funcMap, funcPoint)

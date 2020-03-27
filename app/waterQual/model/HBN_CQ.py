@@ -31,6 +31,9 @@ for outName in outLst:
 
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 codePdf = usgs.codePdf
+pdfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
+unitConv = 0.3048**3*365*24*60*60/1000**2
+
 
 ns = len(siteNoLst)
 nc = len(wqData.varC)
@@ -45,7 +48,8 @@ for iS, siteNo in enumerate(siteNoLst):
     ind1 = info1[info1['siteNo'] == siteNo].index
     ind2 = info2[info2['siteNo'] == siteNo].index
     cLst = [o2[ind2]]+[p[ind2] for p in pLst2]
-    q = wqData.q[-1, ind2, 0]
+    area = pdfArea.loc[siteNo].values[0]
+    q = wqData.q[-1, ind2, 0]/area*unitConv
 
     for code in wqData.varC:
         iC = wqData.varC.index(code)

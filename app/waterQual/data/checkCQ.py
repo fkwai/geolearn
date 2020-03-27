@@ -15,6 +15,8 @@ dirUSGS = os.path.join(kPath.dirData, 'USGS')
 dirInv = os.path.join(kPath.dirData, 'USGS', 'inventory')
 
 fileCountC = os.path.join(dirInv, 'count_NWIS_sample_gageII')
+# fileCountC = os.path.join(dirInv, 'count_NWIS_sample_all')
+
 tabC = pd.read_csv(fileCountC, dtype={'site_no': str})
 tabC = tabC.set_index('site_no')
 siteNoLst = tabC.index.tolist()

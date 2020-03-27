@@ -25,15 +25,13 @@ def mapPoint(ax, lat, lon, data, title=None, vRange=None, cmap=plt.cm.jet, s=30,
     return mm
 
 
-def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, title=None, ylabel=None):
+def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None):
     y = y if type(y) is list else [y]
     for k in range(len(y)):
         yy = y[k]
         sty = '--*' if styLst is None else styLst[k]
         legStr = None if legLst is None else legLst[k]
         ax.plot(t, yy, sty, color=cLst[k], label=legStr)
-        if ylabel is not None:
-            ax.set_ylabel(ylabel)
     if tBar is not None:
         ylim = ax.get_ylim()
         tBar = [tBar] if type(tBar) is not list else tBar
@@ -41,7 +39,24 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, tit
             ax.plot([tt, tt], ylim, '-k')
     if legLst is not None:
         ax.legend(loc='upper right', frameon=False)
-    if title is not None:
-        ax.set_title(title, loc='center')
     ax.xaxis_date()
     return ax
+
+
+def plotCDF(ax, x, cLst='rbkgcmy', legLst=None):
+    x = x if type(x) is list else [x]
+    for k in range(len(x)):
+        xx = x[k]
+        xS = sortData(xx)
+        yS = np.arange(len(xS)) / float(len(xS) - 1)
+        legStr = None if legLst is None else legLst[k]
+        ax.plot(xS, yS, color=cLst[k], label=legStr)
+    if legLst is not None:
+        ax.legend(loc='bottom right', frameon=False)
+
+
+def sortData(x):
+    xArrayTemp = x.flatten()
+    xArray = xArrayTemp[~np.isnan(xArrayTemp)]
+    xSort = np.sort(xArray)
+    return xSort

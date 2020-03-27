@@ -146,11 +146,11 @@ def trainModelTS(outName):
     pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
 
-def testModel(outName, testset, wqData=None):
+def testModel(outName, testset, wqData=None, ep=None):
     # load master
     master = loadMaster(outName)
     statTup = loadStat(outName)
-    model = loadModel(outName)
+    model = loadModel(outName, ep=ep)
 
     # load test data
     wqData = waterQuality.DataModelWQ(master['dataName'])
