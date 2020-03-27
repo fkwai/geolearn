@@ -40,6 +40,23 @@ if not waterQuality.exist('HBN-5s'):
 if not waterQuality.exist('HBN-5s-30d'):
     wqData = waterQuality.DataModelWQ.new('HBN-5s-30d', siteNoHBN[:5], rho=30)
 
+# wrap up data
+if not waterQuality.exist('HBN'):
+    wqData = waterQuality.DataModelWQ.new('HBN', siteNoHBN)
+else:
+    wqData = waterQuality.DataModelWQ('HBN')
+if 'first80-rm2' not in wqData.subset.keys():
+    ind = wqData.subset['first80']
+    indRm = wqData.indByComb(['00010', '00095'])
+    indTrain = np.setdiff1d(ind, indRm)
+    wqData.saveSubset('first80-rm2', indTrain)
+
+if 'first50' not in wqData.subset.keys():
+    ind1 = wqData.indByRatio(0.5)
+    ind2 = wqData.indByRatio(0.5, first=False)
+    wqData.saveSubset(['first50', 'last50'], [ind1, ind2])
+
+
 # divide subsets based on years
 wqData = waterQuality.DataModelWQ('HBN')
 info = wqData.info
@@ -57,3 +74,6 @@ for ind, subset in zip(indLst, subsetLst):
     wqData.saveSubset(subset, ind)
     indRm = np.setdiff1d(indAll, ind)
     wqData.saveSubset(subset+'-rm', indRm)
+for subset in subsetLst:
+    len(wqData.subset[subset])
+wqData.info.iloc[wqData.subset['80s-rm']]['yr'].unique()

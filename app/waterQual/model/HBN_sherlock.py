@@ -17,22 +17,6 @@ dfHBN = pd.read_csv(os.path.join(kPath.dirData, 'USGS', 'inventory', 'HBN.csv'),
 siteNoHBN = [siteNo for siteNo in dfHBN.index.tolist()
              if siteNo in siteNoLstAll]
 
-# wrap up data
-if not waterQuality.exist('HBN'):
-    wqData = waterQuality.DataModelWQ.new('HBN', siteNoHBN)
-else:
-    wqData = waterQuality.DataModelWQ('HBN')
-if 'first80-rm2' not in wqData.subset.keys():
-    ind = wqData.subset['first80']
-    indRm = wqData.indByComb(['00010', '00095'])
-    indTrain = np.setdiff1d(ind, indRm)
-    wqData.saveSubset('first80-rm2', indTrain)
-
-if 'first50' not in wqData.subset.keys():
-    ind1 = wqData.indByRatio(0.5)
-    ind2 = wqData.indByRatio(0.5, first=False)
-    wqData.saveSubset(['first50', 'last50'], [ind1, ind2])
-
 
 caseLst = list()
 # for opt in [1, 2, 3, 4]:
@@ -43,37 +27,63 @@ caseLst = list()
 #         caseLst.append(caseName)
 
 # predict q only
-caseLst = list()
-saveName = 'HBN-first50-q'
-caseName = basins.wrapMaster(
-    dataName='HBN', trainName='first50', batchSize=[None, 200],
-    outName=saveName, varYC=None)
-caseLst.append(caseName)
+# caseLst = list()
+# saveName = 'HBN-first50-q'
+# caseName = basins.wrapMaster(
+#     dataName='HBN', trainName='first50', batchSize=[None, 200],
+#     outName=saveName, varYC=None)
+# caseLst.append(caseName)
 
-saveName = 'HBN-first80-q'
-caseName = basins.wrapMaster(
-    dataName='HBN', trainName='first80', batchSize=[None, 200],
-    outName=saveName, varYC=None)
-caseLst.append(caseName)
+# saveName = 'HBN-first80-q'
+# caseName = basins.wrapMaster(
+#     dataName='HBN', trainName='first80', batchSize=[None, 200],
+#     outName=saveName, varYC=None)
+# caseLst.append(caseName)
 
-codePdf = usgs.codePdf
-groupLst = codePdf.group.unique().tolist()
-groupLst.reverse()
-for group in groupLst:
-    # predict a group of c only
-    codeLst = codePdf[codePdf.group == group].index.tolist()
-    saveName = 'HBN-first50-opt1-'+group
-    caseName = basins.wrapMaster(
-        dataName='HBN', trainName='first50', batchSize=[None, 200],
-        outName=saveName, varYC=codeLst)
+
+# 30 day
+# caseLst=list()
+# saveName = 'HBN-30d-first50-opt1'
+# caseName = basins.wrapMaster(dataName='HBN-30d', trainName='first50',
+#                              batchSize=[None, 200], outName=saveName)
+# caseLst.append(caseName)
+
+# saveName = 'HBN-30d-first50-opt2'
+# caseName = basins.wrapMaster(dataName='HBN-30d', trainName='first50',
+#                              batchSize=[None, 200], varYC=usgs.varC,
+#                              varX=usgs.varQ+gridMET.varLst, outName=saveName)
+# caseLst.append(caseName)
+
+# group only
+# codePdf = usgs.codePdf
+# groupLst = codePdf.group.unique().tolist()
+# groupLst.reverse()
+# for group in groupLst:
+#     # predict a group of c only
+#     codeLst = codePdf[codePdf.group == group].index.tolist()
+#     saveName = 'HBN-30d-first50-opt1-'+group
+#     caseName = basins.wrapMaster(
+#         dataName='HBN-30d', trainName='first50', batchSize=[None, 200],
+#         outName=saveName, varYC=codeLst)
+#     caseLst.append(caseName)
+
+#     saveName = 'HBN-30d-first50-opt2-'+group
+#     caseName = basins.wrapMaster(
+#         dataName='HBN-30d', trainName='first50', batchSize=[None, 200],
+#         outName=saveName, varYC=codeLst, varX=usgs.varQ+gridMET.varLst)
+#     caseLst.append(caseName)
+
+subsetLst = ['{}s-rm'.format(x) for x in ['80', '90', '00', '10']]
+for subset in subsetLst:
+    saveName = 'HBN-{}-opt1'.format(subset)
+    caseName = basins.wrapMaster(dataName='HBN', trainName=subset,
+                                 batchSize=[None, 200], outName=saveName)
     caseLst.append(caseName)
-
-    saveName = 'HBN-first50-opt2-'+group
-    caseName = basins.wrapMaster(
-        dataName='HBN', trainName='first50', batchSize=[None, 200],
-        outName=saveName, varYC=codeLst, varX=usgs.varQ+gridMET.varLst)
+    saveName = 'HBN-{}-opt2'.format(subset)
+    caseName = basins.wrapMaster(dataName='HBN', trainName=subset,
+                                 batchSize=[None, 200], varYC=usgs.varC,
+                                 varX=usgs.varQ+gridMET.varLst, outName=saveName)
     caseLst.append(caseName)
-
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
