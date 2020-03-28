@@ -14,8 +14,19 @@ def fillNan(mat, mask):
     return temp
 
 
-def flatData(x):
+def sortData(x):
     xArrayTemp = x.flatten()
     xArray = xArrayTemp[~np.isnan(xArrayTemp)]
     xSort = np.sort(xArray)
     return xSort
+
+
+def rmNan(xLst):
+    if len(set([len(x) for x in xLst])) > 1:
+        raise Exception('not same size')
+    n = len(xLst[0])
+    ind = np.array(range(n))
+    for x in xLst:
+        indRm = np.where(np.isnan(x))
+        ind = np.setdiff1d(ind, indRm)
+    return [x[ind] for x in xLst], ind

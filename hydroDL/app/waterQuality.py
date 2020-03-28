@@ -30,8 +30,10 @@ class DataModelWQ():
         self.varC = dictData['varC']
         self.varQ = ['00060']  # delete later
         self.varF = gridMET.varLst  # delete later
-        self.info = pd.read_csv(
-            saveName+'.csv', index_col=0, dtype={'siteNo': str})
+        self.info = pd.read_csv(saveName+'.csv', index_col=0,
+                                dtype={'siteNo': str})
+        self.info['date'] = self.info['date'].astype('datetime64[D]')
+
         self.subset = self.loadSubset()
         # counting the dataset used for indexes - fairly fast
         # self.dfCount = self.info['siteNo'].value_counts().rename(

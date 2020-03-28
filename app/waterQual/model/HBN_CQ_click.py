@@ -41,6 +41,7 @@ codePdf = usgs.codePdf
 pdfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
 unitConv = 0.3048**3*365*24*60*60/1000**2
 
+
 def funcMap():
     figM, axM = plt.subplots(len(codeSel), 1, figsize=(8, 6))
     for k, code in enumerate(codeSel):
@@ -63,6 +64,7 @@ def funcPoint(iP, axP):
     # ct = np.concatenate([o1[ind1], o2[ind2]])
     # q = wqData.q[-1, np.concatenate([ind1, ind2]), 0]
     cLst = [o2[ind2]]+[p[ind2] for p in pLst2]
+    area = pdfArea.loc[siteNo]['DRAIN_SQKM']
     q = wqData.q[-1, ind2, 0]/area*unitConv
 
     x = 10**np.linspace(np.log10(np.min(q[q > 0])),

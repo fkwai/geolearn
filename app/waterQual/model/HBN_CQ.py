@@ -48,7 +48,7 @@ for iS, siteNo in enumerate(siteNoLst):
     ind1 = info1[info1['siteNo'] == siteNo].index
     ind2 = info2[info2['siteNo'] == siteNo].index
     cLst = [o2[ind2]]+[p[ind2] for p in pLst2]
-    area = pdfArea.loc[siteNo].values[0]
+    area = pdfArea.loc[siteNo]['DRAIN_SQKM']
     q = wqData.q[-1, ind2, 0]/area*unitConv
 
     for code in wqData.varC:
