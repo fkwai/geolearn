@@ -111,16 +111,17 @@ def plotMap(grid, *, crd, ax=None, lat=None, lon=None, title=None,
             shape = [shape]
         for shp in shape:
             crd = np.array(shp.points)
-            par = shp.parts
+            par = list(shp.parts)
+            par.append(len(crd))
             if len(par) > 1:
                 for k in range(0, len(par)-1):
                     x = crd[par[k]:par[k+1], 0]
                     y = crd[par[k]:par[k+1], 1]
-                    mm.plot(x, y, color='k', linewidth=2)
+                    mm.plot(x, y, color='r', linewidth=2)
             else:
                 x = crd[:, 0]
                 y = crd[:, 1]
-                mm.plot(x, y, color='k', linewidth=2)
+                mm.plot(x, y, color='r', linewidth=2)
     cbar = mm.colorbar(cs, location='bottom', pad='5%')
     if title is not None:
         ax.set_title(title)

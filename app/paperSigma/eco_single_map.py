@@ -19,7 +19,7 @@ doOpt = []
 # doOpt.append('test')
 doOpt.append('loadData')
 # doOpt.append('plotMapMC')
-# doOpt.append('plotMapPaper')
+doOpt.append('plotMapPaper')
 
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
@@ -32,14 +32,19 @@ rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 yrLst = [2017]
 
-hucShapeFile = '/mnt/sdc/Kuai/Map/HUC/HUC2_CONUS'
-shapeLst = shapefile.Reader(hucShapeFile).shapes()
-shapeHucLst = shapefile.Reader(hucShapeFile).records()
+ecoShapeFile = '/mnt/sdb/Kuai/map/ecoRegion/ecoRegion'
+shapeLst = shapefile.Reader(ecoShapeFile).shapes()
+shapeRecLst = shapefile.Reader(ecoShapeFile).records()
+ecoIdLst = [rec[1] for rec in shapeRecLst]
 
 matplotlib.rcParams.update({'font.size': 14})
 matplotlib.rcParams.update({'lines.linewidth': 2})
 matplotlib.rcParams.update({'lines.markersize': 10})
 matplotlib.rcParams.update({'legend.fontsize': 12})
+
+codeLst = ['5.1', '6.2','8.1', '8.2', '8.3', '8.4', '8.5', '9.2', '9.3', '9.4', '9.5','10.1', '10.2', '11.1', '12.1', '13.1', '14.3']
+idLst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12, 13, 14, 15, 16, 17]
+nameLst=['Northern Forests','Northwestern Forests Mountain','Mixed Wood Plains','Central USA Plains','Southeastern USA Plains','Ozark/Ouachita-Appalachiana Forests','Mississippi Alluvial and Southeast Coastal','Temperate Prairies','West-central Semiarid Prairies','South-central Semiarid Prairies','Texas Plain','Cold Deserts','Warm Deserts','Mediterranean California','Southern Semiarid Highlands','Temperate Sierras','Tropical Forests']
 
 
 #################################################
@@ -61,7 +66,7 @@ if 'loadData' in doOpt:
     dsLst = list()
     statErrLst = list()
     statSigmaLst = list()
-    for k in range(0, 17):
+    for k in range(17):
         trainName = 'ecoRegion'+str(k+1).zfill(2)+'_v2f1'
         testName = 'CONUSv2f1'
         out = trainName+'_y15_Forcing'
@@ -78,41 +83,42 @@ if 'loadData' in doOpt:
 
 #################################################
 if 'plotMapMC' in doOpt:
-    a = 0
-    for k in [2, 10, 14, 15]:
-        k = k-1
-        statSigma = statSigmaLst[a]
+    for k in range(17):
+        # for k in [5]:
+        ecoId = k+1
+        shape = shapeLst[ecoIdLst.index(ecoId)]
+        statSigma = statSigmaLst[k]
         statErr = 'sigmaMC'
         fig, ax = plt.subplots(figsize=[6, 3])
         data = statSigma.sigmaMC
         grid = ds.data2grid(data=data)
-        titleStr = r'$\sigma_{mc}$' + ' from HUC%02d model' % (k+1)
+        titleStr = r'$\sigma_{mc}$' + ' from Eco-region %02d model' % (k+1)
         rnnSMAP.funPost.plotMap(
             grid, crd=ds.crdGrid, ax=ax, title=titleStr,
-            shape=shapeLst[k])
+            shape=shape)
         plt.tight_layout()
-        fig.show()
+        # fig.show()
         saveFile = os.path.join(saveFolder, 'map_sigmaMC_%02d' % (k+1))
         fig.savefig(saveFile)
-        a = a+1
 
 #################################################
 if 'plotMapPaper' in doOpt:
     a = 0
     figNum = ['(a)', '(b)', '(c)', '(d)']
     fig, axes = plt.subplots(2, 2, figsize=[12, 7])
-    for k in [2, 10, 14, 15]:
-        k = k-1
-        statSigma = statSigmaLst[a]
+    for ecoId in [5, 10, 12, 13]:
+        k = ecoId-1
+        shape = shapeLst[ecoIdLst.index(ecoId)]
+        statSigma = statSigmaLst[k]
         statErr = 'sigmaMC'
         data = statSigma.sigmaMC
         grid = ds.data2grid(data=data)
         titleStr = figNum[a]+' ' + \
-            r'$\sigma_{mc}$' + ' from HUC%02d model' % (k+1)
+            r'$\sigma_{mc}$' + ' from Eco-region {} model'.format(codeLst[k])
         ax = axes[math.floor(a/2), a % 2]
         rnnSMAP.funPost.plotMap(
             grid, crd=ds.crdGrid, ax=ax, title=titleStr,
-            shape=shapeLst[k])
+            shape=shape)
         a = a+1
     plt.tight_layout()
     fig.show()
