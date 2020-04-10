@@ -28,22 +28,25 @@ unitConv = 0.3048**3*365*24*60*60/1000**2
 q = wqData.q[:, :, 0]
 runoff = q/area*unitConv
 
-i=np.random.randint(365)
-j=np.random.randint(len(info))
-q[i,j]
+aa = np.stack([q, runoff])
+
+i = np.random.randint(365)
+j = np.random.randint(len(info))
+q[i, j]
 area[j]
-runoff[i,j]
-q[i,j]/area[j]
+runoff[i, j]
+q[i, j]/area[j]
 
 
 # nan in Q - 3% all nan, 7% any nan
-
+q = wqData.q[:, :, 0]
+len(info)
 len(np.where(np.isnan(q).all(axis=0))[0])
 len(np.where(np.isnan(q).any(axis=0))[0])
 
-iNan=np.where(np.isnan(q))
+iNan = np.where(np.isnan(q))
 iRow, cRow = np.unique(iNan[1], return_counts=True)
-len(np.where(cRow>300)[0])
+len(np.where(cRow > 300)[0])
 
 # compare of opt1-4
 outLst = ['basinRef-opt1', 'basinRef-opt2']

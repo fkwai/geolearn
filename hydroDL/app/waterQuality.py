@@ -36,17 +36,7 @@ class DataModelWQ():
         self.info['date'] = self.info['date'].astype('datetime64[D]')
 
         self.subset = self.loadSubset()
-        # counting the dataset used for indexes - fairly fast
-        # self.dfCount = self.info['siteNo'].value_counts().rename(
-        #     'count').to_frame().rename_axis(index='siteNo')
-        self.dfCount = self.info['siteNo'].value_counts().rename(
-            'count').to_frame().rename_axis('siteNo', axis=0)
-
-        rankSite = self.info.groupby('siteNo').cumcount().rename('rank')
-        dfRank = self.info.join(rankSite)
-        dfSite = pd.merge(dfRank, self.dfCount, on='siteNo')
-        dfSite['pRank'] = dfSite['rank']/dfSite['count']
-        self.dfSite = dfSite
+        self.dfSite = countSite(self.info)
         print('loading info {}'.format(time.time()-t0))
 
         if self.q.shape[2] == 1:  # add runoff
@@ -54,6 +44,7 @@ class DataModelWQ():
             runoff = calRunoff(q, self.info)
             self.q = np.stack([q, runoff], axis=-1).astype(np.float32)
             np.savez(saveName, q=self.q, f=self.f, c=self.c, g=self.g)
+            print('calculate Runoff and re-save data {}'.format(time.time()-t0))
 
     @classmethod
     def new(cls, caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):
@@ -374,18 +365,44 @@ def calRunoff(q, info):
     runoff = q/area*unitConv
     return runoff
 
-# find the distribution of data
-# for k, var in enumerate(wqData.varC):
-#     fig, axes = plt.subplots(2, 2)
-#     temp = wqData.c[:, k].flatten()
-#     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
-#                            (temp < np.nanpercentile(temp, 95)))]
-#     axes[0, 0].hist(temp, bins=100)
-#     axes[0, 1].hist(temp90, bins=100)
-#     try:
-#         axes[1, 0].hist(np.log(temp+1), bins=100)
-#         axes[1, 1].hist(np.log(temp90+1), bins=100)
-#     except(ValueError):
-#         print(var+' can not log')
-#     fig.suptitle(var)
-#     fig.show()
+
+def countSite(info):
+    # counting the dataset used for indexes - fairly fast
+    # self.dfCount = self.info['siteNo'].value_counts().rename(
+    #     'count').to_frame().rename_axis(index='siteNo')
+    dfCount = info['siteNo'].value_counts().rename(
+        'count').to_frame().rename_axis('siteNo', axis=0)
+    rankSite = info.groupby('siteNo').cumcount().rename('rank')
+    dfRank = info.join(rankSite)
+    # dfSite = pd.merge(dfRank, dfCount, on='siteNo')
+    # removed as will change index number if info is a subset - HF
+    dfSite = dfRank.join(dfCount, on='siteNo')
+    dfSite['pRank'] = dfSite['rank']/dfSite['count']
+    return dfSite
+
+
+def indYr(info, yrLst=[1979, 1990, 2000, 2010, 2020]):
+    info['yr'] = pd.DatetimeIndex(info['date']).year
+    indLst = list()
+    for k in range(len(yrLst)-1):
+        sy = yrLst[k]
+        ey = yrLst[k+1]
+        ind = info.index[(info['yr'] >= sy) & (info['yr'] < ey)].values
+        indLst.append(ind)
+    return indLst
+
+    # find the distribution of data
+    # for k, var in enumerate(wqData.varC):
+    #     fig, axes = plt.subplots(2, 2)
+    #     temp = wqData.c[:, k].flatten()
+    #     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
+    #                            (temp < np.nanpercentile(temp, 95)))]
+    #     axes[0, 0].hist(temp, bins=100)
+    #     axes[0, 1].hist(temp90, bins=100)
+    #     try:
+    #         axes[1, 0].hist(np.log(temp+1), bins=100)
+    #         axes[1, 1].hist(np.log(temp90+1), bins=100)
+    #     except(ValueError):
+    #         print(var+' can not log')
+    #     fig.suptitle(var)
+    #     fig.show()

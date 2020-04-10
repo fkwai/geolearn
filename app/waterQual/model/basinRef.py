@@ -80,6 +80,7 @@ ax.plot(area[indHBN], err[indHBN], 'r*')
 # np.nanmedian(err[indHBN, :])
 fig.show()
 
+
 # dw vs error
 code = '00955'
 # code = '00600'
