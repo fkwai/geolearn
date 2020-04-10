@@ -35,17 +35,19 @@ trainLst = ['pQ-F50', 'pQ-rmY10', 'pQ-rmY80']
 for train in trainLst:
     caseName = basins.wrapMaster(dataName='basinRef', trainName=train,
                                  batchSize=[None, 1000],
-                                 outName='basinRef-pQ-{}'.format(train))
-    # slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
-for train in trainLst:
+                                 outName='basinRef-rq-{}'.format(train),
+                                 varX=usgs.varQ+['runoff']+gridMET.varLst, varY=None)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
+
     caseName = basins.wrapMaster(dataName='basinRef', trainName=train,
                                  batchSize=[None, 1000],
-                                 outName='basinRef-pQ-runoff-{}'.format(train),
+                                 outName='basinRef-r-{}'.format(train),
                                  varX=usgs.varQ+['runoff']+gridMET.varLst, varY=None)
-    # slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
 
-train = 'pQ-F50'
-caseName = basins.wrapMaster(dataName='basinRef', trainName=train, batchSize=[
-    None, 1000], outName='basinRef-pQ-runoff-{}'.format(train),
-    varX=usgs.varQ+['runoff']+gridMET.varLst, varY=None)
-basins.trainModelTS(caseName)
+    caseName = basins.wrapMaster(dataName='basinRef', trainName=train,
+                                 batchSize=[None, 1000],
+                                 outName='basinRef-q-{}'.format(train),
+                                 varX=usgs.varQ+['runoff']+gridMET.varLst, varY=None)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
+
