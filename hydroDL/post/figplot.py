@@ -7,6 +7,8 @@ def clickMap(funcMap, funcPoint):
     # funcMap - overall design and map plot
     # funcPoint - how to plot point given axes and index of point
     figM, axM, figP, axP, xLoc, yLoc = funcMap()
+    if type(axM) is not list:
+        axM = [axM]
 
     def onclick(event, figP, axP):
         xClick = event.xdata
@@ -53,7 +55,7 @@ def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',
         else:
             temp = temp[~np.isnan(temp)]
         bp = ax.boxplot(temp, patch_artist=True, notch=True,
-                        showfliers=False, widths=widths)        
+                        showfliers=False, widths=widths)
         for kk in range(0, len(bp['boxes'])):
             plt.setp(bp['boxes'][kk], facecolor=cLst[kk])
         if label1 is not None:
@@ -68,5 +70,3 @@ def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',
             ax.set_position([0, 0, 0.1, 1])
             ax.legend(bp['boxes'], label2, bbox_to_anchor=(1, 1))
     return fig
-
-

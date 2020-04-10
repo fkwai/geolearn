@@ -22,13 +22,14 @@ class DataModelWQ():
         # info
         with open(saveName+'.json', 'r') as fp:
             dictData = json.load(fp)
+
         self.siteNoLst = dictData['siteNoLst']
         self.name = dictData['name']
         self.rho = dictData['rho']
         self.nFill = dictData['nFill']
         self.varG = dictData['varG']
         self.varC = dictData['varC']
-        self.varQ = ['00060']  # delete later
+        self.varQ = ['00060', 'runoff']  # delete later
         self.varF = gridMET.varLst  # delete later
         self.info = pd.read_csv(saveName+'.csv', index_col=0,
                                 dtype={'siteNo': str})
@@ -47,6 +48,12 @@ class DataModelWQ():
         dfSite['pRank'] = dfSite['rank']/dfSite['count']
         self.dfSite = dfSite
         print('loading info {}'.format(time.time()-t0))
+
+        if self.q.shape[2] == 1:  # add runoff
+            q = self.q[:, :, 0]
+            runoff = calRunoff(q, self.info)
+            self.q = np.stack([q, runoff], axis=-1).astype(np.float32)
+            np.savez(saveName, q=self.q, f=self.f, c=self.c, g=self.g)
 
     @classmethod
     def new(cls, caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):
@@ -86,6 +93,8 @@ class DataModelWQ():
                     mtd = gageII.dictStat[var]
                 elif var in usgs.dictStat.keys():
                     mtd = usgs.dictStat[var]
+                else:
+                    print('variable not found')
                 mtdLst.append(mtd)
         return mtdLst
 
@@ -341,16 +350,29 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     infoDf = pd.DataFrame(infoLst)
+    # add runoff
+    runoff = calRunoff(q[:, :, 0], infoDf)
+    q = np.stack([q[:, :, 0], runoff], axis=-1).astype(np.float32)
 
     saveFolder = os.path.join(kPath.dirWQ, 'trainData')
     saveName = os.path.join(saveFolder, caseName)
     np.savez(saveName, q=q, f=f, c=c, g=g)
     infoDf.to_csv(saveName+'.csv')
     dictData = dict(name=caseName, rho=rho, nFill=nFill,
-                    varG=varG, varC=varC, varQ=['00060'], varF=gridMET.varLst,
+                    varG=varG, varC=varC, varQ=['00060', 'runoff'], varF=gridMET.varLst,
                     siteNoLst=siteNoLst)
     with open(saveName+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)
+
+
+def calRunoff(q, info):
+    siteNoLst = info.siteNo.unique().tolist()
+    dfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
+    dfArea.rename({'STAID': 'siteNo'})
+    area = info.join(dfArea, on='siteNo')['DRAIN_SQKM'].values
+    unitConv = 0.3048**3*365*24*60*60/1000**2
+    runoff = q/area*unitConv
+    return runoff
 
 # find the distribution of data
 # for k, var in enumerate(wqData.varC):
