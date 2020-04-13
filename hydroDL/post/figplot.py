@@ -7,7 +7,7 @@ def clickMap(funcMap, funcPoint):
     # funcMap - overall design and map plot
     # funcPoint - how to plot point given axes and index of point
     figM, axM, figP, axP, xLoc, yLoc = funcMap()
-    if type(axM) is not list:
+    if type(axM) is not np.ndarray:
         axM = [axM]
 
     def onclick(event, figP, axP):

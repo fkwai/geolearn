@@ -18,7 +18,8 @@ def mapPoint(ax, lat, lon, data, title=None, vRange=None, cmap=plt.cm.jet, s=30,
     mm.drawcoastlines()
     mm.drawcountries(linestyle='dashed')
     mm.drawstates(linestyle='dashed', linewidth=0.5)
-    cs = mm.scatter(lon, lat, c=data, cmap=cmap,
+    ind = np.where(~np.nan(data))[0]
+    cs = mm.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
                     s=s, marker=marker, vmin=vmin, vmax=vmax)
     mm.colorbar(cs, location='bottom', pad='5%')
     ax.set_title(title)
@@ -76,7 +77,7 @@ def plotBox(ax, x, labLst=None, c='r'):
     return ax
 
 
-def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange = None):
+def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange=None):
     ny, nx = mat.shape
     ax.set_xticks(np.arange(ny))
     ax.set_yticks(np.arange(nx))
