@@ -16,8 +16,8 @@ doOpt.append('test')
 # doOpt.append('plotMap')
 doOpt.append('plotErrBox')
 # doOpt.append('plotConf')
-# doOpt.append('plotConfDist')
-# doOpt.append('plotConfLegend')
+doOpt.append('plotConfDist')
+doOpt.append('plotConfLegend')
 #
 # noiseNameLst = ['0', '5e3', '1e2', '2e2', '5e2', '1e1']
 
@@ -27,7 +27,7 @@ noiseLabelLst = ['0', '0.01', '0.02', '0.03', '0.04', '0.05',
                  '0.06', '0.07', '0.08', '0.09', '0.1']
 strErrLst = ['RMSE', 'ubRMSE']
 saveFolder = os.path.join(
-    rnnSMAP.kPath['dirResult'], 'paperSigma')
+    rnnSMAP.kPath['dirResult'], 'paperSigma', 'noise')
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 
 matplotlib.rcParams.update({'font.size': 16})
@@ -143,10 +143,11 @@ if 'plotConfDist' in doOpt:
         if iFig == 0:
             axes[iFig].set_ylabel('Frequency')
     noiseLst = np.arange(0, 0.11, 0.01)
-    strSigmaLst = ['sigmaMC', 'sigmaX']
-    legLst = [r'$d(p_{mc})$', r'$d(p_{x})$']
-    cLst = 'rb'
-    axesDist = [axes[2], axes[2].twinx()]
+    strSigmaLst = ['sigmaMC', 'sigmaX', 'sigma']
+    legLst = [r'$d(p_{mc})$', r'$d(p_{x})$', r'$d(p_{comb})$']
+    cLst = 'rbk'
+    axTwin = axes[2].twinx()
+    axesDist = [axes[2], axTwin, axTwin]
     for iS in range(0, len(strSigmaLst)):
         distLst = list()
         for iN in range(0, len(noiseNameLst)):

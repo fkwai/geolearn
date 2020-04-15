@@ -13,17 +13,23 @@ rnnSMAP.reload()
 doOpt = []
 # doOpt.append('train')
 # doOpt.append('test')
-doOpt.append('loadData')
-doOpt.append('plotConf')
+# doOpt.append('loadData')
+# doOpt.append('plotConf')
 doOpt.append('plotBar')
-
-doOpt.append('plotBox')
+# doOpt.append('plotBox')
+# doOpt.append('plotReg')
+# doOpt.append('plot121')
 
 
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 saveFolder = os.path.join(
     rnnSMAP.kPath['dirResult'], 'paperSigma', 'eco_comb')
+
+matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
+matplotlib.rcParams.update({'legend.fontsize': 16})
 
 #################################################
 if 'train' in doOpt:
@@ -125,7 +131,7 @@ if 'plotBar' in doOpt:
     figBar, axBar= plt.subplots(1,1, figsize=(12, 4))
     axBar.bar(range(11), ksdLst,color='rrrbbbbbbbb')
     axBar.set_xticks(range(11))
-    axBar.set_ylabel(r'd($p_{mc}$, 1-to-1)')
+    axBar.set_ylabel(r'd($p_{comb}$)')
     axBar.set_xticklabels(labLst)
     saveFile = os.path.join(saveFolder, 'ecoComb_bar')
     # fig.show()
@@ -169,58 +175,56 @@ if 'plotBox' in doOpt:
     fig.savefig(saveFile, dpi=100)
     fig.savefig(saveFile+'.eps')
 
+if 'plot121' in doOpt:
+    for k in range(11):
+        fig, axes = plt.subplots(1, 4, figsize=(12, 4))
+        yLst = [statErrLst[k].ubRMSE, statErrLst[k].ubRMSE,
+                statErrLst[k].ubRMSE, statSigmaLst[k].sigmaX]
+        xLst = [statSigmaLst[k].sigmaX, statSigmaLst[k].sigmaMC,
+                statSigmaLst[k].sigma, statSigmaLst[k].sigmaMC]
+        xlabelLst = [r'$\sigma_{mc}$', r'$\sigma_{x}$',
+                     r'$\sigma_{comb}$', r'$\sigma_{x}$']
+        ylabelLst = ['ubRMSE', 'ubRMSE', 'ubRMSE', r'$\sigma_{x}$']
+        for i in range(4):
+            rnnSMAP.funPost.plotVS(xLst[i], yLst[i], ax=axes[i],
+                                   xlabel=xlabelLst[i], ylabel=ylabelLst[i])
+        saveFile = os.path.join(saveFolder, 'ecoComb{}_121'.format(k))
+        fig.savefig(saveFile)
 
-for k in range(11):
-    fig, axes = plt.subplots(1, 4, figsize=(12, 4))
-    yLst = [statErrLst[k].ubRMSE, statErrLst[k].ubRMSE,
-            statErrLst[k].ubRMSE, statSigmaLst[k].sigmaX]
-    xLst = [statSigmaLst[k].sigmaX, statSigmaLst[k].sigmaMC,
-            statSigmaLst[k].sigma, statSigmaLst[k].sigmaMC]
-    xlabelLst = [r'$\sigma_{mc}$', r'$\sigma_{x}$',
-                 r'$\sigma_{comb}$', r'$\sigma_{x}$']
-    ylabelLst = ['ubRMSE', 'ubRMSE', 'ubRMSE', r'$\sigma_{x}$']
-    for i in range(4):
-        rnnSMAP.funPost.plotVS(xLst[i], yLst[i], ax=axes[i],
-                               xlabel=xlabelLst[i], ylabel=ylabelLst[i])
-    saveFile = os.path.join(saveFolder, 'ecoComb{}_121'.format(k))
-    fig.savefig(saveFile)
-
-
-yLst = list()
-x1Lst = list()
-x2Lst = list()
-x3Lst = list()
-for k in range(11):
-    yLst.append(statErrLst[k].ubRMSE)
-    x1Lst.append(statSigmaLst[k].sigmaX)
-    x2Lst.append(statSigmaLst[k].sigmaMC)
-    x3Lst.append(statSigmaLst[k].sigma)
-y = np.concatenate(yLst, axis=0)
-x1 = np.concatenate(x1Lst, axis=0)
-x2 = np.concatenate(x2Lst, axis=0)
-x3 = np.concatenate(x3Lst, axis=0)
-xx = np.stack((x1, x2), axis=1)
-yy = y
-ind = np.where(~np.isnan(yy))[0]
-xf = xx[ind, :]
-yf = yy[ind]
-model = sm.RLM(yf, xf)
-result = model.fit()
-w = result.params
-yp = result.predict(xx)
-
-
-for k in range(11):
-    fig, axes = plt.subplots(1, 4, figsize=(12, 4))
-    yLst = [statErrLst[k].ubRMSE, statErrLst[k].ubRMSE,
-            statErrLst[k].ubRMSE, statErrLst[k].ubRMSE]
-    xLst = [statSigmaLst[k].sigmaX, statSigmaLst[k].sigmaMC,
-            statSigmaLst[k].sigma, statSigmaLst[k].sigmaX*w[0]+statSigmaLst[k].sigmaMC*w[1]]
-    xlabelLst = [r'$\sigma_{mc}$', r'$\sigma_{x}$',
-                 r'$\sigma_{comb}$', r'$\sigma_{reg}$']
-    ylabelLst = ['ubRMSE', 'ubRMSE', 'ubRMSE', r'$\sigma_{x}$']
-    for i in range(4):
-        rnnSMAP.funPost.plotVS(xLst[i], yLst[i], ax=axes[i],
-                               xlabel=xlabelLst[i], ylabel=ylabelLst[i])
-    saveFile = os.path.join(saveFolder, 'ecoComb{}_reg'.format(k))
-    fig.savefig(saveFile)
+if 'plotReg' in doOpt:
+    yLst = list()
+    x1Lst = list()
+    x2Lst = list()
+    x3Lst = list()
+    for k in range(11):
+        yLst.append(statErrLst[k].ubRMSE)
+        x1Lst.append(statSigmaLst[k].sigmaX)
+        x2Lst.append(statSigmaLst[k].sigmaMC)
+        x3Lst.append(statSigmaLst[k].sigma)
+    y = np.concatenate(yLst, axis=0)
+    x1 = np.concatenate(x1Lst, axis=0)
+    x2 = np.concatenate(x2Lst, axis=0)
+    x3 = np.concatenate(x3Lst, axis=0)
+    xx = np.stack((x1, x2), axis=1)
+    yy = y
+    ind = np.where(~np.isnan(yy))[0]
+    xf = xx[ind, :]
+    yf = yy[ind]
+    model = sm.RLM(yf, xf)
+    result = model.fit()
+    w = result.params
+    yp = result.predict(xx)
+    for k in range(11):
+        fig, axes = plt.subplots(1, 4, figsize=(12, 4))
+        yLst = [statErrLst[k].ubRMSE, statErrLst[k].ubRMSE,
+                statErrLst[k].ubRMSE, statErrLst[k].ubRMSE]
+        xLst = [statSigmaLst[k].sigmaX, statSigmaLst[k].sigmaMC,
+                statSigmaLst[k].sigma, statSigmaLst[k].sigmaX*w[0]+statSigmaLst[k].sigmaMC*w[1]]
+        xlabelLst = [r'$\sigma_{mc}$', r'$\sigma_{x}$',
+                    r'$\sigma_{comb}$', r'$\sigma_{reg}$']
+        ylabelLst = ['ubRMSE', 'ubRMSE', 'ubRMSE', r'$\sigma_{x}$']
+        for i in range(4):
+            rnnSMAP.funPost.plotVS(xLst[i], yLst[i], ax=axes[i],
+                                xlabel=xlabelLst[i], ylabel=ylabelLst[i])
+        saveFile = os.path.join(saveFolder, 'ecoComb{}_reg'.format(k))
+        fig.savefig(saveFile)
