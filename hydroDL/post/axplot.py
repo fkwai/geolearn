@@ -18,7 +18,8 @@ def mapPoint(ax, lat, lon, data, title=None, vRange=None, cmap=plt.cm.jet, s=30,
     mm.drawcoastlines()
     mm.drawcountries(linestyle='dashed')
     mm.drawstates(linestyle='dashed', linewidth=0.5)
-    cs = mm.scatter(lon, lat, c=data, cmap=cmap,
+    ind = np.where(~np.nan(data))[0]
+    cs = mm.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
                     s=s, marker=marker, vmin=vmin, vmax=vmax)
     mm.colorbar(cs, location='bottom', pad='5%')
     ax.set_title(title)
@@ -53,6 +54,49 @@ def plotCDF(ax, x, cLst='rbkgcmy', legLst=None):
         ax.plot(xS, yS, color=cLst[k], label=legStr)
     if legLst is not None:
         ax.legend(loc='bottom right', frameon=False)
+
+
+def plotBox(ax, x, labLst=None, c='r'):
+    temp = x
+    if type(temp) is list:
+        for kk in range(len(temp)):
+            tt = temp[kk]
+            if tt is not None and tt != []:
+                tt = tt[~np.isnan(tt)]
+                temp[kk] = tt
+            else:
+                temp[kk] = []
+    else:
+        temp = temp[~np.isnan(temp)]
+    bp = ax.boxplot(temp, patch_artist=True, notch=True, showfliers=False)
+    # ax.set_xticks(range(len(vLst)), vLst)
+    if labLst is not None:
+        _ = plt.setp(ax, xticks=range(1, len(labLst)+1), xticklabels=labLst)
+    for kk in range(0, len(bp['boxes'])):
+        _ = plt.setp(bp['boxes'][kk], facecolor=c)
+    return ax
+
+
+def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange=None):
+    ny, nx = mat.shape
+    ax.set_xticks(np.arange(ny))
+    ax.set_yticks(np.arange(nx))
+    if ny == nx:
+        labX = labLst
+        labY = labLst
+    else:
+        labX = labLst[1]
+        labY = labLst[0]
+    ax.set_xticklabels(labX)
+    ax.set_yticklabels(labY)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+    im = ax.imshow(mat)
+    for j in range(ny):
+        for i in range(nx):
+            text = ax.text(i, j, fmt.format(mat[j, i]),
+                           ha="center", va="center", color="w")
+    return ax
 
 
 def sortData(x):

@@ -1,6 +1,8 @@
 
 from scipy.stats import linregress
 import numpy as np
+from hydroDL import utils
+from scipy.optimize import curve_fit
 
 
 def slopeModel(q, c, x=None):
@@ -24,6 +26,22 @@ def kateModel(q, c, x=None):
     a, b, r, p, std = linregress(x2[ind], y2[ind])
     ceq = 1/b
     dw = 1/a/ceq
+    if x is None:
+        out = None
+    else:
+        out = ceq/(1+x/dw)
+    return ceq, dw, out
+
+
+def func(x, a, b):
+    return a/(x/b+1)
+
+
+def kateModel2(q, c, x=None):
+    (q, c), ind = utils.rmNan([q, c])
+    popt, pcov = curve_fit(func, q, c, bounds=[(0, 0), (np.inf, 100)])
+    ceq = popt[0]
+    dw = popt[1]
     if x is None:
         out = None
     else:

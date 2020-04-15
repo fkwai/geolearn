@@ -11,19 +11,18 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-wqData = waterQuality.DataModelWQ('HBN')
-figFolder = os.path.join(kPath.dirWQ, 'HBN')
+wqData = waterQuality.DataModelWQ('basinRef')
+figFolder = os.path.join(kPath.dirWQ, 'basinRef')
 
 # compare of opt1-4
-outLst = ['HBN-first50-opt1', 'HBN-first50-opt2',
-          'HBN-30d-first50-opt1', 'HBN-30d-first50-opt2']
-# outLst = ['HBN-30d-first50-opt1', 'HBN-30d-first50-opt2']
-trainSet = 'first50'
-testSet = 'last50'
+outLst = ['basinRef-rq-pQ-F50', 'basinRef-q-pQ-F50',
+          'basinRef-r-pQ-F50', 'basinRef-opt2']
+trainSet = 'pQ-F50'
+testSet = 'pQ-L50'
 pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]
 for outName in outLst:
-    p1, o1 = basins.testModel(outName, trainSet)
-    p2, o2 = basins.testModel(outName, testSet)
+    p1, o1 = basins.testModel(outName, trainSet, wqData=wqData, ep=400)
+    p2, o2 = basins.testModel(outName, testSet, wqData=wqData, ep=400)
     errMat1 = wqData.errBySite(p1, subset=trainSet)
     errMat2 = wqData.errBySite(p2, subset=testSet)
     pLst1.append(p1)
@@ -39,7 +38,7 @@ for group in groupLst:
         indLst = [wqData.varC.index(code) for code in codeLst]
         labLst1 = [codePdf.loc[code]['shortName'] +
                    '\n'+code for code in codeLst]
-        labLst2 = ['opt1-365d', 'opt2-365d', 'opt1-30d', 'opt2-30d']
+        labLst2 = ['R+Q', 'Q', 'R', 'target Q']
         dataBox = list()
         for ic in indLst:
             temp = list()
@@ -47,7 +46,7 @@ for group in groupLst:
                 temp.append(errMat[:, ic, 1])
             dataBox.append(temp)
         title = '{} correlation of {} group'.format(train, group)
-        figName = 'box_{}_{}_rho'.format(train, group)
+        figName = 'box_{}_{}_runoff'.format(train, group)
         fig = figplot.boxPlot(dataBox, label1=labLst1, label2=labLst2)
         fig.suptitle(title)
         fig.show()

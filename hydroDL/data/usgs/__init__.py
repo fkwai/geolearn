@@ -11,6 +11,7 @@ varC = codeLst
 varQ = ['00060']
 
 dictStat = {
+    'runoff': 'log-norm',
     '00010': 'norm',
     '00060': 'log-norm',
     '00094': 'log-norm',

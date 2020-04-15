@@ -69,7 +69,7 @@ def dealNaN(dataTup, optNaN):
         if data is not None:
             data[np.isinf(data)] = np.nan
             indNan = np.where(np.isnan(data))
-            if len(indNan) > 0:
+            if len(indNan[0]) > 0:
                 if optN == 1:
                     data[indNan] = 0
                     print('nan found and filled')

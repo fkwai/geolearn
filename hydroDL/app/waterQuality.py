@@ -22,31 +22,29 @@ class DataModelWQ():
         # info
         with open(saveName+'.json', 'r') as fp:
             dictData = json.load(fp)
+
         self.siteNoLst = dictData['siteNoLst']
         self.name = dictData['name']
         self.rho = dictData['rho']
         self.nFill = dictData['nFill']
         self.varG = dictData['varG']
         self.varC = dictData['varC']
-        self.varQ = ['00060']  # delete later
+        self.varQ = ['00060', 'runoff']  # delete later
         self.varF = gridMET.varLst  # delete later
         self.info = pd.read_csv(saveName+'.csv', index_col=0,
                                 dtype={'siteNo': str})
         self.info['date'] = self.info['date'].astype('datetime64[D]')
 
         self.subset = self.loadSubset()
-        # counting the dataset used for indexes - fairly fast
-        # self.dfCount = self.info['siteNo'].value_counts().rename(
-        #     'count').to_frame().rename_axis(index='siteNo')
-        self.dfCount = self.info['siteNo'].value_counts().rename(
-            'count').to_frame().rename_axis('siteNo', axis=0)
-
-        rankSite = self.info.groupby('siteNo').cumcount().rename('rank')
-        dfRank = self.info.join(rankSite)
-        dfSite = pd.merge(dfRank, self.dfCount, on='siteNo')
-        dfSite['pRank'] = dfSite['rank']/dfSite['count']
-        self.dfSite = dfSite
+        self.dfSite = countSite(self.info)
         print('loading info {}'.format(time.time()-t0))
+
+        if self.q.shape[2] == 1:  # add runoff
+            q = self.q[:, :, 0]
+            runoff = calRunoff(q, self.info)
+            self.q = np.stack([q, runoff], axis=-1).astype(np.float32)
+            np.savez(saveName, q=self.q, f=self.f, c=self.c, g=self.g)
+            print('calculate Runoff and re-save data {}'.format(time.time()-t0))
 
     @classmethod
     def new(cls, caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):
@@ -86,6 +84,8 @@ class DataModelWQ():
                     mtd = gageII.dictStat[var]
                 elif var in usgs.dictStat.keys():
                     mtd = usgs.dictStat[var]
+                else:
+                    print('variable not found')
                 mtdLst.append(mtd)
         return mtdLst
 
@@ -341,29 +341,68 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     infoDf = pd.DataFrame(infoLst)
+    # add runoff
+    runoff = calRunoff(q[:, :, 0], infoDf)
+    q = np.stack([q[:, :, 0], runoff], axis=-1).astype(np.float32)
 
     saveFolder = os.path.join(kPath.dirWQ, 'trainData')
     saveName = os.path.join(saveFolder, caseName)
     np.savez(saveName, q=q, f=f, c=c, g=g)
     infoDf.to_csv(saveName+'.csv')
     dictData = dict(name=caseName, rho=rho, nFill=nFill,
-                    varG=varG, varC=varC, varQ=['00060'], varF=gridMET.varLst,
+                    varG=varG, varC=varC, varQ=['00060', 'runoff'], varF=gridMET.varLst,
                     siteNoLst=siteNoLst)
     with open(saveName+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)
 
-# find the distribution of data
-# for k, var in enumerate(wqData.varC):
-#     fig, axes = plt.subplots(2, 2)
-#     temp = wqData.c[:, k].flatten()
-#     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
-#                            (temp < np.nanpercentile(temp, 95)))]
-#     axes[0, 0].hist(temp, bins=100)
-#     axes[0, 1].hist(temp90, bins=100)
-#     try:
-#         axes[1, 0].hist(np.log(temp+1), bins=100)
-#         axes[1, 1].hist(np.log(temp90+1), bins=100)
-#     except(ValueError):
-#         print(var+' can not log')
-#     fig.suptitle(var)
-#     fig.show()
+
+def calRunoff(q, info):
+    siteNoLst = info.siteNo.unique().tolist()
+    dfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
+    dfArea.rename({'STAID': 'siteNo'})
+    area = info.join(dfArea, on='siteNo')['DRAIN_SQKM'].values
+    unitConv = 0.3048**3*365*24*60*60/1000**2
+    runoff = q/area*unitConv
+    return runoff
+
+
+def countSite(info):
+    # counting the dataset used for indexes - fairly fast
+    # self.dfCount = self.info['siteNo'].value_counts().rename(
+    #     'count').to_frame().rename_axis(index='siteNo')
+    dfCount = info['siteNo'].value_counts().rename(
+        'count').to_frame().rename_axis('siteNo', axis=0)
+    rankSite = info.groupby('siteNo').cumcount().rename('rank')
+    dfRank = info.join(rankSite)
+    # dfSite = pd.merge(dfRank, dfCount, on='siteNo')
+    # removed as will change index number if info is a subset - HF
+    dfSite = dfRank.join(dfCount, on='siteNo')
+    dfSite['pRank'] = dfSite['rank']/dfSite['count']
+    return dfSite
+
+
+def indYr(info, yrLst=[1979, 1990, 2000, 2010, 2020]):
+    info['yr'] = pd.DatetimeIndex(info['date']).year
+    indLst = list()
+    for k in range(len(yrLst)-1):
+        sy = yrLst[k]
+        ey = yrLst[k+1]
+        ind = info.index[(info['yr'] >= sy) & (info['yr'] < ey)].values
+        indLst.append(ind)
+    return indLst
+
+    # find the distribution of data
+    # for k, var in enumerate(wqData.varC):
+    #     fig, axes = plt.subplots(2, 2)
+    #     temp = wqData.c[:, k].flatten()
+    #     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
+    #                            (temp < np.nanpercentile(temp, 95)))]
+    #     axes[0, 0].hist(temp, bins=100)
+    #     axes[0, 1].hist(temp90, bins=100)
+    #     try:
+    #         axes[1, 0].hist(np.log(temp+1), bins=100)
+    #         axes[1, 1].hist(np.log(temp90+1), bins=100)
+    #     except(ValueError):
+    #         print(var+' can not log')
+    #     fig.suptitle(var)
+    #     fig.show()

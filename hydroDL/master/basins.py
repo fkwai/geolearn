@@ -153,7 +153,8 @@ def testModel(outName, testset, wqData=None, ep=None):
     model = loadModel(outName, ep=ep)
 
     # load test data
-    wqData = waterQuality.DataModelWQ(master['dataName'])
+    if wqData is None:
+        wqData = waterQuality.DataModelWQ(master['dataName'])
     varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
 
     testDataLst = wqData.transIn(

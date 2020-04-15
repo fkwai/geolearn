@@ -51,6 +51,7 @@ if 'first80-rm2' not in wqData.subset.keys():
     indTrain = np.setdiff1d(ind, indRm)
     wqData.saveSubset('first80-rm2', indTrain)
 
+wqData = waterQuality.DataModelWQ('HBN-30d')
 if 'first50' not in wqData.subset.keys():
     ind1 = wqData.indByRatio(0.5)
     ind2 = wqData.indByRatio(0.5, first=False)
@@ -61,7 +62,7 @@ if 'first50' not in wqData.subset.keys():
 wqData = waterQuality.DataModelWQ('HBN')
 info = wqData.info
 info['yr'] = pd.DatetimeIndex(info['date']).year
-yrLst = [1979,1990,2000,2010,2020]
+yrLst = [1979, 1990, 2000, 2010, 2020]
 subsetLst = ['80s', '90s', '00s', '10s']
 indLst = list()
 indAll = info.index.values
