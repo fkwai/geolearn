@@ -15,15 +15,15 @@ rnnSMAP.reload()
 #################################################
 # intervals temporal test
 doOpt = []
-# doOpt.append('train')
-# doOpt.append('test')
+doOpt.append('train')
+doOpt.append('test')
 # doOpt.append('plotConf')
-doOpt.append('plotConfDist')
+# doOpt.append('plotConfDist')
 # doOpt.append('plotInvGammaCDF')
 
 # doOpt.append('plotNorm')
 # doOpt.append('plotScale')
-# doOpt.append('plotMap')
+doOpt.append('plotMap')
 # doOpt.append('plotBox')
 # doOpt.append('plotVS')
 
@@ -33,15 +33,15 @@ matplotlib.rcParams.update({'lines.markersize': 12})
 matplotlib.rcParams.update({'legend.fontsize': 16})
 
 
-trainName = 'CONUSv4f1'
-testName = 'CONUSv4f1'
+trainName = 'CONUSv2f1'
+testName = 'CONUSv4=2f1'
 yr = [2017]
 
 C1Lst = [2, 3, 4]
 C2Lst = [1, 2, 4]
 outLst = list()
 caseStrLst = list()
-outLst.append(trainName+'_y15_Forcing')
+outLst.append(trainName+'_y15_Forcing_dr60')
 caseStrLst.append('no prior')
 for j in C1Lst:
     for i in C2Lst:
@@ -72,7 +72,7 @@ if 'train' in doOpt:
             opt['lossPrior'] = 'invGamma+'+str(j)+'+'+str(i)
             runTrainLSTM.runCmdLine(
                 opt=opt, cudaID=k % 3, screenName=opt['lossPrior'])
-            # rnnSMAP.funLSTM.trainLSTM(opt)
+            rnnSMAP.funLSTM.trainLSTM(opt)
             k = k+1
 
 #################################################
@@ -179,7 +179,7 @@ if 'plotConfDist' in doOpt:
         ax.plot(bLst, dLst, color=cLst[j], label='a='+str(a), marker='*')
     ax.plot(bLst, [dd, dd, dd], color='k', label='no prior')
     ax.legend(loc='best')
-    ax.set_ylabel(r'd($P_{ee}$,1-to-1)')
+    ax.set_ylabel(r'd($p_{ecomb}$)')
     ax.set_xlabel('b')
     ax.set_xticks(bLst)
     ax.set_title('(a) Quality of '+r'$\sigma_{comb}$')
@@ -206,7 +206,7 @@ if 'plotConfDist' in doOpt:
             d2Lst.append(d2)
             k = k+1
     ax.plot(d1Lst, d2Lst, '*')
-    ax.set_ylabel(r'd($P_{ee}$,1-to-1)')
+    ax.set_ylabel(r'd($p_{ecomb}$)')
     ax.set_xlabel('d(prior,posterior)')
     ax.set_title('(b) Quality Change of '+r'$\sigma_{comb}$')
 
