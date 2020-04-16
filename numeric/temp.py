@@ -13,4 +13,4 @@ importlib.reload(equationSystem)
 
 x = equationSystem.gaussElimination(A, b)
 L, U = equationSystem.LU(A)
-x = equationSystem.jacobi(A, b, [0, 0, 0], n=10)
+x = equationSystem.jacobi(A, b, [0, 0, 0], n=20)

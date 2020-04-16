@@ -11,10 +11,10 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-wqData = waterQuality.DataModelWQ('HBN')
+wqData = waterQuality.DataModelWQ('basinRef')
 
 
-outLst = ['HBN-first50-opt1', 'HBN-first50-opt2']
+outLst = ['basinRef-first50-opt1', 'basinRef-first50-opt2']
 trainSet = 'first50'
 testSet = 'last50'
 pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]

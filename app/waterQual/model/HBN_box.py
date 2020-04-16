@@ -15,18 +15,14 @@ wqData = waterQuality.DataModelWQ('HBN')
 figFolder = os.path.join(kPath.dirWQ, 'HBN')
 
 # compare of opt1-4
-outLst = ['HBN-first50-opt1', 'HBN-first50-opt2',
-          'HBN-first50-opt3', 'HBN-first50-opt4']
+outLst = ['HBN-first50-opt1', 'HBN-first50-opt2']
 trainSet = 'first50'
 testSet = 'last50'
-# outLst = ['HBN-opt1', 'HBN-opt2',
-#           'HBN-opt3', 'HBN-opt4']
-# trainSet = 'first80'
-# testSet = 'last20'
 pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]
 for outName in outLst:
     p1, o1 = basins.testModel(outName, trainSet, wqData=wqData)
     p2, o2 = basins.testModel(outName, testSet, wqData=wqData)
+    errMat1 = wqData.errBySite(p1, subset=trainSet)
     errMat1 = wqData.errBySite(p1, subset=trainSet)
     errMat2 = wqData.errBySite(p2, subset=testSet)
     pLst1.append(p1)

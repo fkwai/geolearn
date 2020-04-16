@@ -51,6 +51,7 @@ def saveOptLSTM(outFolder, opt: classLSTM.optLSTM):
                 ff.write(key+': '+str(opt[key]))
             i = i+1
 
+
 def fixRootDB(rootDB):
     if '/' in rootDB:
         nameDB = rootDB.split('/')[-1]
@@ -222,6 +223,10 @@ def testLSTM(*, rootOut, out, test, syr, eyr, epoch=None, drMC=0, testBatch=0):
     # Load Model
     modelFile = os.path.join(outFolder, 'ep'+str(epoch)+'.pt')
     model = torch.load(modelFile)
+    try:
+        yP = model(xTest[:, 0:10, :])
+    except:
+        print('first iteration failed again for CUDNN_STATUS_EXECUTION_FAILED ')
 
     #############################################
     # save prediction
