@@ -9,16 +9,31 @@ import numpy as np
 import os
 import time
 
-# all gages
-fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoLst-1979')
-siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
-dfHBN = pd.read_csv(os.path.join(kPath.dirData, 'USGS', 'inventory', 'HBN.csv'), dtype={
-    'siteNo': str}).set_index('siteNo')
-siteNoHBN = [siteNo for siteNo in dfHBN.index.tolist()
-             if siteNo in siteNoLstAll]
-
 
 caseLst = list()
+
+subsetLst = ['00955-00665-rmY10', '00955-rmY10', '00665-rmY10']
+varLst = [['00955', '00665'], ['00955'], ['00665']]
+
+for subset, var in zip(subsetLst, varLst):
+    caseName = basins.wrapMaster(
+        dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset, varYC=var, varX=usgs.varQ+gridMET.varLst, varY=None)
+    caseLst.append(caseName)
+
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
+for caseName in caseLst:
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=4)
+
+# predict a single variable
+# codeLst = ['00955', '00915', '00405', '71846', '00410']
+# for code in codeLst:
+#     saveName = 'HBN-first50-{}'.format(code)
+#     caseName = basins.wrapMaster(
+#         dataName='HBN', trainName='first50', batchSize=[None, 200],
+#         outName=saveName, varYC=[code], varX=usgs.varQ+gridMET.varLst, varY=None)
+#     caseLst.append(caseName)
+
+
 # for opt in [1, 2, 3, 4]:
 #     for trainName, trainStr in zip(['first80', 'first80-rm2'], ['', '-rm2']):
 #         saveName = 'HBN-opt'+str(opt)+trainStr
@@ -73,18 +88,14 @@ caseLst = list()
 #         outName=saveName, varYC=codeLst, varX=usgs.varQ+gridMET.varLst)
 #     caseLst.append(caseName)
 
-subsetLst = ['{}s-rm'.format(x) for x in ['80', '90', '00', '10']]
-for subset in subsetLst:
-    saveName = 'HBN-{}-opt1'.format(subset)
-    caseName = basins.wrapMaster(dataName='HBN', trainName=subset,
-                                 batchSize=[None, 200], outName=saveName)
-    caseLst.append(caseName)
-    saveName = 'HBN-{}-opt2'.format(subset)
-    caseName = basins.wrapMaster(dataName='HBN', trainName=subset,
-                                 batchSize=[None, 200], varYC=usgs.varC,
-                                 varX=usgs.varQ+gridMET.varLst, outName=saveName)
-    caseLst.append(caseName)
-
-cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
-for caseName in caseLst:
-    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=4)
+# subsetLst = ['{}s-rm'.format(x) for x in ['80', '90', '00', '10']]
+# for subset in subsetLst:
+#     saveName = 'HBN-{}-opt1'.format(subset)
+#     caseName = basins.wrapMaster(dataName='HBN', trainName=subset,
+#                                  batchSize=[None, 200], outName=saveName)
+#     caseLst.append(caseName)
+#     saveName = 'HBN-{}-opt2'.format(subset)
+#     caseName = basins.wrapMaster(dataName='HBN', trainName=subset,
+#                                  batchSize=[None, 200], varYC=usgs.varC,
+#                                  varX=usgs.varQ+gridMET.varLst, outName=saveName)
+#     caseLst.append(caseName)
