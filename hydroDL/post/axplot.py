@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def mapPoint(ax, lat, lon, data, title=None, vRange=None, cmap=plt.cm.jet, s=30, marker='o'):
+def mapPoint(ax, lat, lon, data, vRange=None, cmap=plt.cm.jet, s=30, marker='o'):
     if np.isnan(data).all():
         print('all nan in data')
         return
@@ -18,11 +18,32 @@ def mapPoint(ax, lat, lon, data, title=None, vRange=None, cmap=plt.cm.jet, s=30,
     mm.drawcoastlines()
     mm.drawcountries(linestyle='dashed')
     mm.drawstates(linestyle='dashed', linewidth=0.5)
-    ind = np.where(~np.nan(data))[0]
+    ind = np.where(~np.isnan(data))[0]
     cs = mm.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
                     s=s, marker=marker, vmin=vmin, vmax=vmax)
     mm.colorbar(cs, location='bottom', pad='5%')
-    ax.set_title(title)
+    return mm
+
+
+def mapGrid(ax, lat, lon, data, vRange=None, cmap=plt.cm.jet):
+    if np.isnan(data).all():
+        print('all nan in data')
+        return
+    if vRange is None:
+        vmin = np.percentile(data[~np.isnan(data)], 10)
+        vmax = np.percentile(data[~np.isnan(data)], 90)
+    else:
+        vmin, vmax = vRange
+    mm = basemap.Basemap(llcrnrlat=25, urcrnrlat=50,
+                         llcrnrlon=-125, urcrnrlon=-65,
+                         projection='cyl', resolution='c', ax=ax)
+    mm.drawcoastlines()
+    mm.drawcountries(linestyle='dashed')
+    mm.drawstates(linestyle='dashed', linewidth=0.5)
+    x, y = mm(lon, lat)
+    xx, yy = np.meshgrid(x, y)
+    cs = mm.pcolormesh(xx, yy, data, cmap=cmap, vmin=vmin, vmax=vmax)
+    mm.colorbar(cs, location='bottom', pad='5%')
     return mm
 
 
@@ -39,7 +60,8 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None):
         for tt in tBar:
             ax.plot([tt, tt], ylim, '-k')
     if legLst is not None:
-        ax.legend(loc='upper right', frameon=False)
+        # ax.legend(loc='upper right', frameon=False)
+        ax.legend(loc='upper right')
     ax.xaxis_date()
     return ax
 

@@ -105,7 +105,6 @@ def plotMap(grid, *, crd, ax=None, lat=None, lon=None, title=None,
     x, y = mm(lon, lat)
     xx, yy = np.meshgrid(x, y)
     cs = mm.pcolormesh(xx, yy, grid, cmap=plt.cm.jet, vmin=vmin, vmax=vmax)
-    # cs=map.scatter(xx, yy, c=grid,s=10,cmap=plt.cm.jet,edgecolors=None, linewidth=0)
     if shape is not None:
         if type(shape) is not list:
             shape = [shape]

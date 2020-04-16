@@ -23,8 +23,11 @@ def clickMap(funcMap, funcPoint):
             circle = plt.Circle([xLoc[iP], yLoc[iP]], 1,
                                 color='black', fill=False)
             ax.add_patch(circle)
-        for ax in axP.reshape(-1):
-            ax.clear()
+        if type(axP) is not np.ndarray:
+            axP.clear()
+        else:
+            for ax in axP.reshape(-1):
+                ax.clear()
         funcPoint(iP, axP)
         figM.canvas.draw()
         figP.canvas.draw()
