@@ -12,8 +12,9 @@ import time
 
 caseLst = list()
 
-subsetLst = ['00955-00665-rmY10', '00955-rmY10', '00665-rmY10']
-varLst = [['00955', '00665'], ['00955'], ['00665']]
+subsetLst = ['00618-00955-all-rmY10',
+             '00618-00955-any-rmY10', '00955-rmY10', '00618-rmY10']
+varLst = [['00618', '00955'], ['00618', '00955'], ['00955'], ['00665']]
 
 for subset, var in zip(subsetLst, varLst):
     caseName = basins.wrapMaster(

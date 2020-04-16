@@ -33,8 +33,8 @@ if 'subset' in doLst:
         indYr = waterQuality.indYr(
             wqData.info.iloc[ind], yrLst=[2010, 2020])[0]
         indYrCmp = np.setdiff1d(ind, indYr)
-    wqData.saveSubset('-'.join(sorted(codeLst)+[lab,'Y10']), indYr)
-    wqData.saveSubset('-'.join(sorted(codeLst)+[lab,'rmY10']), indYrCmp)
+        wqData.saveSubset('-'.join(sorted(codeLst)+[lab,'Y10']), indYr)
+        wqData.saveSubset('-'.join(sorted(codeLst)+[lab,'rmY10']), indYrCmp)
     for code in codeLst:
         ic = wqData.varC.index(code)
         indC = np.where(~np.isnan(wqData.c[:, ic]))[0]
