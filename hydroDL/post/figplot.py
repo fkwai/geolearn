@@ -27,7 +27,7 @@ def clickMap(funcMap, funcPoint):
             axP.clear()
         else:
             for ax in axP.reshape(-1):
-                ax.clear()
+                ax.clear()        
         funcPoint(iP, axP)
         figM.canvas.draw()
         figP.canvas.draw()

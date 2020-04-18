@@ -171,4 +171,6 @@ def testModel(outName, testset, wqData=None, ep=None):
     cP = wqData.transOut(ycOut, statTup[3], master['varYC'])
     obsLst = wqData.extractSubset(testset)
     qT, cT = obsLst[2:]
+    icLst = [wqData.varC.index(code) for code in varTup[3]]
+    cT = cT[:, icLst]
     return cP, cT

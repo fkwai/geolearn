@@ -12,13 +12,15 @@ import time
 
 caseLst = list()
 
-subsetLst = ['00618-00955-all-rmY10',
-             '00618-00955-any-rmY10', '00955-rmY10', '00618-rmY10']
-varLst = [['00618', '00955'], ['00618', '00955'], ['00955'], ['00665']]
+subsetLst = ['00618-00955-all-Y8090',
+             '00618-00955-any-Y8090', '00955-Y8090', '00618-Y8090']
+varLst = [['00618', '00955'], ['00618', '00955'], ['00955'], ['00618']]
 
 for subset, var in zip(subsetLst, varLst):
     caseName = basins.wrapMaster(
-        dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset, varYC=var, varX=usgs.varQ+gridMET.varLst, varY=None)
+        dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt1', varYC=var, varX=usgs.varQ+gridMET.varLst, varY=None)
+    caseName = basins.wrapMaster(
+        dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt2', varYC=var, varX=gridMET.varLst)
     caseLst.append(caseName)
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
