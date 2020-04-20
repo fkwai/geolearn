@@ -11,21 +11,47 @@ import time
 
 
 caseLst = list()
-
-subsetLst = ['00618-00955-all-Y8090',
-             '00618-00955-any-Y8090', '00955-Y8090', '00618-Y8090']
-varLst = [['00618', '00955'], ['00618', '00955'], ['00955'], ['00618']]
-
-for subset, var in zip(subsetLst, varLst):
-    caseName = basins.wrapMaster(
-        dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt1', varYC=var, varX=usgs.varQ+gridMET.varLst, varY=None)
-    caseName = basins.wrapMaster(
-        dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt2', varYC=var, varX=gridMET.varLst)
+subsetLst = ['Y8090', 'Y0010']
+for subset in subsetLst:
+    saveName = 'Silica16-{}-opt1'.format(subset)
+    caseName = basins.wrapMaster(dataName='Silica16', trainName=subset,
+                                 batchSize=[None, 200], outName=saveName)
     caseLst.append(caseName)
+    saveName = 'Silica16-{}-opt2'.format(subset)
+    caseName = basins.wrapMaster(dataName='Silica16', trainName=subset,
+                                 batchSize=[None, 200], varY=None,
+                                 varX=usgs.varQ+gridMET.varLst, outName=saveName)
+    caseLst.append(caseName)
+    saveName = 'Silica16-{}-opt3'.format(subset)
+    caseName = basins.wrapMaster(dataName='Silica16', trainName=subset,
+                                 batchSize=[None, 200], varY=None, outName=saveName)
+    caseLst.append(caseName)
+    saveName = 'Silica16-{}-opt4'.format(subset)
+    caseName = basins.wrapMaster(dataName='Silica16', trainName=subset,
+                                 batchSize=[None, 200], varYC=None, outName=saveName)
+    caseLst.append(caseName)
+
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
     slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=4)
+
+# # predict a variable combination
+# subsetLst = ['00618-00955-all-Y8090',
+#              '00618-00955-any-Y8090', '00955-Y8090', '00618-Y8090']
+# varLst = [['00618', '00955'], ['00618', '00955'], ['00955'], ['00618']]
+# for subset, var in zip(subsetLst, varLst):
+#     caseName = basins.wrapMaster(
+#         dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt1', varYC=var, varX=usgs.varQ+gridMET.varLst, varY=None)
+#     caseLst.append(caseName)
+#     caseName = basins.wrapMaster(
+#         dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt2', varYC=var, varX=gridMET.varLst)
+#     caseLst.append(caseName)
+#     caseName = basins.wrapMaster(
+#         dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt3', varYC=var, varY=None)
+#     caseName = basins.wrapMaster(
+#         dataName='HBN', trainName=subset, batchSize=[None, 200], outName='HBN-'+subset+'-opt4', varYC=None)
+#     caseLst.append(caseName)
 
 # predict a single variable
 # codeLst = ['00955', '00915', '00405', '71846', '00410']
