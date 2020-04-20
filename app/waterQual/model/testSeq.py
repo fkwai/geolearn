@@ -1,3 +1,4 @@
+import importlib
 from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath
@@ -12,133 +13,67 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
-# master = basins.loadMaster('HBN-opt2')
-# wqData = waterQuality.DataModelWQ(master['dataName'])
-# p1, o1 = basins.testModel('HBN-first50-opt2', 'first50', wqData=wqData)
+
+doLst = list()
+# doLst.append('data')
+# doLst.append('subset')
+# doLst.append('train')
+
+if 'data' in doLst:
+    # only look at 5 site with most 00955 obs
+    # ['11264500', '07083000', '01466500', '04063700', '10343500']
+    dataName = 'HBN'
+    codeLst = ['00618', '00955']
+    wqData = waterQuality.DataModelWQ(dataName)
+    icLst = [wqData.varC.index(code) for code in codeLst]
+    indAll = np.where(~np.isnan(wqData.c[:, icLst]).all(axis=1))[0]
+    siteNoHBN = wqData.info['siteNo'].unique()
+    info = wqData.info.iloc[indAll]
+    tabCount = info.groupby('siteNo').count()
+    siteNoLst = tabCount.nlargest(5, 'date').index.tolist()
+    wqData = waterQuality.DataModelWQ.new('HBN5', siteNoLst)
+
+if 'subset' in doLst:
+    wqData = waterQuality.DataModelWQ('HBN5')
+    codeLst = ['00618', '00955']
+    icLst = [wqData.varC.index(code) for code in codeLst]
+    indAll = np.where(~np.isnan(wqData.c[:, icLst]).all(axis=1))[0]
+    indAny = np.where(~np.isnan(wqData.c[:, icLst]).any(axis=1))[0]
+    wqData.saveSubset('-'.join(sorted(codeLst)+['all']), indAll)
+    wqData.saveSubset('-'.join(sorted(codeLst)+['any']), indAll)
+    for ind, lab in zip([indAll, indAny], ['all', 'any']):
+        indYr1 = waterQuality.indYr(
+            wqData.info.iloc[ind], yrLst=[1979, 2000])[0]
+        wqData.saveSubset('-'.join(sorted(codeLst)+[lab, 'Y8090']), indYr1)
+        indYr2 = waterQuality.indYr(
+            wqData.info.iloc[ind], yrLst=[2000, 2020])[0]
+        wqData.saveSubset('-'.join(sorted(codeLst)+[lab, 'Y0010']), indYr2)
+
+if 'training' in doLst:
+    dataName = 'HBN5'
+    codeLst = ['00618', '00955']
+    trainset = '00618-00955-all-Y8090'
+    testset = '00618-00955-all-Y0010'
+    out = 'HBN5-00618-00955-all-Y8090'
+    wqData = waterQuality.DataModelWQ(dataName)
+    masterName = basins.wrapMaster(
+        dataName='HBN5', trainName=trainset, batchSize=[
+            None, 100], outName=out, varYC=codeLst, nEpoch=100)
+    basins.trainModelTS(masterName)
 
 
-outName = 'HBN-opt1'
-# testset = 'first50'
-master = basins.loadMaster(outName)
-statTup = basins.loadStat(outName)
-model = basins.loadModel(outName)
-model.eval()
-if torch.cuda.is_available():
-    model = model.cuda()
+# sequence testing
+dataName = 'HBN'
+outName = 'HBN-00618-00955-all-Y8090-opt2'
+trainset = '00618-00955-all-Y8090'
+testset = '00618-00955-all-Y0010'
 
+wqData = waterQuality.DataModelWQ(dataName)
 
-# load test data
-wqData = waterQuality.DataModelWQ(master['dataName'])
-(varX, varXC) = (master['varX'], master['varXC'])
-(varY, varYC) = (master['varY'], master['varYC'])
-statX, statXC, statY, statYC = statTup
+# point testing
+yP, ycP = basins.testModel(outName, testset, wqData=wqData)
 
-siteNoLst = wqData.info['siteNo'].unique().tolist()
-
-nFill = 5
-startDate = pd.datetime(1979, 1, 1)
-endDate = pd.datetime(2019, 12, 31)
-
-tabG = gageII.readData(varLst=varXC, siteNoLst=siteNoLst)
-tabG = gageII.updateCode(tabG)
-
-outLst = list()
-# for i, siteNo in enumerate(siteNoLst):
-
-siteNo = siteNoLst[0]
-t0 = time.time()
-dfF = gridMET.readBasin(siteNo)
-if '00060' in varX:
-    dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
-    dfQ = dfQ.rename(columns={'00060_00003': '00060'})
-    dfX = dfQ.join(dfF)
-else:
-    dfX = dfF
-dfX = dfX[dfX.index >= startDate]
-dfX = dfX[dfX.index <= endDate]
-dfX = dfX.interpolate(limit=nFill, limit_direction='both')
-xA = dfX.values
-
-nt = len(dfX)
-ny = len(varY) if varY is not None else 0
-nyc = len(varYC) if varYC is not None else 0
-out = np.full([nt, ny+nyc], np.nan)
-
-mtdX = wqData.extractVarMtd(varX)
-x = transform.transInAll(xA, mtdX, statLst=statX)
-mtdXC = wqData.extractVarMtd(varXC)
-xc = transform.transInAll(tabG.loc[siteNo].values, mtdXC, statLst=statXC)
-tN = dfX.index[dfX.isna().any(axis=1)].values.astype('datetime64[D]')
-
-x, xc = trainTS.dealNaN((x, xc), master['optNaN'][:2])
-if len(tN) == 0:
-    indLst1 = [0]
-    indLst2 = [len(dfX)]
-else:
-    tA = dfX.index.values.astype('datetime64[D]')
-    temp = tN[1:]-tN[:-1]
-    t1Ary = tN[:-1][temp > np.timedelta64(1, 'D')]
-    t2Ary = tN[1:][temp > np.timedelta64(1, 'D')]
-    indLst1 = [0] +\
-        np.where(tA == t1Ary)[0].tolist() + \
-        list(np.where(tA == tN[-1])[0]+1)
-    indLst2 = np.where(tA == tN[0])[0].tolist() + \
-        np.where(tA == t2Ary)[0].tolist() +\
-        [len(dfX)]
-
-for ind1, ind2 in zip(indLst1, indLst2):
-    if ind1 == ind2:
-        break
-    xx = np.concatenate(
-        [x[ind1:ind2, :], np.tile(xc, [ind2-ind1, 1])], axis=-1)
-    xx = np.expand_dims(xx, axis=0)
-    xT = torch.from_numpy(xx).float()
-    if torch.cuda.is_available():
-        xT = xT.cuda()
-    if i == 0 and ind1 == 0:
-        try:
-            yT = model(xT)
-        except:
-            print('first iteration failed again')
-    yT = model(xT)
-    out[ind1:ind2, :] = yT.detach().cpu().numpy()
-outLst.append(out)
-# print('tested site {} cost {:.3f}'.format(i, time.time()-t0))
-
-dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
-dfQ = dfQ.rename(columns={'00060_00003': '00060'})
-dfQ = dfQ[dfQ.index >= startDate]
-dfQ = dfQ[dfQ.index <= endDate]
-qT = dfQ['00060'].values
-
-mtdQ = wqData.extractVarMtd(['00060'])
-qN = transform.transInAll(qT, mtdQ, statLst=statY)
-
-q = out[:, 0]
-
-fig, ax = plt.subplots(1, 1)
-ax.plot(q, qT,'*')
-fig.show()
-
-iS = 10
-siteNo = siteNoLst[iS]
-q = outLst[iS][:, 0]
-
-mtdY = wqData.extractVarMtd(varY)
-statY = statTup[2][0]
-qP = np.exp(q*(statY[1]-statY[0])+statY[0])-1
-
-# qP = wqData.transOut(q, statTup[2], varY)
-dfF = gridMET.readBasin(siteNo)
-dfX = dfF
-dfX = dfX[dfX.index >= startDate]
-dfX = dfX[dfX.index <= endDate]
-dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
-dfY = dfX.join(dfQ)
-qT = dfY['00060_00003'].values
-qX = (np.log(qT+1)-statY[0])/(statY[1]-statY[0])
-t = dfY.index.values.astype('datetime64[D]')
-
-fig, ax = plt.subplots(1, 1)
-axplot.plotTS(ax, t, [qX, q], legLst=['obs', 'pred'])
-fig.show()
+# sequence testing
+infoTrain = wqData.info.iloc[wqData.subset[trainset]]
+siteNoLst = infoTrain['siteNo'].unique().tolist()
+dictPred = basins.testModelSeq(outName, siteNoLst=siteNoLst, wqData=wqData)

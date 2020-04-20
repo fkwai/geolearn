@@ -78,3 +78,12 @@ for ind, subset in zip(indLst, subsetLst):
 for subset in subsetLst:
     len(wqData.subset[subset])
 wqData.info.iloc[wqData.subset['80s-rm']]['yr'].unique()
+
+# devide to 8090 and 0010
+wqData = waterQuality.DataModelWQ('HBN')
+indYr1 = waterQuality.indYr(
+    wqData.info, yrLst=[1979, 2000])[0]
+wqData.saveSubset('Y8090', indYr1)
+indYr2 = waterQuality.indYr(
+    wqData.info, yrLst=[2000, 2020])[0]
+wqData.saveSubset('Y0010', indYr2)

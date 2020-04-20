@@ -1,3 +1,4 @@
+import importlib
 from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath
@@ -23,44 +24,48 @@ if 'subset' in doLst:
     icLst = [wqData.varC.index(code) for code in codeLst]
     indAll = np.where(~np.isnan(wqData.c[:, icLst]).all(axis=1))[0]
     indAny = np.where(~np.isnan(wqData.c[:, icLst]).any(axis=1))[0]
-    # print number of samples
-    for code in codeLst:
-        ic = wqData.varC.index(code)
-        indC = np.where(~np.isnan(wqData.c[:, ic]))[0]
+    wqData.saveSubset('-'.join(sorted(codeLst)+['all']), indAll)
+    wqData.saveSubset('-'.join(sorted(codeLst)+['any']), indAny)
     # seperate index by years
     for ind, lab in zip([indAll, indAny], ['all', 'any']):
-        indYr1 = waterQuality.indYr(wqData.info.iloc[ind], yrLst=[1979, 2000])[0]
+        indYr1 = waterQuality.indYr(
+            wqData.info.iloc[ind], yrLst=[1979, 2000])[0]
         wqData.saveSubset('-'.join(sorted(codeLst)+[lab, 'Y8090']), indYr1)
-        indYr2 = waterQuality.indYr(wqData.info.iloc[ind], yrLst=[2000, 2020])[0]
+        indYr2 = waterQuality.indYr(
+            wqData.info.iloc[ind], yrLst=[2000, 2020])[0]
         wqData.saveSubset('-'.join(sorted(codeLst)+[lab, 'Y0010']), indYr2)
     for code in codeLst:
         ic = wqData.varC.index(code)
         indC = np.where(~np.isnan(wqData.c[:, ic]))[0]
-        indYr1 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[1979, 2000])[0]
+        indYr1 = waterQuality.indYr(
+            wqData.info.iloc[indC], yrLst=[1979, 2000])[0]
         wqData.saveSubset(code+'-Y8090', indYr1)
-        indYr2 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[2000, 2020])[0]
+        indYr2 = waterQuality.indYr(
+            wqData.info.iloc[indC], yrLst=[2000, 2020])[0]
         wqData.saveSubset(code+'-Y0010', indYr2)
     # d=wqData.info.iloc[wqData.subset['00618-00955-any-Y10']]['date']
     # np.sort(pd.DatetimeIndex(d).year.unique())
     # ind=wqData.info.iloc[wqData.subset['00618-00955-any-Y10']].index.values
     # wqData.c[ind, wqData.varC.index('00618')]
 
-# train local
-
-
-
 # test
-code = '00955'
-out = 'HBN-00955-rmY10'
-trainSet = '00955-rmY10'
-testSet = '00955-Y10'
-p1, o1 = basins.testModel(out, trainSet, wqData=wqData)
-p2, o2 = basins.testModel(out, testSet, wqData=wqData)
-errMat1 = wqData.errBySite(p1, subset=trainSet, varC=[code])
-errMat2 = wqData.errBySite(p2, subset=testSet, varC=[code])
+codeLst = ['00618', '00955']
+varPred = ['00060']+codeLst
+dataName = 'HBN'
+outName = 'HBN-00618-00955-all-Y8090-opt2'
+trainset = '00618-00955-all-Y8090'
+testset = '00618-00955-all-Y0010'
+# point test
+yP1, ycP1 = basins.testModel(outName, trainset, wqData=wqData)
+errMat1 = wqData.errBySiteC(ycP1, codeLst, subset=trainset)
+yP2, ycP2 = basins.testModel(outName, testset, wqData=wqData)
+errMat2 = wqData.errBySiteC(ycP2, codeLst, subset=testset)
+
+# seq test
+siteNoLst = wqData.info['siteNo'].unique().tolist()
+basins.testModelSeq(outName, siteNoLst, wqData=wqData)
 
 # plot
-siteNoLst = wqData.info['siteNo'].unique().tolist()
 dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
 lat = dfCrd['LAT_GAGE'].values
@@ -69,30 +74,33 @@ codePdf = usgs.codePdf
 
 
 def funcMap():
-    figM, axM = plt.subplots(2, 1, figsize=(8, 6))
-    shortName = codePdf.loc[code]['shortName']
-    title = 'correlation of {} {}'.format(shortName, code)
-    axplot.mapPoint(axM[0], lat, lon, errMat1[:, 0, 1], s=12)
-    axplot.mapPoint(axM[1], lat, lon, errMat2[:, 0, 1], s=12)
-    figP, axP = plt.subplots(1, 1, figsize=(8, 6))
+    figM, axM = plt.subplots(2, 2, figsize=(8, 6))
+    # shortName = codePdf.loc[code]['shortName']
+    # title = 'RMSE of {} {}'.format(shortName, code)
+    axplot.mapPoint(axM[0, 0], lat, lon, errMat1[:, 0, 0], s=12)
+    axplot.mapPoint(axM[1, 0], lat, lon, errMat1[:, 1, 0], s=12)
+    axplot.mapPoint(axM[0, 1], lat, lon, errMat2[:, 0, 0], s=12)
+    axplot.mapPoint(axM[1, 1], lat, lon, errMat2[:, 1, 0], s=12)
+    figP, axP = plt.subplots(3, 1, figsize=(8, 6))
     return figM, axM, figP, axP, lon, lat
 
 
 def funcPoint(iP, axP):
     siteNo = siteNoLst[iP]
-    info1 = wqData.subsetInfo(trainSet)
-    info2 = wqData.subsetInfo(testSet)
-    ind1 = info1[info1['siteNo'] == siteNo].index
-    ind2 = info2[info2['siteNo'] == siteNo].index
-    t1 = info1['date'][ind1].values.astype(np.datetime64)
-    t2 = info2['date'][ind2].values.astype(np.datetime64)
-    t = np.concatenate([t1, t2])
-    x = np.concatenate([p1[ind1], p2[ind2]])
-    y = np.concatenate([o1[ind1], o2[ind2]])
-    # tBar = t1[-1]+(t2[0]-t1[-1])/2
-    tBar= np.datetime64('2010-01-01')
-    axplot.plotTS(axP, t, [x, y], styLst='-*', tBar=tBar,
-                  legLst=['pred', 'obs'])
+    dfPred, dfObs = basins.loadSeq(outName, siteNo)
+    t = dfPred['date'].values.astype(np.datetime64)
+    tBar = np.datetime64('2000-01-01')
+    for k, var in enumerate(varPred):
+        if var == '00060':
+            styLst = '--'
+            title = 'streamflow'
+        else:
+            styLst = '-*'
+            shortName = codePdf.loc[var]['shortName']
+            title = ' {} {}'.format(shortName, var)
+        axplot.plotTS(axP[k], t, [dfPred[var], dfObs[var]], tBar=tBar,
+                      legLst=['pred', 'obs'], styLst=styLst, cLst='br')
+        axP[k].set_title(title)
 
 
 figplot.clickMap(funcMap, funcPoint)

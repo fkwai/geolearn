@@ -12,11 +12,6 @@ from hydroDL.app import waterQuality
 from hydroDL.model import rnn, crit, trainTS
 
 
-def nameFolder(outName):
-    outFolder = os.path.join(kPath.dirWQ, 'model', outName)
-    return outFolder
-
-
 defaultMaster = dict(
     dataName='HBN', trainName='first50', outName=None, modelName='CudnnLSTM',
     hiddenSize=256, batchSize=[None, 500], nEpoch=500, saveEpoch=100, resumeEpoch=0,
@@ -24,6 +19,11 @@ defaultMaster = dict(
     varX=gridMET.varLst, varXC=gageII.lstWaterQuality,
     varY=usgs.varQ, varYC=usgs.varC
 )
+
+
+def nameFolder(outName):
+    outFolder = os.path.join(kPath.dirWQ, 'model', outName)
+    return outFolder
 
 
 def wrapMaster(**kw):
@@ -90,7 +90,7 @@ def loadModel(outName, ep=None, opt=False):
     modelFile = os.path.join(outFolder, 'model_ep{}'.format(ep))
     model = torch.load(modelFile)
     if opt:
-        optFile = os.path.join(outFolder, 'optim_ep{}'.format(k+sEp))
+        optFile = os.path.join(outFolder, 'optim_ep{}'.format(ep))
         optim = torch.load(optFile)
         return model, optim
     else:
@@ -146,31 +146,139 @@ def trainModelTS(outName):
     pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
 
-def testModel(outName, testset, wqData=None, ep=None):
-    # load master
+def getObs(outName, testset, wqData=None):
     master = loadMaster(outName)
-    statTup = loadStat(outName)
-    model = loadModel(outName, ep=ep)
-
-    # load test data
+    varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
     if wqData is None:
         wqData = waterQuality.DataModelWQ(master['dataName'])
-    varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
+    dataTup = wqData.extractData(varTup=varTup, subset=testset)
+    yT, ycT = dataTup[2:]
+    return yT, ycT
 
-    testDataLst = wqData.transIn(
-        subset=testset, statTup=statTup, varTup=varTup)
-    sizeLst = trainTS.getSize(testDataLst)
-    testDataLst = trainTS.dealNaN(testDataLst, master['optNaN'])
-    x = testDataLst[0]
-    xc = testDataLst[1]
-    ny = sizeLst[2]
 
-    # test model - point by point
-    yOut, ycOut = trainTS.testModel(model, x, xc, ny)
-    qP = wqData.transOut(yOut, statTup[2], master['varY'])
-    cP = wqData.transOut(ycOut, statTup[3], master['varYC'])
-    obsLst = wqData.extractSubset(testset)
-    qT, cT = obsLst[2:]
-    icLst = [wqData.varC.index(code) for code in varTup[3]]
-    cT = cT[:, icLst]
-    return cP, cT
+def testModel(outName, testset, wqData=None, ep=None, reTest=False):
+    # load master
+    master = loadMaster(outName)
+    if ep is None:
+        ep = master['nEpoch']
+    outFolder = nameFolder(outName)
+    testFileName = 'testP-{}-Ep{}.npz'.format(testset, ep)
+    testFile = os.path.join(outFolder, testFileName)
+
+    if os.path.exists(testFile) and reTest is False:
+        print('load saved test result')
+        npz = np.load(testFile, allow_pickle=True)
+        yP = npz['yP']
+        ycP = npz['ycP']
+    else:
+        statTup = loadStat(outName)
+        model = loadModel(outName, ep=ep)
+        # load test data
+        if wqData is None:
+            wqData = waterQuality.DataModelWQ(master['dataName'])
+        varTup = (master['varX'], master['varXC'],
+                  master['varY'], master['varYC'])
+        testDataLst = wqData.transIn(
+            subset=testset, statTup=statTup, varTup=varTup)
+        sizeLst = trainTS.getSize(testDataLst)
+        testDataLst = trainTS.dealNaN(testDataLst, master['optNaN'])
+        x = testDataLst[0]
+        xc = testDataLst[1]
+        ny = sizeLst[2]
+        # test model - point by point
+        yOut, ycOut = trainTS.testModel(model, x, xc, ny)
+        yP = wqData.transOut(yOut, statTup[2], master['varY'])
+        ycP = wqData.transOut(ycOut, statTup[3], master['varYC'])
+        np.savez(testFile, yP=yP, ycP=ycP)
+    return yP, ycP
+
+
+def testModelSeq(outName, siteNoLst, wqData=None, ep=None, returnOut=False,
+                 sd=np.datetime64('1979-01-01'),
+                 ed=np.datetime64('2020-01-01')):
+    # run sequence test for all sites, default to be from first date to last date
+    if type(siteNoLst) is not list:
+        siteNoLst = [siteNoLst]
+    master = loadMaster(outName)
+    if ep is None:
+        ep = master['nEpoch']
+    outDir = nameFolder(outName)
+    sdS = pd.to_datetime(sd).strftime('%Y%m%d')
+    edS = pd.to_datetime(ed).strftime('%Y%m%d')
+    saveDir = os.path.join(outDir, 'seq-{}-{}'.format(sdS, edS))
+    if not os.path.exists(saveDir):
+        os.mkdir(saveDir)
+    siteSaveLst = os.listdir(saveDir)
+    sitePredLst = [siteNo for siteNo in siteNoLst if siteNo not in siteSaveLst]
+    if len(sitePredLst) != 0:
+        if wqData is None:
+            wqData = waterQuality.DataModelWQ(master['dataName'])
+        (varX, varXC, varY, varYC) = (
+            master['varX'], master['varXC'], master['varY'], master['varYC'])
+        (statX, statXC, statY, statYC) = loadStat(outName)
+        model = loadModel(outName, ep=ep)
+        tabG = gageII.readData(varLst=varXC, siteNoLst=siteNoLst)
+        tabG = gageII.updateCode(tabG)
+        for siteNo in sitePredLst:
+            if 'DRAIN_SQKM' in varXC:
+                area = tabG[tabG.index == siteNo]['DRAIN_SQKM'].values
+            else:
+                area = None
+            # test model
+            print('testing {} from {} to {}'.format(siteNo, sdS, edS))
+            dfX = waterQuality.readSiteX(
+                siteNo, sd, ed, varX, area=area, nFill=5)
+            xA = np.expand_dims(dfX.values, axis=1)
+            xcA = np.expand_dims(
+                tabG.loc[siteNo].values.astype(np.float), axis=0)
+            mtdX = wqData.extractVarMtd(varX)
+            x = transform.transInAll(xA, mtdX, statLst=statX)
+            mtdXC = wqData.extractVarMtd(varXC)
+            xc = transform.transInAll(xcA, mtdXC, statLst=statXC)
+            yOut = trainTS.testModel(model, x, xc)
+            # transfer out
+            nt = len(dfX)
+            ny = len(varY) if varY is not None else 0
+            nyc = len(varYC) if varYC is not None else 0
+            yP = np.full([nt, ny+nyc], np.nan)
+            yP[:, :ny] = wqData.transOut(yOut[:, 0, :ny], statY, varY)
+            yP[:, ny:] = wqData.transOut(yOut[:, 0, ny:], statYC, varYC)
+            # save output
+            t = dfX.index.values.astype('datetime64[D]')
+            colY = [] if varY is None else varY
+            colYC = [] if varYC is None else varYC
+            dfOut = pd.DataFrame(data=yP, columns=[colY+colYC], index=t)
+            dfOut.index.name = 'date'
+            dfOut = dfOut.reset_index()
+            dfOut.to_csv(os.path.join(saveDir, siteNo), index=False)
+    # load all csv
+    if returnOut:
+        dictOut = dict()
+        for siteNo in siteNoLst:
+            # print('loading {} from {} to {}'.format(siteNo, sdS, edS))
+            dfOut = pd.read_csv(os.path.join(saveDir, siteNo))
+            dictOut[siteNo] = dfOut
+        return dictOut
+
+
+def loadSeq(outName, siteNoLst,
+            sd=np.datetime64('1979-01-01'),
+            ed=np.datetime64('2020-01-01')):
+    outDir = nameFolder(outName)
+    sdS = pd.to_datetime(sd).strftime('%Y%m%d')
+    edS = pd.to_datetime(ed).strftime('%Y%m%d')
+    saveDir = os.path.join(outDir, 'seq-{}-{}'.format(sdS, edS))
+    if type(siteNoLst) is list:
+        dictPred = dict()
+        dictObs = dict()
+        for siteNo in siteNoLst:
+            # print('loading {} from {} to {}'.format(siteNo, sdS, edS))
+            dfPred = pd.read_csv(os.path.join(saveDir, siteNo))
+            dfObs = waterQuality.readSiteY(siteNo, dfPred.columns[1:].tolist())
+            dictPred[siteNo] = dfPred
+            dictObs[siteNo] = dfObs
+        return dictPred, dictObs
+    else:
+        dfPred = pd.read_csv(os.path.join(saveDir, siteNoLst))
+        dfObs = waterQuality.readSiteY(siteNoLst, dfPred.columns[1:].tolist())
+        return dfPred, dfObs

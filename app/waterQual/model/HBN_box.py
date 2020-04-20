@@ -15,39 +15,33 @@ wqData = waterQuality.DataModelWQ('HBN')
 figFolder = os.path.join(kPath.dirWQ, 'HBN')
 
 # compare of opt1-4
-outLst = ['HBN-first50-opt1', 'HBN-first50-opt2']
-trainSet = 'first50'
-testSet = 'last50'
-pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]
+outLst = ['HBN-Y8090-opt1', 'HBN-Y8090-opt2']
+trainSet = 'Y8090'
+testSet = 'Y0010'
+errMatLst = list()
 for outName in outLst:
-    p1, o1 = basins.testModel(outName, trainSet, wqData=wqData)
-    p2, o2 = basins.testModel(outName, testSet, wqData=wqData)
-    errMat1 = wqData.errBySite(p1, subset=trainSet)
-    errMat1 = wqData.errBySite(p1, subset=trainSet)
-    errMat2 = wqData.errBySite(p2, subset=testSet)
-    pLst1.append(p1)
-    pLst2.append(p2)
-    errMatLst1.append(errMat1)
-    errMatLst2.append(errMat2)
+    yp1, ycp1 = basins.testModel(outName, trainSet, wqData=wqData)
+    yp2, ycp2 = basins.testModel(outName, testSet, wqData=wqData)
+    errMat1 = wqData.errBySiteC(ycp1, wqData.varC, subset=trainSet)
+    errMat2 = wqData.errBySiteC(ycp2, wqData.varC, subset=testSet)
+    errMatLst.append(errMat1)
+    errMatLst.append(errMat2)
 
 codePdf = usgs.codePdf
 groupLst = codePdf.group.unique().tolist()
 for group in groupLst:
-    for errMatLst, train in zip([errMatLst1, errMatLst2], ['train', 'test']):
-        codeLst = codePdf[codePdf.group == group].index.tolist()
-        indLst = [wqData.varC.index(code) for code in codeLst]
-        labLst1 = [codePdf.loc[code]['shortName'] +
-                   '\n'+code for code in codeLst]
-        labLst2 = ['opt1', 'opt2', 'opt3', 'opt4']
-        dataBox = list()
-        for ic in indLst:
-            temp = list()
-            for errMat in errMatLst:
-                temp.append(errMat[:, ic, 1])
-            dataBox.append(temp)
-        title = '{} correlation of {} group'.format(train, group)
-        figName = 'box_{}_{}_allOpt'.format(train, group)
-        fig = figplot.boxPlot(dataBox, label1=labLst1, label2=labLst2)
-        fig.suptitle(title)
-        fig.show()
-        fig.savefig(os.path.join(figFolder, figName))
+    codeLst = codePdf[codePdf.group == group].index.tolist()
+    indLst = [wqData.varC.index(code) for code in codeLst]
+    labLst1 = [codePdf.loc[code]['shortName'] +
+                '\n'+code for code in codeLst]
+    labLst2 = ['train opt1','test opt1','train opt2', 'test opt2']
+    dataBox = list()
+    for ic in indLst:
+        temp = list()
+        for errMat in errMatLst:
+            temp.append(errMat[:, ic, 1])
+        dataBox.append(temp)
+    title = 'correlation of {} group'.format(group)
+    fig = figplot.boxPlot(dataBox, label1=labLst1, label2=labLst2)
+    fig.suptitle(title)
+    fig.show()

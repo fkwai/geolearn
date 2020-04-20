@@ -251,11 +251,11 @@ class DataModelWQ():
         tabComb = tabComb.sort_values(0, ascending=False)
         return tabComb
 
-    def errBySite(self, ycP, varC=None, subset=None):
+    def errBySiteC(self, ycP, varC, subset=None):
+        if type(varC) is not list:
+            varC = [varC]
         obsLst = self.extractSubset(subset=subset)
         ycT = obsLst[3]
-        if varC is None:
-            varC = self.varC
         indC = [self.varC.index(var) for var in varC]
         info = self.info.loc[self.subset[subset].tolist()].reset_index()
         siteNoLst = self.info.siteNo.unique()
@@ -270,6 +270,31 @@ class DataModelWQ():
                 corr = np.corrcoef(a[indV], b[indV])[0, 1]
                 statMat[i, k, 0] = rmse
                 statMat[i, k, 1] = corr
+        return statMat
+
+    def errBySiteQ(self, yP, varQ, subset=None):
+        if type(varQ) is not list:
+            varQ = [varQ]
+        obsLst = self.extractSubset(subset=subset)
+        yT = obsLst[2]
+        indQ = [self.varQ.index(var) for var in varQ]
+        info = self.info.loc[self.subset[subset].tolist()].reset_index()
+        siteNoLst = self.info.siteNo.unique()
+        statMat = np.full([len(siteNoLst), len(indQ), 2], np.nan)
+        for i, siteNo in enumerate(siteNoLst):
+            indS = info[info['siteNo'] == siteNo].index.values
+            for k, iQ in enumerate(indQ):    
+                a = yT[:, indS, iQ]
+                b = yP[:, indS, k]
+                ns = len(indS)
+                rmseMat = np.ndarray(ns)
+                corrMat = np.ndarray(ns)
+                for kk in range(len(indS)):
+                    indV = np.where(~np.isnan(a[:, kk]))
+                    rmseMat[kk] = np.sqrt(np.nanmean((a[indV, kk]-b[indV, kk])**2))
+                    corrMat[kk] = np.corrcoef(a[indV, kk], b[indV, kk])[0, 1]
+                statMat[i, k, 0] = np.nanmean(rmseMat)
+                statMat[i, k, 1] = np.nanmean(corrMat)
         return statMat
 
 
@@ -361,6 +386,11 @@ def calRunoff(q, info):
     dfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
     dfArea.rename({'STAID': 'siteNo'})
     area = info.join(dfArea, on='siteNo')['DRAIN_SQKM'].values
+    runoff = calRunoffArea(q, area)
+    return runoff
+
+
+def calRunoffArea(q, area):
     unitConv = 0.3048**3*365*24*60*60/1000**2
     runoff = q/area*unitConv
     return runoff
@@ -391,18 +421,63 @@ def indYr(info, yrLst=[1979, 1990, 2000, 2010, 2020]):
         indLst.append(ind)
     return indLst
 
-    # find the distribution of data
-    # for k, var in enumerate(wqData.varC):
-    #     fig, axes = plt.subplots(2, 2)
-    #     temp = wqData.c[:, k].flatten()
-    #     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
-    #                            (temp < np.nanpercentile(temp, 95)))]
-    #     axes[0, 0].hist(temp, bins=100)
-    #     axes[0, 1].hist(temp90, bins=100)
-    #     try:
-    #         axes[1, 0].hist(np.log(temp+1), bins=100)
-    #         axes[1, 1].hist(np.log(temp90+1), bins=100)
-    #     except(ValueError):
-    #         print(var+' can not log')
-    #     fig.suptitle(var)
-    #     fig.show()
+
+def readSiteX(siteNo, sd, ed, varX, area=None, nFill=5):
+    tr = pd.date_range(sd, ed)
+    dfX = pd.DataFrame({'date': tr}).set_index('date')
+    # extract data
+    dfF = gridMET.readBasin(siteNo)
+    if '00060' in varX or 'runoff' in varX:
+        dfQ = usgs.readStreamflow(siteNo, startDate=sd)
+        dfQ = dfQ.rename(columns={'00060_00003': '00060'})
+        if 'runoff' in varX:
+            if area is None:
+                tabArea = gageII.readData(
+                    varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
+                area = tabArea['DRAIN_SQKM'].values[0]
+            dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
+        dfX = dfX.join(dfQ)
+    dfX = dfX.join(dfF)
+    dfX = dfX[varX]
+    dfX = dfX.interpolate(limit=nFill, limit_direction='both')
+    return dfX
+
+
+def readSiteY(siteNo, varY, area=None,
+              sd=np.datetime64('1979-01-01'),
+              ed=np.datetime64('2020-01-01')):
+    tr = pd.date_range(sd, ed)
+    dfY = pd.DataFrame({'date': tr}).set_index('date')
+    # extract data
+    codeLst = [code for code in varY if code in usgs.codeLst]
+    dfC = usgs.readSample(siteNo, codeLst=codeLst, startDate=sd)
+    if '00060' in varY or 'runoff' in varY:
+        dfQ = usgs.readStreamflow(siteNo, startDate=sd)
+        dfQ = dfQ.rename(columns={'00060_00003': '00060'})
+        if 'runoff' in varY:
+            if area is None:
+                tabArea = gageII.readData(
+                    varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
+                area = tabArea['DRAIN_SQKM'].values[0]
+            dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
+        dfY = dfY.join(dfQ)
+    dfY = dfY.join(dfC)
+    dfY = dfY[varY]
+    return dfY
+
+
+# find the distribution of data
+# for k, var in enumerate(wqData.varC):
+#     fig, axes = plt.subplots(2, 2)
+#     temp = wqData.c[:, k].flatten()
+#     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
+#                            (temp < np.nanpercentile(temp, 95)))]
+#     axes[0, 0].hist(temp, bins=100)
+#     axes[0, 1].hist(temp90, bins=100)
+#     try:
+#         axes[1, 0].hist(np.log(temp+1), bins=100)
+#         axes[1, 1].hist(np.log(temp90+1), bins=100)
+#     except(ValueError):
+#         print(var+' can not log')
+#     fig.suptitle(var)
+#     fig.show()

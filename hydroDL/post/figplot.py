@@ -8,7 +8,7 @@ def clickMap(funcMap, funcPoint):
     # funcPoint - how to plot point given axes and index of point
     figM, axM, figP, axP, xLoc, yLoc = funcMap()
     if type(axM) is not np.ndarray:
-        axM = [axM]
+        axM = np.array([axM])
 
     def onclick(event, figP, axP):
         xClick = event.xdata
@@ -17,7 +17,7 @@ def clickMap(funcMap, funcPoint):
             print('click on map plz')
             return
         iP = np.argmin(np.sqrt((xClick - xLoc)**2 + (yClick - yLoc)**2))
-        for ax in axM:
+        for ax in axM.flatten():
             # for ax in temp:
             [p.remove() for p in reversed(ax.patches)]
             circle = plt.Circle([xLoc[iP], yLoc[iP]], 1,
@@ -27,7 +27,7 @@ def clickMap(funcMap, funcPoint):
             axP.clear()
         else:
             for ax in axP.reshape(-1):
-                ax.clear()        
+                ax.clear()
         funcPoint(iP, axP)
         figM.canvas.draw()
         figP.canvas.draw()

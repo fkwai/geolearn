@@ -158,7 +158,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
     return model, optim, lossEpLst
 
 
-def testModel(model, x, xc, ny, batchSize=2000):
+def testModel(model, x, xc, ny=None, batchSize=2000):
     model.eval()
     nt, ns, nx = x.shape
     iS = np.arange(0, ns, batchSize)
@@ -181,11 +181,18 @@ def testModel(model, x, xc, ny, batchSize=2000):
                 print('first iteration failed again')
         yT = model(xT)
         out = yT.detach().cpu().numpy()
-        yLst.append(out[:, :, :ny])
-        ycLst.append(out[-1, :, ny:])
-    yOut = np.concatenate(yLst, axis=1)
-    ycOut = np.concatenate(ycLst, axis=0)
-    return yOut, ycOut
+        if ny is None:
+            yLst.append(out)
+        else:
+            yLst.append(out[:, :, :ny])
+            ycLst.append(out[-1, :, ny:])
+    if ny is None:
+        yOut = np.concatenate(yLst, axis=1)
+        return yOut
+    else:
+        yOut = np.concatenate(yLst, axis=1)
+        ycOut = np.concatenate(ycLst, axis=0)
+        return yOut, ycOut
 
 
 def saveModel(model, modelFile):
