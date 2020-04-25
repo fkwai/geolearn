@@ -61,7 +61,7 @@ xL2 = dataTup2[0][-1, :, :]
 yL2 = dataTup2[2][-1, :, :]
 ycL2 = dataTup2[3]
 
-# point test l2
+# point test l2 - linear
 ycpL1 = np.full([len(infoTrain), 1], np.nan)
 ycpL2 = np.full([len(infoTest), 1], np.nan)
 for siteNo in siteNoLst:

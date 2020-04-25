@@ -21,18 +21,26 @@ df1 = pd.read_csv(os.path.join(dirInv, 'codeCount_B2000.csv'),
                   dtype={'siteNo': str}).set_index('siteNo')
 df2 = pd.read_csv(os.path.join(dirInv, 'codeCount_A2000.csv'),
                   dtype={'siteNo': str}).set_index('siteNo')
+code = '00955'
 
 # silica num > 100 in both training and testing (named silica64)
-code = '00955'
 siteNoLst = df0[(df1[code] > 100) & (df2[code] > 100)].index.tolist()
-wqData = waterQuality.DataModelWQ.new('Silica64', siteNoLst)
-indYr1 = waterQuality.indYr(
-    wqData.info, yrLst=[1979, 2000])[0]
-wqData.saveSubset('Y8090', indYr1)
-indYr2 = waterQuality.indYr(
-    wqData.info, yrLst=[2000, 2020])[0]
-wqData.saveSubset('Y0010', indYr2)
+if not waterQuality.exist('Silica64'):
+    wqData = waterQuality.DataModelWQ.new('Silica64', siteNoLst)
+wqData = waterQuality.DataModelWQ('Silica64')
+indYr1 = waterQuality.indYr(wqData.info, yrLst=[1979, 2000])[0]
+# wqData.saveSubset('Y8090', indYr1)
+indYr2 = waterQuality.indYr(wqData.info, yrLst=[2000, 2020])[0]
+# wqData.saveSubset('Y0010', indYr2)
 
+# subset only have silica
+ic = wqData.varC.index(code)
+indC = np.where(~np.isnan(wqData.c[:, ic]))[0]
+wqData.saveSubset(code, indC)
+indYr1 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[1979, 2000])[0]
+# wqData.saveSubset('{}-Y8090'.format(code), indYr1)
+indYr2 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[2000, 2020])[0]
+# wqData.saveSubset('{}-Y0010'.format(code), indYr2)
 
 figP, axP = plt.subplots(5, 1, figsize=(8, 6))
 for k in range(5):

@@ -85,7 +85,7 @@ class DataModelWQ():
                 elif var in usgs.dictStat.keys():
                     mtd = usgs.dictStat[var]
                 else:
-                    print('variable not found')
+                    raise Exception('Variable {} not found!'.format(var))
                 mtdLst.append(mtd)
         return mtdLst
 
@@ -283,7 +283,7 @@ class DataModelWQ():
         statMat = np.full([len(siteNoLst), len(indQ), 2], np.nan)
         for i, siteNo in enumerate(siteNoLst):
             indS = info[info['siteNo'] == siteNo].index.values
-            for k, iQ in enumerate(indQ):    
+            for k, iQ in enumerate(indQ):
                 a = yT[:, indS, iQ]
                 b = yP[:, indS, k]
                 ns = len(indS)
@@ -291,7 +291,8 @@ class DataModelWQ():
                 corrMat = np.ndarray(ns)
                 for kk in range(len(indS)):
                     indV = np.where(~np.isnan(a[:, kk]))
-                    rmseMat[kk] = np.sqrt(np.nanmean((a[indV, kk]-b[indV, kk])**2))
+                    rmseMat[kk] = np.sqrt(np.nanmean(
+                        (a[indV, kk]-b[indV, kk])**2))
                     corrMat[kk] = np.corrcoef(a[indV, kk], b[indV, kk])[0, 1]
                 statMat[i, k, 0] = np.nanmean(rmseMat)
                 statMat[i, k, 1] = np.nanmean(corrMat)
@@ -422,7 +423,9 @@ def indYr(info, yrLst=[1979, 1990, 2000, 2010, 2020]):
     return indLst
 
 
-def readSiteX(siteNo, sd, ed, varX, area=None, nFill=5):
+def readSiteX(siteNo, varX, area=None, nFill=5,
+              sd=np.datetime64('1979-01-01'), 
+              ed=np.datetime64('2020-01-01')):
     tr = pd.date_range(sd, ed)
     dfX = pd.DataFrame({'date': tr}).set_index('date')
     # extract data

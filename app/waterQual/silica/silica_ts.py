@@ -13,28 +13,38 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-wqData = waterQuality.DataModelWQ('Silica16')
 # test
-codeLst = ['00955']
-varPred = ['00060']+codeLst
-dataName = 'Silica16'
-outName = 'Silica16-Y8090-opt1'
+outName = 'Silica64-Y8090-00955-opt1'
+master = basins.loadMaster(outName)
+dataName = master['dataName']
+wqData = waterQuality.DataModelWQ(dataName)
 trainset = 'Y8090'
 testset = 'Y0010'
+if master['varY'] is not None:
+    plotVar = ['00060', '00955']
+else:
+    plotVar = ['00955']
 
 # point test
 yP1, ycP1 = basins.testModel(outName, trainset, wqData=wqData)
-errMatC1 = wqData.errBySiteC(ycP1, subset=trainset, varC=codeLst)
-errMatQ1 = wqData.errBySiteQ(yP1, subset=trainset, varQ=['00060'])
+errMatC1 = wqData.errBySiteC(ycP1, subset=trainset, varC=master['varYC'])
+if master['varY'] is not None:
+    errMatQ1 = wqData.errBySiteQ(yP1, subset=trainset, varQ=master['varY'])
 yP2, ycP2 = basins.testModel(outName, testset, wqData=wqData)
-errMatC2 = wqData.errBySiteC(ycP2, subset=testset, varC=codeLst)
-errMatQ2 = wqData.errBySiteQ(yP2, subset=testset, varQ=['00060'])
+errMatC2 = wqData.errBySiteC(ycP2, subset=testset, varC=master['varYC'])
+if master['varY'] is not None:
+    errMatQ2 = wqData.errBySiteQ(yP2, subset=testset, varQ=master['varY'])
 
 # box
 dataBox = list()
 for k in range(2):
-    temp = [errMatC1[:, 0, k], errMatC2[:, 0, k]]
-    dataBox.append(temp)
+    for var in plotVar:
+        if var == '00060':
+            temp = [errMatQ1[:, 0, k], errMatQ2[:, 0, k]]
+        else:
+            ic = master['varYC'].index(var)
+            temp = [errMatC1[:, ic, k], errMatC2[:, ic, k]]
+            dataBox.append(temp)
 fig = figplot.boxPlot(dataBox, label1=['RMSE', 'Corr'], label2=[
                       'train', 'test'], sharey=False)
 fig.show()
@@ -43,7 +53,7 @@ fig.show()
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 basins.testModelSeq(outName, siteNoLst, wqData=wqData)
 
-# plot
+# time series map
 dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
 lat = dfCrd['LAT_GAGE'].values
@@ -52,18 +62,21 @@ codePdf = usgs.codePdf
 
 
 def funcMap():
-    nM = len(codeLst)+1
+    nM = len(plotVar)
     figM, axM = plt.subplots(nM, 1, figsize=(8, 6))
-    axplot.mapPoint(axM[0], lat, lon, errMatQ2[:, 0, 0], s=12)
-    axM[0].set_title('streamflow')
-    for k in range(1, nM):
-        code = codeLst[k-1]
-        # ic = wqData.varC.index(code)
-        shortName = codePdf.loc[code]['shortName']
-        title = '{} {}'.format(shortName, code)
-        axplot.mapPoint(axM[k], lat, lon, errMatC2[:, 0, 0], s=12)
-        axM[k].set_title(title)
+    axM = np.array([axM]) if nM == 1 else axM
+    for k, var in enumerate(plotVar):
+        if var == '00060':
+            axplot.mapPoint(axM[k], lat, lon, errMatQ2[:, 0, 1], s=12)
+            axM[k].set_title('streamflow')
+        else:
+            ic = master['varYC'].index(var)
+            shortName = codePdf.loc[var]['shortName']
+            title = '{} {}'.format(shortName, var)
+            axplot.mapPoint(axM[k], lat, lon, errMatC2[:, ic, 1], s=12)
+            axM[k].set_title(title)
     figP, axP = plt.subplots(nM, 1, figsize=(8, 6))
+    axP = np.array([axP]) if nM == 1 else axP
     return figM, axM, figP, axP, lon, lat
 
 
@@ -72,14 +85,14 @@ def funcPoint(iP, axP):
     dfPred, dfObs = basins.loadSeq(outName, siteNo)
     t = dfPred['date'].values.astype(np.datetime64)
     tBar = np.datetime64('2000-01-01')
-    for k, var in enumerate(varPred):
+    for k, var in enumerate(plotVar):
         if var == '00060':
             styLst = '--'
-            title = 'streamflow'
+            title = '{} streamflow'.format(siteNo)
         else:
             styLst = '-*'
             shortName = codePdf.loc[var]['shortName']
-            title = ' {} {}'.format(shortName, var)
+            title = '{} {} {}'.format(siteNo, shortName, var)
         axplot.plotTS(axP[k], t, [dfPred[var], dfObs[var]], tBar=tBar,
                       legLst=['pred', 'obs'], styLst=styLst, cLst='br')
         axP[k].set_title(title)

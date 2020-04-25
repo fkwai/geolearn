@@ -6,10 +6,11 @@ import torch
 import json
 from datetime import date
 import warnings
-from hydroDL import kPath
+from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, transform
 from hydroDL.app import waterQuality
 from hydroDL.model import rnn, crit, trainTS
+from sklearn.linear_model import LinearRegression
 
 
 defaultMaster = dict(
@@ -205,7 +206,7 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None, returnOut=False,
     outDir = nameFolder(outName)
     sdS = pd.to_datetime(sd).strftime('%Y%m%d')
     edS = pd.to_datetime(ed).strftime('%Y%m%d')
-    saveDir = os.path.join(outDir, 'seq-{}-{}'.format(sdS, edS))
+    saveDir = os.path.join(outDir, 'seq-{}-{}-ep{}'.format(sdS, edS, ep))
     if not os.path.exists(saveDir):
         os.mkdir(saveDir)
     siteSaveLst = os.listdir(saveDir)
@@ -267,7 +268,7 @@ def loadSeq(outName, siteNoLst,
     outDir = nameFolder(outName)
     sdS = pd.to_datetime(sd).strftime('%Y%m%d')
     edS = pd.to_datetime(ed).strftime('%Y%m%d')
-    saveDir = os.path.join(outDir, 'seq-{}-{}'.format(sdS, edS))
+    saveDir = os.path.join(outDir, 'seq-{}-{}-ep500'.format(sdS, edS))
     if type(siteNoLst) is list:
         dictPred = dict()
         dictObs = dict()
@@ -282,3 +283,49 @@ def loadSeq(outName, siteNoLst,
         dfPred = pd.read_csv(os.path.join(saveDir, siteNoLst))
         dfObs = waterQuality.readSiteY(siteNoLst, dfPred.columns[1:].tolist())
         return dfPred, dfObs
+
+
+def modelLinear(outName, testset, trainset=None, wqData=None):
+    master = loadMaster(outName)
+    dataName = master['dataName']
+    if wqData is None:
+        wqData = waterQuality.DataModelWQ(dataName)
+    if trainset is None:
+        trainset = master['trainName']
+    infoTrain = wqData.info.iloc[wqData.subset[trainset]].reset_index()
+    infoTest = wqData.info.iloc[wqData.subset[testset]].reset_index()
+
+    # linear reg data
+    statTup = loadStat(outName)
+    varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
+    dataTup1 = wqData.transIn(subset=trainset, varTup=varTup, statTup=statTup)
+    dataTup2 = wqData.transIn(subset=testset, varTup=varTup, statTup=statTup)
+    dataTup1 = trainTS.dealNaN(dataTup1, master['optNaN'])
+    dataTup2 = trainTS.dealNaN(dataTup2, master['optNaN'])
+    varYC = varTup[3]
+    statYC = statTup[3]
+    x1 = dataTup1[0][-1, :, :]
+    yc1 = dataTup1[3]
+    x2 = dataTup2[0][-1, :, :]
+
+    # point test l2 - linear
+    nc = len(varYC)
+    matP1 = np.full([len(infoTrain), nc], np.nan)
+    matP2 = np.full([len(infoTest), nc], np.nan)
+    siteNoLst = infoTest['siteNo'].unique().tolist()
+    for siteNo in siteNoLst:
+        ind1 = infoTrain[infoTrain['siteNo'] == siteNo].index
+        ind2 = infoTest[infoTest['siteNo'] == siteNo].index
+        xT1 = x1[ind1, :]
+        ycT1 = yc1[ind1, :]
+        for ic in range(nc):
+            [xx, yy], iv = utils.rmNan([xT1, ycT1[:, ic]])
+            if len(iv) > 0:
+                modelYC = LinearRegression().fit(xx, yy)
+                matP1[ind1, ic] = modelYC.predict(xT1)
+                if len(ind2) > 0:
+                    xT2 = x2[ind2, :]
+                    matP1[ind2, ic] = modelYC.predict(xT2)
+    matO1 = wqData.transOut(matP1, statYC, varYC)
+    matO2 = wqData.transOut(matP2, statYC, varYC)
+    return matO1, matO2
