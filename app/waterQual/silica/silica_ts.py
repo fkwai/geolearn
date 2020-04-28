@@ -83,19 +83,35 @@ def funcMap():
 def funcPoint(iP, axP):
     siteNo = siteNoLst[iP]
     dfPred, dfObs = basins.loadSeq(outName, siteNo)
-    t = dfPred['date'].values.astype(np.datetime64)
+    t = dfPred.index.values.astype(np.datetime64)
     tBar = np.datetime64('2000-01-01')
     for k, var in enumerate(plotVar):
+        rmse, corr = waterQuality.calErrSeq(dfPred[var], dfObs[var])
+        tStr = '{}, rmse [{:.2f} {:.2f}], corr [{:.2f} {:.2f}]'.format(
+            siteNo, rmse[0], rmse[1], corr[0], corr[1])
         if var == '00060':
             styLst = '--'
-            title = '{} streamflow'.format(siteNo)
+            title = 'streamflow '+tStr
         else:
             styLst = '-*'
             shortName = codePdf.loc[var]['shortName']
-            title = '{} {} {}'.format(siteNo, shortName, var)
+            title = shortName + ' ' + tStr
         axplot.plotTS(axP[k], t, [dfPred[var], dfObs[var]], tBar=tBar,
                       legLst=['pred', 'obs'], styLst=styLst, cLst='br')
-        axP[k].set_title(title)
+        axP[k].set_title(tStr)
 
 
-figplot.clickMap(funcMap, funcPoint)
+importlib.reload(figplot)
+figM, figP = figplot.clickMap(funcMap, funcPoint)
+
+for ax in figP.axes:
+    ax.set_xlim(np.datetime64('2015-01-01'), np.datetime64('2020-01-01'))
+figP.canvas.draw()
+
+for ax in figP.axes:
+    ax.set_xlim(np.datetime64('1988-01-01'), np.datetime64('1993-01-01'))
+figP.canvas.draw()
+
+for ax in figP.axes:
+    ax.set_xlim(np.datetime64('1980-01-01'), np.datetime64('2020-01-01'))
+figP.canvas.draw()

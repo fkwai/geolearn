@@ -35,6 +35,7 @@ def clickMap(funcMap, funcPoint):
                             lambda event: onclick(event, figP, axP))
     figM.show()
     figP.show()
+    return figM, figP
 
 
 def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',

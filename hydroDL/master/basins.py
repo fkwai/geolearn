@@ -8,7 +8,8 @@ from datetime import date
 import warnings
 from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, transform
-from hydroDL.app import waterQuality
+# from hydroDL.app import waterQuality
+from hydroDL.app import waterQuality2 as waterQuality
 from hydroDL.model import rnn, crit, trainTS
 # from sklearn.linear_model import LinearRegression
 
@@ -222,13 +223,13 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None, returnOut=False,
         tabG = gageII.updateCode(tabG)
         for siteNo in sitePredLst:
             if 'DRAIN_SQKM' in varXC:
-                area = tabG[tabG.index == siteNo]['DRAIN_SQKM'].values
+                area = tabG[tabG.index == siteNo]['DRAIN_SQKM'].values[0]
             else:
                 area = None
             # test model
             print('testing {} from {} to {}'.format(siteNo, sdS, edS))
             dfX = waterQuality.readSiteX(
-                siteNo, sd, ed, varX, area=area, nFill=5)
+                siteNo, varX, sd=sd, ed=ed, area=area, nFill=5)
             xA = np.expand_dims(dfX.values, axis=1)
             xcA = np.expand_dims(
                 tabG.loc[siteNo].values.astype(np.float), axis=0)
@@ -262,27 +263,18 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None, returnOut=False,
         return dictOut
 
 
-def loadSeq(outName, siteNoLst,
+def loadSeq(outName, siteNo,
             sd=np.datetime64('1979-01-01'),
-            ed=np.datetime64('2020-01-01')):
+            ed=np.datetime64('2020-01-01'),
+            ep=500):
     outDir = nameFolder(outName)
     sdS = pd.to_datetime(sd).strftime('%Y%m%d')
     edS = pd.to_datetime(ed).strftime('%Y%m%d')
-    saveDir = os.path.join(outDir, 'seq-{}-{}-ep500'.format(sdS, edS))
-    if type(siteNoLst) is list:
-        dictPred = dict()
-        dictObs = dict()
-        for siteNo in siteNoLst:
-            # print('loading {} from {} to {}'.format(siteNo, sdS, edS))
-            dfPred = pd.read_csv(os.path.join(saveDir, siteNo))
-            dfObs = waterQuality.readSiteY(siteNo, dfPred.columns[1:].tolist())
-            dictPred[siteNo] = dfPred
-            dictObs[siteNo] = dfObs
-        return dictPred, dictObs
-    else:
-        dfPred = pd.read_csv(os.path.join(saveDir, siteNoLst))
-        dfObs = waterQuality.readSiteY(siteNoLst, dfPred.columns[1:].tolist())
-        return dfPred, dfObs
+    saveDir = os.path.join(outDir, 'seq-{}-{}-ep{}'.format(sdS, edS, ep))
+    dfPred = pd.read_csv(os.path.join(saveDir, siteNo))
+    dfPred = utils.time.datePdf(dfPred)
+    dfObs = waterQuality.readSiteY(siteNo, dfPred.columns.tolist())
+    return dfPred, dfObs
 
 
 def modelLinear(outName, testset, trainset=None, wqData=None):

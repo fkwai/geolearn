@@ -16,10 +16,8 @@ import matplotlib.pyplot as plt
 # test
 wqData = waterQuality.DataModelWQ('Silica64')
 
-# outLst = ['Silica64-Y8090-opt1', 'Silica64-Y8090-opt2','Silica64-Y8090-opt3',
-#           'Silica64-Y8090-00955-opt1', 'Silica64-Y8090-00955-opt2']
-outLst = ['Silica64-Y0010-opt1', 'Silica64-Y0010-opt2', 'Silica64-Y0010-opt3',
-          'Silica64-Y0010-00955-opt1', 'Silica64-Y0010-00955-opt2']
+hsLst = [256, 128, 64, 32]
+outLst = ['Silica64-00955-Y8090-h{}-opt1'.format(hs) for hs in hsLst]
 code = '00955'
 trainset = 'Y8090'
 testset = 'Y0010'
@@ -47,8 +45,7 @@ for k in range(2):
         temp = [errMat[:, k] for errMat in errMatLst]
         dataBox.append(temp)
     label1 = ['B2000', 'A2000']
-    label2 = ['all C, Q in', 'all C, Q out',
-              'all C, no Q', 'single C, Q in', 'single C, Q out']
+    label2 = hsLst
     fig = figplot.boxPlot(dataBox, label1=label1, label2=label2, sharey=True)
     fig.suptitle('RMSE') if k == 0 else fig.suptitle('Correlation')
     fig.show()
