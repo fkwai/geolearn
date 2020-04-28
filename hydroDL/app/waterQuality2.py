@@ -29,8 +29,8 @@ class DataModelWQ():
         self.nFill = dictData['nFill']
         self.varG = dictData['varG']
         self.varC = dictData['varC']
-        self.varQ = ['00060', 'runoff']  # delete later
-        self.varF = gridMET.varLst  # delete later
+        self.varQ = dictData['varQ']  # delete later
+        self.varF = dictData['varF']  # delete later
         self.info = pd.read_csv(saveName+'.csv', index_col=0,
                                 dtype={'siteNo': str})
         self.info['date'] = self.info['date'].astype('datetime64[D]')
@@ -93,7 +93,8 @@ class DataModelWQ():
         temp = list()
         for var in varLst:
             if var in self.varQ:
-                temp.append(self.q[:, :, 0])
+                ind = self.varQ.index(var)
+                temp.append(self.q[:, :, ind])
             elif var in self.varF:
                 ind = self.varF.index(var)
                 temp.append(self.f[:, :, ind])
@@ -354,9 +355,10 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
                 dfQ).interpolate(limit=nFill, limit_direction='both')
             tempF = pd.DataFrame({'date': ctR}).set_index('date').join(
                 dfF).interpolate(limit=nFill, limit_direction='both')
+            tempQ = tempQ.join(dfC)
             qLst.append(tempQ.values)
             fLst.append(tempF.values)
-            cLst.append(dfC.iloc[k].values)
+            # cLst.append(dfC.iloc[k].values)
             gLst.append(tabG.loc[siteNo].values)
             infoLst.append(dict(siteNo=siteNo, date=ct))
         t2 = time.time()
@@ -365,18 +367,19 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
     q = np.stack(qLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     f = np.stack(fLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
-    c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
+    # c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     infoDf = pd.DataFrame(infoLst)
     # add runoff
-    runoff = calRunoff(q[:, :, 0], infoDf)
-    q = np.stack([q[:, :, 0], runoff], axis=-1).astype(np.float32)
+    # runoff = calRunoff(q[:, :, 0], infoDf)
+    # q = np.stack([q[:, :, 0], runoff], axis=-1).astype(np.float32)
 
     saveFolder = os.path.join(kPath.dirWQ, 'trainData')
     saveName = os.path.join(saveFolder, caseName)
-    np.savez(saveName, q=q, f=f, c=c, g=g)
+    # np.savez(saveName, q=q, f=f, c=c, g=g)
+    np.savez(saveName, q=q, f=f, c=np.ndarray([len(gLst), 0]), g=g)
     infoDf.to_csv(saveName+'.csv')
     dictData = dict(name=caseName, rho=rho, nFill=nFill,
-                    varG=varG, varC=varC, varQ=['00060', 'runoff'], varF=gridMET.varLst,
+                    varG=varG, varC=[], varQ=['00060']+varC, varF=gridMET.varLst,
                     siteNoLst=siteNoLst)
     with open(saveName+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)

@@ -1,5 +1,6 @@
 import datetime as dt
 import numpy as np
+import pandas as pd
 
 
 def t2dt(t, hr=False):
@@ -30,10 +31,16 @@ def tRange2Array(tRange, *, step=np.timedelta64(1, 'D')):
 def intersect(tLst1, tLst2):
     # numpy>1.14
     # C, ind1, ind2 = np.intersect1d(tLst1, tLst2, return_indices=True)
-    
+
     # numpy<1.14
     C = np.intersect1d(tLst1, tLst2)
     ind1 = np.where(np.isin(tLst1, C))[0]
     ind2 = np.where(np.isin(tLst2, C))[0]
 
     return ind1, ind2
+
+
+def datePdf(df, field='date'):
+    df['date'] = pd.to_datetime(df[field])
+    df = df.set_index('date')
+    return df

@@ -1,5 +1,5 @@
 import importlib
-from hydroDL.app import waterQuality
+from hydroDL.app import waterQuality, wqLinear
 from hydroDL import kPath, utils
 from hydroDL.data import gageII, usgs, gridMET, transform
 from hydroDL.post import axplot, figplot
@@ -11,12 +11,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
+import pickle
+from sklearn.linear_model import LinearRegression
 
-siteNo = '01124000'
-dfX = waterQuality.readSiteX(siteNo, gridMET.varLst)
-dfY = waterQuality.readSiteY(siteNo, ['00955'])
+wqData = waterQuality.DataModelWQ('Silica64')
+optX = 'F'
+optT = 'Y8090'
+code = '00955'
+order = (5, 0, 5)
+siteNoLst = wqData.siteNoLst
 
-
-mod = sm.tsa.statespace.SARIMAX(dfY, exog=dfX, order=(100, 0, 0))
-res = mod.fit()
-print(res.summary())
+for optT in ['Y8090', 'Y0010']:
+    for siteNo in siteNoLst:
+        dfP = wqLinear.loadSeq(siteNo, code, 'ARMA',
+                               optX=optX, optT=optT, order=(5, 0, 0))
