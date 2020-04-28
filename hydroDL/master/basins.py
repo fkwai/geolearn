@@ -10,7 +10,7 @@ from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, transform
 from hydroDL.app import waterQuality
 from hydroDL.model import rnn, crit, trainTS
-from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import LinearRegression
 
 
 defaultMaster = dict(
