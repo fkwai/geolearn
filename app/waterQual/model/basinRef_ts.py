@@ -19,15 +19,14 @@ trainSet = 'first50'
 testSet = 'last50'
 pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]
 for outName in outLst:
-    master = basins.loadMaster(outName)
-    yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData)
-    yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData)
-    errMatC1 = wqData.errBySiteC(ycP1, subset=trainSet, varC=master['varYC'])
-    errMatC2 = wqData.errBySiteC(ycP2, subset=testSet, varC=master['varYC'])
-    pLst1.append(ycP1)
-    pLst2.append(ycP2)
-    errMatLst1.append(errMatC1)
-    errMatLst2.append(errMatC2)
+    p1, o1 = basins.testModel(outName, trainSet, wqData=wqData)
+    p2, o2 = basins.testModel(outName, testSet, wqData=wqData)
+    errMat1 = wqData.errBySite(p1, subset=trainSet)
+    errMat2 = wqData.errBySite(p2, subset=testSet)
+    pLst1.append(p1)
+    pLst2.append(p2)
+    errMatLst1.append(errMat1)
+    errMatLst2.append(errMat2)
 
 # plot
 codeSel = ['00955', '00940', '00915']
@@ -47,7 +46,7 @@ def funcMap():
         ic = wqData.varC.index(code)
         shortName = codePdf.loc[code]['shortName']
         title = 'correlation of {} {}'.format(shortName, code)
-        axplot.mapPoint(axM[k], lat, lon, errMatC2[:, ic, 1], s=12)
+        axplot.mapPoint(axM[k], lat, lon,errMat2[:, ic, 1], s=12)
         axM[k].set_title(title)
     figP, axP = plt.subplots(len(codeSel), 1, figsize=(8, 6))
     return figM, axM, figP, axP, lon, lat

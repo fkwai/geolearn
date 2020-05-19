@@ -8,8 +8,8 @@ from datetime import date
 import warnings
 from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, transform
-from hydroDL.app import waterQuality
-# from hydroDL.app import waterQuality2 as waterQuality
+# from hydroDL.app import waterQuality
+from hydroDL.app import waterQuality2 as waterQuality
 from hydroDL.model import rnn, crit, trainTS
 from sklearn.linear_model import LinearRegression
 

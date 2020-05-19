@@ -36,3 +36,11 @@ def jacobi(A, b, x, n=10):
     for k in range(n):
         x = Di.dot(b-(L+U).dot(x))
     return x
+
+
+def newton(F, DF, x0, n=10):
+    x = x0
+    for k in range(n):
+        s = gaussElimination(DF(x), -F(x))
+        x = x+s
+    return x
