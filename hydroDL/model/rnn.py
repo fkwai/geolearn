@@ -306,6 +306,7 @@ class CudnnLstm(torch.nn.Module):
         output, hy, cy, reserve, new_weight_buf = torch._cudnn_rnn(
             input, weight, 4, None, hx, cx, torch.backends.cudnn.CUDNN_LSTM,
             self.hiddenSize, 1, False, 0, self.training, False, (), None)
+
         return output, (hy, cy)
 
     @property
@@ -548,3 +549,213 @@ class LstmCnnForcast(nn.Module):
         x2 = self.linearOut(x2)
 
         return x2
+
+
+# class RNN(nn.Module):
+#     def __init__(self, *, nx, nh):
+#         super(RNN, self).__init__()
+#         self.nh = nh
+#         self.i2h = F.sigmoid(nn.Linear(nh + nh, nh))
+#         self.h2o = F.relu(nn.Linear(nh, 1))
+
+
+class modelTest(nn.Module):
+    def __init__(self, *, nx, nh, rho):
+        super(modelTest, self).__init__()
+        self.rho = rho
+        self.nh = nh
+        self.x2i = nn.Linear(nx, nh)
+        self.i2h = nn.Linear(nh + nh, nh)
+        # self.h2h = nn.Linear(nh + nh, nh)
+        self.h2s = nn.Linear(nh, rho)
+        self.h2o = nn.Linear(nh, 2)
+        # self.h2o = nn.Linear(nh, 1)
+
+    def forward(self, x):
+        nt, ns, nx = x.shape
+        nh = self.nh
+        rho = self.rho
+        rhoF = nt-rho
+        h1 = torch.zeros(ns, nh)
+        zO = torch.zeros(rhoF, ns, 1)
+        if self.training is False:
+            sO = torch.zeros(rhoF, ns, rho)
+            bO = torch.zeros(rhoF, ns, 2)
+        if next(self.parameters()).is_cuda:
+            h1 = h1.cuda()
+            zO = zO.cuda()
+            if self.training is False:
+                bO = bO.cuda()
+                sO = sO.cuda()
+        for k in range(rho):
+            hx = self.x2i(x[k, :])
+            h1 = self.i2h(torch.cat((hx, h1), 1))
+            h1 = F.sigmoid(h1)
+            # h2 = self.i2h(torch.cat((hx, h1), 1))
+            # h2 = F.sigmoid(h2)
+        for k in range(rhoF):
+            hx = self.x2i(x[k+rho, :])
+            h1 = self.i2h(torch.cat((hx, h1), 1))
+            h1 = F.sigmoid(h1)
+            # h2 = self.i2h(torch.cat((hx, h1), 1))
+            # h2 = F.sigmoid(h2)
+            s = self.h2s(h1)
+            s = F.tanh(s)
+            z1 = x[k:k+rho, :, 0].transpose(0, 1).mul(s).sum(dim=1)
+            b = self.h2o(h1)
+            b = F.sigmoid(b)
+            zO[k, :, 0] = z1.mul(b[:, 1])+b[:, 0]
+            # zO[k, :, 0] = z1+b[:, 0]
+            if self.training is False:
+                sO[k, :, :] = s
+                bO[k, :, :] = b
+        if self.training:
+            return zO
+        else:
+            return zO, sO, bO
+
+
+class AgeLSTM(torch.nn.Module):
+    def __init__(self, *, nx, ny, nyc, nh, dr=0.5):
+        super(AgeLSTM, self).__init__()
+        self.nx = nx
+        self.ny = ny
+        self.nyc = nyc
+        self.nh = nh
+        self.nLayer = 1
+        self.linearIn = torch.nn.Linear(nx, nh)
+        self.lstm = CudnnLstm(
+            inputSize=nh, hiddenSize=nh, dr=dr)
+        self.linearOut = torch.nn.Linear(nh, 2)
+        self.b = Parameter(torch.zeros(3, nyc, requires_grad=True).float())
+
+    def forward(self, x, doDropMC=False):
+        nt, ns, nx = x.shape
+        ny = self.ny
+        nyc = self.nyc
+        b = self.b
+        nh = self.nh
+        x0 = self.linearIn(x)
+        outLSTM, (hn, cn) = self.lstm(x0, doDropMC=doDropMC)
+        outLSTM = F.relu(outLSTM)
+        y = outLSTM.sum(dim=-1)
+        t = torch.arange(nh).float()/nh
+        if self.training:
+            yc = torch.zeros([ns, nyc]).float()
+            hh = outLSTM[-1, :, :]
+        else:
+            yc = torch.zeros([nt, ns, nyc]).float()
+            hh = outLSTM
+        if next(self.parameters()).is_cuda:
+            yc = yc.cuda()
+            b = b.cuda()
+            t = t.cuda()
+        for k in range(nyc):
+            c0 = b[0, k]
+            c1 = b[1, k]
+            r = 10**b[2, k]
+            gate = c0 * torch.exp(-r*t)*r +\
+                c1*(1-torch.exp(-r*t))
+            if self.training:
+                yc[:, k] = hh.mul(gate).sum(dim=1)
+            else:
+                yc[:, :, k] = hh.mul(gate).sum(dim=2)
+        if self.training:
+            return y[:, :, None], yc
+        else:
+            return y[:, :, None], yc, hh
+
+
+class AgeLSTM2(torch.nn.Module):
+    def __init__(self, *, nx, ny, nyc, nh, rho, dr=0.5):
+        super(AgeLSTM2, self).__init__()
+        self.nx = nx
+        self.ny = ny
+        self.nyc = nyc
+        self.nh = nh
+        self.rho = rho
+        self.nLayer = 1
+        self.linearIn = torch.nn.Linear(nx, nh)
+        self.lstm = CudnnLstm(
+            inputSize=nh, hiddenSize=nh, dr=dr)
+        self.linearOut = torch.nn.Linear(nh, rho)
+        self.linearB = torch.nn.Linear(nh, 2)
+        self.r = Parameter(torch.zeros(3, nyc, requires_grad=True).float())
+
+    def forward(self, x, doDropMC=False):
+        nt, ns, nx = x.shape
+        ny = self.ny
+        nyc = self.nyc
+        r = self.r
+        nh = self.nh
+        rho = self.rho
+        x0 = self.linearIn(x)
+        outLSTM, (hn, cn) = self.lstm(x0)
+        t = torch.arange(rho).flip(0).float()/nh
+        if self.training:
+            gate = self.linearOut(hn)[0, :, :]
+            b = self.linearB(hn)[0, :, :]
+            out = torch.zeros([ns, ny+nyc]).float()
+            if next(self.parameters()).is_cuda:
+                out = out.cuda()
+            p = x[:, :, 0]
+            yt = p.transpose(0, 1).mul(gate)
+            out[:, 0] = yt.sum(dim=1)*b[:, 0]
+        else:
+            gate = self.linearOut(outLSTM)
+            b = self.linearB(outLSTM)
+            yt = torch.zeros([nt, ns, rho]).float()
+            out = torch.zeros([nt, ns, ny+nyc]).float()
+            if next(self.parameters()).is_cuda:
+                out = out.cuda()
+                yt = yt.cuda()
+            for k in range(rho, nt):
+                p = x[k-rho:k, :, 0]
+                yt[k, :, :] = p.transpose(0, 1).mul(gate[k, :, :])
+                out[k, :, 0] = yt[k, :, :].sum(dim=1)*b[k, :, 0]
+
+        if next(self.parameters()).is_cuda:
+            r = r.cuda()
+            t = t.cuda()
+        for j in range(nyc):
+            c0 = r[0, j]
+            c1 = r[1, j]
+            rr = 10**r[2, j]
+            # func = c0 * torch.exp(-rr*t)*rr + c1*(1-torch.exp(-rr*t))
+            func = 1-torch.exp(-rr*t)
+            if self.training:
+                # out[:, ny+j] = yt.mul(func).mean(dim=1)/yt.mean(dim=1)
+                out[:, ny+j] = yt.mul(func).sum(dim=1)
+            else:
+                for k in range(rho, nt):
+                    # out[k, :, ny+j] = yt[k, :, :].mul(func).mean(dim=1)/yt[k, :, :].mean(dim=1)
+                    out[k, :, ny+j] = yt[k, :, :].mul(func).sum(dim=1)
+        if self.training:
+            return out
+        else:
+            return out
+
+
+class LstmModel(torch.nn.Module):
+    def __init__(self, *, nx, ny, hiddenSize, dr=0.5):
+        super(LstmModel, self).__init__()
+        self.nx = nx
+        self.ny = ny
+        self.hiddenSize = hiddenSize
+        self.ct = 0
+        self.nLayer = 1
+        self.linearIn = torch.nn.Linear(nx, hiddenSize)
+        self.lstm = CudnnLstm(
+            inputSize=hiddenSize, hiddenSize=hiddenSize, dr=dr)
+        self.lstm2 = CudnnLstm(
+            inputSize=hiddenSize, hiddenSize=hiddenSize, dr=dr)
+        self.linearOut = torch.nn.Linear(hiddenSize, ny)
+        self.gpu = 1
+
+    def forward(self, x, doDropMC=False):
+        x0 = F.relu(self.linearIn(x))
+        outLSTM, (hn, cn) = self.lstm(x0)
+        outLSTM2, (hn, cn) = self.lstm2(outLSTM)
+        out = self.linearOut(outLSTM2)
+        # out = rho/time * batchsize * Ntargetvar
+        return out

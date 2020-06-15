@@ -8,6 +8,7 @@ a = 0
 b = 1
 n = 10
 h = (b-a)/(n+1)
+t=np.linspace(a,b,n+2)
 
 
 def F(w):
@@ -19,12 +20,12 @@ def F(w):
         w0 = ww[k]
         w1 = ww[k+1]
         w2 = ww[k+2]
-        y[k] = w0+w2-(2+h**2)*w1+h**2*w1**2
+        y[k] = w0+w2-2*w1+10*h**2
     return y
 
 
 def DF(w):
-    diag = 2*h**2*w - (2+h**2)
+    diag = -2
     mat = np.eye(n)*diag
     rng = np.arange(n-1)
     mat[rng, rng+1] = 1
@@ -34,7 +35,8 @@ def DF(w):
 
 x = np.zeros(n)
 for k in range(10):
-    s = es.gaussElimination(DF(x), -F(x))
+    # s = es.gaussElimination(DF(x), -F(x))
+    s = np.linalg.solve(DF(x), -F(x))
     x = x+s
     # print(x)
 

@@ -29,6 +29,9 @@ for outName in outLst:
     errMatLst1.append(errMatC1)
     errMatLst2.append(errMatC2)
 
+q1, c1 = basins.getObs(outName, trainSet, wqData=wqData)
+q2, c2 = basins.getObs(outName, testSet, wqData=wqData)
+
 # plot
 codeSel = ['00955', '00940', '00915']
 # codeSel = ['00600', '00605', '00405']
@@ -69,7 +72,7 @@ def funcPoint(iP, axP):
         x = np.concatenate([p1[ind1], p2[ind2]])
         dataLst.append(x)
         styLst.append('--'+c)
-    y = np.concatenate([o1[ind1], o2[ind2]])
+    y = np.concatenate([c1[ind1], c2[ind2]])
     dataLst.append(y)
     styLst.append('*k')
     tBar = t1[-1]+(t2[0]-t1[-1])/2
@@ -81,6 +84,5 @@ def funcPoint(iP, axP):
         axplot.plotTS(axP[k], t, xTS, styLst=styLst, tBar=tBar,
                       legLst=['opt1', 'opt2', 'obs'])
         axP[k].set_title(title)
-
 
 figplot.clickMap(funcMap, funcPoint)

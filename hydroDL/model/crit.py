@@ -67,7 +67,7 @@ class RmseMix(torch.nn.Module):
         mask = tarC == tarC
         p = outC[mask]
         t = tarC[mask]
-        lossC = torch.sqrt(((p - t)**2).nansum())
+        lossC = torch.sqrt(((p - t)**2).sum())
         return (lossTs+lossC)/(nts+nc)
 
 
@@ -81,6 +81,25 @@ class RmseLoss(torch.nn.Module):
         for k in range(ny):
             p0 = output[:, :, k]
             t0 = target[:, :, k]
+            mask = t0 == t0
+            p = p0[mask]
+            t = t0[mask]
+            temp = torch.sqrt(((p - t)**2).mean())
+            if temp == temp:
+                loss = loss + temp
+        return loss/ny
+
+
+class RmseLoss2D(torch.nn.Module):
+    def __init__(self):
+        super(RmseLoss2D, self).__init__()
+
+    def forward(self, output, target):
+        ny = target.shape[1]
+        loss = 0
+        for k in range(ny):
+            p0 = output[:,  k]
+            t0 = target[:,  k]
             mask = t0 == t0
             p = p0[mask]
             t = t0[mask]
