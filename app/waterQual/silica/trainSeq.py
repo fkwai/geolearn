@@ -1,19 +1,15 @@
 
 from hydroDL import kPath
 from hydroDL.app import waterQuality, waterQuality2
-from hydroDL.data import gageII, usgs, gridMET
 from hydroDL.master import basins
-from hydroDL.post import axplot, figplot
-import matplotlib.pyplot as plt
 
-import importlib
 
-import pandas as pd
+# import importlib
+from hydroDL.master import slurm
 import numpy as np
-import os
-import time
 
-importlib.reload(waterQuality2)
+
+# importlib.reload(waterQuality2)
 
 # wqData = waterQuality.DataModelWQ('Silica64')
 # siteNoLst = wqData.siteNoLst
@@ -30,7 +26,7 @@ wqData = waterQuality2.DataModelWQ('Silica64Seq')
 # subset only have silica
 code = '00955'
 ic = wqData.varQ.index(code)
-indC = np.where(~np.isnan(wqData.q[:, ic]))[0]
+indC = np.where(~np.isnan(wqData.q[-1,:, ic]))[0]
 wqData.saveSubset(code, indC)
 indYr1 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[1979, 2000])[0]
 wqData.saveSubset('{}-Y8090'.format(code), indYr1)
@@ -39,6 +35,9 @@ wqData.saveSubset('{}-Y0010'.format(code), indYr2)
 
 saveName = 'Silica64Seq-Y8090'
 caseName = basins.wrapMaster(dataName='Silica64Seq', trainName='00955-Y8090',
-                             batchSize=[None, 200], varY=wqData.varQ, varYC=None,
+                             batchSize=[None, 200], varY=['00060','00955'], varYC=None,
                              outName=saveName)
-basins.trainModelTS(saveName)
+
+
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
+slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=6)
