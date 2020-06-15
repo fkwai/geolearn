@@ -14,7 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # test
-outName = 'Silica64-Y8090-opt1'
+outName = 'Silica64-00955-Y8090-opt1'
 
 wqData = waterQuality.DataModelWQ('Silica64')
 code = '00955'

@@ -14,7 +14,7 @@ dirShape = os.path.join(dirGageII, 'boundaries-shapefiles-by-aggeco')
 lstWaterQuality = ['DRAIN_SQKM', 'SNOW_PCT_PRECIP', 'GEOL_REEDBUSH_DOM', 'STREAMS_KM_SQ_KM', 'PCT_1ST_ORDER',
                    'BFI_AVE', 'CONTACT', 'FORESTNLCD06', 'PLANTNLCD06', 'NUTR_BAS_DOM', 'ECO3_BAS_DOM', 'HLR_BAS_DOM_100M',
                    'ELEV_MEAN_M_BASIN', 'PERMAVE', 'WTDEPAVE', 'ROCKDEPAVE', 'SLOPE_PCT']
-
+varLst = lstWaterQuality
 dictStat = dict(
     DRAIN_SQKM='log-norm',
     SNOW_PCT_PRECIP='norm',

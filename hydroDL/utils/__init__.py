@@ -21,7 +21,7 @@ def sortData(x):
     return xSort
 
 
-def rmNan(xLst):
+def rmNan(xLst, returnInd=True):
     if len(set([len(x) for x in xLst])) > 1:
         raise Exception('not same size')
     n = len(xLst[0])
@@ -29,4 +29,7 @@ def rmNan(xLst):
     for x in xLst:
         indRm = np.where(np.isnan(x))
         ind = np.setdiff1d(ind, indRm)
-    return [x[ind] for x in xLst], ind
+    if returnInd is True:
+        return [x[ind] for x in xLst], ind
+    else:
+        return [x[ind] for x in xLst]
