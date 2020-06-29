@@ -693,8 +693,8 @@ class AgeLSTM2(torch.nn.Module):
         outLSTM, (hn, cn) = self.lstm(x0)
         t = torch.arange(rho).flip(0).float()/nh
         if self.training:
-            gate = self.linearOut(hn)[0, :, :]
-            b = self.linearB(hn)[0, :, :]
+            gate = F.relu(self.linearOut(hn)[0, :, :])
+            b = F.relu(self.linearB(hn)[0, :, :])
             out = torch.zeros([ns, ny+nyc]).float()
             if next(self.parameters()).is_cuda:
                 out = out.cuda()
@@ -702,8 +702,8 @@ class AgeLSTM2(torch.nn.Module):
             yt = p.transpose(0, 1).mul(gate)
             out[:, 0] = yt.sum(dim=1)*b[:, 0]
         else:
-            gate = self.linearOut(outLSTM)
-            b = self.linearB(outLSTM)
+            gate = F.relu(self.linearOut(outLSTM))
+            b = F.relu(self.linearB(outLSTM))
             yt = torch.zeros([nt, ns, rho]).float()
             out = torch.zeros([nt, ns, ny+nyc]).float()
             if next(self.parameters()).is_cuda:
@@ -722,18 +722,18 @@ class AgeLSTM2(torch.nn.Module):
             c1 = r[1, j]
             rr = 10**r[2, j]
             # func = c0 * torch.exp(-rr*t)*rr + c1*(1-torch.exp(-rr*t))
-            func = 1-torch.exp(-rr*t)
+            func = c1*(1-torch.exp(-rr*t))
             if self.training:
-                # out[:, ny+j] = yt.mul(func).mean(dim=1)/yt.mean(dim=1)
-                out[:, ny+j] = yt.mul(func).sum(dim=1)
+                out[:, ny+j] = yt.mul(func).sum(dim=1)/yt.sum(dim=1)
+                # out[:, ny+j] = yt.mul(func).sum(dim=1)
             else:
                 for k in range(rho, nt):
-                    # out[k, :, ny+j] = yt[k, :, :].mul(func).mean(dim=1)/yt[k, :, :].mean(dim=1)
-                    out[k, :, ny+j] = yt[k, :, :].mul(func).sum(dim=1)
+                    out[k, :, ny+j] = yt[k, :, :].mul(func).sum(dim=1)/yt[k, :, :].sum(dim=1)
+                    # out[k, :, ny+j] = yt[k, :,:].mul(func).sum(dim=1)                    
         if self.training:
             return out
         else:
-            return out
+            return out, b, gate
 
 
 class LstmModel(torch.nn.Module):

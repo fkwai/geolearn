@@ -15,8 +15,7 @@ import matplotlib.pyplot as plt
 from hydroDL.model import rnn, crit, trainTS
 import time
 
-siteNo = '07227500'
-codeLst = ['00300','00915', '00955']
+siteNo = '02175000'
 nh = 256
 batchSize = [365, 50]
 if not waterQuality.exist(siteNo):
@@ -25,7 +24,7 @@ wqData = waterQuality.DataModelWQ(siteNo)
 varX = wqData.varF
 varXC = wqData.varG
 varY = [wqData.varQ[0]]
-varYC = ['00915', '00940', '00955']
+varYC = ['00915', '00945', '00955']
 varTup = (varX, varXC, varY, varYC)
 dataTup, statTup = wqData.transIn(varTup=varTup)
 dataTup = trainTS.dealNaN(dataTup, [1, 1, 0, 0])
@@ -95,14 +94,22 @@ if torch.cuda.is_available():
 yT = model(xT)
 yO = yT.detach().cpu().numpy()
 
+
+predY = transform.transOut(yO[:, :, 0], mtdY[0], statY[0])
+predYC = transform.transOutAll(yO[:, :, 1:], mtdYC, statYC)
+obsY = dfY.values
+obsYC = dfYC.values
+
 t = dfY.index.values
 fig, axes = plt.subplots(4, 1)
-axplot.plotTS(axes[0], t, [yO[:, 0, 0], y[:, 0, 0]],
+axplot.plotTS(axes[0], t, [predY, obsY],
               styLst='---', cLst='rb')
-axplot.plotTS(axes[1], t, [yO[:, 0, 1], yc[:, 0, 0]],
-              styLst='-*', cLst='rb')
-axplot.plotTS(axes[2], t, [yO[:, 0, 2], yc[:, 0, 1]],
-              styLst='-*', cLst='rb')
-axplot.plotTS(axes[3], t, [yO[:, 0, 3], yc[:, 0, 2]],
-              styLst='-*', cLst='rb')
+axes[0].set_title('streamflow')
+axes[0].set_xticks([])
+codePdf = usgs.codePdf
+for k, code in enumerate(varYC):
+    axplot.plotTS(axes[k+1], t, [predYC[:, 0, k], obsYC[:, k]],
+                  styLst='-*', cLst='rb')
+    axes[k+1].set_title(code+' '+codePdf.loc[code]['shortName'])
+    axes[k].set_xticks([])
 fig.show()

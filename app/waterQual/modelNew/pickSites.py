@@ -22,7 +22,7 @@ df2 = pd.read_csv(os.path.join(dirInv, 'codeCount_A2000.csv'),
 
 # pick some sites
 # codeLst = ['00915', '00940', '00955','00300']
-codeLst = ['00915', '00955','00300']
+codeLst = ['00915', '00945', '00955']
 tempLst = list()
 for code in codeLst:
     temp = df0[(df1[code] > 100) & (df2[code] > 100)].index.tolist()

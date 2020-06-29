@@ -15,9 +15,11 @@ from hydroDL.model import rnn, crit, trainTS
 
 
 defaultMaster = dict(
-    dataName='HBN', trainName='first50', outName=None, modelName='CudnnLSTM',
-    hiddenSize=256, batchSize=[None, 500], nEpoch=500, saveEpoch=100, resumeEpoch=0,
+    dataName='HBN', trainName='first50', outName=None,
+    hiddenSize=256, batchSize=[None, 500],
+    nEpoch=500, saveEpoch=100, resumeEpoch=0,
     optNaN=[1, 1, 0, 0], overwrite=True,
+    modelName='CudnnLSTM', crit='RmseLoss', optim='AdaDelta',
     varX=gridMET.varLst, varXC=gageII.lstWaterQuality,
     varY=usgs.varQ, varYC=usgs.varC
 )
@@ -125,11 +127,27 @@ def trainModelTS(outName):
     if dictP['modelName'] == 'CudnnLSTM':
         model = rnn.CudnnLstmModel(
             nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
-    lossFun = crit.RmseLoss()
+    elif dictP['modelName'] == 'AgeLSTM':
+        model = rnn.AgeLSTM2(
+            nx=nx+nxc, ny=ny, nyc=nyc, rho=365, nh=dictP['hiddenSize'])
+    else:
+        raise RuntimeError('Model not specified')
+
+    if dictP['crit'] == 'RmseLoss':
+        lossFun = crit.RmseLoss()
+    elif dictP['crit'] == 'RmseLoss2D':
+        lossFun = crit.RmseLoss2D()
+    else:
+        raise RuntimeError('loss function not specified')
     if torch.cuda.is_available():
         lossFun = lossFun.cuda()
         model = model.cuda()
-    optim = torch.optim.Adadelta(model.parameters())
+
+    if dictP['optim'] == 'AdaDelta':
+        optim = torch.optim.Adadelta(model.parameters())
+    else:
+        raise RuntimeError('optimizor function not specified')
+
     lossLst = list()
     nEp = dictP['nEpoch']
     sEp = dictP['saveEpoch']

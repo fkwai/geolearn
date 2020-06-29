@@ -1,0 +1,117 @@
+import importlib
+from hydroDL.master import basins
+from hydroDL.app import waterQuality
+from hydroDL import kPath
+from hydroDL.model import trainTS
+from hydroDL.data import gageII, usgs
+from hydroDL.post import axplot, figplot
+
+import torch
+import os
+import json
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# test
+outName = 'CaO49-CaO-Y0010-opt1'
+master = basins.loadMaster(outName)
+dataName = master['dataName']
+wqData = waterQuality.DataModelWQ(dataName)
+trainset = 'CaO-Y0010'
+testset = 'CaO-Y8090'
+
+if master['varY'] is not None:
+    plotVar = ['00060', '00300', '00915']
+else:
+    plotVar = ['00300', '00915']
+
+# point test
+yP1, ycP1 = basins.testModel(outName, trainset, wqData=wqData)
+errMatC1 = wqData.errBySiteC(ycP1, subset=trainset, varC=master['varYC'])
+if master['varY'] is not None:
+    errMatQ1 = wqData.errBySiteQ(yP1, subset=trainset, varQ=master['varY'])
+yP2, ycP2 = basins.testModel(outName, testset, wqData=wqData)
+errMatC2 = wqData.errBySiteC(ycP2, subset=testset, varC=master['varYC'])
+if master['varY'] is not None:
+    errMatQ2 = wqData.errBySiteQ(yP2, subset=testset, varQ=master['varY'])
+
+# box
+dataBox = list()
+for k in range(2):
+    for var in plotVar:
+        if var == '00060':
+            temp = [errMatQ1[:, 0, k], errMatQ2[:, 0, k]]
+        else:
+            ic = master['varYC'].index(var)
+            temp = [errMatC1[:, ic, k], errMatC2[:, ic, k]]
+        dataBox.append(temp)
+fig = figplot.boxPlot(dataBox, sharey=False)
+fig.show()
+
+# seq test
+siteNoLst = wqData.info['siteNo'].unique().tolist()
+basins.testModelSeq(outName, siteNoLst, wqData=wqData)
+
+# time series map
+dfCrd = gageII.readData(
+    varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
+lat = dfCrd['LAT_GAGE'].values
+lon = dfCrd['LNG_GAGE'].values
+codePdf = usgs.codePdf
+
+
+def funcMap():
+    nM = len(plotVar)
+    figM, axM = plt.subplots(nM, 1, figsize=(8, 6))
+    axM = np.array([axM]) if nM == 1 else axM
+    for k, var in enumerate(plotVar):
+        if var == '00060':
+            axplot.mapPoint(axM[k], lat, lon, errMatQ2[:, 0, 1], s=12)
+            axM[k].set_title('streamflow')
+        else:
+            ic = master['varYC'].index(var)
+            shortName = codePdf.loc[var]['shortName']
+            title = '{} {}'.format(shortName, var)
+            axplot.mapPoint(axM[k], lat, lon, errMatC2[:, ic, 1], s=12)
+            axM[k].set_title(title)
+    figP, axP = plt.subplots(nM, 1, figsize=(8, 6))
+    axP = np.array([axP]) if nM == 1 else axP
+    return figM, axM, figP, axP, lon, lat
+
+
+def funcPoint(iP, axP):
+    siteNo = siteNoLst[iP]
+    dfPred, dfObs = basins.loadSeq(outName, siteNo)
+    t = dfPred.index.values.astype(np.datetime64)
+    tBar = np.datetime64('2000-01-01')
+    for k, var in enumerate(plotVar):
+        rmse, corr = waterQuality.calErrSeq(dfPred[var], dfObs[var])
+        tStr = '{}, rmse [{:.2f} {:.2f}], corr [{:.2f} {:.2f}]'.format(
+            siteNo, rmse[0], rmse[1], corr[0], corr[1])
+        if var == '00060':
+            styLst = '--'
+            title = 'streamflow '+tStr
+        else:
+            styLst = '-*'
+            shortName = codePdf.loc[var]['shortName']
+            title = shortName + ' ' + tStr
+        axplot.plotTS(axP[k], t, [dfPred[var], dfObs[var]], tBar=tBar,
+                      legLst=['pred', 'obs'], styLst=styLst, cLst='rb')
+        axP[k].set_title(tStr)
+
+
+importlib.reload(figplot)
+figM, figP = figplot.clickMap(funcMap, funcPoint)
+
+for ax in figP.axes:
+    ax.set_xlim(np.datetime64('2015-01-01'), np.datetime64('2020-01-01'))
+figP.canvas.draw()
+
+for ax in figP.axes:
+    ax.set_xlim(np.datetime64('1988-01-01'), np.datetime64('1993-01-01'))
+figP.canvas.draw()
+
+for ax in figP.axes:
+    ax.set_xlim(np.datetime64('1980-01-01'), np.datetime64('2020-01-01'))
+figP.canvas.draw()

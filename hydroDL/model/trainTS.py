@@ -140,7 +140,10 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
             xT, yT = subsetRandom(dataLst, batchSize, sizeLst)
             try:
                 yP = model(xT)
-                loss = lossFun(yP, yT)
+                if type(lossFun) is crit.RmseLoss:
+                    loss = lossFun(yP, yT)
+                elif type(lossFun) is crit.RmseLoss2D:
+                    loss = lossFun(yP, yT[-1, :, :])
                 loss.backward()
                 optim.step()
                 model.zero_grad()

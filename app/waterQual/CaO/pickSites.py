@@ -21,7 +21,7 @@ df2 = pd.read_csv(os.path.join(dirInv, 'codeCount_A2000.csv'),
                   dtype={'siteNo': str}).set_index('siteNo')
 
 # pick some sites
-codeLst = ['00915', '00300']
+codeLst = ['00300', '00915']
 tempLst = list()
 for code in codeLst:
     temp = df0[(df1[code] > 100) & (df2[code] > 100)].index.tolist()
@@ -34,9 +34,23 @@ for k in range(1, len(tempLst)):
 if not waterQuality.exist('CaO49'):
     wqData = waterQuality.DataModelWQ.new('CaO49', siteNoLst)
 indYr1 = waterQuality.indYr(wqData.info, yrLst=[1979, 2000])[0]
-# wqData.saveSubset('Y8090', indYr1)
+wqData.saveSubset('Y8090', indYr1)
 indYr2 = waterQuality.indYr(wqData.info, yrLst=[2000, 2020])[0]
-# wqData.saveSubset('Y0010', indYr2)
+wqData.saveSubset('Y0010', indYr2)
+
+
+# subset only have Ca and O
+ic = [wqData.varC.index(code) for code in codeLst]
+indC = np.where(~np.isnan(wqData.c[:, ic]))[0]
+wqData.saveSubset('CaO', indC)
+indYr1 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[1979, 2000])[0]
+wqData.saveSubset('CaO-Y8090', indYr1)
+indYr2 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[2000, 2020])[0]
+wqData.saveSubset('CaO-Y0010', indYr2)
+indYr1 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[1979, 2010])[0]
+wqData.saveSubset('CaO-Y8000', indYr1)
+indYr2 = waterQuality.indYr(wqData.info.iloc[indC], yrLst=[2010, 2020])[0]
+wqData.saveSubset('CaO-Y10', indYr2)
 
 
 nB = df1.loc[siteNoLst][codeLst].values.sum(axis=1)
