@@ -21,7 +21,8 @@ defaultMaster = dict(
     optNaN=[1, 1, 0, 0], overwrite=True,
     modelName='CudnnLSTM', crit='RmseLoss', optim='AdaDelta',
     varX=gridMET.varLst, varXC=gageII.lstWaterQuality,
-    varY=usgs.varQ, varYC=usgs.varC
+    varY=usgs.varQ, varYC=usgs.varC,
+    rmFlag=False
 )
 
 
@@ -115,7 +116,8 @@ def trainModelTS(outName):
     dictP = loadMaster(outName)
 
     # load data
-    wqData = waterQuality.DataModelWQ(dictP['dataName'])
+    rmFlag = dictP['rmFlag'] if 'rmFlag' in dictP else False
+    wqData = waterQuality.DataModelWQ(dictP['dataName'], rmFlag)
     varTup = (dictP['varX'], dictP['varXC'], dictP['varY'], dictP['varYC'])
     dataTup, statTup = wqData.transIn(
         subset=dictP['trainName'], varTup=varTup)
@@ -213,7 +215,8 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
     return yP, ycP
 
 
-def testModelSeq(outName, siteNoLst, wqData=None, ep=None, returnOut=False,
+def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
+                 returnOut=False, retest=False,
                  sd=np.datetime64('1979-01-01'),
                  ed=np.datetime64('2020-01-01')):
     # run sequence test for all sites, default to be from first date to last date
@@ -229,7 +232,11 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None, returnOut=False,
     if not os.path.exists(saveDir):
         os.mkdir(saveDir)
     siteSaveLst = os.listdir(saveDir)
-    sitePredLst = [siteNo for siteNo in siteNoLst if siteNo not in siteSaveLst]
+    if retest is True:
+        sitePredLst = siteNoLst
+    else:
+        sitePredLst = [
+            siteNo for siteNo in siteNoLst if siteNo not in siteSaveLst]
     if len(sitePredLst) != 0:
         if wqData is None:
             wqData = waterQuality.DataModelWQ(master['dataName'])
@@ -255,6 +262,7 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None, returnOut=False,
             x = transform.transInAll(xA, mtdX, statLst=statX)
             mtdXC = wqData.extractVarMtd(varXC)
             xc = transform.transInAll(xcA, mtdXC, statLst=statXC)
+            [x, xc] = trainTS.dealNaN([x, xc], master['optNaN'][:2])
             yOut = trainTS.testModel(model, x, xc)
             # transfer out
             nt = len(dfX)

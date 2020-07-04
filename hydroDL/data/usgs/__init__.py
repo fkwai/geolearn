@@ -10,6 +10,7 @@ codeLst = list(codePdf.index)
 varC = codeLst
 varQ = ['00060']
 
+# normalization method
 dictStat = {
     'runoff': 'log-norm',
     '00010': 'norm',
@@ -48,3 +49,28 @@ dictStat = {
     '71846': 'log-norm',
     '80154': 'log-norm'
 }
+
+# code of remarks
+dfFlagC = pd.DataFrame([
+    [0, '0', 'No flags'],
+    [1, '<', 'less than'],
+    [2, '>', 'greater than'],
+    [3, 'A', 'average'],
+    [4, 'E', 'estimated'],
+    [5, 'M', 'presence verified but not quantified'],
+    [6, 'N', 'presumptive evidence of presence'],
+    [7, 'R', 'radchem non-detect, below ssLc'],
+    [8, 'S', 'most probable value'],
+    [9, 'U', 'analyzed for but not detected'],
+    [10, 'V', 'value affected by contamination']],
+    columns=['code', 'label', 'description']).set_index('code')
+
+dfFlagQ = pd.DataFrame([
+    [0, '0', 'No flags'],
+    [1, '<', 'The Value is known to be less than reported value'],
+    [2, '>', 'The value is known to be greater than reported value'],
+    [3, 'e', 'The value has been edited or estimated by USGS personnel'],
+    [4, 'R', 'Records for these data have been revised'],
+    [5, 'A', 'Approved for publication -- Processing and review completed'],
+    [6, 'P', 'Provisional data subject to revision']],
+    columns=['code', 'label', 'description']).set_index('code')

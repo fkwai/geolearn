@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 wqData = waterQuality.DataModelWQ('basinRef')
 
 
-outName = 'basinRef-Y8090-opt1'
+outName = 'basinRef-Y8090-opt2'
 trainSet = 'Y8090'
 testSet = 'Y0010'
 master = basins.loadMaster(outName)
@@ -27,7 +27,11 @@ q2, c2 = basins.getObs(outName, testSet, wqData=wqData)
 
 # seq test
 siteNoLst = wqData.info['siteNo'].unique().tolist()
-basins.testModelSeq(outName, siteNoLst, wqData=wqData, ep=300)
+# basins.testModelSeq(outName, siteNoLst, wqData=wqData, 
+# ep=300)
+
+basins.testModelSeq(outName, ['08070200'], wqData=wqData, ep=300)
+
 
 # figure out number of sample
 info1 = wqData.subsetInfo(trainSet)
@@ -47,7 +51,7 @@ for i, siteNo in enumerate(siteNoLst):
 
 
 # plot
-codeSel = ['00665', '00660','00915']
+codeSel = ['00300', '00915']
 # codeSel = ['00600', '00605', '00405']
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 dfCrd = gageII.readData(
@@ -76,7 +80,7 @@ def funcMap():
         ind = indLst[k]
         axplot.mapPoint(axM[k], lat[ind], lon[ind], errMatC2[ind, ic, 1], s=12)
         axM[k].set_title(title)
-    figP, axP = plt.subplots(len(codeSel)+1, 1, figsize=(8, 6))
+    figP, axP = plt.subplots(len(codeSel), 1, figsize=(8, 6))
     return figM, axM, figP, axP, lon[indAll], lat[indAll]
 
 
@@ -88,20 +92,13 @@ def funcPoint(iP, axP):
     dfPred = dfPred[dfPred.index >= np.datetime64('1980-01-01')]
     dfObs = dfObs[dfObs.index >= np.datetime64('1980-01-01')]
     t = dfPred.index.values.astype(np.datetime64)
-    axplot.plotTS(axP[0], t, [dfPred['00060'], dfObs['00060']], tBar=tBar,
-                  legLst=['pred', 'obs'], styLst='--', cLst='br')
-    axP[0].set_title('{} streamflow'.format(siteNo))
     for k, var in enumerate(codeSel):
         shortName = codePdf.loc[var]['shortName']
-        title = ' {} {}'.format(shortName, var)
-        # styLst = ['--*', '--*']
-        # [x1, x2], iT = utils.rmNan([dfPred[var].values, dfObs[var].values])
-        # axplot.plotTS(axP[k+1], t[iT], [x1, x2], tBar=tBar,
-        #               legLst=['pred', 'obs'], styLst=styLst, cLst='br')
+        title = '{} {} {}'.format(siteNo, shortName, var)
         styLst = ['-', '*']
-        axplot.plotTS(axP[k+1], t, [dfPred[var].values, dfObs[var].values], tBar=tBar,
+        axplot.plotTS(axP[k], t, [dfPred[var].values, dfObs[var].values], tBar=tBar,
                       legLst=['pred', 'obs'], styLst=styLst, cLst='br')
-        axP[k+1].set_title(title)
+        axP[k].set_title(title)
 
 
 plt.tight_layout

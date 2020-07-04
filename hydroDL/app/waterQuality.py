@@ -8,7 +8,7 @@ from hydroDL.data import usgs, gageII, gridMET, transform
 
 
 class DataModelWQ():
-    def __init__(self, caseName):
+    def __init__(self, caseName, rmFlag=False):
         self.caseName = caseName
         t0 = time.time()
         # data
@@ -18,6 +18,9 @@ class DataModelWQ():
         self.f = npzFile['f']
         self.c = npzFile['c']
         self.g = npzFile['g']
+        self.cf = npzFile['cf']
+        if rmFlag is True:
+            self.c[self.cf == 1] = np.nan
         print('loading data {}'.format(time.time()-t0))
         # info
         with open(saveName+'.json', 'r') as fp:
@@ -338,11 +341,13 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
     gLst = list()  # geo-const
     qLst = list()  # streamflow
     cLst = list()  # water quality
+    cfLst = list()  # water quality flags
     infoLst = list()
     t0 = time.time()
     for i, siteNo in enumerate(siteNoLst):
         t1 = time.time()
-        dfC = usgs.readSample(siteNo, codeLst=varC, startDate=startDate)
+        dfC, dfCF = usgs.readSample(
+            siteNo, codeLst=varC, startDate=startDate, flag=2)
         dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
         dfF = gridMET.readBasin(siteNo)
         for k in range(len(dfC)):
@@ -357,6 +362,7 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
             qLst.append(tempQ.values)
             fLst.append(tempF.values)
             cLst.append(dfC.iloc[k].values)
+            cfLst.append(dfCF.iloc[k].values)
             gLst.append(tabG.loc[siteNo].values)
             infoLst.append(dict(siteNo=siteNo, date=ct))
         t2 = time.time()
@@ -366,18 +372,18 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
     f = np.stack(fLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
+    cf = np.stack(cfLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     infoDf = pd.DataFrame(infoLst)
     # add runoff
     runoff = calRunoff(q[:, :, 0], infoDf)
     q = np.stack([q[:, :, 0], runoff], axis=-1).astype(np.float32)
-
     saveFolder = os.path.join(kPath.dirWQ, 'trainData')
     saveName = os.path.join(saveFolder, caseName)
-    np.savez(saveName, q=q, f=f, c=c, g=g)
+    np.savez(saveName, q=q, f=f, c=c, g=g, cf=cf)
     infoDf.to_csv(saveName+'.csv')
     dictData = dict(name=caseName, rho=rho, nFill=nFill,
-                    varG=varG, varC=varC, varQ=['00060', 'runoff'], varF=gridMET.varLst,
-                    siteNoLst=siteNoLst)
+                    varG=varG, varC=varC, varQ=['00060', 'runoff'],
+                    varF=gridMET.varLst, siteNoLst=siteNoLst)
     with open(saveName+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)
 

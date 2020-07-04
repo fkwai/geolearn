@@ -8,7 +8,7 @@ from hydroDL import kPath
 __all__ = ['readSample', 'readStreamflow', 'readUsgsText']
 
 
-def readSample(siteNo, codeLst, startDate=None, csv=True):
+def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
     """read USGS sample data, did:
     1. extract data of interested code and date
     2. average repeated daily observation
@@ -17,6 +17,7 @@ def readSample(siteNo, codeLst, startDate=None, csv=True):
     Keyword Arguments:
         codeLst {list} -- usgs code of interesting fields (default: {sampleCodeLst})
         startDate {date} -- start date (default: {None})
+        flag {int} -- 0 no flag; 1 str flag; 2 num flag 
     Returns:
         pandas.DataFrame -- [description]
     """
@@ -25,24 +26,72 @@ def readSample(siteNo, codeLst, startDate=None, csv=True):
         dfC = readUsgsText(fileC, dataType='sample')
         if startDate is not None:
             dfC = dfC[dfC['date'] >= startDate]
-        dfC = dfC[['date']+list(set(codeLst) & set(dfC.columns.tolist()))]
-        dfC = dfC.set_index('date').dropna(how='all')
-        dfC = dfC.groupby(level=0).agg(lambda x: x.mean())
-        if len(dfC.index) == 0:
-            return None
-    else:
-        fileC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csv', siteNo)
-        dfC = pd.read_csv(fileC)
-        dfC['date'] = pd.to_datetime(dfC['date'], format='%Y-%m-%d')
         dfC = dfC.set_index('date')
-    return dfC.reindex(columns=codeLst)
+        codeSel = list(set(codeLst) & set(dfC.columns.tolist()))
+        codeSel_cd = [code + '_cd' for code in codeSel]
+        dfC = dfC[codeSel+codeSel_cd].dropna(how='all')
+        if len(dfC) == 0:
+            return None if flag == 0 else (None, None)
+        dfC1 = dfC[codeSel]
+        dfC2 = dfC[codeSel_cd]
+        bx = dfC1.notna().values & dfC2.isna().values
+        dfC2[bx] = 'x'
+        dfC2 = dfC2.fillna('')
+        bDup = dfC.index.duplicated(keep=False)
+        indUni = dfC.index[~bDup]
+        indDup = dfC.index[bDup].unique()
+        indAll = dfC.index.unique()
+        dfO1 = pd.DataFrame(index=indAll, columns=codeSel)
+        dfO2 = pd.DataFrame(index=indAll, columns=codeSel_cd)
+        dfO1.loc[indUni] = dfC1.loc[indUni][codeSel]
+        dfO2.loc[indUni] = dfC2.loc[indUni][codeSel_cd]
+        for ind in indDup:
+            temp1 = dfC1.loc[ind]
+            temp2 = dfC2.loc[ind]
+            for code in codeSel:
+                if 'x' in temp2[code+'_cd'].tolist():
+                    dfO1.loc[ind][code] = temp1[code][temp2[code+'_cd']
+                                                      == 'x'].mean()
+                    if temp2[code+'_cd'].tolist().count('x') > 1:
+                        dfO2.loc[ind][code+'_cd'] = 'X'
+                    else:
+                        dfO2.loc[ind][code+'_cd'] = 'x'
+                else:
+                    dfO1.loc[ind][code] = temp1[code].mean()
+                    dfO2.loc[ind][code+'_cd'] = ''.join(temp2[code+'_cd'])
+    else:
+        dirC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csv')
+        fileC1 = os.path.join(dirC, siteNo)
+        if not os.path.exists(fileC1):
+            return None if flag == 0 else (None, None)
+        dfO1 = pd.read_csv(fileC1)
+        dfO1['date'] = pd.to_datetime(dfO1['date'], format='%Y-%m-%d')
+        dfO1 = dfO1.set_index('date')
+        if flag > 0:
+            fileC2 = os.path.join(dirC, siteNo+'_flag')
+            dfO2 = pd.read_csv(fileC2)
+            dfO2['date'] = pd.to_datetime(dfO2['date'], format='%Y-%m-%d')
+            dfO2 = dfO2.set_index('date')
+        if startDate is not None:
+            dfO1 = dfO1[dfO1.index >= startDate]
+            dfO2 = dfO2[dfO2.index >= startDate]
+    if flag > 0:
+        if flag == 2:
+            dfO3 = pd.DataFrame(index=dfO2.index, columns=dfO2.columns)
+            dfO3[(dfO2 == 'x') | (dfO2 == 'X')] = 0
+            dfO3[(dfO2 != 'x') & (dfO2 != 'X') & (dfO2.notna())] = 1
+            dfO2 = dfO3
+        codeLst_cd = [code + '_cd' for code in codeLst]
+        return (dfO1.reindex(columns=codeLst), dfO2.reindex(columns=codeLst_cd))
+    else:
+        return dfO1.reindex(columns=codeLst)
 
 
 def readStreamflow(siteNo, startDate=None, csv=True):
     """read USGS streamflow (00060) data, did:
-    1. fill missing average observation (00060_00003) by available max and min.    
+    1. fill missing average observation (00060_00003) by available max and min.
     Arguments:
-        siteNo {str} -- site number    
+        siteNo {str} -- site number
     Keyword Arguments:
         startDate {date} -- start date (default: {None})
     Returns:
@@ -68,13 +117,15 @@ def readStreamflow(siteNo, startDate=None, csv=True):
                              'streamflow', 'csv', siteNo)
         dfQ = pd.read_csv(fileQ)
         dfQ['date'] = pd.to_datetime(dfQ['date'], format='%Y-%m-%d')
+        if startDate is not None:
+            dfQ = dfQ[dfQ['date'] >= startDate]
     return dfQ.set_index('date')
 
 
 def readUsgsText(fileName, dataType=None):
-    """read usgs text file, rename head for given dataType    
+    """read usgs text file, rename head for given dataType
     Arguments:
-        fileName {str} -- file name    
+        fileName {str} -- file name
     Keyword Arguments:
         dataType {str} -- dailyTS, streamflow or sample (default: {None})
     """

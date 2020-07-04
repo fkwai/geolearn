@@ -30,23 +30,31 @@ for code in codeLst:
 siteNoLst = tempLst[0]
 for k in range(1, len(tempLst)):
     siteNoLst = list(set(siteNoLst).intersection(tempLst[k]))
+startDate = pd.datetime(1979, 1, 1)
+endDate = pd.datetime(2019, 12, 31)
+nc = len(codeLst)
+ns = len(siteNoLst)
 
-# # cal dw
-# code = codeLst[0]
-# pMat2 = np.ndarray([len(siteNoLst), 2])
-# pdfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
-# unitConv = 0.3048**3*365*24*60*60/1000**2
-# for k, siteNo in enumerate(siteNoLst):
-#     area = pdfArea.loc[siteNo]['DRAIN_SQKM']
-#     dfC = usgs.readSample(siteNo, codeLst=codeLst)
-#     dfQ = usgs.readStreamflow(siteNo)
-#     df = dfC.join(dfQ)
-#     t = df.index.values
-#     q = df['00060_00003'].values/area*unitConv
-#     c = df[code].values
-#     ceq, dw, y = wqRela.kateModel(q, c)
-#     pMat2[k, 0] = ceq
-#     pMat2[k, 1] = dw
+# cal dw
+rMat = np.ndarray([ns, nc])
+pdfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
+unitConv = 0.3048**3*365*24*60*60/1000**2
+for k, siteNo in enumerate(siteNoLst):
+    for i, code in enumerate(codeLst):
+        area = pdfArea.loc[siteNo]['DRAIN_SQKM']
+        dfC = usgs.readSample(siteNo, codeLst=codeLst, startDate=startDate)
+        dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
+        df = dfC.join(dfQ)
+        t = df.index.values
+        q = df['00060_00003'].values/area*unitConv
+        c = df[code].values
+        (q, c), ind = utils.rmNan([q, c])
+        x = 10**np.linspace(np.log10(np.min(q[q > 0])),
+                            np.log10(np.max(q[~np.isnan(q)])), 20)
+        ceq, dw, y = wqRela.kateModel(q, c, q)
+        corr = np.corrcoef(c, y)[0, 1]
+        rMat[k, i] = corr
+
 
 dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
@@ -54,16 +62,17 @@ lat = dfCrd['LAT_GAGE'].values
 lon = dfCrd['LNG_GAGE'].values
 
 
-
 def funcMap():
-    figM, axM = plt.subplots(1, 1, figsize=(8, 6))
-    axplot.mapPoint(axM, lat, lon, lon, s=12)
+    figM, axM = plt.subplots(nc, 1, figsize=(8, 6))
+    for k in range(nc):
+        axplot.mapPoint(axM[k], lat, lon, rMat[:, k], s=12)
     figP = plt.figure(constrained_layout=True)
     spec = gridspec.GridSpec(ncols=3, nrows=2, figure=figP)
     axLst = [figP.add_subplot(spec[0, :])] +\
         [figP.add_subplot(spec[1, k]) for k in range(3)]
     axP = np.array(axLst)
     return figM, axM, figP, axP, lon, lat
+
 
 def funcPoint(iP, axes):
     kA = 0
@@ -88,6 +97,7 @@ def funcPoint(iP, axes):
     legLst = ['streamflow']+[usgs.codePdf.loc[code]['shortName']
                              for code in codeLst]
     axplot.plotTS(ax, t, data, styLst='-***', cLst='krgb', legLst=legLst)
+    ax.set_title(siteNo)
 
     # plot C-Q
     nc = len(codeLst)
@@ -96,9 +106,11 @@ def funcPoint(iP, axes):
         q = dfData['00060']
         c = dfData[code]
         [q, c], ind = utils.rmNan([q, c])
+        ceq, dw, y = wqRela.kateModel(q, c, q)
         ax = axes[kA]
         kA = kA+1
         ax.plot(np.log(q), np.log(c), 'r*')
+        ax.plot(np.log(q), np.log(y), 'b*')
 
 
 figplot.clickMap(funcMap, funcPoint)
