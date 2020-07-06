@@ -428,6 +428,13 @@ def indYr(info, yrLst=[1979, 1990, 2000, 2010, 2020]):
         indLst.append(ind)
     return indLst
 
+def indYrOddEven(info):
+    info['yr'] = pd.DatetimeIndex(info['date']).year
+    ind1 = info.index[info['yr'] % 2 == 1].values
+    ind2 = info.index[info['yr'] % 2 == 0].values
+    indLst = [ind1, ind2]
+    return indLst
+
 
 def readSiteX(siteNo, varX, area=None, nFill=5,
               sd=np.datetime64('1979-01-01'),
@@ -459,7 +466,8 @@ def readSiteY(siteNo, varY, area=None,
     dfY = pd.DataFrame({'date': tr}).set_index('date')
     # extract data
     codeLst = [code for code in varY if code in usgs.codeLst]
-    dfC = usgs.readSample(siteNo, codeLst=codeLst, startDate=sd)
+    dfC, dfCF = usgs.readSample(
+        siteNo, codeLst=codeLst, startDate=sd, flag=True)
     if '00060' in varY or 'runoff' in varY:
         dfQ = usgs.readStreamflow(siteNo, startDate=sd)
         dfQ = dfQ.rename(columns={'00060_00003': '00060'})
@@ -471,6 +479,7 @@ def readSiteY(siteNo, varY, area=None,
             dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
         dfY = dfY.join(dfQ)
     dfY = dfY.join(dfC)
+    dfY = dfY.join(dfCF)
     dfY = dfY[varY]
     return dfY
 

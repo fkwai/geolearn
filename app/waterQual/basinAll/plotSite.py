@@ -26,15 +26,34 @@ codeLst = ['00660', '00600']
 startDate = pd.datetime(1979, 1, 1)
 endDate = pd.datetime(2019, 12, 31)
 siteNo = '07060710'
-dfC = usgs.readSample(siteNo, codeLst=codeLst, startDate=startDate)
+dfC, dfCF = usgs.readSample(siteNo, codeLst=codeLst,
+                            startDate=startDate, flag=True)
 dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
-nc = len(codeLst)
-fig, axes = plt.subplots(nc+1, 1)
-axplot.plotTS(axes[0],  dfQ.index.values,
-              dfQ['00060_00003'].values, styLst='-')
-axes[0].set_title(' {} streamflow'.format(siteNo))
+
+
+fig, axes = plt.subplots(len(codeLst), 1)
 for k, code in enumerate(codeLst):
-    axplot.plotTS(axes[k+1],  dfC.index.values, dfC[code].values, styLst='*')
+    flagLst = ['<', 'E']
+    axes[k].plot(dfC[code], '*', label='others')
+    for flag in flagLst:
+        axes[k].plot(dfC[code][dfCF[code+'_cd'] == flag], '*', label=flag)
+    shortName = usgs.codePdf.loc[code]['shortName']
+    title = '{} {} {}'.format(siteNo,shortName, code)
+    axes[k].set_title(title)
+    axes[k].legend()
+fig.show()
+
+fig, axes = plt.subplots(len(codeLst), 1)
+# axplot.plotTS(axes[0],  dfQ.index.values,
+#               dfQ['00060_00003'].values, styLst='-')
+# axes[0].set_title(' {} streamflow'.format(siteNo))
+for k, code in enumerate(codeLst):
+    vc = dfC[code].values.copy()
+    vf = dfCF[code+'_cd'].values
+    vcf = dfC[code].values.copy()
+    vcf[(vf == 'x') | (vf == 'X')] = np.nan
+    data = [vc, vcf]
+    axplot.plotTS(axes[k],  dfC.index.values, data, styLst='**', cLst='rk')
     shortName = usgs.codePdf.loc[code]['shortName']
     title = '{} {}'.format(shortName, code)
     axes[k+1].set_title(title)

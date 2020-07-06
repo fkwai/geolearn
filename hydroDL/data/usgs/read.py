@@ -74,7 +74,8 @@ def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
             dfO2 = dfO2.set_index('date')
         if startDate is not None:
             dfO1 = dfO1[dfO1.index >= startDate]
-            dfO2 = dfO2[dfO2.index >= startDate]
+            if flag > 0:
+                dfO2 = dfO2[dfO2.index >= startDate]
     if flag > 0:
         if flag == 2:
             dfO3 = pd.DataFrame(index=dfO2.index, columns=dfO2.columns)

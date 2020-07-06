@@ -11,20 +11,19 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-wqData = waterQuality.DataModelWQ('basinRef')
+wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
 
 outLst = ['basinRef-Y8090-opt1', 'basinRef-Y8090-opt2']
 trainSet = 'Y8090'
 testSet = 'Y0010'
-pLst1, pLst2, errMatLst1, errMatLst2 = [list() for x in range(4)]
+errMatLst1, errMatLst2 = [list() for x in range(2)]
+
 for outName in outLst:
     master = basins.loadMaster(outName)
-    yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData, ep=300)
-    yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData, ep=300)
+    yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData, ep=500)
+    yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData, ep=500)
     errMatC1 = wqData.errBySiteC(ycP1, subset=trainSet, varC=master['varYC'])
     errMatC2 = wqData.errBySiteC(ycP2, subset=testSet, varC=master['varYC'])
-    pLst1.append(ycP1)
-    pLst2.append(ycP2)
     errMatLst1.append(errMatC1)
     errMatLst2.append(errMatC2)
 

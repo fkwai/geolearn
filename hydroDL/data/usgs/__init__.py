@@ -52,17 +52,18 @@ dictStat = {
 
 # code of remarks
 dfFlagC = pd.DataFrame([
-    [0, '0', 'No flags'],
-    [1, '<', 'less than'],
-    [2, '>', 'greater than'],
-    [3, 'A', 'average'],
-    [4, 'E', 'estimated'],
-    [5, 'M', 'presence verified but not quantified'],
-    [6, 'N', 'presumptive evidence of presence'],
-    [7, 'R', 'radchem non-detect, below ssLc'],
-    [8, 'S', 'most probable value'],
-    [9, 'U', 'analyzed for but not detected'],
-    [10, 'V', 'value affected by contamination']],
+    [0, 'x', 'No flags'],
+    [1, 'X', 'Averaged from no flag'],
+    [2, '<', 'less than'],
+    [3, '>', 'greater than'],
+    [4, 'A', 'average'],
+    [5, 'E', 'estimated'],
+    [6, 'M', 'presence verified but not quantified'],
+    [7, 'N', 'presumptive evidence of presence'],
+    [8, 'R', 'radchem non-detect, below ssLc'],
+    [9, 'S', 'most probable value'],
+    [10, 'U', 'analyzed for but not detected'],
+    [11, 'V', 'value affected by contamination']],
     columns=['code', 'label', 'description']).set_index('code')
 
 dfFlagQ = pd.DataFrame([

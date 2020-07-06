@@ -16,9 +16,13 @@ tabSel = gageII.updateCode(tabSel)
 siteNoLst = tabSel[tabSel['CLASS'] == 1].index.tolist()
 
 # wqData = waterQuality.DataModelWQ.new('basinRef', siteNoLst)
-wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
+wqData = waterQuality.DataModelWQ('basinRef')
 
-indYr1 = waterQuality.indYr(wqData.info, yrLst=[1979, 2000])[0]
-wqData.saveSubset('Y8090', indYr1)
-indYr2 = waterQuality.indYr(wqData.info, yrLst=[2000, 2020])[0]
-wqData.saveSubset('Y0010', indYr2)
+# indYr1 = waterQuality.indYr(wqData.info, yrLst=[1979, 2000])[0]
+# wqData.saveSubset('Y8090', indYr1)
+# indYr2 = waterQuality.indYr(wqData.info, yrLst=[2000, 2020])[0]
+# wqData.saveSubset('Y0010', indYr2)
+
+indYrO, indYrE = waterQuality.indYrOddEven(wqData.info)
+wqData.saveSubset('Yodd', indYrO)
+wqData.saveSubset('Yeven', indYrE)

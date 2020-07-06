@@ -11,10 +11,10 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-wqData = waterQuality.DataModelWQ('basinRef')
+wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
 
 
-outName = 'basinRef-Y8090-opt2'
+outName = 'basinRef-Y8090-opt1'
 trainSet = 'Y8090'
 testSet = 'Y0010'
 master = basins.loadMaster(outName)
@@ -26,7 +26,7 @@ q1, c1 = basins.getObs(outName, trainSet, wqData=wqData)
 q2, c2 = basins.getObs(outName, testSet, wqData=wqData)
 
 # seq test
-outLst = ['basinRef-Y8090-opt1', 'basinRef-Y8090-opt2']
+outLst = ['basinRef-Y8090-opt1', 'basinRef-Y8090-rmF-opt1']
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 for outName in outLst:
     basins.testModelSeq(outName, siteNoLst, wqData=wqData)
@@ -49,7 +49,7 @@ for i, siteNo in enumerate(siteNoLst):
 
 
 # plot
-codeSel = ['00665', '00660', '00915']
+codeSel = ['00665', '00660']
 # codeSel = ['00600', '00605', '00405']
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 dfCrd = gageII.readData(
@@ -107,7 +107,7 @@ def funcPoint(iP, axP):
         vcf[(vf == 'x') | (vf == 'X')] = np.nan
         data = [dfPred1[var].values, dfPred2[var].values, vc, vcf]
         axplot.plotTS(axP[k+1], t, data, tBar=tBar,
-                      legLst=['pred-opt1', 'pred-opt2', 'obs', 'obs-flag'], styLst=styLst, cLst='bgrk')
+                      legLst=['pred', 'pred-rmFlag', 'obs', 'obs-flag'], styLst=styLst, cLst='bgrk')
         axP[k+1].set_title(title)
 
 
