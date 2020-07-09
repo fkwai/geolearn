@@ -254,7 +254,7 @@ class DataModelWQ():
         tabComb = tabComb.sort_values(0, ascending=False)
         return tabComb
 
-    def errBySiteC(self, ycP, varC, subset=None):
+    def errBySiteC(self, ycP, varC, subset=None, rmExt=False):
         if type(varC) is not list:
             varC = [varC]
         obsLst = self.extractSubset(subset=subset)
@@ -268,6 +268,11 @@ class DataModelWQ():
             for k, iC in enumerate(indC):
                 a = ycT[indS, iC]
                 b = ycP[indS, k]
+                if rmExt is True and len(a) != 0:
+                    aV = a[a < np.percentile(a, 95)]
+                    aV = aV[aV > np.percentile(a, 5)]
+                    ul = np.mean(aV)+np.std(aV)*5
+                    a[a > ul] = np.nan
                 indV = np.where(~np.isnan(a))
                 rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
                 corr = np.corrcoef(a[indV], b[indV])[0, 1]
@@ -427,6 +432,7 @@ def indYr(info, yrLst=[1979, 1990, 2000, 2010, 2020]):
         ind = info.index[(info['yr'] >= sy) & (info['yr'] < ey)].values
         indLst.append(ind)
     return indLst
+
 
 def indYrOddEven(info):
     info['yr'] = pd.DatetimeIndex(info['date']).year

@@ -14,22 +14,25 @@ import matplotlib.pyplot as plt
 wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
 
 
-outName = 'basinRef-Y8090-opt2'
-trainSet = 'Y8090'
-testSet = 'Y0010'
+outName = 'basinRef-Yeven-opt2'
+trainSet = 'Yeven'
+testSet = 'Yodd'
 master = basins.loadMaster(outName)
 yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData)
 yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData)
-errMatC1 = wqData.errBySiteC(ycP1, subset=trainSet, varC=master['varYC'])
-errMatC2 = wqData.errBySiteC(ycP2, subset=testSet, varC=master['varYC'])
+errMatC1 = wqData.errBySiteC(
+    ycP1, subset=trainSet, varC=master['varYC'], rmExt=True)
+errMatC2 = wqData.errBySiteC(
+    ycP2, subset=testSet, varC=master['varYC'], rmExt=True)
 q1, c1 = basins.getObs(outName, trainSet, wqData=wqData)
 q2, c2 = basins.getObs(outName, testSet, wqData=wqData)
 
-# seq test
-outLst = ['basinRef-Y8090-opt1', 'basinRef-Y8090-opt2']
-siteNoLst = wqData.info['siteNo'].unique().tolist()
-for outName in outLst:
-    basins.testModelSeq(outName, siteNoLst, wqData=wqData)
+# # seq test
+# outLst = ['basinRef-Yodd-opt1', 'basinRef-Yodd-opt2',
+#           'basinRef-Yeven-opt1', 'basinRef-Yeven-opt2']
+# siteNoLst = wqData.info['siteNo'].unique().tolist()
+# for outName in outLst:
+#     basins.testModelSeq(outName, siteNoLst, wqData=wqData, ep=500)
 
 # figure out number of sample
 info1 = wqData.subsetInfo(trainSet)
@@ -39,6 +42,7 @@ dataTest = wqData.extractSubset(testSet)
 ycT1 = dataTrain[3]
 ycT2 = dataTest[3]
 nc = ycT1.shape[1]
+siteNoLst = wqData.info['siteNo'].unique().tolist()
 countMat = np.full([len(siteNoLst), nc, 2], 0)
 for i, siteNo in enumerate(siteNoLst):
     indS1 = info1[info1['siteNo'] == siteNo].index.values
@@ -49,7 +53,7 @@ for i, siteNo in enumerate(siteNoLst):
 
 
 # plot
-codeSel = ['00665', '00660']
+codeSel = ['00665', '00660', '00915']
 # codeSel = ['00600', '00605', '00405']
 siteNoLst = wqData.info['siteNo'].unique().tolist()
 dfCrd = gageII.readData(
@@ -67,6 +71,7 @@ for k, code in enumerate(codeSel):
     indLst.append(ind)
 indAll = np.unique(np.concatenate(indLst))
 siteNoLstP = [siteNoLst[i] for i in indAll]
+outLst = ['basinRef-Yodd-opt2', 'basinRef-Yeven-opt2']
 
 
 def funcMap():
@@ -78,13 +83,12 @@ def funcMap():
         ind = indLst[k]
         axplot.mapPoint(axM[k], lat[ind], lon[ind], errMatC2[ind, ic, 1], s=12)
         axM[k].set_title(title)
-    figP, axP = plt.subplots(len(codeSel)+1, 1, figsize=(8, 6))
+    figP, axP = plt.subplots(len(codeSel), 1, figsize=(8, 6))
     return figM, axM, figP, axP, lon[indAll], lat[indAll]
 
 
 def funcPoint(iP, axP):
     siteNo = siteNoLstP[iP]
-    tBar = np.datetime64('2000-01-01')
     dfPred1, _ = basins.loadSeq(outLst[0], siteNo)
     dfPred2, _ = basins.loadSeq(outLst[1], siteNo)
     sd = np.datetime64('1980-01-01')
@@ -94,21 +98,31 @@ def funcPoint(iP, axP):
     dfPred1 = dfPred1[dfPred1.index >= sd]
     dfPred2 = dfPred2[dfPred2.index >= sd]
     t = dfPred1.index.values.astype(np.datetime64)
-    axplot.plotTS(axP[0], t, [dfPred1['00060'], dfQ['00060']], tBar=tBar,
-                  legLst=['pred-opt1', 'obs'], styLst='--', cLst='br')
-    axP[0].set_title('{} streamflow'.format(siteNo))
+    # axplot.plotTS(axP[0], t, [dfPred1['00060'], dfQ['00060']], tBar=tBar,
+    #               legLst=['pred-opt1', 'obs'], styLst='--', cLst='br')
+    # axP[0].set_title('{} streamflow'.format(siteNo))
     for k, var in enumerate(codeSel):
         shortName = codePdf.loc[var]['shortName']
-        title = ' {} {}'.format(shortName, var)
-        styLst = ['-', '-', '*', '*']
-        vc = dfC[var].values.copy()
+        title = '{} {} {}'.format(siteNo,shortName, var)
+        styLst = ['-', '-', '*', '*', '*', '*']
+        legLst = ['model odd', 'model even', 'obs odd',
+                  'obs even', 'flag even', 'flag odd']
+        yr = dfC.index.year
+        c1 = dfC[var].values.copy()
+        c2 = dfC[var].values.copy()
+        f1 = dfC[var].values.copy()
+        f2 = dfC[var].values.copy()
         vf = dfC[var+'_cd'].values
-        vcf = dfC[var].values.copy()
-        vcf[(vf == 'x') | (vf == 'X')] = np.nan
-        data = [dfPred1[var].values, dfPred2[var].values, vc, vcf]
-        axplot.plotTS(axP[k+1], t, data, tBar=tBar,
-                      legLst=['pred-opt1', 'pred-opt2', 'obs', 'obs-flag'], styLst=styLst, cLst='bgrk')
-        axP[k+1].set_title(title)
+        c1[(vf != 'x') & (vf != 'X')] = np.nan
+        c1[(yr % 2 == 0)] = np.nan
+        c2[(vf != 'x') & (vf != 'X')] = np.nan
+        c2[(yr % 2 == 1)] = np.nan
+        f1[(vf == 'x') | (vf == 'X') | (yr % 2 == 0)] = np.nan
+        f2[(vf == 'x') | (vf == 'X') | (yr % 2 == 1)] = np.nan
+        data = [dfPred1[var].values, dfPred2[var].values, c1, c2, f1, f2]
+        axplot.plotTS(axP[k], t, data, styLst=styLst, cLst='bgrmkk',
+                      legLst=legLst)
+        axP[k].set_title(title)
 
 
 plt.tight_layout

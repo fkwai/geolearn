@@ -33,7 +33,7 @@ dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
 
 fig, axes = plt.subplots(len(codeLst), 1)
 for k, code in enumerate(codeLst):
-    flagLst = ['<', 'E']
+    flagLst = ['x','X','<', 'E']
     axes[k].plot(dfC[code], '*', label='others')
     for flag in flagLst:
         axes[k].plot(dfC[code][dfCF[code+'_cd'] == flag], '*', label=flag)

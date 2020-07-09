@@ -68,12 +68,12 @@ rho = 20
 for ic in indLst:
     temp = list()
     for errMat, countMat in zip(errMatLst2, countMatLst):
-        ind = np.where((countMat[:, ic, 0] > 20) &
-                       (countMat[:, ic, 1] > 20))[0]
+        ind = np.where((countMat[:, ic, 0] > rho) &
+                       (countMat[:, ic, 1] > rho))[0]
         temp.append(errMat[ind, ic, 1])
         # temp.append(errMat[:, ic, 1])
     dataBox.append(temp)
-title = 'test correlation of sites with >{} samples'.format(rho)
+title = 'test correlation of referenced sites with >{} samples'.format(rho)
 fig = figplot.boxPlot(dataBox, label1=labLst1, label2=labLst2, figsize=(12, 6))
 fig.suptitle(title)
 fig.show()
