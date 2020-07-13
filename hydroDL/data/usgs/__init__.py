@@ -9,7 +9,10 @@ codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
 codeLst = list(codePdf.index)
 varC = codeLst
 varQ = ['00060']
-chemLst
+chemLst = ['00300', '00405', '00410', '00440', '00600',
+           '00605', '00618', '00660', '00665', '71846',
+           '00915', '00925', '00930', '00935', '00940',
+           '00945', '00955', '00950', '80154', '00681']
 
 # normalization method
 dictStat = {
