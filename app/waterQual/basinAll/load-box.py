@@ -1,3 +1,4 @@
+import importlib
 from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath
@@ -12,8 +13,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
+wqData.c = wqData.c * wqData.q[-1, :, 0:1]
 
-outLst = ['basinRef-Yeven-opt1', 'basinRef-Yeven-opt2']
+outName = 'basinRef-Yodd-opt1'
 trainSet = 'Yodd'
 testSet = 'Yeven'
 
@@ -21,19 +23,15 @@ testSet = 'Yeven'
 # trainSet = 'Yodd'
 # testSet = 'Yeven'
 
-ep = 500
-errMatLst1, errMatLst2 = [list() for x in range(2)]
-
-for outName in outLst:
-    master = basins.loadMaster(outName)
-    yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData, ep=ep)
-    yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData, ep=ep)
-    errMatC1 = wqData.errBySiteC(
-        ycP1, varC=master['varYC'], subset=trainSet,  rmExt=True)
-    errMatC2 = wqData.errBySiteC(
-        ycP2, varC=master['varYC'], subset=testSet, rmExt=True)
-    errMatLst1.append(errMatC1)
-    errMatLst2.append(errMatC2)
+master = basins.loadMaster(outName)
+yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData)
+yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData)
+ycP1 = ycP1*yP1[-1, :, :]
+ycP2 = ycP2*yP2[-1, :, :]
+errMatC1 = wqData.errBySiteC(
+    ycP1, varC=master['varYC'], subset=trainSet,  rmExt=True)
+errMatC2 = wqData.errBySiteC(
+    ycP2, varC=master['varYC'], subset=testSet, rmExt=True)
 
 
 # figure out number of sample
@@ -55,23 +53,31 @@ for i, siteNo in enumerate(siteNoLst):
 
 
 # plot box
+importlib.reload(figplot)
+saveDir = os.path.join(kPath.dirWQ, 'paper')
 codePdf = usgs.codePdf
-groupLst = codePdf.group.unique().tolist()
-for group in groupLst:
-    codeLst = codePdf[codePdf.group == group].index.tolist()
+groupLst = [['00300', '00405', '00410', '00440', '00600',
+             '00605', '00618', '00660', '00665', '71846', ],
+            ['00915', '00925', '00930', '00935', '00940',
+             '00945', '00955', '00950', '80154', '00681']]
+strLst = ['physical and nutrient variables', 'inorganics variables']
+for k in range(2):
+    codeLst = groupLst[k]
     indLst = [wqData.varC.index(code) for code in codeLst]
     labLst1 = [codePdf.loc[code]['shortName'] +
                '\n'+code for code in codeLst]
-    labLst2 = ['train opt1', 'train opt2', 'test opt1', 'test opt2']
+    labLst2 = ['train', 'test']
     dataBox = list()
     for ic in indLst:
         temp = list()
-        for errMat in errMatLst1+errMatLst2:
+        for errMat in [errMatC1, errMatC2]:
             ind = np.where((countMat[:, ic, 0] > 20) &
                            (countMat[:, ic, 1] > 20))[0]
             temp.append(errMat[ind, ic, 1])
         dataBox.append(temp)
-    title = 'correlation of {} group'.format(group)
-    fig = figplot.boxPlot(dataBox, label1=labLst1, label2=labLst2)
+    fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
+                          label2=labLst2, figsize=(12, 4), yRange=[0, 1])
+    title = 'correlation of {}'.format(strLst[k])
     fig.suptitle(title)
     fig.show()
+    fig.savefig(os.path.join(saveDir, 'box_group{}'.format(k)))

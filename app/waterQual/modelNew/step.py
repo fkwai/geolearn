@@ -21,6 +21,8 @@ batchSize = [365, 50]
 if not waterQuality.exist(siteNo):
     wqData = waterQuality.DataModelWQ.new(siteNo, [siteNo])
 wqData = waterQuality.DataModelWQ(siteNo)
+wqData.c = wqData.c * wqData.q[-1, :, 0:1]
+
 varX = wqData.varF
 varXC = wqData.varG
 varY = [wqData.varQ[0]]
@@ -51,7 +53,7 @@ if torch.cuda.is_available():
 # train
 model.train()
 model.zero_grad()
-for k in range(500):
+for k in range(200):
     t0 = time.time()
     xT, yT = trainTS.subsetRandom(dataTup, batchSize, sizeLst)
     if k == 0:
@@ -96,7 +98,7 @@ yO = yT.detach().cpu().numpy()
 
 
 predY = transform.transOut(yO[:, :, 0], mtdY[0], statY[0])
-predYC = transform.transOutAll(yO[:, :, 1:], mtdYC, statYC)
+predYC = transform.transOutAll(yO[:, :, 1:], mtdYC, statYC)/predY
 obsY = dfY.values
 obsYC = dfYC.values
 

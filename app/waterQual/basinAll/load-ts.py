@@ -12,26 +12,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
+wqData.c = wqData.c * wqData.q[-1, :, 0:1]
 
-outName = 'basinRef-Yeven-opt1'
-trainSet = 'Yeven'
-testSet = 'Yodd'
+outName = 'basinRef-Yodd-opt1'
+trainSet = 'Yodd'
+testSet = 'Yeven'
+
 master = basins.loadMaster(outName)
 yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData)
 yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData)
+ycP1 = ycP1*yP1[-1, :, :]
+ycP2 = ycP2*yP2[-1, :, :]
 errMatC1 = wqData.errBySiteC(
-    ycP1, subset=trainSet, varC=master['varYC'], rmExt=True)
+    ycP1, varC=master['varYC'], subset=trainSet,  rmExt=True)
 errMatC2 = wqData.errBySiteC(
-    ycP2, subset=testSet, varC=master['varYC'], rmExt=True)
-q1, c1 = basins.getObs(outName, trainSet, wqData=wqData)
-q2, c2 = basins.getObs(outName, testSet, wqData=wqData)
-
-# # seq test
-# outLst = ['basinRef-Yodd-opt1', 'basinRef-Yodd-opt2',
-#           'basinRef-Yeven-opt1', 'basinRef-Yeven-opt2']
-# siteNoLst = wqData.info['siteNo'].unique().tolist()
-# for outName in outLst:
-#     basins.testModelSeq(outName, siteNoLst, wqData=wqData, ep=500)
+    ycP2, varC=master['varYC'], subset=testSet, rmExt=True)
 
 # figure out number of sample
 info1 = wqData.subsetInfo(trainSet)
@@ -70,7 +65,7 @@ for k, code in enumerate(codeSel):
     indLst.append(ind)
 indAll = np.unique(np.concatenate(indLst))
 siteNoLstP = [siteNoLst[i] for i in indAll]
-outLst = ['basinRef-Yodd-opt2', 'basinRef-Yeven-opt2']
+outLst = ['basinRef-Yodd-opt1', 'basinRef-Yeven-opt1']
 
 
 def funcMap():
@@ -96,6 +91,10 @@ def funcPoint(iP, axP):
         siteNo, codeSel+[code+'_cd' for code in codeSel], sd=sd)
     dfPred1 = dfPred1[dfPred1.index >= sd]
     dfPred2 = dfPred2[dfPred2.index >= sd]
+    dfPred1 = dfPred1.multiply(dfPred1['00060'], axis='index')
+    dfPred2 = dfPred2.multiply(dfPred2['00060'], axis='index')
+    dfC[codeSel] = dfC[codeSel].multiply(dfQ['00060'], axis='index')
+
     t = dfPred1.index.values.astype(np.datetime64)
     # axplot.plotTS(axP[0], t, [dfPred1['00060'], dfQ['00060']], tBar=tBar,
     #               legLst=['pred-opt1', 'obs'], styLst='--', cLst='br')

@@ -39,7 +39,8 @@ def clickMap(funcMap, funcPoint):
 
 
 def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',
-            figsize=(8, 6), sharey=True, widths=None, legOnly=False):
+            figsize=(8, 6), sharey=True, widths=None, legOnly=False,
+            yRange=None):
     nc = len(data)
     if legOnly is True:
         nc = 1
@@ -68,6 +69,8 @@ def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',
             ax.set_xlabel(str(k))
         ax.set_xticks([])
         # ax.ticklabel_format(axis='y', style='sci')
+        if yRange is not None:
+            ax.set_ylim(yRange)
     if label2 is not None:
         ax.legend(bp['boxes'], label2, loc='best')
         if legOnly is True:
