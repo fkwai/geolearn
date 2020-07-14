@@ -17,9 +17,9 @@ class DataModelWQ():
         self.q = npzFile['q']
         self.f = npzFile['f']
         self.c = npzFile['c']
-        self.g = npzFile['g']
-        self.cf = npzFile['cf']
+        self.g = npzFile['g']        
         if rmFlag is True:
+            self.cf = npzFile['cf']
             self.c[self.cf == 1] = np.nan
         print('loading data {}'.format(time.time()-t0))
         # info
