@@ -11,13 +11,14 @@ import time
 
 
 caseLst = list()
-dataName = 'basinRef'
-subsetLst = ['Y8090', 'Y0010']
+# dataName = 'basinRef'
+dataName = 'stanRef'
+subsetLst = ['Yodd', 'Yeven']
 for subset in subsetLst:
-    saveName = '{}-{}-opt1'.format(dataName, subset)
-    caseName = basins.wrapMaster(dataName=dataName, trainName=subset,
-                                 batchSize=[None, 200], outName=saveName)
-    caseLst.append(caseName)
+    # saveName = '{}-{}-opt1'.format(dataName, subset)
+    # caseName = basins.wrapMaster(dataName=dataName, trainName=subset,
+    #                              batchSize=[None, 200], outName=saveName)
+    # caseLst.append(caseName)
     saveName = '{}-{}-opt2'.format(dataName, subset)
     caseName = basins.wrapMaster(dataName=dataName, trainName=subset,
                                  batchSize=[None, 200], varY=None,
@@ -27,4 +28,4 @@ for subset in subsetLst:
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
-    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=48)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=30)
