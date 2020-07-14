@@ -24,10 +24,10 @@ testSet = 'Yeven'
 # testSet = 'Yeven'
 
 master = basins.loadMaster(outName)
-yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData, ep=100)
-yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData, ep=100)
-# ycP1 = ycP1/yP1[-1, :, :]
-# ycP2 = ycP2/yP2[-1, :, :]
+yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData, ep=300)
+yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData, ep=300)
+ycP1 = ycP1/yP1[-1, :, :]
+ycP2 = ycP2/yP2[-1, :, :]
 errMatC1 = wqData.errBySiteC(
     ycP1, varC=master['varYC'], subset=trainSet,  rmExt=True)
 errMatC2 = wqData.errBySiteC(
@@ -63,7 +63,7 @@ groupLst = [['00300', '00405', '00410', '00440', '00600',
 strLst = ['physical and nutrient variables', 'inorganics variables']
 for k in range(2):
     codeLst = groupLst[k]
-    indLst = [usgs.chemLst.index(code) for code in codeLst]
+    indLst = [master['varYC'].index(code) for code in codeLst]
     labLst1 = [codePdf.loc[code]['shortName'] +
                '\n'+code for code in codeLst]
     labLst2 = ['train', 'test']

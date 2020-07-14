@@ -70,11 +70,11 @@ for k in range(2):
         for errMat in [errMatC1, errMatC2]:
             ind = np.where((countMat[:, ic, 0] > 20) &
                            (countMat[:, ic, 1] > 20))[0]
-            temp.append(errMat[ind, ic, 1])
+            temp.append(errMat[ind, ic, 2])
         dataBox.append(temp)
     fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
-                          label2=labLst2, figsize=(12, 4), yRange=[0, 1])
+                          label2=labLst2, figsize=(12, 4), yRange=[0, 2])
     title = 'correlation of {}'.format(strLst[k])
     fig.suptitle(title)
     fig.show()
-    fig.savefig(os.path.join(saveDir, 'box_group{}'.format(k)))
+    # fig.savefig(os.path.join(saveDir, 'box_group{}'.format(k)))

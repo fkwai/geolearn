@@ -17,7 +17,7 @@ class DataModelWQ():
         self.q = npzFile['q']
         self.f = npzFile['f']
         self.c = npzFile['c']
-        self.g = npzFile['g']        
+        self.g = npzFile['g']
         if rmFlag is True:
             self.cf = npzFile['cf']
             self.c[self.cf == 1] = np.nan
@@ -262,7 +262,7 @@ class DataModelWQ():
         indC = [self.varC.index(var) for var in varC]
         info = self.info.loc[self.subset[subset].tolist()].reset_index()
         siteNoLst = self.info.siteNo.unique()
-        statMat = np.full([len(siteNoLst), len(indC), 2], np.nan)
+        statMat = np.full([len(siteNoLst), len(indC), 3], np.nan)
         for i, siteNo in enumerate(siteNoLst):
             indS = info[info['siteNo'] == siteNo].index.values
             for k, iC in enumerate(indC):
@@ -276,8 +276,12 @@ class DataModelWQ():
                 indV = np.where(~np.isnan(a))
                 rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
                 corr = np.corrcoef(a[indV], b[indV])[0, 1]
+                # nse = 1-np.nansum((b-a)**2)/np.nansum((a-np.nanmean(a))**2)
+                # nse = np.nanmean(b)/np.nanmean(a)-1
+                nse = np.nanmean(np.abs((b-a)/a))
                 statMat[i, k, 0] = rmse
                 statMat[i, k, 1] = corr
+                statMat[i, k, 2] = nse
         return statMat
 
     def errBySiteQ(self, yP, varQ, subset=None):
