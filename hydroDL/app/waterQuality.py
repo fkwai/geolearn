@@ -269,8 +269,8 @@ class DataModelWQ():
                 a = ycT[indS, iC]
                 b = ycP[indS, k]
                 if rmExt is True and len(a) != 0:
-                    aV = a[a < np.percentile(a, 95)]
-                    aV = aV[aV > np.percentile(a, 5)]
+                    aV = a[a < np.nanpercentile(a, 95)]
+                    aV = aV[aV > np.nanpercentile(a, 5)]
                     ul = np.mean(aV)+np.std(aV)*5
                     a[a > ul] = np.nan
                 indV = np.where(~np.isnan(a))
