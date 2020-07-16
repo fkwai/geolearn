@@ -10,8 +10,10 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-# predict load instead of concentration
 wqData = waterQuality.DataModelWQ('basinRef')
+wqData2 = waterQuality.DataModelWQ('basinRef', rmFlag=True)
+
+# predict load instead of concentration
 wqData.c = wqData.c * wqData.q[-1, :, 0:1]
 saveName = os.path.join(kPath.dirWQ, 'trainData', 'loadRef')
 np.savez(saveName, q=wqData.q, f=wqData.f,
@@ -33,11 +35,9 @@ for siteNo in siteNoLst:
 c = (wqData.c-ul)/(ut-ul)
 saveName = os.path.join(kPath.dirWQ, 'trainData', 'stanRef')
 np.savez(saveName, q=wqData.q, f=wqData.f,
-         c=c, g=wqData.g, ut=ut, ul=ul)
+         c=c, g=wqData.g, ut=ut, ul=ul,cf=wqData2.cf)
 
 # add q as a yc field
-wqData = waterQuality.DataModelWQ('basinRef')
-wqData2 = waterQuality.DataModelWQ('basinRef', rmFlag=True)
 c = np.concatenate([wqData.c, wqData.q[-1, :, 0:1]], axis=1)
 saveName = os.path.join(kPath.dirWQ, 'trainData', 'basinRef-q')
 np.savez(saveName, q=wqData.q, f=wqData.f, c=c, g=wqData.g, cf=wqData2.cf)

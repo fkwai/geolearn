@@ -12,22 +12,22 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-wqData = waterQuality.DataModelWQ('loadRef', rmFlag=True)
-wqData.c = wqData.c / wqData.q[-1, :, 0:1]
-
-outName = 'loadRef-Yodd'
+wqData = waterQuality.DataModelWQ('stanRef', rmFlag=True)
+dataName = os.path.join(kPath.dirWQ, 'trainData', 'stanRef.npz')
+npz = np.load(dataName)
+ul = npz['ul']
+ut = npz['ut']
+wqData.c = wqData.c*(ut-ul)+ul
+outName = 'stanRef-Yodd-opt2'
 trainSet = 'Yodd'
 testSet = 'Yeven'
-
-# outLst = ['basinRef-Yodd-opt1', 'basinRef-Yodd-opt2']
-# trainSet = 'Yodd'
-# testSet = 'Yeven'
-
 master = basins.loadMaster(outName)
 yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData)
 yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData)
-ycP1 = ycP1/yP1[-1, :, :]
-ycP2 = ycP2/yP2[-1, :, :]
+ind1 = wqData.subset[trainSet]
+ind2 = wqData.subset[testSet]
+ycP1 = ycP1.c*(ut[ind1, :]-ul[ind1, :])+ul[ind1, :]
+ycP2 = ycP2.c*(ut[ind2, :]-ul[ind2, :])+ul[ind2, :]
 errMatC1 = wqData.errBySiteC(
     ycP1, varC=master['varYC'], subset=trainSet,  rmExt=True)
 errMatC2 = wqData.errBySiteC(
@@ -56,14 +56,14 @@ for i, siteNo in enumerate(siteNoLst):
 importlib.reload(figplot)
 saveDir = os.path.join(kPath.dirWQ, 'paper')
 codePdf = usgs.codePdf
-groupLst = [['00300', '00405', '00410', '00440', '00600',
-             '00605', '00618', '00660', '00665', '71846', ],
-            ['00915', '00925', '00930', '00935', '00940',
-             '00945', '00955', '00950', '80154', '00681']]
+groupLst = [['00010', '00095', '00400', '80154', '70303', '00660',
+             '00618', '00600', '00665', '00605', '71846', '00681'],
+            ['00915', '00925', '00935', '00930', '00940', '00945',
+             '00955', '00410', '00405', '00300', '00950', '00440']]
 strLst = ['physical and nutrient variables', 'inorganics variables']
 for k in range(2):
     codeLst = groupLst[k]
-    indLst = [master['varYC'].index(code) for code in codeLst]
+    indLst = [wqData.varC.index(code) for code in codeLst]
     labLst1 = [codePdf.loc[code]['shortName'] +
                '\n'+code for code in codeLst]
     labLst2 = ['train', 'test']
@@ -81,4 +81,3 @@ for k in range(2):
     fig.suptitle(title)
     fig.show()
     fig.savefig(os.path.join(saveDir, 'box_group{}'.format(k)))
-

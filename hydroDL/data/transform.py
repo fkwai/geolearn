@@ -1,16 +1,17 @@
 import numpy as np
+sn = 0.0001
 
 
 def transIn(data, mtd, stat=None):
     noStat = True if stat is None else False
     if mtd == 'log-norm':
-        temp = np.log(data+1)
+        temp = np.log(data+sn)
         if stat is None:
             stat = [np.nanpercentile(temp, 10),
                     np.nanpercentile(temp, 90)]
         out = (temp-stat[0])/(stat[1]-stat[0])
     elif mtd == 'log-stan':
-        temp = np.log(data+1)
+        temp = np.log(data+sn)
         if stat is None:
             stat = [np.nanmean(temp), np.nanstd(temp)]
         out = (temp-stat[0])/stat[1]
@@ -32,10 +33,10 @@ def transIn(data, mtd, stat=None):
 def transOut(data, mtd, stat):
     if mtd == 'log-norm':
         temp = data*(stat[1]-stat[0])+stat[0]
-        out = np.exp(temp)-1
+        out = np.exp(temp)-sn
     elif mtd == 'log-stan':
         temp = data*stat[1]+stat[0]
-        out = np.exp(temp)-1
+        out = np.exp(temp)-sn
     elif mtd == 'norm':
         out = data*(stat[1]-stat[0])+stat[0]
     elif mtd == 'stan':
