@@ -37,35 +37,19 @@ for stat in statLst:
     rmseLst1 = rmseLst1+list(stat[1]['RMSE'])
     corrLst0 = corrLst0+list(stat[0]['Corr'])
     corrLst1 = corrLst1+list(stat[1]['Corr'])
-# fig, axes = plt.subplots(1, 2)
-# axes[0].plot(rmseLst0, rmseLst1, '*')
-# axes[1].plot(corrLst0, corrLst1, '*')
-# fig.show()
+np.where(np.array(rmseLst0) < np.array(rmseLst1))
 
-# plot box
-keyLst = ['RMSE', 'Corr']
-# ecoLst = ['{0:0>2}'.format(x) for x in range(1, 18)]
-ecoLst = 'ABDEFGHIJKLMNOPQR'
-matplotlib.rcParams.update({'font.size': 16})
-matplotlib.rcParams.update({'lines.linewidth': 2})
-matplotlib.rcParams.update({'lines.markersize': 10})
-for k in range(len(keyLst)):
-    dataBox = list()
-    key = keyLst[k]
-    for ss in statLst:
-        temp = list()
-        for s in ss:
-            temp.append(s[key])
-        dataBox.append(temp)
-    if key == 'RMSE':
-        fig = plot.plotBoxFig(dataBox,
-                              ecoLst,
-                              caseLst1,
-                              widths=0.5,
-                              figsize=(12, 4))
-    else:
-        fig = plot.plotBoxFig(dataBox, ecoLst, widths=0.5, figsize=(12, 4))
-    plt.subplots_adjust(wspace=0, hspace=0)
-    fig.show()
-    saveFile = os.path.join(saveFolder, 'ecoRegion_box_' + key)
-    fig.savefig(saveFile)
+fig, axes = plt.subplots(1, 2)
+x = rmseLst0
+y = rmseLst1
+vmin = np.nanmin([x, y])
+vmax = np.nanmax([x, y])
+axes[0].plot(x, y, '*')
+axes[0].plot([vmin, vmax], [vmin, vmax], 'k-')
+x = corrLst0
+y = corrLst1
+vmin = np.nanmin([x, y])
+vmax = np.nanmax([x, y])
+axes[1].plot(x, y, '*')
+axes[1].plot([vmin, vmax], [vmin, vmax], 'k-')
+fig.show()

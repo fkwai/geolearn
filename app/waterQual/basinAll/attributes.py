@@ -1,4 +1,3 @@
-import importlib
 from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath
@@ -13,17 +12,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
-
-# outName = 'basinRef-Yodd-opt2'
-# trainSet = 'Yodd'
-# testSet = 'Yeven'
-
-outName = 'basinRef-Yeven-opt2'
-trainSet = 'Yeven'
-testSet = 'Yodd'
-
-master = basins.loadMaster(outName)
 ep = 300
+outName = 'basinRef-Yeven-opt2'
+trainSet = 'Yodd'
+testSet = 'Yeven'
+master = basins.loadMaster(outName)
 yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData, ep=ep)
 yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData, ep=ep)
 errMatC1 = wqData.errBySiteC(
@@ -50,32 +43,29 @@ for i, siteNo in enumerate(siteNoLst):
         countMat[i, iC, 1] = np.count_nonzero(~np.isnan(ycT2[indS2, iC]))
 
 
-# plot box
-importlib.reload(figplot)
-saveDir = os.path.join(kPath.dirWQ, 'paper')
-codePdf = usgs.codePdf
-groupLst = [['00010', '00095', '00400', '80154', '70303', '00660',
-             '00665', '00618', '00600', '00605', '71846', '00681'],
-            ['00915', '00925', '00935', '00930', '00940', '00945',
-             '00955', '00410', '00405', '00300', '00950', '00440']]
-strLst = ['physical and nutrient variables', 'inorganics variables']
-for k in range(2):
-    codeLst = groupLst[k]
-    indLst = [wqData.varC.index(code) for code in codeLst]
-    labLst1 = [codePdf.loc[code]['shortName'] +
-               '\n'+code for code in codeLst]
-    labLst2 = ['train', 'test']
-    dataBox = list()
-    for ic in indLst:
-        temp = list()
-        for errMat in [errMatC1, errMatC2]:
-            ind = np.where((countMat[:, ic, 0] > 20) &
-                           (countMat[:, ic, 1] > 20))[0]
-            temp.append(errMat[ind, ic, 2])
-        dataBox.append(temp)
-    fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
-                          label2=labLst2, figsize=(12, 4), yRange=[0, 2])
-    title = 'correlation of {}'.format(strLst[k])
-    fig.suptitle(title)
-    fig.show()
-    # fig.savefig(os.path.join(saveDir, 'box_group{}'.format(k)))
+dropColLst = ['STANAME', 'WR_REPORT_REMARKS',
+              'ADR_CITATION', 'SCREENING_COMMENTS']
+dfX = gageII.readData(siteNoLst=siteNoLst).drop(columns=dropColLst)
+dfX = gageII.updateCode(dfX)
+unitConv = 0.3048**3*365*24*60*60/1000**2
+groupLst = [['00010', '00095', '00400', '80154', '70303', '00660'],
+            ['00665', '00618', '00600', '00605', '71846', '00681'],
+            ['00915', '00925', '00935', '00930', '00940', '00945'],
+            ['00955', '00410', '00405', '00300', '00950', '00440']]
+
+# area vs error
+attr = dfX['DRAIN_SQKM'].values
+attr = np.log(attr)
+fig, axes = plt.subplots(4, 6)
+for j in range(4):
+    for i in range(6):
+        code = groupLst[j][i]
+        ic = wqData.varC.index(code)
+        ind = np.where((countMat[:, ic, 0] > 20) &
+                       (countMat[:, ic, 1] > 20))[0]
+        err = errMatC2[ind, ic, 1]
+        axes[j, i].plot(attr[ind], err, '*')
+        axes[j, i].set_title(code)
+# plt.tight_layout()
+fig.show()
+
