@@ -37,7 +37,9 @@ for stat in statLst:
     rmseLst1 = rmseLst1+list(stat[1]['RMSE'])
     corrLst0 = corrLst0+list(stat[0]['Corr'])
     corrLst1 = corrLst1+list(stat[1]['Corr'])
-np.where(np.array(rmseLst0) < np.array(rmseLst1))
+len(np.where(np.array(rmseLst0) > np.array(rmseLst1))[0])
+len(np.where(np.array(corrLst0) < np.array(corrLst1))[0])
+
 
 fig, axes = plt.subplots(1, 2)
 x = rmseLst0

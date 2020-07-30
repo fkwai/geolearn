@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import json
 from hydroDL import kPath
-from hydroDL.data import usgs, gageII, gridMET, transform
+from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 
 
 class DataModelWQ():
@@ -32,8 +32,10 @@ class DataModelWQ():
         self.nFill = dictData['nFill']
         self.varG = dictData['varG']
         self.varC = dictData['varC']
-        self.varQ = ['00060', 'runoff']  # delete later
-        self.varF = gridMET.varLst  # delete later
+        # self.varQ = ['00060', 'runoff']  # delete later
+        # self.varF = gridMET.varLst  # delete later
+        self.varQ = dictData['varQ']
+        self.varF = dictData['varF']
         self.info = pd.read_csv(saveName+'.csv', index_col=0,
                                 dtype={'siteNo': str})
         self.info['date'] = self.info['date'].astype('datetime64[D]')
@@ -87,6 +89,8 @@ class DataModelWQ():
                     mtd = gageII.dictStat[var]
                 elif var in usgs.dictStat.keys():
                     mtd = usgs.dictStat[var]
+                elif var in ntn.dictStat.keys():
+                    mtd = ntn.dictStat[var]
                 else:
                     raise Exception('Variable {} not found!'.format(var))
                 mtdLst.append(mtd)
