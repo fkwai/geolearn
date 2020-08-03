@@ -1,4 +1,4 @@
-from hydroDL.data import usgs, gageII
+from hydroDL.data import usgs, gageII, ntn
 from hydroDL import kPath, utils
 from hydroDL.app import waterQuality
 import pandas as pd
@@ -57,3 +57,38 @@ for k, tStr in enumerate(tStrLst):
     axplot.mapPoint(axes[j, i], lat, lon, data)
     axes[j, i].set_title('{} {}'.format(var, tStr))
 fig.show()
+
+# check if all fields are available
+varPLst = ['ph', 'Conduc', 'Ca', 'Mg', 'K', 'Na', 'NH4', 'NO3', 'Cl', 'SO4']
+tab = tabData[varPLst]
+tab = tab.dropna(how='all')
+
+# recheck weekday - same conclusion
+ind = tab.index.values
+t1 = pd.to_datetime(tabData['dateon'],
+                    infer_datetime_format=True).dt.normalize()
+t2 = pd.to_datetime(tabData['dateoff'],
+                    infer_datetime_format=True).dt.normalize()
+wd1 = t1[ind].dt.weekday
+wd2 = t2[ind].dt.weekday
+wd1.value_counts(normalize=True)
+wd2.value_counts(normalize=True)
+
+# check for distributions
+dataName = 'refWeek'
+wqData = waterQuality.DataModelWQ(dataName)
+for var in ntn.varLst+['distNTN']:
+    v = wqData.f[:, :, wqData.varF.index(var)]
+    fig, axes = plt.subplots(2, 2)
+    temp = v.flatten()
+    temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
+                           (temp < np.nanpercentile(temp, 95)))]
+    _ = axes[0, 0].hist(temp, bins=100)
+    _ = axes[0, 1].hist(temp90, bins=100)
+    try:
+        _ = axes[1, 0].hist(np.log(temp+1), bins=100)
+        _ = axes[1, 1].hist(np.log(temp90+1), bins=100)
+    except(ValueError):
+        print(var+' can not log')
+    fig.suptitle(var)
+    fig.show()

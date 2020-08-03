@@ -7,6 +7,6 @@ varLst = ['ph', 'Conduc', 'Ca', 'Mg', 'K', 'Na', 'NH4', 'NO3', 'Cl', 'SO4']
 flagLst = ['flagCa', 'flagMg', 'flagK', 'flagNa', 'flagNH4',
            'flagNO3', 'flagCl', 'flagSO4', 'valcode', 'invalcode']
 
-dictStat = dict(ph='norm', Conduc='norm', Ca='norm', Mg='norm', K='norm',
-                Na='norm', NH4='norm', NO3='norm', Cl='norm', SO4='norm')
-
+dictStat = dict(ph='norm', Conduc='norm', Ca='log-norm', Mg='log-norm',
+                K='log-norm', Na='log-norm', NH4='log-norm', NO3='log-norm',
+                Cl='log-norm', SO4='log-norm', distNTN='norm')
