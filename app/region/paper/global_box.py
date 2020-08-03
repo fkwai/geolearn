@@ -28,19 +28,6 @@ for k in range(len(subsetLst)):
         tempLst.append(temp)
     statLst.append(tempLst)
 
-rmseLst0 = list()
-rmseLst1 = list()
-corrLst0 = list()
-corrLst1 = list()
-for stat in statLst:
-    rmseLst0 = rmseLst0+list(stat[0]['RMSE'])
-    rmseLst1 = rmseLst1+list(stat[1]['RMSE'])
-    corrLst0 = corrLst0+list(stat[0]['Corr'])
-    corrLst1 = corrLst1+list(stat[1]['Corr'])
-# fig, axes = plt.subplots(1, 2)
-# axes[0].plot(rmseLst0, rmseLst1, '*')
-# axes[1].plot(corrLst0, corrLst1, '*')
-# fig.show()
 
 # plot box
 keyLst = ['RMSE', 'Corr']

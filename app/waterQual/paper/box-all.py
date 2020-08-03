@@ -9,18 +9,16 @@ from hydroDL.post import axplot, figplot
 import torch
 import os
 import json
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 wqData = waterQuality.DataModelWQ('basinRef', rmFlag=True)
 
-# outName = 'basinRef-Yodd-opt2'
-# trainSet = 'Yodd'
-# testSet = 'Yeven'
-
 outName = 'basinRef-Yeven-opt2'
 trainSet = 'Yeven'
 testSet = 'Yodd'
+siteNoLst = wqData.info['siteNo'].unique().tolist()
 
 master = basins.loadMaster(outName)
 ep = 300
@@ -31,6 +29,18 @@ errMatC1 = wqData.errBySiteC(
 errMatC2 = wqData.errBySiteC(
     ycP2, varC=master['varYC'], subset=testSet, rmExt=True)
 
+
+dirWrtds = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-F')
+dfCorr1 = pd.read_csv(os.path.join(
+    dirWrtds, '{}-{}-corr'.format(trainSet, trainSet)), index_col=0)
+dfCorr2 = pd.read_csv(os.path.join(
+    dirWrtds, '{}-{}-corr'.format(trainSet, testSet)), index_col=0)
+dfRmse1 = pd.read_csv(os.path.join(
+    dirWrtds, '{}-{}-rmse'.format(trainSet, trainSet)), index_col=0)
+dfRmse2 = pd.read_csv(os.path.join(
+    dirWrtds, '{}-{}-rmse'.format(trainSet, testSet)), index_col=0)
+errMatC4 = np.stack([dfRmse1.values, dfCorr1.values], axis=2)
+errMatC3 = np.stack([dfRmse2.values, dfCorr2.values], axis=2)
 
 # figure out number of sample
 siteNoLst = wqData.info['siteNo'].unique().tolist()
@@ -64,17 +74,17 @@ for k in range(2):
     indLst = [wqData.varC.index(code) for code in codeLst]
     labLst1 = [codePdf.loc[code]['shortName'] +
                '\n'+code for code in codeLst]
-    labLst2 = ['train', 'test']
+    labLst2 = ['train LSTM', 'test LSTM', 'train WRTDS', 'test WRTDS']
     dataBox = list()
     for ic in indLst:
         temp = list()
-        for errMat in [errMatC1, errMatC2]:
+        for errMat in [errMatC1, errMatC2, errMatC3, errMatC4]:
             ind = np.where((countMat[:, ic, 0] > 20) &
                            (countMat[:, ic, 1] > 20))[0]
-            temp.append(errMat[ind, ic, 2])
+            temp.append(errMat[ind, ic, 1])
         dataBox.append(temp)
-    fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
-                          label2=labLst2, figsize=(12, 4), yRange=[0, 2])
+    fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.4,
+                          label2=labLst2, figsize=(16, 4), yRange=[0, 1])
     title = 'correlation of {}'.format(strLst[k])
     fig.suptitle(title)
     fig.show()
