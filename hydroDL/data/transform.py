@@ -1,6 +1,6 @@
 import numpy as np
-sn = 0.0001
-# sn = 1
+# sn = 0.0001
+sn = 1
 
 
 def transIn(data, mtd, stat=None):
