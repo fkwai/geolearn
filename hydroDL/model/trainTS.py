@@ -25,12 +25,12 @@ def subsetRandom(dataLst, batchSize, sizeLst=None):
     [nx, nxc, ny, nyc, nt, ns] = sizeLst
 
     iR = np.random.randint(0, ns, [nbatch])
-    xTemp = x[nt-rho:rho, iR, :]
-    xcTemp = np.tile(xc[iR, :], [nt, 1, 1]
+    xTemp = x[nt-rho:nt, iR, :]
+    xcTemp = np.tile(xc[iR, :], [rho, 1, 1]
                      ) if xc is not None else np.ndarray([rho, nbatch, 0])
     xTensor = torch.from_numpy(np.concatenate(
         [xTemp, xcTemp], axis=-1)).float()
-    yTemp = y[nt-rho:rho, iR,
+    yTemp = y[nt-rho:nt, iR,
               :] if y is not None else np.ndarray([rho, nbatch, 0])
     ycTemp = np.full([rho, nbatch, nyc], np.nan)
     ycTemp[-1, :, :] = yc[iR, :] if yc is not None else np.nan
@@ -80,6 +80,10 @@ def dealNaN(dataTup, optNaN):
                         rmLst.append(np.unique(np.where(np.isnan(data))[1]))
                     print('nan found but not removed - later')
         dataLst.append(data)
+    if len(rmLst) > 0:
+        rmAry = np.concatenate(rmLst)
+        for k in range(len(dataLst)):
+            dataLst[k] = np.delete(dataLst[k], rmAry, axis=dataLst[k].ndim-2)
     return dataLst
 
 

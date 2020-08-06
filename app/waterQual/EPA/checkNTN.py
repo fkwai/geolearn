@@ -78,6 +78,7 @@ wd2.value_counts(normalize=True)
 dataName = 'refWeek'
 wqData = waterQuality.DataModelWQ(dataName)
 for var in ntn.varLst+['distNTN']:
+    
     v = wqData.f[:, :, wqData.varF.index(var)]
     fig, axes = plt.subplots(2, 2)
     temp = v.flatten()

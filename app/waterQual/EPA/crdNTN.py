@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import os
 
+# save the projected coordinate of NTN and USGS sites to csv files
+
 dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
 
 # USGS sites

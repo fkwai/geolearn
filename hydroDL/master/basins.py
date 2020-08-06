@@ -203,6 +203,8 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
         testDataLst = wqData.transIn(
             subset=testset, statTup=statTup, varTup=varTup)
         sizeLst = trainTS.getSize(testDataLst)
+        if master['optNaN'] == [2, 2, 0, 0]:
+            master['optNaN'] = [0, 0, 0, 0]
         testDataLst = trainTS.dealNaN(testDataLst, master['optNaN'])
         x = testDataLst[0]
         xc = testDataLst[1]
