@@ -14,9 +14,9 @@ subsetLst = ['Yodd']
 varXC = ['DRAIN_SQKM', 'SNOW_PCT_PRECIP', 'STREAMS_KM_SQ_KM', 'PCT_1ST_ORDER',
          'BFI_AVE', 'CONTACT', 'FORESTNLCD06', 'HLR_BAS_DOM_100M', 'ELEV_MEAN_M_BASIN',
          'PERMAVE', 'WTDEPAVE', 'ROCKDEPAVE', 'SLOPE_PCT']
-varX1 = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr',
+varX1 = ['00060', 'pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr',
          'ph', 'Conduc', 'Cl']
-varX2 = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
+varX2 = ['00060', 'pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
 nEp = 100
 caseLst = list()
 for subset in subsetLst:

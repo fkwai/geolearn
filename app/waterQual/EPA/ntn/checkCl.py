@@ -12,46 +12,43 @@ import matplotlib.pyplot as plt
 # varC = usgs.varC
 varC = ['00940']
 siteNoLst = ['0422026250', '04232050', '0423205010']
+tabG = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
 
-t = pd.date_range(start='1979-01-01', end='2019-12-30', freq='W-TUE')
-t = t[:-1]
-
-# read NTN
-ntnId = 'NY43'
-dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
-fileData = os.path.join(dirNTN, 'NTN-All-w.csv')
-fileSite = os.path.join(dirNTN, 'NTNsites.csv')
-tabData = pd.read_csv(fileData)
-tabSite = pd.read_csv(fileSite)
-tabData['siteID'] = tabData['siteID'].apply(lambda x: x.upper())
-tabData = tabData.replace(-9, np.nan)
-tab = tabData[tabData['siteID'] == ntnId]
-tab.index = pd.to_datetime(tab['dateon'])
-weekday = tab.index.normalize().weekday
-tab2 = pd.DataFrame(index=t)
-tol = pd.Timedelta(3, 'D')
-tab2 = pd.merge_asof(left=tab2, right=tab, right_index=True,
-                     left_index=True, direction='nearest', tolerance=tol)
-varPLst = ['ph', 'Conduc', 'Ca', 'Mg', 'K', 'Na', 'NH4', 'NO3', 'Cl', 'SO4']
-dfP = tab2[varPLst]
-
-
+# read data
 siteNo = siteNoLst[2]
 dfC = usgs.readSample(siteNo, codeLst=varC)
 dfQ = usgs.readStreamflow(siteNo)
 dfF = gridMET.readBasin(siteNo)
-
 ntnFolder = os.path.join(kPath.dirData, 'EPA', 'NTN', 'usgs', 'weeklyRaw')
 dfP = pd.read_csv(os.path.join(ntnFolder, siteNo), index_col='date')
+
+# convert to weekly
+t = pd.date_range(start='1979-01-01', end='2019-12-30', freq='W-TUE')
+td = pd.date_range(t[0], t[-1])    
+df = pd.DataFrame({'date': td}).set_index('date')
+df = df.join(dfC)
+df = df.join(dfQ)
+df = df.join(dfF)
+df = df.rename(columns={'00060_00003': '00060'})
+dfW = df.resample('W-TUE').mean()
+dfW = dfW.join(dfP)
+
+area = tabG.loc[siteNo]['DRAIN_SQKM']
+load1 = dfW['pr']*area*dfW['Cl']
+load2=dfW['00060']*dfW['00940']
+
+fig, ax = plt.subplots(1, 1)
+ax2 = ax.twinx()
+ax.plot(load1,'r--*')
+ax2.plot(load2,'b--*')
+fig.show()
 
 
 # plot
 fig, ax = plt.subplots(1, 1)
 ax2 = ax.twinx()
 ax.plot(dfP['Cl'], 'b--*')
-ax.plot(dfP['cl'], 'g--*')
-ax2.plot(dfC[varC], 'r*')
-
-
+ax.plot(dfP['Cl'], 'g--*')
+ax2.plot(dfCW[varC], 'r*')
+ax2.plot(dfC[varC], 'm*')
 fig.show()
-

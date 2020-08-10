@@ -3,7 +3,7 @@ import time
 import pandas as pd
 import numpy as np
 import json
-from hydroDL import kPath
+from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 
 
@@ -277,15 +277,17 @@ class DataModelWQ():
                     aV = aV[aV > np.nanpercentile(a, 5)]
                     ul = np.mean(aV)+np.std(aV)*5
                     a[a > ul] = np.nan
-                indV = np.where(~np.isnan(a))
-                rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
-                corr = np.corrcoef(a[indV], b[indV])[0, 1]
-                # nse = 1-np.nansum((b-a)**2)/np.nansum((a-np.nanmean(a))**2)
-                # nse = np.nanmean(b)/np.nanmean(a)-1
-                nse = np.nanmean(np.abs((b-a)/a))
-                statMat[i, k, 0] = rmse
-                statMat[i, k, 1] = corr
-                statMat[i, k, 2] = nse
+                # indV = np.where(~np.isnan(a))
+                if len(indS) > 0:
+                    _, indV = utils.rmNan([a, b])
+                    rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
+                    corr = np.corrcoef(a[indV], b[indV])[0, 1]
+                    # nse = 1-np.nansum((b-a)**2)/np.nansum((a-np.nanmean(a))**2)
+                    # nse = np.nanmean(b)/np.nanmean(a)-1
+                    nse = np.nanmean(np.abs((b-a)/a))
+                    statMat[i, k, 0] = rmse
+                    statMat[i, k, 1] = corr
+                    statMat[i, k, 2] = nse
         return statMat
 
     def errBySiteQ(self, yP, varQ, subset=None):

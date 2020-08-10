@@ -17,7 +17,7 @@ df = pd.read_csv(os.path.join(dirInv, 'codeCount.csv'),
                  dtype={'siteNo': str}).set_index('siteNo')
 
 # pick some sites
-code = '00945'
+code = '00915'
 siteNoLst = df[df[code] > 1000].index.tolist()
 nSite = df.loc[siteNoLst][code].values
 dfCrd = gageII.readData(
@@ -42,3 +42,9 @@ def funcPoint(iP, axP):
 
 
 figplot.clickMap(funcMap, funcPoint)
+
+siteNo = '401733105392404'
+dfC = waterQuality.readSiteY(siteNo, usgs.codeLst)
+fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+ax.plot(dfC)
+fig.show()

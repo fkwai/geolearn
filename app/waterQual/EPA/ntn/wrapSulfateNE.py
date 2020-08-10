@@ -7,7 +7,7 @@ from hydroDL import kPath
 from hydroDL.data import usgs, gageII, gridMET, transform
 
 # varC = usgs.varC
-varC = ['00945']
+varC = ['00945', '00935']
 siteNoLst = ['0143400680', '01434021', '01434025']
 nFill = 3
 varG = gageII.lstWaterQuality

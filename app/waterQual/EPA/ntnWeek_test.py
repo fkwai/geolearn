@@ -22,14 +22,23 @@ testSet = 'Yeven'
 errMatLst1, errMatLst2, ypLst1, ypLst2 = [list() for x in range(4)]
 for outName in outLst:
     master = basins.loadMaster(outName)
-    yP1, ycP1 = basins.testModel(outName, trainSet, wqData=wqData, ep=500)
-    yP2, ycP2 = basins.testModel(outName, testSet, wqData=wqData, ep=500)
-    errMatC1 = wqData.errBySiteC(ycP1, subset=trainSet, varC=master['varYC'])
-    errMatC2 = wqData.errBySiteC(ycP2, subset=testSet, varC=master['varYC'])
-    errMatLst1.append(errMatC1)
-    errMatLst2.append(errMatC2)
+    yP1, ycP1 = basins.testModel(
+        outName, trainSet, wqData=wqData, ep=500, reTest=True)
+    yP2, ycP2 = basins.testModel(
+        outName, testSet, wqData=wqData, ep=500, reTest=True)
     ypLst1.append(ycP1)
     ypLst2.append(ycP2)
+
+
+ypLst1[1][np.isnan(ypLst1[0])] = np.nan
+ypLst2[1][np.isnan(ypLst2[0])] = np.nan
+for k in range(2):
+    errMatC1 = wqData.errBySiteC(
+        ypLst1[k], subset=trainSet, varC=master['varYC'])
+    errMatC2 = wqData.errBySiteC(
+        ypLst2[k], subset=testSet, varC=master['varYC'])
+    errMatLst1.append(errMatC1)
+    errMatLst2.append(errMatC2)
 
 
 # figure out number of sample
@@ -66,8 +75,8 @@ for k in range(2):
     for ic in indLst:
         temp = list()
         for errMat in errMatLst1+errMatLst2:
-            ind = np.where((countMat[:, ic, 0] > 10) &
-                           (countMat[:, ic, 1] > 10))[0]
+            ind = np.where((countMat[:, ic, 0] > 200) &
+                           (countMat[:, ic, 1] > 200))[0]
             temp.append(errMat[ind, ic, 1])
         dataBox.append(temp)
     fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
@@ -90,8 +99,8 @@ for k, code in enumerate(codeSel):
     ic = wqData.varC.index(code)
     shortName = codePdf.loc[code]['shortName']
     title = 'correlation difference of {} {}'.format(shortName, code)
-    ind = np.where((countMat[:, ic, 0] > 20) &
-                   (countMat[:, ic, 1] > 20))[0]
+    ind = np.where((countMat[:, ic, 0] > 200) &
+                   (countMat[:, ic, 1] > 200))[0]
     data = errMatLst2[1][ind, ic, 1]-errMatLst2[0][ind, ic, 1]
     axplot.mapPoint(axM[k], lat[ind], lon[ind], data, s=12, vRange=[-1, 1])
     axM[k].set_title(title)
@@ -99,24 +108,26 @@ figM.show()
 
 
 # ['0143400680', '01434021', '01434025']
-siteNo = '01434025'
-indS = siteNoLst.index(siteNo)
-indC = wqData.varC.index('00945')
-errMatLst2[0][indS, indC]
-errMatLst2[1][indS, indC]
-
-errMatLst2[0][50, indC]
-errMatLst2[1][50, indC]
-
+siteNo = '01434021'
 fig, axes = plt.subplots(1, 2)
 ind = wqData.subset[testSet].tolist()
 # ind=wqData.subset[trainSet].tolist()
-indC = wqData.varC.index('00945')
-axes[0].plot(wqData.c[ind, indC], ypLst2[0][:, indC], '*')
-axes[1].plot(wqData.c[ind, indC], ypLst2[1][:, indC], '*')
+indC = wqData.varC.index('00935')
+infoTest = wqData.info.iloc[wqData.subset[testSet]]
+infoTest2 = infoTest.reset_index()
+indS1 = infoTest[infoTest['siteNo'] == siteNo].index
+indS2 = infoTest2[infoTest2['siteNo'] == siteNo].index
+axes[0].plot(wqData.c[indS1, indC], ypLst2[0][indS2, indC], '*')
+axes[1].plot(wqData.c[indS1, indC], ypLst2[1][indS2, indC], '*')
 fig.show()
 
-ind = wqData.subset[trainSet].tolist()
-
-(a, b), ind2 = utils.rmNan([wqData.c[ind, indC], ypLst1[0][:, indC]])
-np.corrcoef(a, b)
+code = '00935'
+indC = wqData.varC.index(code)
+count = countMat[:, indC, 1]
+a = errMatLst2[0][:, indC, 1]
+b = errMatLst2[1][:, indC, 1]
+fig, axes = plt.subplots(1, 2)
+indS2 = infoTest2[infoTest2['siteNo'] == siteNo].index
+axes[0].plot(count, a, '*')
+axes[1].plot(count, b, '*')
+fig.show()

@@ -30,22 +30,29 @@ for outName in outLst:
     ypLst1.append(ycP1)
     ypLst2.append(ycP2)
 
-ypLst1[1]=ypLst1[1][~np.isnan(ypLst1[0])]
-ypLst2[1]=ypLst2[1][~np.isnan(ypLst2[0])]
+ypLst1[1][np.isnan(ypLst1[0])] = np.nan
+ypLst2[1][np.isnan(ypLst2[0])] = np.nan
 for k in range(2):
-    errMatC1 = wqData.errBySiteC(ypLst1[k], subset=trainSet, varC=master['varYC'])
-    errMatC2 = wqData.errBySiteC(ypLst2[k], subset=testSet, varC=master['varYC'])
+    errMatC1 = wqData.errBySiteC(
+        ypLst1[k], subset=trainSet, varC=master['varYC'])
+    errMatC2 = wqData.errBySiteC(
+        ypLst2[k], subset=testSet, varC=master['varYC'])
     errMatLst1.append(errMatC1)
     errMatLst2.append(errMatC2)
-
 
 
 fig, axes = plt.subplots(1, 2)
 indC = wqData.varC.index('00940')
 ind = wqData.subset[testSet].tolist()
-# ind=wqData.subset[trainSet].tolist()
-axes[0].plot(wqData.c[ind, indC], ypLst2[1], '*')
-axes[1].plot(wqData.c[ind, indC], ypLst2[0], '*')
+ind=wqData.subset[trainSet].tolist()
+axes[0].plot(wqData.c[ind, indC], ypLst1[1], '*')
+axes[0].plot([0,300],[0,300])
+axes[0].set_xlim([0,300])
+axes[0].set_ylim([0,300])
+axes[1].plot(wqData.c[ind, indC], ypLst1[0], '*')
+axes[1].plot([0,300],[0,300])
+axes[1].set_xlim([0,300])
+axes[1].set_ylim([0,300])
 fig.show()
 
 

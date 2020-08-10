@@ -16,7 +16,20 @@ crdNTN = crdNTN.drop(['CO83', 'NC30', 'WI19'])
 crdUSGS = pd.read_csv(os.path.join(
     dirNTN, 'crdUSGS.csv'), dtype={'STAID': str})
 crdUSGS = crdUSGS.set_index('STAID')
-crdUSGS = crdUSGS[crdUSGS['CLASS'] == 1]
+
+#
+dfCountYr = pd.read_csv(os.path.join(kPath.dirData, 'USGS',
+                                     'inventory', 'siteCountWeekly-Y10.csv'), dtype={'siteNo': str})
+dfCountYr = dfCountYr.set_index('siteNo')
+codeLst = sorted(usgs.codeLst)
+temp = dfCountYr[codeLst[2:]] >= 6
+temp.sum(axis=1).value_counts().sort_index(ascending=False).cumsum()
+tempSum = temp.sum(axis=1)
+siteSel = tempSum.index[tempSum >= 16]
+siteNoLst = siteSel.tolist()
+crdUSGS = crdUSGS.loc[siteNoLst]
+# crdUSGS = crdUSGS[crdUSGS['CLASS'] == 1]
+
 usgsIdLst = crdUSGS.index.tolist()
 ntnIdLst = crdNTN.index.tolist()
 t = pd.date_range(start='1979-01-01', end='2019-12-31', freq='W-TUE')

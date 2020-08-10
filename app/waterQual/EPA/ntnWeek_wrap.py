@@ -12,12 +12,22 @@ varG = gageII.lstWaterQuality
 caseName = 'refWeek'
 
 # gages - basinRef
-fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoLst-1979')
-siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
-tabSel = gageII.readData(
-    varLst=['CLASS'], siteNoLst=siteNoLstAll)
-tabSel = gageII.updateCode(tabSel)
-siteNoLst = tabSel[tabSel['CLASS'] == 1].index.tolist()
+# fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoLst-1979')
+# siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
+# tabSel = gageII.readData(
+#     varLst=['CLASS'], siteNoLst=siteNoLstAll)
+# tabSel = gageII.updateCode(tabSel)
+# siteNoLst = tabSel[tabSel['CLASS'] == 1].index.tolist()
+
+dfCountYr = pd.read_csv(os.path.join(kPath.dirData, 'USGS',
+                                     'inventory', 'siteCountWeekly-Y10.csv'), dtype={'siteNo': str})
+dfCountYr = dfCountYr.set_index('siteNo')
+codeLst = sorted(usgs.codeLst)
+temp = dfCountYr[codeLst[2:]] >= 6
+temp.sum(axis=1).value_counts().sort_index(ascending=False).cumsum()
+tempSum = temp.sum(axis=1)
+siteSel = tempSum.index[tempSum >= 16]
+siteNoLst =siteSel.tolist()
 
 # add a start/end date to improve efficiency.
 t = pd.date_range(start='1979-01-01', end='2019-12-30', freq='W-TUE')
@@ -45,7 +55,6 @@ infoLst = list()
 t0 = time.time()
 for i, siteNo in enumerate(siteNoLst):
     t1 = time.time()
-    siteNo='01013500'
     dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd)
     dfQ = usgs.readStreamflow(siteNo, startDate=sd)
     dfF = gridMET.readBasin(siteNo)
@@ -95,4 +104,3 @@ dictData = dict(name=caseName, rho=rho, nFill=nFill,
                 varF=gridMET.varLst+varPLst, siteNoLst=siteNoLst)
 with open(saveName+'.json', 'w') as fp:
     json.dump(dictData, fp, indent=4)
-
