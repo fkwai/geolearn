@@ -7,9 +7,9 @@ from hydroDL.master import slurm
 
 dataName = 'refWeek'
 wqData = waterQuality.DataModelWQ(dataName)
-# indYrO, indYrE = waterQuality.indYrOddEven(wqData.info)
-# wqData.saveSubset('Yodd', indYrO)
-# wqData.saveSubset('Yeven', indYrE)
+indYrO, indYrE = waterQuality.indYrOddEven(wqData.info)
+wqData.saveSubset('Yodd', indYrO)
+wqData.saveSubset('Yeven', indYrE)
 
 codeLst = usgs.varC
 subsetLst = ['Yodd', 'Yeven']
@@ -32,4 +32,4 @@ for subset in subsetLst:
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
-    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=12)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
