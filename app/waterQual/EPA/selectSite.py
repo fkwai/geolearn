@@ -44,7 +44,11 @@ def funcPoint(iP, axP):
 figplot.clickMap(funcMap, funcPoint)
 
 siteNo = '401733105392404'
-dfC = waterQuality.readSiteY(siteNo, usgs.codeLst)
-fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+sd = pd.datetime(1980, 1, 1)
+dfC = usgs.readSample(siteNo, codeLst=codeLst, startDate=sd)
+fig, ax = plt.subplots(1, 1, figsize=(12, 6), '*')
 ax.plot(dfC)
 fig.show()
+
+dfC.plot()
+plt.show()

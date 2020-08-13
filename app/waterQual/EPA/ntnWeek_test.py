@@ -108,7 +108,7 @@ figM.show()
 
 
 # ['0143400680', '01434021', '01434025']
-siteNo = '01434021'
+siteNo = '0143400680'
 fig, axes = plt.subplots(1, 2)
 ind = wqData.subset[testSet].tolist()
 # ind=wqData.subset[trainSet].tolist()

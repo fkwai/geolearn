@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import os
 import time
+import json
 
 # read crds
 dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
@@ -17,18 +18,11 @@ crdUSGS = pd.read_csv(os.path.join(
     dirNTN, 'crdUSGS.csv'), dtype={'STAID': str})
 crdUSGS = crdUSGS.set_index('STAID')
 
-#
-# dfCountYr = pd.read_csv(os.path.join(kPath.dirData, 'USGS',
-#                                      'inventory', 'siteCountWeekly-Y10.csv'), dtype={'siteNo': str})
-# dfCountYr = dfCountYr.set_index('siteNo')
-# codeLst = sorted(usgs.codeLst)
-# temp = dfCountYr[codeLst[2:]] >= 6
-# temp.sum(axis=1).value_counts().sort_index(ascending=False).cumsum()
-# tempSum = temp.sum(axis=1)
-# siteSel = tempSum.index[tempSum >= 16]
-# siteNoLst = siteSel.tolist()
-# crdUSGS = crdUSGS.loc[siteNoLst]
-# crdUSGS = crdUSGS[crdUSGS['CLASS'] == 1]
+dirInv = os.path.join(kPath.dirData, 'USGS', 'inventory')
+with open(os.path.join(dirInv, 'dictStableSites_0610_0220.json')) as f:
+    dictSite = json.load(f)
+siteNoLst = dictSite['comb']
+crdUSGS = crdUSGS.loc[siteNoLst]
 
 usgsIdLst = crdUSGS.index.tolist()
 ntnIdLst = crdNTN.index.tolist()
@@ -52,7 +46,7 @@ for k, usgsId in enumerate(usgsIdLst):
     x = crdUSGS.loc[usgsId]['x']
     y = crdUSGS.loc[usgsId]['y']
     dist = np.sqrt((x-crdNTN['x'])**2+(y-crdNTN['y'])**2)
-    dist = dist.drop(dist[dist > 500*1000].index)
+    dist = dist.drop(dist[dist > 300*1000].index)
     data = np.full([len(t), len(ntn.varLst)], np.nan)
     distOut = np.full(len(t), np.nan)
     idOut = np.full(len(t), np.nan, dtype=object)
