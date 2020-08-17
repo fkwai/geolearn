@@ -31,7 +31,7 @@ for code in codeLst:
     subset = subsetLst[0]
     for k in range(len(varXLst)):
         varX = varXLst[k]
-        varY = varXLst[k]
+        varY = varYLst[k]
         label = labelLst[k]
         if code == 'comb':
             varYC = usgs.varC
