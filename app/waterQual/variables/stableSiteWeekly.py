@@ -46,7 +46,9 @@ fig.show()
 
 # select sites - 6 yrs > 10 samples or 2 yrs > 20 samples
 indLst = list()
-for code in codeLst:
+varLst = ['00400', '00095', '00915', '00925', '00935',
+          '00930', '71846', '00618', '00940', '00945']
+for code in varLst:
     ic = codeLst.index(code)
     ny = 6
     ns = 10
@@ -59,7 +61,8 @@ for code in codeLst:
     # indS = indS1
     a = len(np.setdiff1d(indS2, indS1))
     b = len(indS)
-    print('{} {} {}'.format(code, a, b))
+    # print('{} {} {}'.format(code, a, b))
+    print('{} {}'.format(code, b))
     indLst.append(indS)
 indAll = np.unique(np.concatenate(indLst[2:]))
 len(indAll)

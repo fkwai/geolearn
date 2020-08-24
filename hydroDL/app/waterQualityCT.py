@@ -104,9 +104,6 @@ class DataModelWQ():
             elif var in self.varF:
                 ind = self.varF.index(var)
                 temp.append(self.f[:, :, ind])
-            elif var in self.varC:  # in case of series C
-                ind = self.varC.index(var)
-                temp.append(self.c[:, :, ind])
             else:
                 raise Exception('Variable {} not found!'.format(var))
         return (np.stack(temp, axis=2))

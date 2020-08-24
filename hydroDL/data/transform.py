@@ -50,7 +50,7 @@ def transInAll(dataIn, mtdLst, statLst=None):
     noStat = True if statLst is None else False
     # find colums that need to do log
     indLog = [i for i, mtd in enumerate(mtdLst) if mtd.split('-')[0] == 'log']
-    data[..., indLog] = np.log(data[..., indLog]+1)
+    data[..., indLog] = np.log(data[..., indLog]+sn)
     # calculate stat
     vS = np.ndarray([data.shape[-1], 2])
     if noStat:

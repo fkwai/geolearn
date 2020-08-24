@@ -80,6 +80,8 @@ for i, siteNo in enumerate(siteNoLst):
     f = np.stack(fLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
     c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
+
+# save
 infoDf = pd.DataFrame(infoLst)
 saveFolder = os.path.join(kPath.dirWQ, 'trainData')
 saveName = os.path.join(saveFolder, caseName)

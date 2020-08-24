@@ -1,6 +1,9 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from . import axplot
+from hydroDL import utils
 
 
 def clickMap(funcMap, funcPoint):
@@ -76,4 +79,26 @@ def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',
         if legOnly is True:
             ax.set_position([0, 0, 0.1, 1])
             ax.legend(bp['boxes'], label2, bbox_to_anchor=(1, 1))
+    return fig
+
+
+def tsYr(t, y, cLst='rbkgcmy', figsize=(12, 4), showCorr=False):
+    y = y if type(y) is list else [y]
+    yrAll = pd.to_datetime(t).year
+    yrLst = yrAll.unique().tolist()
+    ny = len(yrLst)
+    fig, axes = plt.subplots(ncols=ny, sharey=True, figsize=figsize)
+    fig.subplots_adjust(wspace=0)
+    for iYr, yr in enumerate(yrLst):
+        ind = np.where(yrAll == yr)[0]
+        _ = axplot.plotTS(axes[iYr], t[ind], [v[ind] for v in y], cLst=cLst)
+        _ = axes[iYr].set_xlim(np.datetime64(
+            str(yr)), np.datetime64(str(yr+1)))
+        _ = axes[iYr].set_xticks([])
+        corr = np.corrcoef(utils.rmNan([v[ind]
+                                        for v in y], returnInd=False))[0, 1]
+        if showCorr is True:
+            _ = axes[iYr].set_xlabel('{}\n{:.2f}'.format(yr, corr))
+        else:
+            _ = axes[iYr].set_xlabel('{}'.format(yr))
     return fig

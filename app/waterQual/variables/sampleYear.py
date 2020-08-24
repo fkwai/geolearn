@@ -28,13 +28,15 @@ groupLst = [
     ['00300', '00405', '00440', '00410']]
 codePdf = usgs.codePdf
 for group in groupLst:
-    fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+    fig, ax = plt.subplots(1, 1, figsize=(8, 4))
     for code in group:
         ic = codeLst.index(code)
         label = '{} {}'.format(code, codePdf.loc[code]['shortName'])
         count = countMatW[:, :, ic].copy()
-        indS = np.where(np.sum(count > 10, axis=1) > 5)[0]
-        count = np.sum(count[indS, :], axis=0)
-        ax.plot(yrLst, count, '-*', label=label)
+        indS = np.where((np.sum(count > 10, axis=1) > 6) |
+                        np.sum(count > 20, axis=1) > 2)[0]
+        countYr = np.sum(count[indS, :], axis=0)
+        # countYr = np.sum(count, axis=0)
+        ax.plot(yrLst, countYr, '-*', label=label)
     ax.legend()
     fig.show()
