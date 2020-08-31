@@ -104,7 +104,7 @@ class DataModelWQ():
             elif var in self.varF:
                 ind = self.varF.index(var)
                 temp.append(self.f[:, :, ind])
-            elif var in self.varC:  # in case of series C
+            elif var in self.varC:  # in
                 ind = self.varC.index(var)
                 temp.append(self.c[:, :, ind])
             else:
@@ -455,6 +455,29 @@ def indYrOddEven(info):
     return indLst
 
 
+def readSiteTS(siteNo, varLst, freq='D', area=None, nFill=5,
+               sd=np.datetime64('1979-01-01'),
+               ed=np.datetime64('2020-01-01')):
+    tr = pd.date_range(sd, ed)
+    dfX = pd.DataFrame({'date': tr}).set_index('date')
+    # extract data
+    dfF = gridMET.readBasin(siteNo)
+    if '00060' in varX or 'runoff' in varX:
+        dfQ = usgs.readStreamflow(siteNo, startDate=sd)
+        dfQ = dfQ.rename(columns={'00060_00003': '00060'})
+        if 'runoff' in varX:
+            if area is None:
+                tabArea = gageII.readData(
+                    varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
+                area = tabArea['DRAIN_SQKM'].values[0]
+            dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
+        dfX = dfX.join(dfQ)
+    dfX = dfX.join(dfF)
+    dfX = dfX[varX]
+    dfX = dfX.interpolate(limit=nFill, limit_direction='both')
+    return dfX
+
+
 def readSiteX(siteNo, varX, area=None, nFill=5,
               sd=np.datetime64('1979-01-01'),
               ed=np.datetime64('2020-01-01')):
@@ -535,20 +558,3 @@ def calErrSeq(dfP, dfO, tBar=np.datetime64('2000-01-01')):
     rmse2 = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
     corr2 = np.corrcoef(a[indV], b[indV])[0, 1]
     return [rmse1, rmse2], [corr1, corr2]
-
-
-# find the distribution of data
-# for k, var in enumerate(wqData.varC):
-#     fig, axes = plt.subplots(2, 2)
-#     temp = wqData.c[:, k].flatten()
-#     temp90 = temp[np.where((temp > np.nanpercentile(temp, 5)) &
-#                            (temp < np.nanpercentile(temp, 95)))]
-#     axes[0, 0].hist(temp, bins=100)
-#     axes[0, 1].hist(temp90, bins=100)
-#     try:
-#         axes[1, 0].hist(np.log(temp+1), bins=100)
-#         axes[1, 1].hist(np.log(temp90+1), bins=100)
-#     except(ValueError):
-#         print(var+' can not log')
-#     fig.suptitle(var)
-#     fig.show()
