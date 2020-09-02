@@ -19,16 +19,8 @@ varLst = ['00940', '00060', 'pr', 'ph']
 
 siteNo = '0143400680'
 
-if freq == 'D':
-    td = pd.date_range(sd, ed)
-    tr = pd.date_range(sd, ed)
-elif freq == 'W':
-    if ed > np.datetime64('2019-12-30'):
-        ed = np.datetime64('2019-12-30')
-    tr = pd.date_range(sd, ed, freq='W-TUE')
-    ed = tr[-1]
-    td = pd.date_range(sd, ed)
 # read data
+td = pd.date_range(sd, ed)
 varC = list(set(varLst).intersection(usgs.varC))
 varQ = list(set(varLst).intersection(usgs.varQ))
 varF = list(set(varLst).intersection(gridMET.varLst))
@@ -40,24 +32,29 @@ if len(varC) > 0:
     dfD = dfD.join(dfC)
 if len(varQ) > 0:
     dfQ = usgs.readStreamflow(siteNo, startDate=sd)
+    dfQ = dfQ.rename(columns={'00060_00003': '00060'})
 if len(varF) > 0:
     dfF = gridMET.readBasin(siteNo, varLst=varF)
 if len(varP) > 0:
     dfP = ntn.readBasin(siteNo, varLst=varP, freq=freq)
 
-
 # extract data
-dfF = gridMET.readBasin(siteNo)
-if '00060' in varX or 'runoff' in varX:
-    dfQ = usgs.readStreamflow(siteNo, startDate=sd)
-    dfQ = dfQ.rename(columns={'00060_00003': '00060'})
-    if 'runoff' in varX:
-        if area is None:
-            tabArea = gageII.readData(
-                varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
-            area = tabArea['DRAIN_SQKM'].values[0]
-        dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
-    dfX = dfX.join(dfQ)
-dfX = dfX.join(dfF)
-dfX = dfX[varX]
-dfX = dfX.interpolate(limit=nFill, limit_direction='both')
+dfD = pd.DataFrame({'date': td}).set_index('date')
+if 'runoff' in varLst:
+    if area is None:
+        tabArea = gageII.readData(
+            varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
+        area = tabArea['DRAIN_SQKM'].values[0]
+    dfQ['runoff'] = waterQuality.calRunoffArea(dfQ['00060'], area)
+dfD = dfD.join(dfQ)
+dfD = dfD.join(dfF)
+dfD = dfD.join(dfC)
+dfD = dfD.join(dfP)
+dfD = dfD[varLst]
+dfD = dfD.interpolate(limit=nFill, limit_direction='both')
+
+if freq == 'D':
+    return dfD
+elif freq == 'W':
+    dfW = dfD.resample('W-TUE').mean()
+    return dfW

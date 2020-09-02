@@ -457,73 +457,44 @@ def indYrOddEven(info):
 
 def readSiteTS(siteNo, varLst, freq='D', area=None, nFill=5,
                sd=np.datetime64('1979-01-01'),
-               ed=np.datetime64('2020-01-01')):
-    tr = pd.date_range(sd, ed)
-    dfX = pd.DataFrame({'date': tr}).set_index('date')
-    # extract data
-    dfF = gridMET.readBasin(siteNo)
-    if '00060' in varX or 'runoff' in varX:
+               ed=np.datetime64('2019-12-31')):
+    # read data
+    td = pd.date_range(sd, ed)
+    varC = list(set(varLst).intersection(usgs.varC))
+    varQ = list(set(varLst).intersection(usgs.varQ))
+    varF = list(set(varLst).intersection(gridMET.varLst))
+    varP = list(set(varLst).intersection(ntn.varLst))
+
+    dfD = pd.DataFrame({'date': td}).set_index('date')
+    if len(varC) > 0:
+        dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd)
+        dfD = dfD.join(dfC)
+    if len(varQ) > 0:
         dfQ = usgs.readStreamflow(siteNo, startDate=sd)
         dfQ = dfQ.rename(columns={'00060_00003': '00060'})
-        if 'runoff' in varX:
-            if area is None:
-                tabArea = gageII.readData(
-                    varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
-                area = tabArea['DRAIN_SQKM'].values[0]
-            dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
-        dfX = dfX.join(dfQ)
-    dfX = dfX.join(dfF)
-    dfX = dfX[varX]
-    dfX = dfX.interpolate(limit=nFill, limit_direction='both')
-    return dfX
-
-
-def readSiteX(siteNo, varX, area=None, nFill=5,
-              sd=np.datetime64('1979-01-01'),
-              ed=np.datetime64('2020-01-01')):
-    tr = pd.date_range(sd, ed)
-    dfX = pd.DataFrame({'date': tr}).set_index('date')
+    if len(varF) > 0:
+        dfF = gridMET.readBasin(siteNo, varLst=varF)
+    if len(varP) > 0:
+        dfP = ntn.readBasin(siteNo, varLst=varP, freq='D')
     # extract data
-    dfF = gridMET.readBasin(siteNo)
-    if '00060' in varX or 'runoff' in varX:
-        dfQ = usgs.readStreamflow(siteNo, startDate=sd)
-        dfQ = dfQ.rename(columns={'00060_00003': '00060'})
-        if 'runoff' in varX:
-            if area is None:
-                tabArea = gageII.readData(
-                    varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
-                area = tabArea['DRAIN_SQKM'].values[0]
-            dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
-        dfX = dfX.join(dfQ)
-    dfX = dfX.join(dfF)
-    dfX = dfX[varX]
-    dfX = dfX.interpolate(limit=nFill, limit_direction='both')
-    return dfX
-
-
-def readSiteY(siteNo, varY, area=None,
-              sd=np.datetime64('1979-01-01'),
-              ed=np.datetime64('2020-01-01')):
-    tr = pd.date_range(sd, ed)
-    dfY = pd.DataFrame({'date': tr}).set_index('date')
-    # extract data
-    codeLst = [code for code in varY if code in usgs.codeLst]
-    dfC, dfCF = usgs.readSample(
-        siteNo, codeLst=codeLst, startDate=sd, flag=True)
-    if '00060' in varY or 'runoff' in varY:
-        dfQ = usgs.readStreamflow(siteNo, startDate=sd)
-        dfQ = dfQ.rename(columns={'00060_00003': '00060'})
-        if 'runoff' in varY:
-            if area is None:
-                tabArea = gageII.readData(
-                    varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
-                area = tabArea['DRAIN_SQKM'].values[0]
-            dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
-        dfY = dfY.join(dfQ)
-    dfY = dfY.join(dfC)
-    dfY = dfY.join(dfCF)
-    dfY = dfY[varY]
-    return dfY
+    dfD = pd.DataFrame({'date': td}).set_index('date')
+    if 'runoff' in varLst:
+        if area is None:
+            tabArea = gageII.readData(
+                varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
+            area = tabArea['DRAIN_SQKM'].values[0]
+        dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
+    dfD = dfD.join(dfQ)
+    dfD = dfD.join(dfF)
+    dfD = dfD.join(dfC)
+    dfD = dfD.join(dfP)
+    dfD = dfD[varLst]
+    dfD = dfD.interpolate(limit=nFill, limit_direction='both')
+    if freq == 'D':
+        return dfD
+    elif freq == 'W':
+        dfW = dfD.resample('W-TUE').mean()
+        return dfW
 
 
 def extractVarMtd(varLst):
