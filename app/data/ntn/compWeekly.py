@@ -13,7 +13,7 @@ ntnIdLst = tabData['siteID'].unique().tolist()
 varLst = ntn.varLst
 
 folder1 = os.path.join(dirNTN, 'csv', 'weekly')
-folder2 = os.path.join(dirNTN, 'csv', 'weekly')
+folder2 = os.path.join(dirNTN, 'csv', 'weeklyRaw')
 
 for kk, ntnId in enumerate(ntnIdLst):
     df1 = pd.read_csv(os.path.join(folder1, ntnId), index_col='date')

@@ -40,9 +40,3 @@ for kk, ntnId in enumerate(ntnIdLst):
     print('{} {} {:.3f} {:.3f}'.format(kk, ntnId, tt2-tt1, tt2-tt0))
 print('Done')
 
-
-dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
-fileData = os.path.join(dirNTN, 'NTN-All-w.csv')
-tabData = pd.read_csv(fileData)
-tab = tabData[tabData['siteID'] == 'WV18']
-tab[varLst].astype('float32').to_csv('temp')

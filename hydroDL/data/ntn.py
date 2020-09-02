@@ -12,6 +12,8 @@ dictStat = dict(ph='norm', Conduc='norm', Ca='log-norm', Mg='log-norm',
                 K='log-norm', Na='log-norm', NH4='log-norm', NO3='log-norm',
                 Cl='log-norm', SO4='log-norm', distNTN='norm')
 
+dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
+
 
 def readDataRaw():
     """read downloaded NTN raw data:
@@ -19,7 +21,6 @@ def readDataRaw():
     'C:\\Users\\geofk\\work\\database\\EPA\\NTN\\NTNsites.csv'
     """
     # read raw data
-    dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
     fileData = os.path.join(dirNTN, 'NTN-All-w.csv')
     tabData = pd.read_csv(fileData)
     # fix the data
@@ -28,9 +29,7 @@ def readDataRaw():
     return tabData
 
 
-def loadSite(usgs=True):
-    # crds are projected to USGS proj in arcgis
-    dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
+def loadSite():
     fileSite = os.path.join(dirNTN, 'NTNsites.csv')
     tabSite = pd.read_csv(fileSite)
     tabSite = tabSite.rename(columns={'siteid': 'siteID'})
@@ -38,7 +37,7 @@ def loadSite(usgs=True):
     crdNTN = pd.read_csv(os.path.join(
         dirNTN, 'crdNTN.csv'), index_col='siteid')
     crdNTN.index.rename('siteID', inplace=True)
-    tabSite=tabSite.join(crdNTN[['x', 'y']])
+    tabSite = tabSite.join(crdNTN[['x', 'y']])
     # find valid siteNo
     # siteIdLst1 = tabData['siteID'].unique().tolist()
     # siteIdLst2 = tabSite['siteID'].tolist()
@@ -46,22 +45,37 @@ def loadSite(usgs=True):
     # tabSite = tabSite[tabSite['siteID'].isin(siteIdLst)].reset_index(drop=True)
     # tabData = tabData[tabData['siteID'].isin(siteIdLst)].reset_index(drop=True)
     tabSite.drop(['CO83', 'NC30', 'WI19'], inplace=True)
-    if usgs is False:
-        return tabSite
-    else:
-        crdUSGS = pd.read_csv(os.path.join(
-            dirNTN, 'crdUSGS.csv'), dtype={'STAID': str})
-        crdUSGS = crdUSGS.set_index('STAID')
-        crdUSGS.index.rename('idUSGS', inplace=True)
-        return tabSite, crdUSGS
+    return tabSite
+
+
+def loadCrdUSGS():
+    # crds are projected to USGS proj in arcgis
+    dirNTN = os.path.join(kPath.dirData, 'EPA', 'NTN')
+    crdUSGS = pd.read_csv(os.path.join(
+        dirNTN, 'crdUSGS.csv'), dtype={'STAID': str})
+    crdUSGS = crdUSGS.set_index('STAID')
+    crdUSGS.index.rename('idUSGS', inplace=True)
+    return crdUSGS
+
+
+def readSite(ntnId, freq='W'):
+    if freq == 'D':
+        ntnFolder = os.path.join(dirNTN, 'csv', 'daily')
+    elif freq == 'W':
+        ntnFolder = os.path.join(dirNTN, 'csv', 'weekly')
+    fileName = os.path.join(ntnFolder, ntnId)
+    tab = pd.read_csv(fileName, index_col='date')
+    tab.index = pd.to_datetime(tab.index)
+    return tab
 
 
 def readBasin(siteNo, varLst=varLst, freq='W'):
-    dirUsgs = os.path.join(kPath.dirData, 'EPA', 'NTN', 'usgs')
+    dirUsgs = os.path.join(dirNTN, 'usgs')
     if freq == 'W':
-        dirNtn = os.path.join(dirUsgs, 'weeklyRaw')
+        dirNtn = os.path.join(dirUsgs, 'weekly')
     elif freq == 'D':
-        raise ValueError('Daily NTN not working yet')
+        dirNtn = os.path.join(dirUsgs, 'daily')
     dfP = pd.read_csv(os.path.join(dirNtn, siteNo), index_col='date')
-    dfP = dfP[varP]
+    dfP.index = pd.to_datetime(dfP.index)
+    dfP = dfP[varLst]
     return dfP
