@@ -29,7 +29,7 @@ class DataModelWQ():
         self.siteNoLst = dictData['siteNoLst']
         self.name = dictData['name']
         self.rho = dictData['rho']
-        self.nFill = dictData['nFill']
+        # self.nFill = dictData['nFill']
         self.varG = dictData['varG']
         self.varC = dictData['varC']
         # self.varQ = ['00060', 'runoff']  # delete later
@@ -52,14 +52,13 @@ class DataModelWQ():
             print('calculate Runoff and re-save data {}'.format(time.time()-t0))
 
     @classmethod
-    def new(cls, caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):
+    def new(cls, caseName, siteNoLst, rho=365, freq='D', optC='end'):
         print('creating data class')
-        wrapData(caseName, siteNoLst, rho=rho,
-                 nFill=nFill, varC=varC, varG=varG)
+        wrapData(caseName, siteNoLst, rho=rho, freq=freq, optC=optC)
         wqData = cls(caseName)
-        ind1 = wqData.indByRatio(0.8)
-        ind2 = wqData.indByRatio(0.8, first=False)
-        wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
+        # ind1 = wqData.indByRatio(0.8)
+        # ind2 = wqData.indByRatio(0.8, first=False)
+        # wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
         return wqData
 
     def extractData(self, varTup=None, subset=None):
@@ -330,7 +329,7 @@ def exist(caseName):
         return False
 
 
-def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.lstWaterQuality):
+def wrapData(caseName, siteNoLst, rho=365, freq='D', optC='end'):
     """ wrap up input and target data for the model,as:
     x=[nT,nP,nX]
     y=[nP,nY]
@@ -346,62 +345,69 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
         varG {list} -- list of constant variables in gageII (default: {gageII.lstWaterQuality})
         varQ and varF are fixed so far
     """
-    # add a start/end date to improve efficiency.
-    startDate = pd.datetime(1979, 1, 1)
-    endDate = pd.datetime(2019, 12, 31)
-
+    sd = np.datetime64('1979-01-01')
+    ed = np.datetime64('2019-12-31')
+    # ts data
+    varF = gridMET.varLst+ntn.varLst+['distNTN']
+    varC = usgs.varC
+    varQ = usgs.varQ
+    varG = gageII.lstWaterQuality
     # gageII
     tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLst)
     tabG = gageII.updateCode(tabG)
-
-    # read data and merge to: f/q=[nT,nP,nX], g/c=[nP,nY]
-    fLst = list()  # forcing ts
-    gLst = list()  # geo-const
-    qLst = list()  # streamflow
-    cLst = list()  # water quality
-    cfLst = list()  # water quality flags
+    # read data and merge to: x=[nT,nP,nX], xc=[nP,nY]
+    fLst, qLst, cLst, gLst = [list() for x in range(4)]
     infoLst = list()
     t0 = time.time()
     for i, siteNo in enumerate(siteNoLst):
         t1 = time.time()
-        dfC, dfCF = usgs.readSample(
-            siteNo, codeLst=varC, startDate=startDate, flag=2)
-        dfQ = usgs.readStreamflow(siteNo, startDate=startDate)
-        dfF = gridMET.readBasin(siteNo)
+        varLst = varQ+varC+varF
+        df = readSiteTS(siteNo, varLst=varLst, freq=freq)
+        dfC = df[varC].dropna(how='all')
         for k in range(len(dfC)):
             ct = dfC.index[k]
-            ctR = pd.date_range(ct-pd.Timedelta(days=rho-1), ct)
-            if (ctR[0] < startDate) or (ctR[-1] > endDate):
+            if freq == 'D':
+                ctR = pd.date_range(
+                    ct-pd.Timedelta(days=rho-1), ct)
+            elif freq == 'W':
+                ctR = pd.date_range(
+                    ct-pd.Timedelta(days=rho*7-1), ct, freq='W-TUE')
+            if (ctR[0] < sd) or (ctR[-1] > ed):
                 continue
-            tempQ = pd.DataFrame({'date': ctR}).set_index('date').join(
-                dfQ).interpolate(limit=nFill, limit_direction='both')
-            tempF = pd.DataFrame({'date': ctR}).set_index('date').join(
-                dfF).interpolate(limit=nFill, limit_direction='both')
-            qLst.append(tempQ.values)
-            fLst.append(tempF.values)
-            cLst.append(dfC.iloc[k].values)
-            cfLst.append(dfCF.iloc[k].values)
+            for lst, var in zip([fLst,  qLst], [varF, varQ]):
+                temp = pd.DataFrame({'date': ctR}).set_index(
+                    'date').join(df[var])
+                # temp = temp.interpolate(
+                #     limit=nFill, limit_direction='both', limit_area='inside')
+                # give up interpolation after many thoughts
+                lst.append(temp.values)
+            if optC == 'end':
+                cLst.append(dfC.iloc[k].values)
+            elif optC == 'seq':
+                tempC = pd.DataFrame({'date': ctR}).set_index(
+                    'date').join(df[varC])
+                cLst.append(tempC.values)
             gLst.append(tabG.loc[siteNo].values)
             infoLst.append(dict(siteNo=siteNo, date=ct))
         t2 = time.time()
         print('{} on site {} reading {:.3f} total {:.3f}'.format(
             i, siteNo, t2-t1, t2-t0))
-    q = np.stack(qLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     f = np.stack(fLst, axis=-1).swapaxes(1, 2).astype(np.float32)
+    q = np.stack(qLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
-    c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
-    cf = np.stack(cfLst, axis=-1).swapaxes(0, 1).astype(np.float32)
+    if optC == 'end':
+        c = np.stack(cLst, axis=-1).swapaxes(0, 1).astype(np.float32)
+    elif optC == 'seq':
+        c = np.stack(cLst, axis=-1).swapaxes(1, 2).astype(np.float32)
+    # save
     infoDf = pd.DataFrame(infoLst)
-    # add runoff
-    runoff = calRunoff(q[:, :, 0], infoDf)
-    q = np.stack([q[:, :, 0], runoff], axis=-1).astype(np.float32)
     saveFolder = os.path.join(kPath.dirWQ, 'trainData')
     saveName = os.path.join(saveFolder, caseName)
-    np.savez(saveName, q=q, f=f, c=c, g=g, cf=cf)
+    np.savez(saveName, q=q, f=f, c=c, g=g)
     infoDf.to_csv(saveName+'.csv')
-    dictData = dict(name=caseName, rho=rho, nFill=nFill,
-                    varG=varG, varC=varC, varQ=['00060', 'runoff'],
-                    varF=gridMET.varLst, siteNoLst=siteNoLst)
+    dictData = dict(name=caseName, rho=rho,
+                    varG=varG, varC=varC, varQ=varQ,
+                    varF=varF, siteNoLst=siteNoLst)
     with open(saveName+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)
 
@@ -455,7 +461,7 @@ def indYrOddEven(info):
     return indLst
 
 
-def readSiteTS(siteNo, varLst, freq='D', area=None, nFill=5,
+def readSiteTS(siteNo, varLst, freq='D', area=None,
                sd=np.datetime64('1979-01-01'),
                ed=np.datetime64('2019-12-31')):
     # read data
@@ -489,7 +495,6 @@ def readSiteTS(siteNo, varLst, freq='D', area=None, nFill=5,
     dfD = dfD.join(dfC)
     dfD = dfD.join(dfP)
     dfD = dfD[varLst]
-    dfD = dfD.interpolate(limit=nFill, limit_direction='both')
     if freq == 'D':
         return dfD
     elif freq == 'W':
