@@ -72,18 +72,19 @@ def dealNaN(dataTup, optNaN):
             if len(indNan[0]) > 0:
                 if optN == 1:
                     data[indNan] = -1
-                    print('nan found and filled')
+                    print('nan found and filled -1')
                 elif optN == 2:
                     if data.ndim == 2:
                         rmLst.append(indNan[0])
                     if data.ndim == 3:
                         rmLst.append(np.unique(np.where(np.isnan(data))[1]))
-                    print('nan found but not removed - later')
         dataLst.append(data)
     if len(rmLst) > 0:
         rmAry = np.concatenate(rmLst)
         for k in range(len(dataLst)):
             dataLst[k] = np.delete(dataLst[k], rmAry, axis=dataLst[k].ndim-2)
+        print('nan found and removed')
+
     return dataLst
 
 
