@@ -3,8 +3,10 @@ import numpy as np
 import pandas as pd
 from hydroDL import kPath
 
-varLst = ['ph', 'Conduc', 'Ca', 'Mg', 'K',
-          'Na', 'NH4', 'NO3', 'Cl', 'SO4']
+
+varP = ['ph', 'Conduc', 'Ca', 'Mg', 'K',
+        'Na', 'NH4', 'NO3', 'Cl', 'SO4']
+varLst = varP+['distNTN']
 flagLst = ['flagCa', 'flagMg', 'flagK', 'flagNa', 'flagNH4',
            'flagNO3', 'flagCl', 'flagSO4', 'valcode', 'invalcode']
 
