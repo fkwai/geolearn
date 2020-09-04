@@ -42,7 +42,6 @@ np.save(os.path.join(dirInv, 'matCountWeekly'), countMatW)
 # sum up
 nyLst = list(range(5, 21))  # samples in year
 dfCountD = pd.DataFrame(index=nyLst, columns=codeLst).fillna(0)
-
 for code in codeLst:
     ic = codeLst.index(code)
     countD = countMatD[:, :, ic]
