@@ -6,16 +6,17 @@ import numpy as np
 from hydroDL.master import slurm
 import importlib
 
-
+# for a test on training to resolve warnings
 varNtnLst = ['ph', 'Conduc', 'Ca', 'Mg', 'K', 'Na', 'NH4', 'NO3', 'Cl', 'SO4']
 varNtnUsgsLst = ['00400', '00095', '00915', '00925', '00935',
                  '00930', '71846', '00618', '00940', '00945']
 
 # ntn variables
-dataName='sbW'
-caseLst = list()
+dataName = 'sbW'
 wqData = waterQuality.DataModelWQ(dataName)
-codeLst = wqData.varC + ['comb0', 'comb1', 'comb2']
+# codeLst = wqData.varC + ['comb0', 'comb1', 'comb2']
+codeLst = ['comb0', 'comb1', 'comb2']
+caseLst = list()
 for code in codeLst:
     if code[:4] == 'comb':
         labelLst = ['plain', 'ntn']
@@ -52,4 +53,4 @@ for code in codeLst:
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
-    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=12)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)

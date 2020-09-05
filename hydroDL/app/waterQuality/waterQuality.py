@@ -18,6 +18,7 @@ class DataModelWQ():
         self.f = npzFile['f']
         self.c = npzFile['c']
         self.g = npzFile['g']
+        self.dataProvision()
         if rmFlag is True:
             self.cf = npzFile['cf']
             self.c[self.cf == 1] = np.nan
@@ -32,8 +33,6 @@ class DataModelWQ():
         # self.nFill = dictData['nFill']
         self.varG = dictData['varG']
         self.varC = dictData['varC']
-        # self.varQ = ['00060', 'runoff']  # delete later
-        # self.varF = gridMET.varLst  # delete later
         self.varQ = dictData['varQ']
         self.varF = dictData['varF']
         self.info = pd.read_csv(saveName+'.csv', index_col=0,
@@ -60,6 +59,12 @@ class DataModelWQ():
         # ind2 = wqData.indByRatio(0.8, first=False)
         # wqData.saveSubset(['first80', 'last20'], [ind1, ind2])
         return wqData
+
+    def dataProvision(self):
+        bq = np.less(self.q, 0., where=~np.isnan(self.q))
+        if np.any(bq):
+            print('Find negetive Q, filled zero')
+            self.q[bq] = 0
 
     def extractData(self, varTup=None, subset=None):
         dataTup = self.extractVar(varTup)
