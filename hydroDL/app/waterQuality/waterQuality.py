@@ -38,9 +38,10 @@ class DataModelWQ():
         self.info = pd.read_csv(saveName+'.csv', index_col=0,
                                 dtype={'siteNo': str})
         self.info['date'] = self.info['date'].astype('datetime64[D]')
-
+        nWD = len(self.info['date'].dt.dayofweek.unique())
+        self.freq = 'W' if nWD == 1 else 'D'
         self.subset = self.loadSubset()
-        self.dfSite = countSite(self.info)
+        # self.dfSite = countSite(self.info)
         print('loading info {}'.format(time.time()-t0))
 
         if self.q.shape[2] == 1:  # add runoff
@@ -447,17 +448,6 @@ def countSite(info):
     return dfSite
 
 
-def indYr(info, yrLst=[1979, 1990, 2000, 2010, 2020]):
-    info['yr'] = pd.DatetimeIndex(info['date']).year
-    indLst = list()
-    for k in range(len(yrLst)-1):
-        sy = yrLst[k]
-        ey = yrLst[k+1]
-        ind = info.index[(info['yr'] >= sy) & (info['yr'] < ey)].values
-        indLst.append(ind)
-    return indLst
-
-
 def indYrOddEven(info):
     info['yr'] = pd.DatetimeIndex(info['date']).year
     ind1 = info.index[info['yr'] % 2 == 1].values
@@ -483,22 +473,19 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
     if len(varQ) > 0:
         dfQ = usgs.readStreamflow(siteNo, startDate=sd)
         dfQ = dfQ.rename(columns={'00060_00003': '00060'})
+        if 'runoff' in varLst:
+            if area is None:
+                tabArea = gageII.readData(
+                    varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
+                area = tabArea['DRAIN_SQKM'].values[0]
+            dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
+        dfD = dfD.join(dfQ)
     if len(varF) > 0:
         dfF = gridMET.readBasin(siteNo, varLst=varF)
+        dfD = dfD.join(dfF)
     if len(varP) > 0:
         dfP = ntn.readBasin(siteNo, varLst=varP, freq='D')
-    # extract data
-    dfD = pd.DataFrame({'date': td}).set_index('date')
-    if 'runoff' in varLst:
-        if area is None:
-            tabArea = gageII.readData(
-                varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
-            area = tabArea['DRAIN_SQKM'].values[0]
-        dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
-    dfD = dfD.join(dfQ)
-    dfD = dfD.join(dfF)
-    dfD = dfD.join(dfC)
-    dfD = dfD.join(dfP)
+        dfD = dfD.join(dfP)
     dfD = dfD[varLst]
     if freq == 'D':
         return dfD
@@ -539,3 +526,6 @@ def calErrSeq(dfP, dfO, tBar=np.datetime64('2000-01-01')):
     rmse2 = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
     corr2 = np.corrcoef(a[indV], b[indV])[0, 1]
     return [rmse1, rmse2], [corr1, corr2]
+
+
+

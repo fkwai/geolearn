@@ -220,7 +220,7 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
 def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
                  returnOut=False, retest=False,
                  sd=np.datetime64('1979-01-01'),
-                 ed=np.datetime64('2020-01-01')):
+                 ed=np.datetime64('2019-12-31')):
     # run sequence test for all sites, default to be from first date to last date
     if type(siteNoLst) is not list:
         siteNoLst = [siteNoLst]
@@ -255,8 +255,11 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
                 area = None
             # test model
             print('testing {} from {} to {}'.format(siteNo, sdS, edS))
-            dfX = waterQuality.readSiteX(
-                siteNo, varX, sd=sd, ed=ed, area=area, nFill=5)
+            freq = wqData.freq
+            dfX = waterQuality.readSiteTS(
+                siteNo, varX, freq=freq, area=area, sd=sd, ed=ed)
+            # dfX = waterQuality.readSiteX(
+            #     siteNo, varX, sd=sd, ed=ed, area=area, nFill=5)
             xA = np.expand_dims(dfX.values, axis=1)
             xcA = np.expand_dims(
                 tabG.loc[siteNo].values.astype(np.float), axis=0)
@@ -293,16 +296,15 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
 
 def loadSeq(outName, siteNo,
             sd=np.datetime64('1979-01-01'),
-            ed=np.datetime64('2020-01-01'),
+            ed=np.datetime64('2019-12-31'),
             ep=500):
     outDir = nameFolder(outName)
     sdS = pd.to_datetime(sd).strftime('%Y%m%d')
     edS = pd.to_datetime(ed).strftime('%Y%m%d')
     saveDir = os.path.join(outDir, 'seq-{}-{}-ep{}'.format(sdS, edS, ep))
     dfPred = pd.read_csv(os.path.join(saveDir, siteNo))
-    dfPred = utils.time.datePdf(dfPred)
-    dfObs = waterQuality.readSiteY(siteNo, dfPred.columns.tolist())
-    return dfPred, dfObs
+    dfPred = utils.time.datePdf(dfPred)    
+    return dfPred
 
 
 def modelLinear(outName, testset, trainset=None, wqData=None):

@@ -1,4 +1,5 @@
 from . import time
+from . import stat
 import numpy as np
 
 
