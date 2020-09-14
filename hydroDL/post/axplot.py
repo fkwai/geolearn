@@ -101,19 +101,23 @@ def plotBox(ax, x, labLst=None, c='r'):
 
 def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange=None):
     ny, nx = mat.shape
-    ax.set_xticks(np.arange(ny))
-    ax.set_yticks(np.arange(nx))
-    if ny == nx:
-        labX = labLst
-        labY = labLst
-    else:
+    ax.set_xticks(np.arange(nx))
+    ax.set_yticks(np.arange(ny))
+    if type(labLst[0]) is list:
         labX = labLst[1]
         labY = labLst[0]
+    else:        
+        labX = labLst
+        labY = labLst
     ax.set_xticklabels(labX)
     ax.set_yticklabels(labY)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
-    im = ax.imshow(mat)
+    if vRange is None:
+        im = ax.imshow(mat)
+    else:
+        vmin, vmax = vRange
+        im = ax.imshow(mat, vmin=vmin, vmax=vmax)
     for j in range(ny):
         for i in range(nx):
             text = ax.text(i, j, fmt.format(mat[j, i]),

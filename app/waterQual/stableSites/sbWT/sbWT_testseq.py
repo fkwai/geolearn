@@ -5,7 +5,8 @@ from hydroDL.data import usgs, gageII, gridMET, ntn
 import numpy as np
 from hydroDL.master import slurm
 import importlib
-
+import os
+import json
 
 varNtnLst = ['ph', 'Conduc', 'Ca', 'Mg', 'K', 'Na', 'NH4', 'NO3', 'Cl', 'SO4']
 varNtnUsgsLst = ['00400', '00095', '00915', '00925', '00935',
@@ -19,15 +20,9 @@ dataName = 'sbWT'
 outNameLst = list()
 outCodeLst = list()
 wqData = waterQuality.DataModelWQ(dataName)
-codeLst = wqData.varC + ['comb0', 'comb1', 'comb2']
+codeLst = wqData.varC
 for code in codeLst:
-    if code[:4] == 'comb':
-        labelLst = ['plain', 'ntn']
-    else:
-        if code in varNtnUsgsLst:
-            labelLst = ['plain', 'ntnS']
-        else:
-            labelLst = ['plain']
+    labelLst = ['ntn', 'ntnq']
     for label in labelLst:
         subsetLst = ['{}-Y{}'.format(code, x) for x in [1, 2]]
         subset = subsetLst[0]

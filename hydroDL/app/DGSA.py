@@ -34,7 +34,7 @@ def DGSA_light(parameters, responses, ParametersNames=None, n_clsters=3, n_boots
             model = KMedoids(n_clusters=n_clsters)
             Medoids, clsters = model.fit(responses, plotit=False)
             OK = True
-        except valueError:
+        except:
             OK = False
     '''STEP 2. Calculate L1-Norm distance between sample distribution and cluster distributions'''
     '''STEP 2.1 Calucate the CDF of the original parameters'''
