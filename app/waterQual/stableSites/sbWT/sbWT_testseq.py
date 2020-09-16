@@ -29,3 +29,11 @@ for code in codeLst:
         outName = '{}-{}-{}-{}'.format(dataName, code, label, subset)
         siteNoLst = dictSite[code]
         basins.testModelSeq(outName, siteNoLst, wqData=wqData)
+
+# test for streamflow
+dataName = 'sbWT'
+wqData = waterQuality.DataModelWQ(dataName)
+subsetLst = 'comb0-Y1'
+saveName = '{}-{}'.format(dataName, 'streamflow-Y1')
+siteNoLst = wqData.siteNoLst
+basins.testModelSeq(saveName, siteNoLst, wqData=wqData)

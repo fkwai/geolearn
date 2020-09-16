@@ -30,7 +30,7 @@ yP, ycP = basins.testModel(
 ind = wqData.subset[testSet]
 bdate = wqData.info.iloc[ind]['date'].values > np.datetime64('1980-01-01')
 o = wqData.c[-1, ind[bdate], ic]
-p = yP[-1, bdate, 1]
+p = yP[-1, bdate, 0]
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
 ax.plot(o, p, '*')

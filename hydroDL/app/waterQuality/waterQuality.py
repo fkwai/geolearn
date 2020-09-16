@@ -5,6 +5,7 @@ import numpy as np
 import json
 from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
+from hydroDL.master import basins
 
 
 class DataModelWQ():
@@ -354,7 +355,7 @@ def wrapData(caseName, siteNoLst, rho=365, freq='D', optC='end'):
     sd = np.datetime64('1979-01-01')
     ed = np.datetime64('2019-12-31')
     # ts data
-    varF = gridMET.varLst+ntn.varLst+['distNTN']
+    varF = gridMET.varLst+ntn.varLst
     varC = usgs.varC
     varQ = usgs.varQ
     varG = gageII.lstWaterQuality
@@ -526,6 +527,3 @@ def calErrSeq(dfP, dfO, tBar=np.datetime64('2000-01-01')):
     rmse2 = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
     corr2 = np.corrcoef(a[indV], b[indV])[0, 1]
     return [rmse1, rmse2], [corr1, corr2]
-
-
-

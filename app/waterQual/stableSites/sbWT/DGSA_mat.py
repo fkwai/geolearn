@@ -24,7 +24,7 @@ for code in codeLst:
     print(code)
     trainSet = '{}-Y1'.format(code)
     testSet = '{}-Y2'.format(code)
-    outName = '{}-{}-{}-{}'.format(dataName, code, 'ntnp', trainSet)
+    outName = '{}-{}-{}-{}'.format(dataName, code, 'ntnq', trainSet)
     siteNoLst = wqData.info.iloc[wqData.subset[trainSet]].siteNo.unique()
     dfCrd = gageII.readData(
         varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
@@ -39,7 +39,7 @@ for code in codeLst:
         ind = wqData.subset[subset]
         info = wqData.info.iloc[ind].reset_index()
         o = wqData.c[-1, ind, ic]
-        p = yP[-1, :, 1]
+        p = yP[-1, :, 0]
         for iS, siteNo in enumerate(siteNoLst):
             indS = info[info['siteNo'] == siteNo].index.values
             rmse, corr = utils.stat.calErr(p[indS], o[indS])

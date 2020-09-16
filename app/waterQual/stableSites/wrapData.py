@@ -23,3 +23,4 @@ for freq in freqLst:
         print(dataName)
         wqData = waterQuality.DataModelWQ.new(
             dataName, siteNoLst, rho=rho, freq=freq, optC=optC)
+
