@@ -18,7 +18,8 @@ chemLst = ['00300', '00405', '00410', '00440', '00600',
 # normalization method
 dictStat = {
     'runoff': 'log-norm',
-    'Qpred': 'log-norm',
+    'qPredY1': 'log-norm',
+    'qPredY2': 'log-norm',
     '00010': 'norm',
     '00060': 'log-norm',
     '00094': 'log-norm',
