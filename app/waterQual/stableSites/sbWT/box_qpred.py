@@ -7,25 +7,25 @@ from hydroDL.post import axplot, figplot
 import numpy as np
 import matplotlib.pyplot as plt
 
-codeLst = ['00010','00300','00405','00410','00600','00605',
-           '00660','00665','00681','00950','00955','70303',
-           '80154', ]
+codeLst = sorted(usgs.varC)
 
 ep = 500
 reTest = False
-dataName = 'sbWT'
-wqData = waterQuality.DataModelWQ(dataName)
+wqData = waterQuality.DataModelWQ('sbWTQ')
 siteNoLst = wqData.info.siteNo.unique()
 nSite = len(siteNoLst)
 
 # single
 corrMat = np.full([nSite, len(codeLst), 3], np.nan)
 rmseMat = np.full([nSite, len(codeLst), 3], np.nan)
-for iLab, label in enumerate(['plain', 'ntn', 'ntnq']):
+for iLab, label in enumerate(['ntn', 'qpred', 'ntnq']):
     for iCode, code in enumerate(codeLst):
         trainSet = '{}-Y1'.format(code)
         testSet = '{}-Y2'.format(code)
-        outName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
+        if label == 'qpred':
+            outName = '{}-{}-{}-{}'.format('sbWTQ', code, label, trainSet)
+        else:
+            outName = '{}-{}-{}-{}'.format('sbWT', code, label, trainSet)
         master = basins.loadMaster(outName)
         ic = wqData.varC.index(code)
         # for iT, subset in enumerate([trainSet, testSet]):
@@ -34,10 +34,10 @@ for iLab, label in enumerate(['plain', 'ntn', 'ntnq']):
             outName, subset, wqData=wqData, ep=ep, reTest=reTest)
         ind = wqData.subset[subset]
         info = wqData.info.iloc[ind].reset_index()
-        if label == 'ntnq':
-            p = yP[-1, :, 0]
-        else:
+        if label == 'ntn':
             p = yP[-1, :, 1]
+        else:
+            p = yP[-1, :, 0]
         o = wqData.c[-1, ind, ic]
         for iS, siteNo in enumerate(siteNoLst):
             indS = info[info['siteNo'] == siteNo].index.values
@@ -48,7 +48,7 @@ for iLab, label in enumerate(['plain', 'ntn', 'ntnq']):
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
-labLst2 = ['test plain', 'test w/ ntn', 'test w/ ntn Q']
+labLst2 = ['Q as target ', 'sim Q as input', 'obs Q as input']
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
@@ -56,7 +56,7 @@ for k in range(len(codeLst)):
     for i in [0, 1, 2]:
         temp.append(corrMat[:, k, i])
     dataBox.append(temp)
-fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,cLst='bgr',
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='bgr',
                       label2=labLst2, figsize=(12, 4), yRange=[0, 1])
 # fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
 #                       label2=labLst2, figsize=(12, 4), sharey=False)

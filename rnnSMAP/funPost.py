@@ -104,7 +104,7 @@ def plotMap(grid, *, crd, ax=None, lat=None, lon=None, title=None,
     # map.drawcountries()
     x, y = mm(lon, lat)
     xx, yy = np.meshgrid(x, y)
-    cs = mm.pcolormesh(xx, yy, grid, cmap=plt.cm.jet, vmin=vmin, vmax=vmax)
+    cs = mm.pcolormesh(xx, yy, grid, cmap=plt.cm.viridis, vmin=vmin, vmax=vmax)
     if shape is not None:
         if type(shape) is not list:
             shape = [shape]

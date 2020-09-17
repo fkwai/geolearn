@@ -31,6 +31,9 @@ for code in codeLst:
         elif label == 'q':
             varX = ['00060']+gridMET.varLst
             varY = varC
+        elif label == 'qrm':
+            varX = gridMET.varLst
+            varY = varC
         varYC = None
         subsetLst = ['{}-Y{}'.format(code, x) for x in [1, 2]]
         # wrap up

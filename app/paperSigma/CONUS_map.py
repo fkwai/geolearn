@@ -57,7 +57,8 @@ for iFig in range(0, 2):
 
     dataErr = getattr(statErr, 'ubRMSE')
     dataSigma = getattr(statSigma, 'sigma')
-    cRange = [0, 0.1]
+    cRange = [0, 0.06]
+    cRange2 = [0, 0.03]
 
     # plot map RMSE
     ax = fig.add_subplot(gs[0, 0])
@@ -102,14 +103,14 @@ for iFig in range(0, 2):
         grid = ds.data2grid(data=dataSigmaX)
         titleStr = r'$\sigma_{x}$ '+figTitle
         rnnSMAP.funPost.plotMap(grid, crd=ds.crdGrid, ax=ax,
-                                cRange=[0, 0.1], title=titleStr)
+                                cRange=cRange, title=titleStr)
 
         # plot map sigma
         ax = fig.add_subplot(gs[0, 1])
         grid = ds.data2grid(data=dataSigmaMC)
         titleStr = r'$\sigma_{MC}$'+' of '+figTitle
         rnnSMAP.funPost.plotMap(grid, crd=ds.crdGrid, ax=ax,
-                                cRange=[0, 0.05], title=titleStr)
+                                cRange=cRange2, title=titleStr)
 
         # plot map sigma vs RMSE
         ax = fig.add_subplot(gs[0, 2])
