@@ -16,9 +16,10 @@ siteNoLst = wqData.info.siteNo.unique()
 nSite = len(siteNoLst)
 
 # single
-corrMat = np.full([nSite, len(codeLst), 3], np.nan)
-rmseMat = np.full([nSite, len(codeLst), 3], np.nan)
-for iLab, label in enumerate(['ntn', 'qpred', 'ntnq']):
+labelLst = ['qrm', 'ntn', 'qpred', 'ntnq']
+corrMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
+rmseMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
+for iLab, label in enumerate(labelLst):
     for iCode, code in enumerate(codeLst):
         trainSet = '{}-Y1'.format(code)
         testSet = '{}-Y2'.format(code)
@@ -34,10 +35,7 @@ for iLab, label in enumerate(['ntn', 'qpred', 'ntnq']):
             outName, subset, wqData=wqData, ep=ep, reTest=reTest)
         ind = wqData.subset[subset]
         info = wqData.info.iloc[ind].reset_index()
-        if label == 'ntn':
-            p = yP[-1, :, 1]
-        else:
-            p = yP[-1, :, 0]
+        p = yP[-1, :, master['varY'].index(code)]
         o = wqData.c[-1, ind, ic]
         for iS, siteNo in enumerate(siteNoLst):
             indS = info[info['siteNo'] == siteNo].index.values
@@ -48,12 +46,12 @@ for iLab, label in enumerate(['ntn', 'qpred', 'ntnq']):
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
-labLst2 = ['Q as target ', 'sim Q as input', 'obs Q as input']
+labLst2 = ['no Q', 'Q as target ', 'sim Q as input', 'obs Q as input']
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
     temp = list()
-    for i in [0, 1, 2]:
+    for i in range(len(labelLst)):
         temp.append(corrMat[:, k, i])
     dataBox.append(temp)
 fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='bgr',

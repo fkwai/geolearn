@@ -19,7 +19,7 @@ wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
 for code in codeLst:
     # labelLst = ['ntn', 'ntnq']
-    labelLst = ['q']
+    labelLst = ['qonly']
     varC = [code]
     for label in labelLst:
         if label == 'ntn':
@@ -34,6 +34,9 @@ for code in codeLst:
         elif label == 'qrm':
             varX = gridMET.varLst
             varY = varC
+        elif label == 'qonly':
+            varX = ['00060']
+            varY = varC
         varYC = None
         subsetLst = ['{}-Y{}'.format(code, x) for x in [1, 2]]
         # wrap up
@@ -47,4 +50,4 @@ for code in codeLst:
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
-    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=12)
