@@ -7,30 +7,24 @@ from hydroDL.post import axplot, figplot
 import numpy as np
 import matplotlib.pyplot as plt
 
-codeLst = sorted(usgs.varC)
 
+codeLst = sorted(usgs.varC)
 ep = 500
 reTest = False
-wqData = waterQuality.DataModelWQ('sbWTQ')
+dataName = 'sbWT'
+wqData = waterQuality.DataModelWQ(dataName)
 siteNoLst = wqData.info.siteNo.unique()
 nSite = len(siteNoLst)
 
 # single
-# labelLst = ['qrm', 'ntn', 'qpred', 'ntnq']
-labelLst = ['ntn', 'ntnq']
-cLst='br'
-labLst2 = ['Q as target', 'Q as input']
-
+labelLst = ['q', 'ntnq']
 corrMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 rmseMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 for iLab, label in enumerate(labelLst):
     for iCode, code in enumerate(codeLst):
         trainSet = '{}-Y1'.format(code)
         testSet = '{}-Y2'.format(code)
-        if label == 'qpred':
-            outName = '{}-{}-{}-{}'.format('sbWTQ', code, label, trainSet)
-        else:
-            outName = '{}-{}-{}-{}'.format('sbWT', code, label, trainSet)
+        outName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
         master = basins.loadMaster(outName)
         ic = wqData.varC.index(code)
         # for iT, subset in enumerate([trainSet, testSet]):
@@ -50,6 +44,7 @@ for iLab, label in enumerate(labelLst):
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
+labLst2 = ['w/o ntn', 'w/ ntn']
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
@@ -57,7 +52,7 @@ for k in range(len(codeLst)):
     for i in range(len(labelLst)):
         temp.append(corrMat[:, k, i])
     dataBox.append(temp)
-fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst=cLst,
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='br',
                       label2=labLst2, figsize=(12, 4), yRange=[0, 1])
 # fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
 #                       label2=labLst2, figsize=(12, 4), sharey=False)

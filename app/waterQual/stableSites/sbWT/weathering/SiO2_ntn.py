@@ -17,7 +17,7 @@ code = '00955'
 
 trainSet = '{}-Y1'.format(code)
 testSet = '{}-Y2'.format(code)
-labelLst = ['plain', 'ntn', 'ntnq']
+labelLst = ['q', 'ntnq']
 siteNoLst = wqData.info.iloc[wqData.subset[trainSet]].siteNo.unique()
 corrMat = np.full([len(siteNoLst), len(labelLst)], np.nan)
 rmseMat = np.full([len(siteNoLst),  len(labelLst)], np.nan)
@@ -44,10 +44,12 @@ for iLab, label in enumerate(labelLst):
 
 
 def funcMap():
-    figM, axM = plt.subplots(3, 1, figsize=(6, 8))
-    axplot.mapPoint(axM[0], lat, lon, corrMat[:, 2], vRange=[0.5, 1], s=16)
-    axplot.mapPoint(axM[1], lat, lon, corrMat[:, 1]/corrMat[:, 0], s=16)
-    axplot.mapPoint(axM[2], lat, lon, corrMat[:, 2]/corrMat[:, 1], s=16)
+    figM, axM = plt.subplots(1, 2, figsize=(10, 6))
+    axplot.mapPoint(axM[0], lat, lon, corrMat[:, 1], vRange=[0.5, 1], s=16)
+    axM[0].set_title('correlation with NTN')
+    diff = corrMat[:, 1]**2/corrMat[:, 0]**2
+    axplot.mapPoint(axM[1], lat, lon, diff, s=16)
+    axM[1].set_title('Rsq with NTN / Rsq without NTN')
     shortName = usgs.codePdf.loc[code]['shortName']
     # axM.set_title('Testing correlation of {}'.format(shortName))
     figP, axP = plt.subplots(1, 1, figsize=(12, 4))
@@ -56,7 +58,7 @@ def funcMap():
 
 def funcPoint(iP, axP):
     siteNo = siteNoLst[iP]
-    cLst = 'cgb'
+    cLst = 'cb'
     dfO = waterQuality.readSiteTS(siteNo, [code], freq=wqData.freq)[code]
     yr = pd.DatetimeIndex(dfO.index).year
     dfO1 = dfO[yr % 2 == 1]
@@ -71,10 +73,10 @@ def funcPoint(iP, axP):
     axplot.plotTS(axP, dfO1.index, dfO1.values, styLst='*', cLst='m')
     axplot.plotTS(axP, dfO2.index, dfO2.values, styLst='*', cLst='r')
     axP.legend(labelLst+['obs train', 'obs test'])
-    rmse1, corr1 = utils.stat.calErr(dfC['ntn'].values, dfC['obs'].values)
+    rmse1, corr1 = utils.stat.calErr(dfC['q'].values, dfC['obs'].values)
     rmse2, corr2 = utils.stat.calErr(dfC['ntnq'].values, dfC['obs'].values)
     axP.set_title(
-        'site {} corr ntn = {:.3f} corr ntn+q = {:.3f}'.format(siteNo, corr1, corr2))
+        'site {} corr w/o ntn = {:.3f} corr w/ ntn = {:.3f}'.format(siteNo, corr1, corr2))
 
-
+plt.tight_layout()
 figM, figP = figplot.clickMap(funcMap, funcPoint)

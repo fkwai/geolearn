@@ -17,7 +17,7 @@ siteNoLst = wqData.info.siteNo.unique()
 nSite = len(siteNoLst)
 
 # single
-labelLst = ['plain', 'ntnS', 'ntn', 'q', 'ntnq']
+labelLst = ['plain', 'ntnS', 'ntn']
 corrMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 rmseMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 for iLab, label in enumerate(labelLst):
@@ -44,7 +44,7 @@ for iLab, label in enumerate(labelLst):
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
-labLst2 = ['plain', 'w/ single ntn', 'w/ all ntn', 'w/ Q', 'w/ ntn+Q']
+labLst2 = ['w/o ntn', 'w/ single ntn', 'w/ all ntn']
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]

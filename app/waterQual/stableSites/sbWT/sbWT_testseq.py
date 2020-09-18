@@ -21,8 +21,9 @@ outNameLst = list()
 outCodeLst = list()
 wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
+# codeLst=['00955']
 for code in codeLst:
-    labelLst = ['ntn', 'ntnq']
+    labelLst = ['qrm']
     for label in labelLst:
         subsetLst = ['{}-Y{}'.format(code, x) for x in [1, 2]]
         subset = subsetLst[0]
@@ -31,9 +32,9 @@ for code in codeLst:
         basins.testModelSeq(outName, siteNoLst, wqData=wqData)
 
 # test for streamflow
-dataName = 'sbWT'
-wqData = waterQuality.DataModelWQ(dataName)
-subsetLst = 'comb0-Y1'
-saveName = '{}-{}'.format(dataName, 'streamflow-Y1')
-siteNoLst = wqData.siteNoLst
-basins.testModelSeq(saveName, siteNoLst, wqData=wqData)
+# dataName = 'sbWT'
+# wqData = waterQuality.DataModelWQ(dataName)
+# subsetLst = 'comb0-Y1'
+# saveName = '{}-{}'.format(dataName, 'streamflow-Y1')
+# siteNoLst = wqData.siteNoLst
+# basins.testModelSeq(saveName, siteNoLst, wqData=wqData)

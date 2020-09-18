@@ -16,10 +16,9 @@ siteNoLst = wqData.info.siteNo.unique()
 nSite = len(siteNoLst)
 
 # single
-# labelLst = ['qrm', 'ntn', 'qpred', 'ntnq']
-labelLst = ['ntn', 'ntnq']
-cLst='br'
-labLst2 = ['Q as target', 'Q as input']
+labelLst = ['qrm', 'plain', 'qpred', 'q']
+cLst='bgkr'
+labLst2 = ['no Q ', 'obs Q as target', 'pred Q as input', 'obs Q as input']
 
 corrMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 rmseMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
