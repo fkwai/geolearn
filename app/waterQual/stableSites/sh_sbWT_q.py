@@ -19,7 +19,7 @@ wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
 for code in codeLst:
     # labelLst = ['ntn', 'ntnq']
-    labelLst = ['ntnonly']
+    labelLst = ['rmf']
     varC = [code]
     for label in labelLst:
         if label == 'ntn':
@@ -39,6 +39,9 @@ for code in codeLst:
             varY = varC
         elif label == 'ntnonly':
             varX = gridMET.varLst+ntn.varLst
+            varY = varC
+        elif label == 'rmf':
+            varX = ntn.varLst
             varY = varC
         varYC = None
         subsetLst = ['{}-Y{}'.format(code, x) for x in [1, 2]]
