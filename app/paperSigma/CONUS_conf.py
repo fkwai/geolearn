@@ -76,12 +76,12 @@ if 'plotConf' in doOpt:
         plotLst = list()
         for k in range(0, len(sigmaStrLst)):
             plotLst.append(getattr(statConf, 'conf_'+sigmaStrLst[k]))
-        
+
         _, _, out = rnnSMAP.funPost.plotCDF(
             plotLst, ax=axes[iFig], legendLst=legendLst, cLst='grbm',
             xlabel='Error Exceedance Probablity', ylabel=None, showDiff='KS')
         axes[iFig].set_title(figTitle)
-        print(out['rmseLst'])        
+        print(out['rmseLst'])
     axes[0].set_ylabel('Frequency')
     # axes[1].get_legend().remove()
     fig.tight_layout()
@@ -90,3 +90,9 @@ if 'plotConf' in doOpt:
     fig.savefig(saveFile, dpi=100)
     fig.savefig(saveFile+'.eps')
 
+
+conf = getattr(statConfLst[1], 'conf_'+sigmaStrLst[1])
+x = rnnSMAP.funPost.flatData(conf)
+y = np.arange(len(x))/float(len(x)-1)
+np.mean(y-x)
+a=scipy.stats.kstest(x, 'uniform',mode='approx')

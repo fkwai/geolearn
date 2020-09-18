@@ -86,6 +86,7 @@ for iFig in range(0, 2):
     saveFile = os.path.join(saveFolder, 'map_'+figNameLst[iFig])
     fig.savefig(saveFile, dpi=100)
     fig.savefig(saveFile+'.eps')
+    print(scipy.stats.pearsonr(x, y))
 
     #################################################
     # plot sigmaX vs sigmaMC
