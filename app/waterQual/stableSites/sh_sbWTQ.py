@@ -12,8 +12,8 @@ caseLst = list()
 wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
 for code in codeLst:
-    label = 'qpred'
-    varX = ['qPredY1']+gridMET.varLst
+    label = 'ntnqpred'
+    varX = ['qPredY1']+gridMET.varLst+ntn.varLst
     varY = [code]
     varYC = None
     subsetLst = ['{}-Y{}'.format(code, x) for x in [1, 2]]
