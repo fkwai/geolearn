@@ -43,9 +43,11 @@ matplotlib.rcParams.update({'lines.linewidth': 2})
 matplotlib.rcParams.update({'lines.markersize': 10})
 matplotlib.rcParams.update({'legend.fontsize': 12})
 
-codeLst = ['5.1', '6.2','8.1', '8.2', '8.3', '8.4', '8.5', '9.2', '9.3', '9.4', '9.5','10.1', '10.2', '11.1', '12.1', '13.1', '14.3']
-idLst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12, 13, 14, 15, 16, 17]
-nameLst=['Northern Forests','Northwestern Forests Mountain','Mixed Wood Plains','Central USA Plains','Southeastern USA Plains','Ozark/Ouachita-Appalachiana Forests','Mississippi Alluvial and Southeast Coastal','Temperate Prairies','West-central Semiarid Prairies','South-central Semiarid Prairies','Texas Plain','Cold Deserts','Warm Deserts','Mediterranean California','Southern Semiarid Highlands','Temperate Sierras','Tropical Forests']
+codeLst = ['5.1', '6.2', '8.1', '8.2', '8.3', '8.4', '8.5', '9.2',
+           '9.3', '9.4', '9.5', '10.1', '10.2', '11.1', '12.1', '13.1', '14.3']
+idLst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+nameLst = ['Northern Forests', 'Northwestern Forests Mountain', 'Mixed Wood Plains', 'Central USA Plains', 'Southeastern USA Plains', 'Ozark/Ouachita-Appalachiana Forests', 'Mississippi Alluvial and Southeast Coastal',
+           'Temperate Prairies', 'West-central Semiarid Prairies', 'South-central Semiarid Prairies', 'Texas Plain', 'Cold Deserts', 'Warm Deserts', 'Mediterranean California', 'Southern Semiarid Highlands', 'Temperate Sierras', 'Tropical Forests']
 
 
 #################################################
@@ -126,3 +128,4 @@ if 'plotMapPaper' in doOpt:
     saveFile = os.path.join(saveFolder, 'map_sigmaMC')
     fig.savefig(saveFile)
     fig.savefig(saveFile+'.eps')
+    print(saveFile)
