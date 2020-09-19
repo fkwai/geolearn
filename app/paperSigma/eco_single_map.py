@@ -119,10 +119,12 @@ if 'plotMapPaper' in doOpt:
         titleStr = figNum[a]+' ' + \
             r'$\sigma_{mc}$' + ' from Eco-region {} model'.format(codeLst[k])
         ax = axes[math.floor(a/2), a % 2]
+        print('1 plot')
         rnnSMAP.funPost.plotMap(
             grid, crd=ds.crdGrid, ax=ax, title=titleStr,
             shape=shape)
         a = a+1
+    print('2 plot')
     plt.tight_layout()
     # fig.show()
     saveFile = os.path.join(saveFolder, 'map_sigmaMC')
