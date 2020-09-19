@@ -124,7 +124,7 @@ if 'plotMapPaper' in doOpt:
             shape=shape)
         a = a+1
     plt.tight_layout()
-    fig.show()
+    # fig.show()
     saveFile = os.path.join(saveFolder, 'map_sigmaMC')
     fig.savefig(saveFile)
     fig.savefig(saveFile+'.eps')
