@@ -32,7 +32,8 @@ rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 yrLst = [2017]
 
-ecoShapeFile = r'C:\Users\geofk\work\map\ecoRegion\comb\ecoRegion'
+# ecoShapeFile = r'C:\Users\geofk\work\map\ecoRegion\comb\ecoRegion'
+ecoShapeFile = '/mnt/sdb/Kuai/map/ecoRegion/ecoRegion'
 shapeLst = shapefile.Reader(ecoShapeFile).shapes()
 shapeRecLst = shapefile.Reader(ecoShapeFile).records()
 ecoIdLst = [rec[1] for rec in shapeRecLst]
