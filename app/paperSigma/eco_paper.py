@@ -68,11 +68,11 @@ if 'loadData' in doOpt:
         statSigmaLst.append(statSigma)
 
 #################################################
-if 'plotMapPaper' in doOpt:
-    print('111')
+if 'plotMapPaper' in doOpt:    
     figNum = ['(a)', '(b)', '(c)', '(d)']
-    print('222')
+    print('111')
     fig, axes = plt.subplots(2, 2, figsize=[12, 7])
+    print('222')
     for a, ecoId in enumerate(idLst):
         k = ecoId-1
         shape = shapeLst[ecoIdLst.index(ecoId)]
