@@ -69,7 +69,9 @@ if 'loadData' in doOpt:
 
 #################################################
 if 'plotMapPaper' in doOpt:
+    print('111')
     figNum = ['(a)', '(b)', '(c)', '(d)']
+    print('222')
     fig, axes = plt.subplots(2, 2, figsize=[12, 7])
     for a, ecoId in enumerate(idLst):
         k = ecoId-1
