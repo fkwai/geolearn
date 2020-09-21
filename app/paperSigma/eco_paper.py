@@ -68,7 +68,7 @@ if 'loadData' in doOpt:
         statSigmaLst.append(statSigma)
 
 #################################################
-if 'plotMapPaper' in doOpt:    
+if 'plotMapPaper' in doOpt:
     figNum = ['(a)', '(b)', '(c)', '(d)']
     print('111')
     fig, axes = plt.subplots(2, 2, figsize=[12, 7])
@@ -76,7 +76,7 @@ if 'plotMapPaper' in doOpt:
     for a, ecoId in enumerate(idLst):
         k = ecoId-1
         shape = shapeLst[ecoIdLst.index(ecoId)]
-        statSigma = statSigmaLst[k]
+        statSigma = statSigmaLst[a]
         statErr = 'sigmaMC'
         data = statSigma.sigmaMC
         grid = ds.data2grid(data=data)
