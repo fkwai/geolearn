@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+import scipy
 
 codeLst = sorted(usgs.varC)
 ep = 500
@@ -66,3 +67,34 @@ fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='bgr',
 #                       label2=labLst2, figsize=(12, 4), sharey=False)
 fig.show()
 
+# # significance test
+# testLst = ['WRTDS vs LSTM']
+# indLst = [[0, 2]]
+# columns = list()
+# for test in testLst:
+#     columns.append(test+' stat')
+#     columns.append(test+' pvalue')
+# dfS = pd.DataFrame(index=codeLst, columns=columns)
+# for (test, ind) in zip(testLst, indLst):
+#     for k, code in enumerate(codeLst):
+#         data = [corrMat[:, k, x] for x in ind]
+#         [a, b], _ = utils.rmNan(data)
+#         s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
+#         dfS.loc[code][test+' stat'] = s
+#         dfS.loc[code][test+' pvalue'] = p
+# dfS
+
+# significance test
+testLst = ['WRTDS vs LSTM', 'LSTM vs LSTM w/F']
+codeStrLst = ['{} {}'.format(
+    code, usgs.codePdf.loc[code]['shortName']) for code in codeLst]
+indLst = [[0, 2], [2, 3]]
+dfS = pd.DataFrame(index=codeStrLst, columns=testLst)
+for (test, ind) in zip(testLst, indLst):
+    for k, code in enumerate(codeLst):
+        data = [corrMat[:, k, x] for x in ind]
+        [a, b], _ = utils.rmNan(data)
+        s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
+        dfS.loc[codeStrLst[k]][test] = p
+pd.options.display.float_format = '{:,.2f}'.format
+print(dfS)

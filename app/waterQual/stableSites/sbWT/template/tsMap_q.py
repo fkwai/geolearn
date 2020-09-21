@@ -17,7 +17,7 @@ code = '00955'
 
 trainSet = '{}-Y1'.format(code)
 testSet = '{}-Y2'.format(code)
-labelLst = ['ntn', 'ntnq']
+labelLst = ['ntnonly', 'ntnq']
 siteNoLst = wqData.info.iloc[wqData.subset[trainSet]].siteNo.unique()
 corrMat = np.full([len(siteNoLst), len(labelLst)], np.nan)
 rmseMat = np.full([len(siteNoLst),  len(labelLst)], np.nan)
@@ -44,7 +44,7 @@ for iLab, label in enumerate(labelLst):
 
 
 def funcMap():
-    figM, axM = plt.subplots(1, 2, figsize=(10, 6))
+    figM, axM = plt.subplots(1, 2, figsize=(10, 4))
     axplot.mapPoint(axM[0], lat, lon, corrMat[:, 1], vRange=[0.5, 1], s=16)
     axM[0].set_title('correlation with Q')
     diff = corrMat[:, 1]**2/corrMat[:, 0]**2
@@ -52,7 +52,7 @@ def funcMap():
     axM[1].set_title('Rsq Q target / Rsq Q input')
     shortName = usgs.codePdf.loc[code]['shortName']
     # axM.set_title('Testing correlation of {}'.format(shortName))
-    figP, axP = plt.subplots(1, 1, figsize=(12, 4))
+    figP, axP = plt.subplots(1, 1, figsize=(16, 4))
     return figM, axM, figP, axP, lon, lat
 
 
@@ -73,10 +73,14 @@ def funcPoint(iP, axP):
     axplot.plotTS(axP, dfO1.index, dfO1.values, styLst='*', cLst='m')
     axplot.plotTS(axP, dfO2.index, dfO2.values, styLst='*', cLst='r')
     axP.legend(labelLst+['obs train', 'obs test'])
-    rmse1, corr1 = utils.stat.calErr(dfC['ntn'].values, dfC['obs'].values)
-    rmse2, corr2 = utils.stat.calErr(dfC['ntnq'].values, dfC['obs'].values)
-    axP.set_title(
-        'site {} corr Q target = {:.3f} corr Q input = {:.3f}'.format(siteNo, corr1, corr2))
+    titleStr = 'site {}'.format(siteNo)
+    for k, label in enumerate(labelLst):
+        axplot.plotTS(axP, dfC[label].index, dfC[label].values,
+                      styLst='*', cLst=cLst[k])
+        rmse, corr = utils.stat.calErr(dfC[label].values, dfC['obs'].values)
+        titleStr = titleStr+' corr{}={:.3f}'.format(k, corr)
+    axP.set_title(titleStr)
+
 
 plt.tight_layout()
 figM, figP = figplot.clickMap(funcMap, funcPoint)

@@ -23,7 +23,7 @@ wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
 # codeLst=['00955']
 for code in codeLst:
-    labelLst = ['qrm']
+    labelLst = ['qrm','ntnonly']
     for label in labelLst:
         subsetLst = ['{}-Y{}'.format(code, x) for x in [1, 2]]
         subset = subsetLst[0]

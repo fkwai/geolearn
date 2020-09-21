@@ -17,7 +17,9 @@ siteNoLst = wqData.info.siteNo.unique()
 nSite = len(siteNoLst)
 
 # single
-labelLst = ['plain', 'ntnS', 'ntn']
+labelLst = ['q', 'ntnSq', 'ntnq']
+cLst = 'bgr'
+labLst2 = ['no NTN', 'single NTN', 'all NTN']
 corrMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 rmseMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 for iLab, label in enumerate(labelLst):
@@ -44,7 +46,6 @@ for iLab, label in enumerate(labelLst):
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
-labLst2 = ['w/o ntn', 'w/ single ntn', 'w/ all ntn']
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
@@ -52,7 +53,7 @@ for k in range(len(codeLst)):
     for i in range(len(labelLst)):
         temp.append(corrMat[:, k, i])
     dataBox.append(temp)
-fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='bckgr',
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst=cLst,
                       label2=labLst2, figsize=(12, 4), yRange=[0, 1])
 # fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
 #                       label2=labLst2, figsize=(12, 4), sharey=False)

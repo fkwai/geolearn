@@ -57,3 +57,9 @@ fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='br',
 # fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
 #                       label2=labLst2, figsize=(12, 4), sharey=False)
 fig.show()
+
+df = pd.DataFrame(index=codeLst)
+df['corr'] = np.nanmean(corrMat[:, :, 1], axis=0)
+df['name'] = [usgs.codePdf.loc[code]['shortName']for code in codeLst]
+
+
