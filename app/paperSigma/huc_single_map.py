@@ -17,7 +17,7 @@ rnnSMAP.reload()
 
 doOpt = []
 # doOpt.append('test')
-# doOpt.append('loadData')
+doOpt.append('loadData')
 # doOpt.append('plotMapMC')
 doOpt.append('plotMapPaper')
 
