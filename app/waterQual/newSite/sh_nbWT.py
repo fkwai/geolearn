@@ -14,7 +14,9 @@ varNtnUsgsLst = ['00400', '00095', '00915', '00925', '00935',
 # ntn variables
 dataName = 'nbWT'
 wqData = waterQuality.DataModelWQ(dataName)
-codeLst = usgs.newC + ['comb']
+# codeLst = usgs.newC + ['comb']
+codeLst = ['comb']
+
 labelLst = ['QFP_C', 'FP_CQ']
 varF = gridMET.varLst
 varQ = ['00060']

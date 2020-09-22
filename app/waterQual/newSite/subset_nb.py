@@ -19,7 +19,8 @@ for dataName in dataNameLst:
     wqData = waterQuality.DataModelWQ(dataName)
     info = wqData.info
     info['yr'] = pd.DatetimeIndex(info['date']).year
-    for code in usgs.newC:
+    for code in usgs.newC+['comb']:
+        code = 'comb'
         print(dataName, code)
         siteNoLst = dictSite[code]
         bs = info['siteNo'].isin(siteNoLst)
