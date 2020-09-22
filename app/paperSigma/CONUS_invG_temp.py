@@ -7,6 +7,7 @@ import numpy as np
 import scipy
 import pylab
 import scipy.stats as stats
+import torch
 
 import imp
 imp.reload(rnnSMAP)
@@ -15,15 +16,16 @@ rnnSMAP.reload()
 #################################################
 # intervals temporal test
 doOpt = []
-doOpt.append('train')
+# doOpt.append('train')
 doOpt.append('test')
 # doOpt.append('plotConf')
-# doOpt.append('plotConfDist')
-# doOpt.append('plotInvGammaCDF')
+doOpt.append('plotConfDist')
+doOpt.append('plotInvGammaCDF')
+doOpt.append('plotInvGammaPDF')
 
 # doOpt.append('plotNorm')
 # doOpt.append('plotScale')
-doOpt.append('plotMap')
+# doOpt.append('plotMap')
 # doOpt.append('plotBox')
 # doOpt.append('plotVS')
 
@@ -34,24 +36,29 @@ matplotlib.rcParams.update({'legend.fontsize': 16})
 
 
 trainName = 'CONUSv2f1'
-testName = 'CONUSv4=2f1'
+testName = 'CONUSv2f1'
 yr = [2017]
 
-C1Lst = [2, 3, 4]
-C2Lst = [1, 2, 4]
+# C1Lst = [2, 3, 4]
+# C2Lst = [1, 2, 4]
+C1Lst = [4, 5, 6]
+# C2Lst = [0.5, 1, 1.2]
+C2Lst = [0.2, 0.5, 1, 1.2, 1.5]
+
 outLst = list()
 caseStrLst = list()
 outLst.append(trainName+'_y15_Forcing_dr60')
 caseStrLst.append('no prior')
 for j in C1Lst:
     for i in C2Lst:
-        outLst.append(trainName+'_y15_Forcing_dr60_invGamma_'+str(j)+'_'+str(i))
+        outLst.append(trainName+'_y15_Forcing_dr60_invGamma_' +
+                      str(j)+'_'+str(i))
         caseStrLst.append('a='+str(j-1)+','+'b='+str(i/2))
 
 nCase = len(outLst)
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
-saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma')
+saveFolder = os.path.join(rnnSMAP.kPath['dirResult'], 'paperSigma', 'invG')
 
 #################################################
 if 'train' in doOpt:
@@ -72,11 +79,12 @@ if 'train' in doOpt:
             opt['lossPrior'] = 'invGamma+'+str(j)+'+'+str(i)
             runTrainLSTM.runCmdLine(
                 opt=opt, cudaID=k % 3, screenName=opt['lossPrior'])
-            rnnSMAP.funLSTM.trainLSTM(opt)
+            # rnnSMAP.funLSTM.trainLSTM(opt)
             k = k+1
 
 #################################################
 if 'test' in doOpt:
+    torch.cuda.empty_cache()
     dsLst = list()
     statErrLst = list()
     statSigmaLst = list()
@@ -144,7 +152,6 @@ if 'plotConf' in doOpt:
 #################################################
 if 'plotConfDist' in doOpt:
     fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-
     # plotLst = list()
     # for k in range(0, len(caseStrLst)):
     #     plotLst.append(getattr(statConfLst[k], 'conf_sigma'))
@@ -153,7 +160,6 @@ if 'plotConfDist' in doOpt:
     #     xlabel=r'$P_{ee}$', ylabel=None, showDiff=False)
     # axes[0].set_title(r'CDF($p_{comb}$)')
     # axes[0].set_ylabel('Frequency')
-
     cLst = 'rgb'
     x = getattr(statConfLst[0], 'conf_sigma')
     xSort = rnnSMAP.funPost.flatData(x)
@@ -177,7 +183,7 @@ if 'plotConfDist' in doOpt:
             bLst.append(b)
             dLst.append(d)
         ax.plot(bLst, dLst, color=cLst[j], label='a='+str(a), marker='*')
-    ax.plot(bLst, [dd, dd, dd], color='k', label='no prior')
+    ax.plot(bLst, [dd, dd, dd, dd, dd], color='k', label='no prior')
     ax.legend(loc='best')
     ax.set_ylabel(r'd($p_{ecomb}$)')
     ax.set_xlabel('b')
@@ -194,6 +200,56 @@ if 'plotConfDist' in doOpt:
             b = C2Lst[i]/2
             x = getattr(statSigmaLst[k], 'sigmaX_mat')
             x1 = rnnSMAP.funPost.flatData(x)/0.088578376
+            x1 = x1**2
+            y1 = np.arange(len(x1))/float(len(x1)-1)
+            y2 = scipy.stats.invgamma.cdf(x1, a, loc=0, scale=b)
+            # d1 = np.max(np.abs(y1-y2))
+            d1p = np.max(y1-y2)
+            d1n = np.min(y1-y2)
+            if d1p > -d1n:
+                d1 = d1p
+            else:
+                d1 = d1n
+
+            x = getattr(statConfLst[k], 'conf_sigma')
+            xSort = rnnSMAP.funPost.flatData(x)
+            yRank = np.arange(len(xSort))/float(len(xSort)-1)
+            # d2 = np.max(np.abs(xSort - yRank))
+            d2p = np.max(xSort - yRank)
+            d2n = np.min(xSort - yRank)
+            if d2p > -d2n:
+                d2 = d2p
+            else:
+                d2 = d2n
+            # d2 = np.max(xSort - yRank)
+            d1Lst.append(d1)
+            d2Lst.append(d2)
+            ax.text(d1, d2, '[{},{}]'.format(a, b))
+            k = k+1
+    ax.plot(d1Lst, d2Lst, '*')
+    ax.set_ylabel(r'd($p_{ecomb}$)')
+    ax.set_xlabel('d(prior,posterior)')
+    ax.set_title('(b) Quality Change of '+r'$\sigma_{comb}$')
+
+    plt.tight_layout()
+    saveFile = os.path.join(saveFolder, 'invGamma_dist')
+    fig.savefig(saveFile, dpi=100)
+    # fig.savefig(saveFile+'.eps')
+    # fig.show()
+
+if 'plotInvGammaCDF' in doOpt:
+    matplotlib.rcParams.update({'font.size': 12})
+    fig, axes = plt.subplots(len(C1Lst),  len(C2Lst), figsize=(18, 12))
+    k = 1
+    d1Lst = list()
+    d2Lst = list()
+    for j in range(0, len(C1Lst)):
+        for i in range(0, len(C2Lst)):
+            a = C1Lst[j]-1
+            b = C2Lst[i]/2
+            x = getattr(statSigmaLst[k], 'sigmaX_mat')
+            x1 = rnnSMAP.funPost.flatData(x)/0.088578376
+            x1 = x1**2
             y1 = np.arange(len(x1))/float(len(x1)-1)
             y2 = scipy.stats.invgamma.cdf(x1, a, loc=0, scale=b)
             d1 = np.max(np.abs(y1-y2))
@@ -205,20 +261,21 @@ if 'plotConfDist' in doOpt:
             d1Lst.append(d1)
             d2Lst.append(d2)
             k = k+1
-    ax.plot(d1Lst, d2Lst, '*')
-    ax.set_ylabel(r'd($p_{ecomb}$)')
-    ax.set_xlabel('d(prior,posterior)')
-    ax.set_title('(b) Quality Change of '+r'$\sigma_{comb}$')
-
-    plt.tight_layout()
-    saveFile = os.path.join(saveFolder, 'invGamma_dist')
+            axes[j][i].plot(x1, y1, 'b')
+            axes[j][i].plot(x1, y2, 'r')
+            axes[j][i].set_xlim(0, 1)
+            axes[j][i].set_ylim(0, 1)
+            # axes[j][i].set_title('a='+str(a)+'b='+str(b)+'d='+str(d))
+            axes[j][i].set_title('a={};b={};d={:.2f}'.format(a, b, d1))
+    saveFile = os.path.join(saveFolder, 'invGamma_cdf')
     fig.savefig(saveFile, dpi=100)
-    fig.savefig(saveFile+'.eps')
-    fig.show()
+    # fig.savefig(saveFile+'.eps')
+    # fig.show()
 
-if 'plotInvGammaCDF' in doOpt:
+
+if 'plotInvGammaPDF' in doOpt:
     matplotlib.rcParams.update({'font.size': 12})
-    fig, axes = plt.subplots(3, 3, figsize=(12, 12))
+    fig, axes = plt.subplots(len(C1Lst),  len(C2Lst), figsize=(18, 12))
     k = 1
     d1Lst = list()
     d2Lst = list()
@@ -227,19 +284,27 @@ if 'plotInvGammaCDF' in doOpt:
             a = C1Lst[j]-1
             b = C2Lst[i]/2
             x = getattr(statSigmaLst[k], 'sigmaX_mat')
-            x1 = rnnSMAP.funPost.flatData(x)/0.088578376
-            y1 = np.arange(len(x1))/float(len(x1)-1)
-            y2 = scipy.stats.invgamma.cdf(x1, a, scale=b)
-            d1 = np.max(np.abs(y1-y2))
-
-            x = getattr(statConfLst[k], 'conf_sigma')
-            xSort = rnnSMAP.funPost.flatData(x)
-            yRank = np.arange(len(xSort))/float(len(xSort)-1)
-            d2 = np.max(np.abs(xSort - yRank))
-            d1Lst.append(d1)
-            d2Lst.append(d2)
+            xx = rnnSMAP.funPost.flatData(x)/0.088578376
+            xx = xx**2
+            y1, x1 = np.histogram(xx, bins=50)
+            d = np.mean(x1[1:]-x1[:-1])
+            x1 = (x1[1:]+x1[:-1])/2
+            y1 = y1/len(xx)/d
+            x2 = x1
+            y2 = scipy.stats.invgamma.pdf(x2, a, scale=b)
             k = k+1
+
+            temp1 = np.arange(len(xx))/float(len(xx)-1)
+            temp2 = scipy.stats.invgamma.cdf(xx, a, loc=0, scale=b)
+            d1 = np.max(np.abs(temp1-temp2))
+
             axes[j][i].plot(x1, y1, 'b')
             axes[j][i].plot(x1, y2, 'r')
-            axes[j][i].set_title('a='+str(a)+'b='+str(b)+'d='+str(d))
-    fig.show()
+            # axes[j][i].set_xlim(0, 1)
+            # axes[j][i].set_ylim(0, 1)
+            # axes[j][i].set_title('a='+str(a)+'b='+str(b)+'d='+str(d))
+            axes[j][i].set_title('a={};b={};d={:.2f}'.format(a, b, d1))
+    saveFile = os.path.join(saveFolder, 'invGamma_pdf')
+    fig.savefig(saveFile, dpi=100)
+    # fig.savefig(saveFile+'.eps')
+    # fig.show()
