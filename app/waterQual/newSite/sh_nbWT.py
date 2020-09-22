@@ -17,7 +17,7 @@ wqData = waterQuality.DataModelWQ(dataName)
 # codeLst = usgs.newC + ['comb']
 codeLst = ['comb']
 
-labelLst = ['QFP_C', 'FP_CQ']
+labelLst = ['F_CQ', 'QF_C', 'FP_C']
 varF = gridMET.varLst
 varQ = ['00060']
 varP = ntn.varLst
@@ -27,15 +27,23 @@ for code in codeLst:
         varC = usgs.newC
     else:
         varC = [code]
+    varYC = None
     for label in labelLst:
         if label == 'QFP_C':
             varX = varQ+varF+varP
             varY = varC
-            varYC = None
         elif label == 'FP_CQ':
             varX = varF+varP
             varY = varQ+varC
-            varYC = None
+        elif label == 'F_CQ':
+            varX = varF
+            varY = varQ+varC
+        elif label == 'QF_C':
+            varX = varQ+varF
+            varY = varC            
+        elif label == 'FP_C':
+            varX = varF+varP
+            varY = varC            
         trainSet = '{}-B16'.format(code)
         saveName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
         caseName = basins.wrapMaster(
