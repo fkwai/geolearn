@@ -7,8 +7,11 @@ import pandas as pd
 fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
 codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
 codeLst = list(codePdf.index)
-codeLst.remove('00440')
+# codeLst.remove('00440')
 varC = codeLst
+newC = varC.copy()
+newC.remove('00440')
+newC.remove('00410')
 varQ = ['00060', 'runoff']
 chemLst = ['00300', '00405', '00410', '00440', '00600',
            '00605', '00618', '00660', '00665', '71846',
