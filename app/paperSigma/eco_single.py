@@ -17,10 +17,10 @@ idLst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12, 13, 14, 15, 16, 17]
 nameLst=['Northern Forests','Northwestern Forests Mountain','Mixed Wood Plains','Central USA Plains','Southeastern USA Plains','Ozark/Ouachita-Appalachiana Forests','Mississippi Alluvial and Southeast Coastal','Temperate Prairies','West-central Semiarid Prairies','South-central Semiarid Prairies','Texas Plain','Cold Deserts','Warm Deserts','Mediterranean California','Southern Semiarid Highlands','Temperate Sierras','Tropical Forests']
 
 doOpt = []
-# doOpt.append('loadData')
+doOpt.append('loadData')
 doOpt.append('crdMap')
 # doOpt.append('plotMap')
-# doOpt.append('plotBox')
+doOpt.append('plotBox')
 # doOpt.append('plotVS')
 # doOpt.append('plotConf')
 
@@ -28,12 +28,18 @@ rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 
 for kkk in range(0, 3):
+    # if kkk == 0:
+    #     ecoStrLst = ['12', '13', '05']  # [ref, close, far]
+    # if kkk == 1:
+    #     ecoStrLst = ['10', '09', '14']  # [ref, close, far]
+    # if kkk == 2:
+    #     ecoStrLst = ['05', '06', '12']  # [ref, close, far]
     if kkk == 0:
-        ecoStrLst = ['12', '13', '05']  # [ref, close, far]
+        ecoStrLst = ['13', '12', '06']  # [ref, close, far]
     if kkk == 1:
         ecoStrLst = ['10', '09', '14']  # [ref, close, far]
     if kkk == 2:
-        ecoStrLst = ['05', '06', '12']  # [ref, close, far]
+        ecoStrLst = ['06', '05', '13']  # [ref, close, far]
 
     ecoLst = np.asarray(ecoStrLst, dtype=int)
     saveFolder = os.path.join(
@@ -91,7 +97,7 @@ for kkk in range(0, 3):
             ind2 = list(parts)[1:]
             ind2.append(len(points)-1)
             for k in range(0, len(ind1)):
-                pp = points[ind1[k]:ind2[k]]
+                pp = points[ind1[k]:ind2[k]:10]
                 x = [i[0] for i in pp]
                 y = [i[1] for i in pp]
                 ax.plot(x, y, 'k-', label=None, linewidth=0.5)
