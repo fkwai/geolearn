@@ -94,6 +94,6 @@ def transOutAll(data, mtdLst, statLst=list()):
         out[..., i] = data[..., i]*vS[i, 1]+vS[i, 0]
     # find colums that need to do log
     indLog = [i for i, mtd in enumerate(mtdLst) if mtd.split('-')[0] == 'log']
-    out[..., indLog] = np.exp(out[..., indLog])-1
+    out[..., indLog] = np.exp(out[..., indLog])-sn
 
     return out
