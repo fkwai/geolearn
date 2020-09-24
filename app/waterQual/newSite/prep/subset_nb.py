@@ -20,12 +20,11 @@ for dataName in dataNameLst:
     info = wqData.info
     info['yr'] = pd.DatetimeIndex(info['date']).year
     for code in usgs.newC+['comb']:
-        code = 'comb'
         print(dataName, code)
         siteNoLst = dictSite[code]
         bs = info['siteNo'].isin(siteNoLst)
-        b1 = (info['yr'] < 2016).values
-        b2 = (info['yr'] >= 2016).values
+        b1 = (info['yr'] <= 2016).values
+        b2 = (info['yr'] > 2016).values
         if code == 'comb':
             ind1 = info.index[b1 & bs].values
             ind2 = info.index[b2 & bs].values
