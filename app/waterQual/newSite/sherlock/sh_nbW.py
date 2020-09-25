@@ -16,7 +16,8 @@ dataName = 'nbW'
 wqData = waterQuality.DataModelWQ(dataName)
 # codeLst = usgs.newC + ['comb']
 codeLst = ['comb']
-labelLst = ['QFP_C', 'FP_QC']
+# labelLst = ['QFP_C', 'FP_QC']
+labelLst = ['F_QC', 'QF_C', 'FP_C', 'P_C']
 varF = gridMET.varLst
 varQ = ['00060']
 varP = ntn.varLst
@@ -42,6 +43,9 @@ for code in codeLst:
             varY = None
         elif label == 'FP_C':
             varX = varF+varP
+            varY = None
+        elif label == 'P_C':
+            varX = varP
             varY = None
         trainSet = '{}-B16'.format(code)
         saveName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)

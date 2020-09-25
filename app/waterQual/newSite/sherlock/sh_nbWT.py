@@ -18,8 +18,7 @@ wqData = waterQuality.DataModelWQ(dataName)
 codeLst = ['comb']
 
 # labelLst = ['QFP_C', 'FP_QC', 'F_QC', 'QF_C', 'FP_C']
-labelLst = ['QFP_C', 'FP_QC']
-
+labelLst = ['QFP_C', 'FP_QC']+['F_QC', 'QF_C', 'FP_C', 'P_C']
 varF = gridMET.varLst
 varQ = ['00060']
 varP = ntn.varLst
@@ -45,6 +44,9 @@ for code in codeLst:
             varY = varC
         elif label == 'FP_C':
             varX = varF+varP
+            varY = varC
+        elif label == 'P_C':
+            varX = varP
             varY = varC
         trainSet = '{}-B16'.format(code)
         saveName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
