@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 codeLst = sorted(usgs.newC)
 # dataName = 'nbWT'
-dataName = 'nbW'
+dataName = 'nbW_norm'
 wqData = waterQuality.DataModelWQ(dataName)
 siteNoLst = wqData.info.siteNo.unique()
 
@@ -20,22 +20,10 @@ mtdLst = wqData.extractVarMtd(codeLst)
 dataNorm, stat = transform.transInAll(data, mtdLst)
 info = wqData.info
 
-c1Mat = np.ndarray(wqData.c.shape)
-c2Mat = np.ndarray(wqData.c.shape)
-for code in wqData.varC:
-    ic = wqData.varC.index(code)
-    for siteNo in siteNoLst:
-        indS = info[info['siteNo'] == siteNo].index.values
-        data = wqData.c[indS, ic]
-        c1Mat[indS, ic] = np.nanpercentile(data, 10)
-        c2Mat[indS, ic] = np.nanpercentile(data, 90)
-data = (wqData.c-c1Mat)/(c2Mat-c1Mat)
-dataNorm, stat = transform.transInAll(data, mtdLst)
-
-code = '00300'
+code = '00660'
 ic = codeLst.index(code)
 fig, axes = plt.subplots(2, 1, figsize=(6, 8))
-for siteNo in siteNoLst:
+for siteNo in siteNoLst[1:2]:
     indS = info[info['siteNo'] == siteNo].index.values
     yr = utils.sortData(data[indS, ic])
     yn = utils.sortData(dataNorm[indS, ic])
@@ -47,3 +35,24 @@ axes[1].set_ylim([-0.2, 1.2])
 axes[0].set_title('{} {} CDFs '.format(code, shortName))
 axes[1].set_title('{} {} CDFs after normalization '.format(code, shortName))
 fig.show()
+
+siteNo = '01111500'
+df = waterQuality.readSiteTS(siteNo, [code], freq='D').dropna()
+dfC, dfCF = usgs.readSample(siteNo, codeLst=[code], flag=2)
+dfC = dfC.resample('W-TUE').mean()
+dfCF = dfCF.fillna(0)
+dfCFW = dfCF.resample('W-TUE').mean()
+dfCFW = dfCFW.fillna(0)
+dfCFW[dfCFW != 0] = 1
+fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+t = dfC.index
+v = dfC[code].values
+flag = dfCFW[code+'_cd'].values
+ax.plot(t[flag == 0], v[flag == 0], 'r*')
+ax.plot(t[flag != 0], v[flag != 0], 'k*')
+fig.show()
+
+data = df.values
+c1 = np.nanpercentile(data, 10)
+c2 = np.nanpercentile(data, 90)
+(data-c1)/(c2-c1)

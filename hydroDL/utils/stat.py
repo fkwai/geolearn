@@ -11,7 +11,7 @@ def calErr(pred, obs, rmExt=True):
         aV = aV[aV > np.nanpercentile(a, 5)]
         ul = np.mean(aV)+np.std(aV)*5
         a[a > ul] = np.nan
-    indV = np.where(~np.isnan(a))
+    indV = np.where(~np.isnan(a) & ~np.isnan(b))
     if len(indV) > 0:
         rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
         corr = np.corrcoef(a[indV], b[indV])[0, 1]

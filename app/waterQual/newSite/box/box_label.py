@@ -8,20 +8,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import scipy
+import os
+import json
 
+dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
+with open(os.path.join(dirSel, 'dictNB_y16n36.json')) as f:
+    dictSite = json.load(f)
 codeLst = sorted(usgs.newC)
-
 ep = 500
 reTest = False
+siteNoLst = dictSite['comb']
+nSite = len(siteNoLst)
 dataName = 'nbW'
 wqData = waterQuality.DataModelWQ(dataName)
-siteNoLst = wqData.info.siteNo.unique()
-nSite = len(siteNoLst)
 
 # single
-labelLst = ['FP_C', 'QFP_C', 'FP_CQ']
+labelLst = ['Q_C', 'QF_C','QFP_C']
 cLst = 'gbr'
-labLst2 = ['no Q', 'Q as target', 'Q as input']
+labLst2 = ['Q', 'Q + Forcing', 'Q + Forcing chem']
 
 corrMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
 rmseMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
@@ -43,7 +47,8 @@ for iLab, label in enumerate(labelLst):
         elif len(wqData.c.shape) == 2:
             p = ycP[:, master['varYC'].index(code)]
             o = wqData.c[ind, ic]
-        for iS, siteNo in enumerate(siteNoLst):
+        for siteNo in dictSite[code]:
+            iS = siteNoLst.index(siteNo)
             indS = info[info['siteNo'] == siteNo].index.values
             rmse, corr = utils.stat.calErr(p[indS], o[indS])
             corrMat[iS, iCode, iLab] = corr
@@ -67,7 +72,7 @@ fig.show()
 
 
 # significance test
-testLst = ['add Q', 'add NTN']
+testLst = ['Q as target', 'Q as input']
 indLst = [[0, 2], [1, 2]]
 codeStrLst = ['{} {}'.format(
     code, usgs.codePdf.loc[code]['shortName']) for code in codeLst]
@@ -79,6 +84,5 @@ for (test, ind) in zip(testLst, indLst):
         s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
         # s, p = scipy.stats.ttest_rel(a, b)
         dfS.loc[codeStrLst[k]][test] = p
-dfS['aver R'] = np.nanmean(corrMat[:, :, 2], axis=0)
 pd.options.display.float_format = '{:,.2f}'.format
 print(dfS)
