@@ -263,9 +263,9 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
             xA = np.expand_dims(dfX.values, axis=1)
             xcA = np.expand_dims(
                 tabG.loc[siteNo].values.astype(np.float), axis=0)
-            mtdX = wqData.extractVarMtd(varX)
+            mtdX = waterQuality.extractVarMtd(varX)
             x = transform.transInAll(xA, mtdX, statLst=statX)
-            mtdXC = wqData.extractVarMtd(varXC)
+            mtdXC = waterQuality.extractVarMtd(varXC)
             xc = transform.transInAll(xcA, mtdXC, statLst=statXC)
             [x, xc] = trainTS.dealNaN([x, xc], master['optNaN'][:2])
             yOut = trainTS.testModel(model, x, xc)

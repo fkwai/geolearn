@@ -43,6 +43,7 @@ class DataModelWQ():
         self.freq = 'W' if nWD == 1 else 'D'
         self.subset = self.loadSubset()
         # self.dfSite = countSite(self.info)
+        self.addT()
         print('loading info {}'.format(time.time()-t0))
 
         if self.q.shape[2] == 1:  # add runoff
@@ -82,25 +83,6 @@ class DataModelWQ():
         y = self.extractVarT(varY) if varY is not None else None
         yc = self.extractVarC(varYC) if varYC is not None else None
         return (x, xc, y, yc)
-
-    def extractVarMtd(self, varLst):
-        mtdLst = list()
-        if varLst is None:
-            mtdLst = None
-        else:
-            for var in varLst:
-                if var in gridMET.dictStat.keys():
-                    mtd = gridMET.dictStat[var]
-                elif var in gageII.dictStat.keys():
-                    mtd = gageII.dictStat[var]
-                elif var in usgs.dictStat.keys():
-                    mtd = usgs.dictStat[var]
-                elif var in ntn.dictStat.keys():
-                    mtd = ntn.dictStat[var]
-                else:
-                    raise Exception('Variable {} not found!'.format(var))
-                mtdLst.append(mtd)
-        return mtdLst
 
     def extractVarT(self, varLst):
         temp = list()
@@ -218,7 +200,7 @@ class DataModelWQ():
             [outDataLst, outStatLst] = [list(), list()]
             for (data, var) in zip(dataTup, varTup):
                 if data is not None:
-                    mtd = self.extractVarMtd(var)
+                    mtd = extractVarMtd(var)
                     outData, outStat = transform.transInAll(data, mtd)
                 else:
                     (outData, outStat) = (None, None)
@@ -230,7 +212,7 @@ class DataModelWQ():
             outDataLst = list()
             for (data, var, stat) in zip(dataTup, varTup, statTup):
                 if data is not None:
-                    mtd = self.extractVarMtd(var)
+                    mtd = extractVarMtd(var)
                     outData = transform.transInAll(data, mtd, statLst=stat)
                 else:
                     outData = None
@@ -239,7 +221,7 @@ class DataModelWQ():
             return outDataLst
 
     def transOut(self, data, stat, var):
-        mtd = self.extractVarMtd(var)
+        mtd = extractVarMtd(var)
         # normalize data out
         t0 = time.time()
         if data.shape[-1] == 0:
@@ -250,6 +232,23 @@ class DataModelWQ():
         t1 = time.time()-t0
         print('transform out {}'.format(time.time()-t0))
         return out
+
+    def addT(self):
+        nd = pd.DatetimeIndex(self.info['date']).dayofyear.values
+        rho = self.rho
+        ns = len(nd)
+        if self.freq == 'D':
+            dd = np.flipud(np.arange(0, rho))
+        if self.freq == 'W':
+            dd = np.flipud(np.arange(0, rho))*7
+        tMat = np.tile(np.expand_dims(nd, axis=1), [1, rho])
+        tMat = (tMat-dd)/365
+        sinT = np.sin(2*np.pi*tMat).swapaxes(0, 1).astype(np.float32)
+        cosT = np.cos(2*np.pi*tMat).swapaxes(0, 1).astype(np.float32)
+        matT = np.stack([sinT, cosT], axis=2)
+        self.f = np.concatenate([self.f, matT], axis=2)
+        self.varF.append('sinT')
+        self.varF.append('cosT')
 
     def calComb(self):
         # calculate the combinations - could improve effeciency later
@@ -507,6 +506,9 @@ def extractVarMtd(varLst):
                 mtd = gageII.dictStat[var]
             elif var in usgs.dictStat.keys():
                 mtd = usgs.dictStat[var]
+            # add sinT cosT
+            elif var in ['sinT', 'cosT']:
+                mtd = 'norm'
             else:
                 raise Exception('Variable {} not found!'.format(var))
             mtdLst.append(mtd)
