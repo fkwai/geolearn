@@ -8,11 +8,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import json
+import os
 
 # ts map of single dataset, label and code
 ep = 500
 dataName = 'nbW'
-label = 'Q_C'
+label = 'QT_C'
 code = '00955'
 trainSet = '{}-B16'.format('comb')
 testSet = '{}-A16'.format('comb')

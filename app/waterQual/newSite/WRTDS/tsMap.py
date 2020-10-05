@@ -18,7 +18,7 @@ with open(os.path.join(dirSel, 'dictNB_y16n36.json')) as f:
 
 ep = 500
 dataName = 'nbW'
-label = 'QFP_C'
+label = 'QT_C'
 code = '00955'
 trainSet = '{}-B16'.format('comb')
 testSet = '{}-A16'.format('comb')

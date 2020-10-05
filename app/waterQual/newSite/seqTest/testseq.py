@@ -14,13 +14,14 @@ with open(os.path.join(dirSel, 'dictNB_y16n36.json')) as f:
 siteNoLst = dictSite['comb']
 
 # ntn variables
-dataName = 'nbWT'
+dataName = 'nbW'
 outNameLst = list()
 outCodeLst = list()
 wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
 # labelLst = ['QFP_C', 'FP_QC']
-labelLst = ['F_QC', 'QF_C', 'FP_C', 'P_C']
+# labelLst = ['F_QC', 'QF_C', 'FP_C', 'P_C']
+labelLst = ['QT_C']
 
 for label in labelLst:
     trainSet = 'comb-B16'

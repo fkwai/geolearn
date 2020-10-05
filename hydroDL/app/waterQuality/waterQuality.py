@@ -66,7 +66,7 @@ class DataModelWQ():
     def dataProvision(self):
         bq = np.less(self.q, 0., where=~np.isnan(self.q))
         if np.any(bq):
-            print('Find negetive Q, filled zero')
+            print('Find negative Q, filled zero')
             self.q[bq] = 0
 
     def extractData(self, varTup=None, subset=None):
@@ -486,6 +486,10 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
     if len(varP) > 0:
         dfP = ntn.readBasin(siteNo, varLst=varP, freq='D')
         dfD = dfD.join(dfP)
+    if 'sinT' in varLst or 'cosT' in varLst:
+        t = dfD.index.dayofyear.values/365
+        dfD['sinT'] = np.sin(2*np.pi*t)
+        dfD['cosT'] = np.cos(2*np.pi*t)
     dfD = dfD[varLst]
     if freq == 'D':
         return dfD

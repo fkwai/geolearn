@@ -15,7 +15,7 @@ import pandas as pd
 import time
 import matplotlib.pyplot as plt
 
-siteNo = '08195000'
+siteNo = '10172200'
 code = '00955'
 freq = 'W'
 sn = 1
@@ -55,12 +55,12 @@ rho = 52
 dfX = pd.DataFrame({'date': df.index}).set_index('date')
 dfX = dfX.join(np.log(df['00060']+sn)).rename(
     columns={'00060': 'logQ'})
-t = yr+dfX.index.dayofyear.values/365
-dfX['sinT'] = np.sin(2*np.pi*t)
-dfX['cosT'] = np.cos(2*np.pi*t)
+# t = yr+dfX.index.dayofyear.values/365
+# dfX['sinT'] = np.sin(2*np.pi*t)
+# dfX['cosT'] = np.cos(2*np.pi*t)
 # dfX['T'] = (dfX.index.values-np.datetime64('1979-01-01', 'D')
 #       ).astype('timedelta64[D]')
-# dfX = dfX.join(df[varF])
+dfX = dfX.join(df[varF])
 dfXN = (dfX-dfX.min())/(dfX.max()-dfX.min())
 dfC = df[varC].dropna(how='all')
 xLst = list()
@@ -89,7 +89,9 @@ xx = x[:, ind1, :]
 yy = y[:, ind1, :]
 # training
 nbatch = 20
-nEp = 100
+nEp = 500
+# saveEp = [10, 100]
+saveEp = [100]
 ns = xx.shape[1]
 nx = xx.shape[-1]
 ny = yy.shape[-1]
@@ -124,16 +126,49 @@ for iEp in range(1, nEp + 1):
     print(logStr)
     lossLst.append(loss)
 
-# testing
-xA = np.expand_dims(dfXN.values, axis=1)
-xA[np.where(np.isnan(xA))] = -1
-xF = torch.from_numpy(xA).float().cuda()
-yF = model(xF)
-dfYP['LSTM'] = yF.detach().cpu().numpy().flatten()
+    if iEp in saveEp:
+        # testing
+        xA = np.expand_dims(dfXN.values, axis=1)
+        xA[np.where(np.isnan(xA))] = -1
+        xF = torch.from_numpy(xA).float().cuda()
+        yF = model(xF)
+        dfYP['LSTM-ep'+str(iEp)] = yF.detach().cpu().numpy().flatten()
 
 # plot data
-fig, ax = plt.subplots(1, 1, figsize=(16, 3))
-ax.plot(df.index, df[code].values, 'k*')
-ax.plot(dfYP.index, dfYP['WRTDS'].values, '-b')
-ax.plot(dfYP.index, dfYP['LSTM'].values, '-r')
+t = df.index
+yr = t.year.values
+ind1 = (yr <= 2016) & (yr >= 1980)
+ind2 = yr > 2016
+o1 = df[ind1][code].values
+o2 = df[ind2][code].values
+t1 = t[ind1]
+t2 = t[ind2]
+ep = 100
+v1 = [dfYP[ind1]['LSTM-ep'+str(ep)].values,
+      dfYP[ind1]['WRTDS'].values.astype(float),
+      df[ind1][code].values]
+v2 = [dfYP[ind2]['LSTM-ep'+str(ep)].values,
+      dfYP[ind2]['WRTDS'].values.astype(float),
+      df[ind2][code].values]
+rmseWRTDS1, corrWRTDS1 = utils.stat.calErr(v1[1], v1[2])
+rmseLSTM1, corrLSTM1 = utils.stat.calErr(v1[0], v1[2])
+rmseWRTDS2, corrWRTDS2 = utils.stat.calErr(v2[1], v2[2])
+rmseLSTM2, corrLSTM2 = utils.stat.calErr(v2[0], v2[2])
+
+# plot
+fig, axes = plt.subplots(2, 1, figsize=(16, 6))
+axplot.plotTS(axes[0], t1, v1, styLst='--*', cLst='rbk')
+axplot.plotTS(axes[1], t2, v2, styLst='--*', cLst='rbk')
+axes[0].set_title('site {} WRTDS {:.2f} LSTM {:.2f}'.format(
+    siteNo, corrWRTDS1, corrLSTM1))
+axes[1].set_title('site {} WRTDS {:.2f} LSTM {:.2f}'.format(
+    siteNo, corrWRTDS2, corrLSTM2))
+# fig.show()
+# plot forcing
+# ax1 = axes[0].twinx()
+# ax2 = axes[1].twinx()
+# var = 'etr'
+# axplot.plotTS(ax1, t1, df[ind1][var].values, styLst=['-.'], cLst='c')
+# axplot.plotTS(ax2, t2, df[ind2][var].values, styLst=['-.'], cLst='c')
 fig.show()
+varF

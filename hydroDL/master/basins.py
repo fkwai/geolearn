@@ -303,7 +303,7 @@ def loadSeq(outName, siteNo,
     edS = pd.to_datetime(ed).strftime('%Y%m%d')
     saveDir = os.path.join(outDir, 'seq-{}-{}-ep{}'.format(sdS, edS, ep))
     dfPred = pd.read_csv(os.path.join(saveDir, siteNo))
-    dfPred = utils.time.datePdf(dfPred)    
+    dfPred = utils.time.datePdf(dfPred)
     return dfPred
 
 

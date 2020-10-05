@@ -1,4 +1,3 @@
-
 from hydroDL import kPath, utils
 from hydroDL.app import waterQuality
 from hydroDL.master import basins
@@ -7,10 +6,8 @@ from hydroDL.master import slurm
 from hydroDL.post import axplot, figplot
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-import pandas as pd
 import json
-import scipy
+import os
 
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
 with open(os.path.join(dirSel, 'dictNB_y16n36.json')) as f:
@@ -19,16 +16,17 @@ with open(os.path.join(dirSel, 'dictNB_y16n36.json')) as f:
 codeLst = sorted(usgs.newC)
 ep = 500
 reTest = False
-dataName = 'nbW'
-wqData = waterQuality.DataModelWQ(dataName)
 siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
-corrMat = np.full([nSite, len(codeLst), 4], np.nan)
 
-# LSTM
-label = 'QT_C'
-trainSet = 'comb-B16'
-testSet = 'comb-A16'
+dataName = 'nbW'
+label = 'QFP_C'
+
+corrMat = np.full([nSite, len(codeLst), 2], np.nan)
+rmseMat = np.full([nSite, len(codeLst), 2], np.nan)
+wqData = waterQuality.DataModelWQ(dataName)
+trainSet = '{}-B16'.format('comb')
+testSet = '{}-A16'.format('comb')
 outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
 master = basins.loadMaster(outName)
 for iT, subset in enumerate([trainSet, testSet]):
@@ -49,44 +47,36 @@ for iT, subset in enumerate([trainSet, testSet]):
             indS = info[info['siteNo'] == siteNo].index.values
             rmse, corr = utils.stat.calErr(p[indS], o[indS])
             corrMat[iS, iCode, iT] = corr
-            # rmseMat[iS, iCode, iT*2] = rmse
+            rmseMat[iS, iCode, iT] = rmse
 
-# WRTDS
-dirWrtds = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS')
-file1 = os.path.join(dirWrtds, '{}-{}-corr'.format('B16', 'B16'))
-dfCorr1 = pd.read_csv(file1, dtype={'siteNo': str}).set_index('siteNo')
-corrMat[:, 2] = dfCorr1.loc[siteNoLst][code].values
-file2 = os.path.join(dirWrtds, '{}-{}-corr'.format('B16', 'A16'))
-dfCorr2 = pd.read_csv(file2, dtype={'siteNo': str}).set_index('siteNo')
-corrMat[:, 3] = dfCorr2.loc[siteNoLst][code].values
-for iCode, code in enumerate(codeLst):
-    indS = [siteNoLst.index(siteNo) for siteNo in dictSite[code]]
-    corrMat[indS, iCode, 2] = dfCorr1.iloc[indS][code].values
-    corrMat[indS, iCode, 3] = dfCorr2.iloc[indS][code].values
-
+# reference basins
+tabRef = gageII.readData(varLst=['CLASS'], siteNoLst=siteNoLst)
+tabRef = gageII.updateCode(tabRef)
+bRef = (tabRef['CLASS'] == 1).values
+ind1 = np.where(bRef)[0]
+ind2 = np.where(~bRef)[0]
 
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
-# labLst2 = ['WRTDS train', 'WRTDS test', 'LSTM train', 'LSTM test']
-labLst2 = ['WRTDS test', 'LSTM test']
+labLst2 = ['train-ref', 'train-nonref', 'test-ref', 'test-nonref']
+
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
     temp = list()
-    # for i in [2, 3, 0 ,1]:
-    for i in [3, 1]:
-        temp.append(corrMat[:, k, i])
+    for i in range(corrMat.shape[2]):
+        temp.append(corrMat[ind1, k, i])
+        temp.append(corrMat[ind2, k, i])
     dataBox.append(temp)
-fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='br',
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
                       label2=labLst2, figsize=(12, 4), yRange=[0, 1])
-# fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
-#                       label2=labLst2, figsize=(12, 4), sharey=False)
 fig.show()
 
-# p-values
-testLst = ['p-value']
-indLst = [[1, 3]]
+
+# significance test
+testLst = ['training', 'testing']
+indLst = [[0, 2], [1, 3]]
 codeStrLst = ['{} {}'.format(
     code, usgs.codePdf.loc[code]['shortName']) for code in codeLst]
 dfS = pd.DataFrame(index=codeStrLst, columns=testLst)
@@ -94,8 +84,8 @@ for (test, ind) in zip(testLst, indLst):
     for k, code in enumerate(codeLst):
         data = [corrMat[:, k, x] for x in ind]
         [a, b], _ = utils.rmNan(data)
-        # s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
-        s, p = scipy.stats.ttest_rel(a, b)
+        s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
+        # s, p = scipy.stats.ttest_rel(a, b)
         dfS.loc[codeStrLst[k]][test] = p
 pd.options.display.float_format = '{:,.2f}'.format
 print(dfS)
