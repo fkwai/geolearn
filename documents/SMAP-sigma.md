@@ -5,7 +5,7 @@ K. Fang, D. Kifer, K. Lawson, CP. Shen, Evaluating the potential and challenges 
 
 DOI will be added when available. 
 
-The full package could be found in https://github.com/fkwai/geolearn
+The updated package could be found in https://github.com/fkwai/geolearn
 
 Please contact kuaifang@stanford.edu or cshen@engr.psu.edu for data. 
 
