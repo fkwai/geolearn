@@ -18,7 +18,7 @@ echo "[path-of-this-folder]" > "$SITEDIR/[whatever].pth"
 ~~~
 
 ## modify data path
-To plot figures, required data path need to be set correspondingly by modify Line 23-26 of [rnnSMAP package init code](rnnSMAP/__init__.py):
+To plot figures, required data path need to be set correspondingly by modify Line 23-26 of [rnnSMAP package init code](/rnnSMAP/__init__.py):
 ~~~
 dirDB = os.path.join(os.path.sep, 'D:', 'rnnSMAP', 'Database_SMAPgrid')
 dirOut = os.path.join(os.path.sep, 'D:', 'rnnSMAP', 'Output_SMAPgrid')
