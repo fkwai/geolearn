@@ -2,11 +2,11 @@ This code contains deep learning code used to modeling hydrologic systems, inclu
 
 # Publications from this repo
 
-K. Fang, M. Pan, CP. Shen, [The Value of SMAP for Long-Term Soil Moisture Estimation With the Help of Deep Learning], IEEE Transactions on Geoscience and Remote Sensing (2018) (https://doi.org/10.1109/TGRS.2018.2872131)
+K. Fang, M. Pan, CP. Shen, The Value of SMAP for Long-Term Soil Moisture Estimation With the Help of Deep Learning, IEEE Transactions on Geoscience and Remote Sensing (2018) https://doi.org/10.1109/TGRS.2018.2872131
 
-K. Fang, CP. Shen, D. Kifer and X. Yang, [Prolongation of SMAP to Spatio-temporally Seamless Coverage of Continental US Using a Deep Learning Neural Network], Geophysical Research Letters  (2017)(https://doi.org/10.1002/2017GL075619)
+K. Fang, CP. Shen, D. Kifer and X. Yang, Prolongation of SMAP to Spatio-temporally Seamless Coverage of Continental US Using a Deep Learning Neural Network, Geophysical Research Letters  (2017) https://doi.org/10.1002/2017GL075619
 
-K. Fang, D. Kifer, K. Lawson, CP. Shen, Evaluating the potential and challenges of an uncertainty quantification method for long short-term memory models for soil moisture predictions, submitted, [Document](/documents/SMAP-sigma)
+K. Fang, D. Kifer, K. Lawson, CP. Shen, Evaluating the potential and challenges of an uncertainty quantification method for long short-term memory models for soil moisture predictions, submitted
 
 # Acknowledge
 
@@ -14,7 +14,7 @@ I worked with [Dr. Chaopeng Shen](http://water.engr.psu.edu/shen/index.html) and
 
 Feng, DP, K. Fang and CP. Shen, [Enhancing streamflow forecast and extracting insights using continental-scale long-short term memory networks with data integration], Water Resources Reserach (2020), https://doi.org/10.1029/2019WR026793
 
-Shen, CP., [A trans-disciplinary review of deep learning research and its relevance for water resources scientists], Water Resources Research. 54(11), 8558-8593, doi: 10.1029/2018WR022643 (2018) https://doi.org/10.1029/2018WR022643
+Shen, CP., [A trans-disciplinary review of deep learning research and its relevance for water resources scientists], Water Resources Research (2018), https://doi.org/10.1029/2018WR022643 
 
 # Example
 Two examples with sample data are wrapped up including
