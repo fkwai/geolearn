@@ -10,7 +10,7 @@ K. Fang, D. Kifer, K. Lawson, CP. Shen, Evaluating the potential and challenges 
 
 # Acknowledge
 
-I worked with [Dr. Chaopeng Shen](http://water.engr.psu.edu/shen/index.html) and [MHPI group](https://github.com/mhpi)  until end of 2019. Please check this forked repo (https://github.com/mhpi/hydroDL). where MHPI group is carrying on many interesting researches. 
+I worked with [Dr. Chaopeng Shen](http://water.engr.psu.edu/shen/index.html) and [MHPI group](https://github.com/mhpi)  until end of 2019. Please check this [forked repo] (https://github.com/mhpi/hydroDL), where MHPI group is carrying on many interesting researches. Here are some papers from MHPI to read and cite:
 
 Feng, DP, K. Fang and CP. Shen, [Enhancing streamflow forecast and extracting insights using continental-scale long-short term memory networks with data integration], Water Resources Reserach (2020), https://doi.org/10.1029/2019WR026793
 
