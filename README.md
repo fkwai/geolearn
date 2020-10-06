@@ -24,5 +24,5 @@ Two examples with sample data are wrapped up including
 A demo for temporal test is [here](example/demo-temporal-test.ipynb)
 
 # Document
-[description of the SMAP database](document/database-SMAP.py)
-[instruction on LSTM uncertainty paper](/documents/SMAP-sigma)
+- [description of the SMAP database](document/database-SMAP.py)
+- [instruction on LSTM uncertainty paper](/documents/SMAP-sigma)
