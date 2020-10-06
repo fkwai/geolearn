@@ -46,6 +46,9 @@ for code in codeLst:
 t0 = time.time()
 for iS, siteNo in enumerate(siteNoLst):
     print('{}/{} {:.2f}'.format(iS, len(siteNoLst), time.time()-t0))
+    saveFile = os.path.join(dirOut, siteNo)
+    if os.path.exists(saveFile):
+        continue
     varC = codeLst
     varQ = ['00060']
     df = waterQuality.readSiteTS(siteNo, varLst=varC+varQ, freq='W')
@@ -81,8 +84,8 @@ for iS, siteNo in enumerate(siteNoLst):
                 corr = np.corrcoef(yt, yy)[0, 1]
             resLst = [len(yy), coef[0], coef[1], coef[2], inte, corr, rmse]
             dictRes[code].loc[siteNo] = resLst
-    dfYP.to_csv(os.path.join(dirOut, siteNo))
+    dfYP.to_csv(saveFile)
 
-for code in codeLst:
-    fileRes = os.path.join(dirRes, code)
-    dictRes[code].to_csv(fileRes)
+# for code in codeLst:
+#     fileRes = os.path.join(dirRes, code)
+#     dictRes[code].to_csv(fileRes)

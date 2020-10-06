@@ -1,176 +1,134 @@
 import os
 import rnnSMAP
-from rnnSMAP import runTrainLSTM
+# from rnnSMAP import runTrainLSTM
 import matplotlib.pyplot as plt
-import numpy as np
-# import huc_single_test
-import imp
 import matplotlib
+import numpy as np
+from rnnSMAP import runTestLSTM
+import shapefile
+import time
+import imp
+import math
 imp.reload(rnnSMAP)
 rnnSMAP.reload()
 
 #################################################
-# intend to test huc vs huc
-
-codeLst = ['5.1', '6.2','8.1', '8.2', '8.3', '8.4', '8.5', '9.2', '9.3', '9.4', '9.5','10.1', '10.2', '11.1', '12.1', '13.1', '14.3']
-idLst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,12, 13, 14, 15, 16, 17]
-nameLst=['Northern Forests','Northwestern Forests Mountain','Mixed Wood Plains','Central USA Plains','Southeastern USA Plains','Ozark/Ouachita-Appalachiana Forests','Mississippi Alluvial and Southeast Coastal','Temperate Prairies','West-central Semiarid Prairies','South-central Semiarid Prairies','Texas Plain','Cold Deserts','Warm Deserts','Mediterranean California','Southern Semiarid Highlands','Temperate Sierras','Tropical Forests']
+# train on one HUC and test on CONUS. look at map of sigma
 
 doOpt = []
+# doOpt.append('train')
+# doOpt.append('test')
 doOpt.append('loadData')
-doOpt.append('crdMap')
-# doOpt.append('plotMap')
-doOpt.append('plotBox')
-# doOpt.append('plotVS')
-# doOpt.append('plotConf')
+# doOpt.append('plotMapMC')
+doOpt.append('plotMapPaper')
 
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 
-for kkk in range(0, 3):
-    # if kkk == 0:
-    #     ecoStrLst = ['12', '13', '05']  # [ref, close, far]
-    # if kkk == 1:
-    #     ecoStrLst = ['10', '09', '14']  # [ref, close, far]
-    # if kkk == 2:
-    #     ecoStrLst = ['05', '06', '12']  # [ref, close, far]
-    if kkk == 0:
-        ecoStrLst = ['13', '12', '06']  # [ref, close, far]
-    if kkk == 1:
-        ecoStrLst = ['10', '09', '14']  # [ref, close, far]
-    if kkk == 2:
-        ecoStrLst = ['06', '05', '13']  # [ref, close, far]
+saveFolder = os.path.join(
+    rnnSMAP.kPath['dirResult'], 'paperSigma', 'eco_single_map')
+strSigmaLst = ['sigmaX', 'sigmaMC']
+strErrLst = ['Bias', 'ubRMSE']
+rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
+rootDB = rnnSMAP.kPath['DB_L3_NA']
+yrLst = [2017]
 
-    ecoLst = np.asarray(ecoStrLst, dtype=int)
-    saveFolder = os.path.join(
-        rnnSMAP.kPath['dirResult'], 'paperSigma', 'eco_single')
-    caseStr = ''.join(ecoStrLst)
-    legendLst = [codeLst[ecoLst[0]-1]+' (train)',
-                 codeLst[ecoLst[1]-1]+' (close)',
-                 codeLst[ecoLst[2]-1]+' (far)']
+# ecoShapeFile = r'C:\Users\geofk\work\map\ecoRegion\comb\ecoRegion'
+ecoShapeFile = '/mnt/sdb/Kuai/map/ecoRegion/ecoRegion'
+shapeLst = shapefile.Reader(ecoShapeFile).shapes()
+shapeRecLst = shapefile.Reader(ecoShapeFile).records()
+ecoIdLst = [rec[1] for rec in shapeRecLst]
 
-    matplotlib.rcParams.update({'font.size': 16})
-    matplotlib.rcParams.update({'lines.linewidth': 2})
-    matplotlib.rcParams.update({'lines.markersize': 10})
-    matplotlib.rcParams.update({'legend.fontsize': 16})
+matplotlib.rcParams.update({'font.size': 14})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
+matplotlib.rcParams.update({'legend.fontsize': 12})
 
-    #################################################
-    # load data and plot map
-    if 'loadData' in doOpt:
-        statErrLst = list()
-        statSigmaLst = list()
-        statConfLst = list()
-        for k in range(0, len(ecoLst)):
-            trainName = 'ecoRegion'+str(ecoLst[0]).zfill(2)+'_v2f1'
-            testName = 'ecoRegion'+str(ecoLst[k]).zfill(2)+'_v2f1'
-            out = trainName+'_y15_Forcing'
-            ds = rnnSMAP.classDB.DatasetPost(
-                rootDB=rootDB, subsetName=testName, yrLst=[2016, 2017])
-            ds.readData(var='SMAP_AM', field='SMAP')
-            ds.readPred(out=out, drMC=100, field='LSTM',
-                        rootOut=rnnSMAP.kPath['OutSigma_L3_NA'])
+codeLst = ['5.1', '6.2', '8.1', '8.2', '8.3', '8.4', '8.5', '9.2',
+           '9.3', '9.4', '9.5', '10.1', '10.2', '11.1', '12.1', '13.1', '14.3']
+idLst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+nameLst = ['Northern Forests', 'Northwestern Forests Mountain', 'Mixed Wood Plains', 'Central USA Plains', 'Southeastern USA Plains', 'Ozark/Ouachita-Appalachiana Forests', 'Mississippi Alluvial and Southeast Coastal',
+           'Temperate Prairies', 'West-central Semiarid Prairies', 'South-central Semiarid Prairies', 'Texas Plain', 'Cold Deserts', 'Warm Deserts', 'Mediterranean California', 'Southern Semiarid Highlands', 'Temperate Sierras', 'Tropical Forests']
 
-            statErr = ds.statCalError(predField='LSTM', targetField='SMAP')
-            statErrLst.append(statErr)
 
-            statSigma = ds.statCalSigma(field='LSTM')
-            statSigmaLst.append(statSigma)
-            statConf = ds.statCalConf(predField='LSTM', targetField='SMAP')
-            statConfLst.append(statConf)
+#################################################
+# test
+if 'test' in doOpt:
+    for k in range(0, 17):
+        trainName = 'ecoRegion'+str(k+1).zfill(2)+'_v2f1'
+        testName = 'CONUSv2f1'
+        out = trainName+'_y15_Forcing'
+        runTestLSTM.runCmdLine(
+            rootDB=rootDB, rootOut=rootOut, out=out, testName=testName,
+            yrLst=yrLst, cudaID=k % 3, screenName=out)
+        # if k % 3 == 2:
+        # time.sleep(1000)
 
-    #################################################
-    if 'crdMap' in doOpt:
-        import shapefile
-        # hucShapeFile = '/mnt/sdc/Kuai/Map/HUC/HUC2_CONUS.shp'
-        ecoShapeFile = '/mnt/sdb/Kuai/map/ecoRegion/ecoRegionClip2.shp'
-        ecoShape = shapefile.Reader(ecoShapeFile)
-        ecoIdLst = [ecoShape.records()[x][1] for x in range(17)]
-        cmap = 'rgb'
-        labelLst = ['A (train)', 'B (close)', 'C (far)']
-        fig, axes = plt.subplots(2, 1, figsize=(3, 3))
-        ax = axes[0]
-        for iEco in range(0, 17):
-            shape = ecoShape.shapeRecords()[iEco]
-            parts = shape.shape.parts
-            points = shape.shape.points
-            ind1 = list(parts)
-            ind2 = list(parts)[1:]
-            ind2.append(len(points)-1)
-            for k in range(0, len(ind1)):
-                pp = points[ind1[k]:ind2[k]:10]
-                x = [i[0] for i in pp]
-                y = [i[1] for i in pp]
-                ax.plot(x, y, 'k-', label=None, linewidth=0.5)
-        cLst = 'rgb'
-        for iEco in range(0, len(ecoLst)):
-            iShp = ecoIdLst.index(ecoLst[iEco])
-            shape = ecoShape.shapeRecords()[iShp]
-            parts = shape.shape.parts
-            points = shape.shape.points
-            ind1 = list(parts)
-            ind2 = list(parts)[1:]
-            ind2.append(len(points)-1)
-            for k in range(0, len(ind1)):
-                pp = points[ind1[k]:ind2[k]]
-                x = [i[0] for i in pp[::50]]
-                y = [i[1] for i in pp[::50]]
-                if k == 0:
-                    ax.fill(
-                        x, y, 'k-', label=legendLst[iEco], color=cLst[iEco])
-                else:
-                    ax.fill(x, y, 'k-', color=cLst[iEco])
-        ax.set_aspect('equal', 'box')
-        hh, ll = ax.get_legend_handles_labels()
-        axes[1].legend(hh, ll)
-        axes[1].axis('off')
-        axes[0].axis('off')
+#################################################
+# load data
+if 'loadData' in doOpt:
+    dsLst = list()
+    statErrLst = list()
+    statSigmaLst = list()
+    for k in range(17):
+        trainName = 'ecoRegion'+str(k+1).zfill(2)+'_v2f1'
+        testName = 'CONUSv2f1'
+        out = trainName+'_y15_Forcing'
+        ds = rnnSMAP.classDB.DatasetPost(
+            rootDB=rootDB, subsetName=testName, yrLst=yrLst)
+        ds.readData(var='SMAP_AM', field='SMAP')
+        ds.readPred(rootOut=rootOut, out=out, drMC=100, field='LSTM')
+        dsLst.append(ds)
+
+        statErr = ds.statCalError(predField='LSTM', targetField='SMAP')
+        statSigma = ds.statCalSigma(field='LSTM')
+        statErrLst.append(statErr)
+        statSigmaLst.append(statSigma)
+
+#################################################
+if 'plotMapMC' in doOpt:
+    for k in range(17):
+        # for k in [5]:
+        ecoId = k+1
+        shape = shapeLst[ecoIdLst.index(ecoId)]
+        statSigma = statSigmaLst[k]
+        statErr = 'sigmaMC'
+        fig, ax = plt.subplots(figsize=[6, 3])
+        data = statSigma.sigmaMC
+        grid = ds.data2grid(data=data)
+        titleStr = r'$\sigma_{mc}$' + ' from Eco-region %02d model' % (k+1)
+        rnnSMAP.funPost.plotMap(
+            grid, crd=ds.crdGrid, ax=ax, title=titleStr,
+            shape=shape)
+        plt.tight_layout()
         # fig.show()
-        saveFile = os.path.join(saveFolder, caseStr+'_ecoMap')
-        fig.savefig(saveFile, dpi=100)
-        fig.savefig(saveFile+'.eps')
+        saveFile = os.path.join(saveFolder, 'map_sigmaMC_%02d' % (k+1))
+        fig.savefig(saveFile)
 
-    #################################################
-    if 'plotConf' in doOpt:
-        strConfLst = ['conf_sigmaMC', 'conf_sigmaX', 'conf_sigma']
-        titleLst = [r'$\sigma_{mc}$', r'$\sigma_{x}$', r'$\sigma_{comb}$']
-        fig, axes = plt.subplots(ncols=len(strConfLst), figsize=(8, 4))
-
-        for k in range(0, len(strConfLst)):
-            plotLst = list()
-            for iEco in range(0, 3):
-                temp = getattr(statConfLst[iEco], strConfLst[k])
-                plotLst.append(temp)
-            rnnSMAP.funPost.plotCDF(
-                plotLst, ax=axes[k], cLst='grb', legendLst=legendLst)
-            axes[k].set_title(titleLst[k])
-        saveFile = os.path.join(saveFolder, caseStr+'_conf.png')
-        # fig.show()
-        # fig.savefig(saveFile, dpi=100)
-
-    #################################################
-    if 'plotBox' in doOpt:
-        data = list()
-        # strSigmaLst = ['sigmaMC', 'sigmaX', 'sigma']
-        strSigmaLst = ['sigmaMC', 'sigmaX']
-        strErrLst = ['ubRMSE']
-        labelC = [r'$\sigma_{mc}$', r'$\sigma_{x}$', 'ubRMSE']
-        for strSigma in strSigmaLst:
-            temp = list()
-            for k in range(0, len(ecoLst)):
-                statSigma = statSigmaLst[k]
-                temp.append(getattr(statSigma, strSigma))
-            data.append(temp)
-        for strErr in strErrLst:
-            temp = list()
-            for k in range(0, len(ecoLst)):
-                statErr = statErrLst[k]
-                temp.append(getattr(statErr, strErr))
-            data.append(temp)
-        fig = rnnSMAP.funPost.plotBox(
-            data, labelS=None, labelC=labelC,
-            colorLst='rgb', figsize=(9, 3), sharey=False)
-        fig.subplots_adjust(wspace=0.5)
-        fig.tight_layout()
-        saveFile = os.path.join(saveFolder, caseStr+'_box')
-        fig.savefig(saveFile, dpi=100)
-        fig.savefig(saveFile+'.eps')
+#################################################
+if 'plotMapPaper' in doOpt:
+    a = 0
+    figNum = ['(a)', '(b)', '(c)', '(d)']
+    fig, axes = plt.subplots(2, 2, figsize=[12, 7])
+    for ecoId in [5, 10, 12, 13]:
+        k = ecoId-1
+        shape = shapeLst[ecoIdLst.index(ecoId)]
+        statSigma = statSigmaLst[k]
+        statErr = 'sigmaMC'
+        data = statSigma.sigmaMC
+        grid = ds.data2grid(data=data)
+        titleStr = figNum[a]+' ' + \
+            r'$\sigma_{mc}$' + ' from Eco-region {} model'.format(codeLst[k])
+        ax = axes[math.floor(a/2), a % 2]
+        print('1 plot')
+        rnnSMAP.funPost.plotMap(
+            grid, crd=ds.crdGrid, ax=ax, title=titleStr,
+            shape=shape)
+        a = a+1
+    print('2 plot')
+    plt.tight_layout()
+    # fig.show()
+    saveFile = os.path.join(saveFolder, 'map_sigmaMC')
+    fig.savefig(saveFile)
+    fig.savefig(saveFile+'.eps')
+    print(saveFile)

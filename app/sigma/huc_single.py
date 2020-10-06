@@ -13,8 +13,8 @@ rnnSMAP.reload()
 # intend to test huc vs huc
 
 doOpt = []
-# doOpt.append('train')
-# doOpt.append('test')
+doOpt.append('train')
+doOpt.append('test')
 doOpt.append('loadData')
 doOpt.append('crdMap')
 # doOpt.append('plotMap')

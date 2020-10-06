@@ -43,7 +43,7 @@ lon = dfCrd['LNG_GAGE'].values
 
 
 def funcMap():
-    figM, axM = plt.subplots(1, 3, figsize=(6, 12))
+    figM, axM = plt.subplots(1, 3, figsize=(12, 4))
     mat1 = dfR1['corr'].values
     mat2 = dfR2['corr'].values
     axplot.mapPoint(axM[0], lat, lon, mat1, vRange=[0, 1], s=16)
@@ -68,8 +68,8 @@ def funcPoint(iP, axP):
     v = [dfP1.values, dfP2.values, dfO.values]
     [v1, v2, o], iv = utils.rmNan([dfP1.values, dfP2.values, dfO.values])
     tt = t[iv]
-    styLst = [['-*'] for x in range(3)]
-    axplot.plotTS(axP, tt.values, [v1, v2, o], cLst='rbk')
+    # styLst = [['-*'] for x in range(3)]
+    axplot.plotTS(axP, tt.values, [v1, v2, o], cLst='rbk', styLst='--*')
     # print corr
     rmse1, corr1 = utils.stat.calErr(v[0], v[-1])
     rmse2, corr2 = utils.stat.calErr(v[1], v[-1])
@@ -77,4 +77,5 @@ def funcPoint(iP, axP):
         siteNo, corr1, corr2))
 
 
+plt.tight_layout()
 figM, figP = figplot.clickMap(funcMap, funcPoint)
