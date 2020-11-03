@@ -23,25 +23,6 @@ doOpt.append('plotBox')
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 
-
-#################################################
-if 'train' in doOpt:
-    opt = rnnSMAP.classLSTM.optLSTM(
-        rootDB=rootDB, rootOut=rootOut,
-        syr=2015, eyr=2015, varC='varConstLst_Noah',
-        dr=0.6, modelOpt='relu',
-        model='cudnn', loss='sigma'
-    )    
-    for k in range(0, 17):
-        trainName = 'ecoRegion'+str(k+1).zfill(2)+'_v2f1'
-        opt['train'] = trainName
-        opt['var'] = 'varLst_Forcing'
-        opt['out'] = trainName+'_y15_Forcing'
-        cudaID = k % 3
-        print(trainName)
-        runTrainLSTM.runCmdLine(
-            opt=opt, cudaID=cudaID, screenName=opt['out'])
-            
 #################################################
 # load data and plot map
 for j in range(17):

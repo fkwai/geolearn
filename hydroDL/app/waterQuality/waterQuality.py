@@ -428,7 +428,8 @@ def calRunoff(q, info):
 
 
 def calRunoffArea(q, area):
-    unitConv = 0.3048**3*365*24*60*60/1000**2
+    # transfer to m/yr
+    unitConv = 0.3048**3*365*24*60*60/1000**2 
     runoff = q/area*unitConv
     return runoff
 
@@ -510,6 +511,8 @@ def extractVarMtd(varLst):
                 mtd = gageII.dictStat[var]
             elif var in usgs.dictStat.keys():
                 mtd = usgs.dictStat[var]
+            elif var in ntn.dictStat.keys():
+                mtd = ntn.dictStat[var]
             # add sinT cosT
             elif var in ['sinT', 'cosT']:
                 mtd = 'norm'

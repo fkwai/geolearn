@@ -15,7 +15,7 @@ import pandas as pd
 import time
 import matplotlib.pyplot as plt
 
-siteNo = '10172200'
+siteNo = '08195000'
 code = '00955'
 freq = 'W'
 sn = 1
@@ -89,9 +89,9 @@ xx = x[:, ind1, :]
 yy = y[:, ind1, :]
 # training
 nbatch = 20
-nEp = 500
-# saveEp = [10, 100]
-saveEp = [100]
+nEp = 100
+saveEp = [10, 50, 100]
+
 ns = xx.shape[1]
 nx = xx.shape[-1]
 ny = yy.shape[-1]

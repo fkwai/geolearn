@@ -22,6 +22,13 @@ def sortData(x):
     return xSort
 
 
+def rankData(x):
+    ind = np.where(~np.isnan(x))[0]
+    indS = np.argsort(x[ind])
+    xRank = x[ind[indS]]
+    return xRank, ind[indS]
+
+
 def rmNan(xLst, returnInd=True):
     if len(set([len(x) for x in xLst])) > 1:
         raise Exception('not same size')

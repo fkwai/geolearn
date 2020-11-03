@@ -27,6 +27,8 @@ doOpt.append('plotBox')
 rootDB = rnnSMAP.kPath['DB_L3_NA']
 rootOut = rnnSMAP.kPath['OutSigma_L3_NA']
 
+
+
 for kkk in range(0, 3):
     # if kkk == 0:
     #     ecoStrLst = ['12', '13', '05']  # [ref, close, far]

@@ -16,7 +16,7 @@ siteNoLst = wqData.info.siteNo.unique()
 codeLst = usgs.newC
 icLst = [wqData.varC.index(code) for code in codeLst]
 data = wqData.c[:, np.array(icLst)]
-mtdLst = wqData.extractVarMtd(codeLst)
+mtdLst = waterQuality.extractVarMtd(codeLst)
 dataNorm, stat = transform.transInAll(data, mtdLst)
 info = wqData.info
 
