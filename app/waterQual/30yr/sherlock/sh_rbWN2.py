@@ -12,7 +12,7 @@ varNtnUsgsLst = ['00400', '00095', '00915', '00925', '00935',
                  '00930', '71846', '00618', '00940', '00945']
 
 # ntn variables
-dataName = 'rbDN2'
+dataName = 'rbWN2'
 wqData = waterQuality.DataModelWQ(dataName)
 codeLst = ['comb']
 labelLst = ['QFP_C', 'FP_QC', 'Q_C']
