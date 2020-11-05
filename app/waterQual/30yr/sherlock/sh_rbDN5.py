@@ -15,7 +15,7 @@ varNtnUsgsLst = ['00400', '00095', '00915', '00925', '00935',
 dataName = 'rbDN5'
 # wqData = waterQuality.DataModelWQ(dataName)
 codeLst = ['comb']
-labelLst = ['QFP_C', 'FP_QC', 'Q_C']
+labelLst = ['QFP_C', 'QF_C', 'FP_C', 'QP_C', 'Q_C', 'FP_QC']
 varF = gridMET.varLst
 varQ = ['00060']
 varP = ntn.varLst
@@ -41,6 +41,9 @@ for code in codeLst:
             varY = None
         elif label == 'FP_C':
             varX = varF+varP
+            varY = None
+        elif label == 'QP_C':
+            varX = varQ+varP
             varY = None
         elif label == 'P_C':
             varX = varP

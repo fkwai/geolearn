@@ -16,7 +16,7 @@ dataName = 'rbWN5'
 # wqData = waterQuality.DataModelWQ(dataName)
 codeLst = usgs.newC
 # labelLst = ['QFP_C', 'FP_QC', 'Q_C']
-labelLst = ['FP_QC']
+labelLst = ['QFP_C']
 varF = gridMET.varLst
 varQ = ['00060']
 varP = ntn.varLst
@@ -42,6 +42,9 @@ for code in codeLst:
             varY = None
         elif label == 'FP_C':
             varX = varF+varP
+            varY = None
+        elif label == 'QP_C':
+            varX = varQ+varP
             varY = None
         elif label == 'P_C':
             varX = varP
