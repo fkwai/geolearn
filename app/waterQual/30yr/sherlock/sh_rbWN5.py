@@ -16,10 +16,12 @@ dataName = 'rbWN5'
 # wqData = waterQuality.DataModelWQ(dataName)
 codeLst = ['comb']
 # labelLst = ['QFP_C', 'QF_C', 'FP_C', 'QP_C', 'Q_C', 'FP_QC']
-labelLst = ['QF_C', 'FP_C', 'QP_C',]
+labelLst = ['QT_C']
 varF = gridMET.varLst
 varQ = ['00060']
 varP = ntn.varLst
+varT = ['sinT', 'cosT']
+
 caseLst = list()
 for code in codeLst:
     if code == 'comb':
