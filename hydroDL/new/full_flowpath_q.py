@@ -43,17 +43,18 @@ indTrain = np.where((yr >= yrTrain[0]) & (yr < yrTrain[1]))[0]
 # data
 # varX = varF
 varX = ['pr']
-varY = ['00060']
+varY = ['runoff']
 nx = len(varX)
 ny = len(varY)
 X = df[varX].values
 Y = df[varY].values
-mtdX = waterQuality.extractVarMtd(varX)
-mtdY = waterQuality.extractVarMtd(varY)
-x, statX = transform.transInAll(X, mtdX)
-y, statY = transform.transInAll(Y, mtdY)
-x[np.isnan(x)] = -1
-
+# mtdX = waterQuality.extractVarMtd(varX)
+# mtdY = waterQuality.extractVarMtd(varY)
+# x, statX = transform.transInAll(X, mtdX)
+# y, statY = transform.transInAll(Y, mtdY)
+# x[np.isnan(x)] = -1
+x = np.log(X+1)
+y = np.log(Y+1)
 xx = x[indTrain, :]
 yy = y[indTrain, :]
 
@@ -62,7 +63,7 @@ try:
     model = flowPath(nx, 256, 10).cuda()
 except:
     pass
-model = flowPath(nx, 256, 10).cuda()
+model = flowPath(nx, 256, 3).cuda()
 lossFun = crit.RmseLoss().cuda()
 optim = torch.optim.Adadelta(model.parameters())
 
@@ -71,7 +72,7 @@ nbatch = 100
 rho = 1000
 nd = 365
 # train
-nEp = 500
+nEp = 300
 nIterEp = int(np.ceil(np.log(0.01) / np.log(1 - nbatch/nt)))
 xTemp = np.ndarray([rho, nbatch, nx])
 yTemp = np.ndarray([rho, nbatch, ny])
@@ -92,7 +93,7 @@ for iEp in range(1, nEp + 1):
     optim.zero_grad()
     yP = model(xT, nd)
     loss = lossFun(yP, yT[nd-1:, :, :])
-    loss.backward(retain_graph=True)
+    loss.backward()
     optim.step()
     ct = time.time() - t0
     logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp, loss.item(), ct)
@@ -106,13 +107,13 @@ fig.show()
 # test
 xA = np.expand_dims(x, axis=1)
 xF = torch.from_numpy(xA).float().cuda()
-yF = model(xF)
+yF = model(xF, nd)
 yO = yF.detach().cpu().numpy()[:, 0, :]
-yOut = transform.transOutAll(yO, mtdY, statY)
+# yOut = transform.transOutAll(yO, mtdY, statY)
 
 # plot
 fig, ax = plt.subplots(1, 1, figsize=(16, 6))
-# axplot.plotTS(ax, df.index, [y, yO], styLst='--', cLst='kr')
-tBar = [np.d]
-axplot.plotTS(ax, df.index, [Y, yOut], styLst='--', cLst='kr')
+ax.plot(df.index[nd-1:], yO[:, 0], color='r')
+# ax.plot(df.index, Y, color='k')
+# ax.plot( yy, color='k')
 fig.show()

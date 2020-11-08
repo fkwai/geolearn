@@ -106,7 +106,7 @@ def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange=None):
     if type(labLst[0]) is list:
         labX = labLst[1]
         labY = labLst[0]
-    else:        
+    else:
         labX = labLst
         labY = labLst
     ax.set_xticklabels(labX)
@@ -125,8 +125,31 @@ def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange=None):
     return ax
 
 
+def plot121(ax, x, y, specP='b*', specL='k-', vR=None):
+    _ = ax.plot(x, y, specP)
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    vmin = np.min([xlim[0], ylim[0]])
+    vmax = np.max([xlim[1], ylim[1]])
+    _ = ax.plot([vmin, vmax], [vmin, vmax], specL)
+
+
+def scatter121(ax, x, y, c, specL='k-', vR=None):
+    _ = ax.scatter(x, y, c=c)
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    vmin = np.min([xlim[0], ylim[0]])
+    vmax = np.max([xlim[1], ylim[1]])
+    _ = ax.plot([vmin, vmax], [vmin, vmax], specL)
+
+
 def sortData(x):
     xArrayTemp = x.flatten()
     xArray = xArrayTemp[~np.isnan(xArrayTemp)]
     xSort = np.sort(xArray)
     return xSort
+
+
+def titleInner(ax, titleStr):
+    _ = ax.text(.5, .9, titleStr, horizontalalignment='center',
+                transform=ax.transAxes)

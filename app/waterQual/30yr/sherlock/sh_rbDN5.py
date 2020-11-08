@@ -69,4 +69,4 @@ for code in codeLst:
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
 for caseName in caseLst:
-    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=48)
