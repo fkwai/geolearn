@@ -64,7 +64,7 @@ for code in codeLst:
         trainSet = '{}-B10'.format(code)
         saveName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
         caseName = basins.wrapMaster(
-            dataName=dataName, trainName=trainSet, batchSize=[None, 100],
+            dataName=dataName, trainName=trainSet, batchSize=[None, 500],
             outName=saveName, varX=varX, varY=varY, varYC=varYC)
         caseLst.append(caseName)
 

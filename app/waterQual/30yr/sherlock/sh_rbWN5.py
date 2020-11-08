@@ -16,7 +16,7 @@ dataName = 'rbWN5'
 # wqData = waterQuality.DataModelWQ(dataName)
 codeLst = ['comb']
 # labelLst = ['QFP_C', 'QF_C', 'FP_C', 'QP_C', 'Q_C', 'FP_QC']
-labelLst = ['QT_C', 'QTFP_C']
+labelLst = ['QT_C', 'QTFP_C', 'QFP_C', 'QTF_C']
 varF = gridMET.varLst
 varQ = ['00060']
 varP = ntn.varLst
@@ -53,14 +53,14 @@ for code in codeLst:
             varY = None
         elif label == 'QT_C':
             varX = varQ+varT
-            varY = None        
+            varY = None
         elif label == 'QTFP_C':
             varX = varQ+varT+varF+varP
             varY = None
         trainSet = '{}-B10'.format(code)
         saveName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
         caseName = basins.wrapMaster(
-            dataName=dataName, trainName=trainSet, batchSize=[None, 100],
+            dataName=dataName, trainName=trainSet, batchSize=[None, 500],
             outName=saveName, varX=varX, varY=varY, varYC=varYC)
         caseLst.append(caseName)
 
