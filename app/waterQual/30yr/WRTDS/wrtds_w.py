@@ -18,48 +18,51 @@ import matplotlib.pyplot as plt
 startDate = pd.datetime(1979, 1, 1)
 endDate = pd.datetime(2020, 1, 1)
 sn = 1
+codeLst = usgs.newC
 
-wqData = waterQuality.DataModelWQ('rbWN5')
-siteNoLst = wqData.siteNoLst
+dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
+with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
+    dictSite = json.load(f)
+siteNoLst = dictSite['comb']
 t0 = time.time()
-addF = False
-# for addF in [True, False]:
-if addF is True:
-    saveFolder = os.path.join(
-        kPath.dirWQ, 'modelStat', 'WRTDS-F', 'B10N5')
-else:
-    saveFolder = os.path.join(
-        kPath.dirWQ, 'modelStat', 'WRTDS', 'B10N5')
-if not os.path.exists(saveFolder):
-    os.mkdir(saveFolder)
+
+dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10')
+dirOut = os.path.join(dirRoot, 'output')
+dirPar = os.path.join(dirRoot, 'params')
+for folder in [dirRoot, dirOut, dirPar]:
+    if not os.path.exists(folder):
+        os.mkdir(folder)
+
+dictPar = dict()
+colLst = ['count', 'pQ', 'pSinT', 'pCosT', 'b']
+for code in codeLst:
+    dfpar = pd.DataFrame(index=siteNoLst, columns=colLst)
+    dfpar.index.name = 'siteNo'
+    dictPar[code] = dfpar
+
 for kk, siteNo in enumerate(siteNoLst):
     print('{}/{} {:.2f}'.format(
         kk, len(siteNoLst), time.time()-t0))
-    saveName = os.path.join(saveFolder, siteNo)
+    saveName = os.path.join(dirOut, siteNo)
     # if os.path.exists(saveName):
     #     continue
-    varF = gridMET.varLst+ntn.varLst
-    varC = usgs.varC
-    varQ = usgs.varQ
-    varLst = varF+varC+varQ
+    varQ = '00060'
+    varLst = codeLst+[varQ]
     df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='W')
 
     dfX = pd.DataFrame({'date': df.index}).set_index('date')
-    dfX = dfX.join(np.log(df['00060']+sn)).rename(
-        columns={'00060': 'logQ'})
-    if addF is True:
-        dfX = dfX.join(df[varF])
+    dfX = dfX.join(np.log(df[varQ]+sn)).rename(
+        columns={varQ: 'logQ'})
     yr = dfX.index.year.values
     t = yr+dfX.index.dayofyear.values/365
     dfX['sinT'] = np.sin(2*np.pi*t)
     dfX['cosT'] = np.cos(2*np.pi*t)
-
     ind = np.where(yr < 2010)[0]
-    dfYP = pd.DataFrame(index=df.index, columns=varC)
+    dfYP = pd.DataFrame(index=df.index, columns=codeLst)
     dfYP.index.name = 'date'
     # dfXN = (dfX-dfX.min())/(dfX.max()-dfX.min())
     dfXN = dfX
-    for code in varC:
+    for code in codeLst:
         x = dfXN.iloc[ind].values
         # y = np.log(df.iloc[ind][code].values+sn)
         y = df.iloc[ind][code].values
@@ -71,4 +74,11 @@ for kk, siteNo in enumerate(siteNoLst):
             yp = lrModel.predict(dfXN[~b].values)
             # yp = np.exp(yp)-sn
             dfYP.at[dfYP[~b].index, code] = yp
+            coef = lrModel.coef_
+            inte = lrModel.intercept_
+            parLst = [len(yy), coef[0], coef[1], coef[2], inte]
+            dictPar[code].loc[siteNo] = parLst
     dfYP.to_csv(saveName)
+for code in codeLst:
+    filePar = os.path.join(dirPar, code)
+    dictPar[code].to_csv(filePar)

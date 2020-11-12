@@ -18,9 +18,9 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
     dictSite = json.load(f)
 
 codeLst = sorted(usgs.newC)
-ep = 300
+ep = 500
 reTest = False
-dataName = 'rbWN5'
+dataName = 'rbDN5'
 wqData = waterQuality.DataModelWQ(dataName)
 siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
@@ -53,7 +53,7 @@ for iCode, code in enumerate(codeLst):
         # rmseMat[iS, iCode, iT*2] = rmse
 
 # WRTDS
-dirWrtds = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS')
+dirWrtds = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-D', 'B10')
 file2 = os.path.join(dirWrtds, '{}-{}-corr'.format('B10N5', 'A10N5'))
 dfCorr2 = pd.read_csv(file2, dtype={'siteNo': str}).set_index('siteNo')
 for iCode, code in enumerate(codeLst):

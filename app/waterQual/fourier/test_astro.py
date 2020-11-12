@@ -19,12 +19,13 @@ wqData = waterQuality.DataModelWQ('Silica64')
 siteNoLst = wqData.siteNoLst
 
 # real data
+code = '00955'
 # siteNo = '07083000'
 siteNo = '09352900'
-indS = np.random.randint(0, 64)
+# indS = np.random.randint(0, 64)
 siteNo = siteNoLst[indS]
 # siteNo = '04193500'
-dfObs = waterQuality.readSiteY(siteNo, ['00955'])
+dfObs = waterQuality.readSiteTS(siteNo, ['00955'])
 # rm outlier
 df = dfObs[dfObs['00955'].notna().values]
 y = df['00955'].values
@@ -92,7 +93,7 @@ fig, axes = plt.subplots(nf, 1, figsize=(10, 6))
 for kf in range(nf):
     freqAbs = np.abs(freq)
     ind = np.where((freqAbs >= frLst[kf]) & (freqAbs < frLst[kf+1]))[0]
-    axes[kf].plot(tt, np.sum(yp[ind, :]/2*len(t)/len(tt),
+    axes[kf].plot(tt, np.sum(yp[ind, 1:]/2*len(t)/len(tt),
                              axis=0), '-r')
     axes[kf].set_title('T range [{},{}]'.format(prLst[kf], prLst[kf+1]))
     # axes[kf].xaxis.set_ticklabels([])
@@ -111,18 +112,20 @@ fig, axes = plt.subplots(3, 1, figsize=(10, 6))
 freqAbs = np.abs(freq)
 ind = np.where((freqAbs >= 1/10) & (freqAbs < 1.1))[0]
 axes[0].plot(t, y, '-*b', label='obs')
-axes[0].plot(tt, np.sum(yp[ind, :]/2*len(t)/len(tt), axis=0), '-r', label='high freq')
+axes[0].plot(tt, np.sum(yp[ind, :]/2*len(t)/len(tt), axis=0),
+             '-r', label='high freq')
 axes[0].legend()
 axT1 = axes[1].twinx()
 axT1.plot(dfQ, '-b', label='streamflow')
-axes[1].plot(tt, np.sum(yp[ind, :]/2*len(t)/len(tt), axis=0), '-r', label='high freq')
+axes[1].plot(tt, np.sum(yp[ind, :]/2*len(t)/len(tt), axis=0),
+             '-r', label='high freq')
 axes[1].legend()
 axT1.legend()
 axT2 = axes[2].twinx()
 axT2.plot(dfF['pr'], '-b', label='prcp')
-axes[2].plot(tt, np.sum(yp[ind, :]/2*len(t)/len(tt), axis=0), '-r', label='high freq')
+axes[2].plot(tt, np.sum(yp[ind, :]/2*len(t)/len(tt), axis=0),
+             '-r', label='high freq')
 axes[2].legend()
 axT2.legend()
 plt.tight_layout()
 fig.show()
-

@@ -17,16 +17,16 @@ siteNoLst = dictSite['comb']
 dataName = 'rbWN5'
 wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
-labelLst = ['FP_QC', 'QFP_C', 'Q_C']
+labelLst = ['QT_C', 'QTFP_C']
 for label in labelLst:
     trainSet = 'comb-B10'
     outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
     basins.testModelSeq(outName, siteNoLst, wqData=wqData)
 
-# solo models
-label = 'FP_QC'
-codeLst = usgs.newC
-for code in codeLst:
-    trainSet = '{}-B10'.format(code)
-    outName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
-    basins.testModelSeq(outName, siteNoLst, wqData=wqData)
+# # solo models
+# label = 'FP_QC'
+# codeLst = usgs.newC
+# for code in codeLst:
+#     trainSet = '{}-B10'.format(code)
+#     outName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
+#     basins.testModelSeq(outName, siteNoLst, wqData=wqData)

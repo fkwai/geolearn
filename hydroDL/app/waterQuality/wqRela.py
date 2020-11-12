@@ -3,7 +3,7 @@ from scipy.stats import linregress
 import numpy as np
 from hydroDL import utils
 from scipy.optimize import curve_fit
-
+from astropy.timeseries import LombScargle
 
 def slopeModel(q, c, x=None):
     x1 = np.log(q)

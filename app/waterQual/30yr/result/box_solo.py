@@ -50,7 +50,7 @@ for iCode, code in enumerate(codeLst):
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
 with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
     dictSite = json.load(f)
-ep = 300
+ep = 500
 corrComb = np.full([nSite, len(codeLst), 2], np.nan)
 rmseComb = np.full([nSite, len(codeLst), 2], np.nan)
 trainSet = '{}-B10'.format('comb')

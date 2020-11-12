@@ -47,8 +47,13 @@ def mapGrid(ax, lat, lon, data, vRange=None, cmap=plt.cm.jet):
     return mm
 
 
-def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None):
+def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, sd=None):
     y = y if type(y) is list else [y]
+    if sd is not None:
+        ind = np.where(t >= sd)[0]
+        t = t[ind]
+        for k in range(len(y)):
+            y[k] = y[k][ind]
     for k in range(len(y)):
         yy = y[k]
         sty = '--*' if styLst is None else styLst[k]

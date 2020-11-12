@@ -24,7 +24,7 @@ siteNoLst = wqData.siteNoLst
 indS = np.random.randint(0, 64)
 siteNo = siteNoLst[indS]
 # siteNo = '06317000'
-dfObs = waterQuality.readSiteY(siteNo, ['00955'])
+dfObs = waterQuality.readSiteTS(siteNo, ['00955'])
 # rm outlier
 df = dfObs[dfObs['00955'].notna().values]
 y = df['00955'].values
@@ -68,8 +68,8 @@ y2 = np.zeros(len(t))
 #         yy = yy+ls.model(xx, 1/d)
 #         y2 = y2+ls.model(x, 1/d)
 for k in indP.tolist():
-      yy = yy+ls.model(xx, freq[k])
-      y2 = y2+ls.model(x, freq[k])
+    yy = yy+ls.model(xx, freq[k])
+    y2 = y2+ls.model(x, freq[k])
 
 fig, axes = plt.subplots(2, 1, figsize=(10, 4))
 axes[0].plot(tt, yy, '-r', label='Lomb-Scargle')
