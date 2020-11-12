@@ -61,7 +61,11 @@ fig, ax = plt.subplots(1, 1)
 ax.plot(1/freq, power, '-*b', label='power')
 fig.show()
 
-waterQuality.calPower(code,df)
+freq, power2, p2 = waterQuality.calPower(code, df)
+fig, ax = plt.subplots(1, 1)
+# ax.plot(1/freq, 1-p, '-r', label='baluev probability')
+ax.plot(1/freq, power2, '-*b', label='power')
+fig.show()
 # # ts
 # fig, ax = plt.subplots(1, 1)
 # ax.plot(df.index, df['00955'].values, '*')

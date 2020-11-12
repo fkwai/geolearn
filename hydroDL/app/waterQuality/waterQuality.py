@@ -6,24 +6,24 @@ import json
 from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 from hydroDL.master import basins
-from astropy.timeseries import LombScargle
+# from astropy.timeseries import LombScargle
 
 
-def calPower(code, df):
-    tt = df.index.values
-    dfD = df[df[code].notna().values]
-    t = dfD.index.values
-    x = (t.astype('datetime64[D]') -
-         np.datetime64('1979-01-01')).astype(np.float)
-    y = dfD[code].values
-    nt = len(tt)
-    freq = np.fft.fftfreq(nt)[1:]
-    ind = np.where((1/freq >= 0) & (1/freq < 1000))[0]
-    freq = freq[ind]
-    ls = LombScargle(x, y)
-    power = ls.power(freq)
-    p = ls.false_alarm_probability(power)
-    return freq, power, 1-p
+# def calPower(code, df):
+#     tt = df.index.values
+#     dfD = df[df[code].notna().values]
+#     t = dfD.index.values
+#     x = (t.astype('datetime64[D]') -
+#          np.datetime64('1979-01-01')).astype(np.float)
+#     y = dfD[code].values
+#     nt = len(tt)
+#     freq = np.fft.fftfreq(nt)[1:]
+#     ind = np.where((1/freq >= 0) & (1/freq < 1000))[0]
+#     freq = freq[ind]
+#     ls = LombScargle(x, y)
+#     power = ls.power(freq)
+#     p = ls.false_alarm_probability(power)
+#     return freq, power, 1-p
 
 
 class DataModelWQ():

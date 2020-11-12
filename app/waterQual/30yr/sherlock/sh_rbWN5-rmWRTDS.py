@@ -24,7 +24,7 @@ varP = ntn.varLst
 varT = ['sinT', 'cosT']
 varC = [var+'-R' for var in usgs.newC]
 code = 'comb'
-caseLst=list()
+caseLst = list()
 for label in labelLst:
     if label == 'QFP_C':
         varX = varQ+varF+varP
