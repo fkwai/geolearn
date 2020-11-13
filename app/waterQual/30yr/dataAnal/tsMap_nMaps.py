@@ -1,6 +1,4 @@
 
-from astropy.timeseries import LombScargle
-import matplotlib.gridspec as gridspec
 import importlib
 from hydroDL import kPath, utils
 from hydroDL.app import waterQuality
@@ -15,6 +13,9 @@ import pandas as pd
 import json
 import scipy
 
+from astropy.timeseries import LombScargle
+import matplotlib.gridspec as gridspec
+
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
 with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
     dictSite = json.load(f)
@@ -23,52 +24,64 @@ codeLst = sorted(usgs.newC)
 ep = 500
 reTest = False
 dataName = 'rbWN5'
-wqData = waterQuality.DataModelWQ(dataName)
 siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
-corrMat = np.full([nSite, len(codeLst), 2], np.nan)
 
+# load all sequence
+dictLSTMLst = list()
 # LSTM
-label = 'QTFP_C'
-trainSet = 'comb-B10'
-testSet = 'comb-A10'
-outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
-master = basins.loadMaster(outName)
-subset = testSet
-yP, ycP = basins.testModel(
-    outName, subset, wqData=wqData, ep=ep, reTest=reTest)
-ind = wqData.subset[subset]
-info = wqData.info.iloc[ind].reset_index()
-for iCode, code in enumerate(codeLst):
-    ic = wqData.varC.index(code)
-    if len(wqData.c.shape) == 3:
-        p = yP[-1, :, master['varY'].index(code)]
-        o = wqData.c[-1, ind, ic]
-    elif len(wqData.c.shape) == 2:
-        p = ycP[:, master['varYC'].index(code)]
-        o = wqData.c[ind, ic]
-    for siteNo in dictSite[code]:
-        iS = siteNoLst.index(siteNo)
-        indS = info[info['siteNo'] == siteNo].index.values
-        rmse, corr = utils.stat.calErr(p[indS], o[indS])
-        corrMat[iS, iCode, 0] = corr
-        # rmseMat[iS, iCode, iT*2] = rmse
-
+labelLst = ['QTFP_C']
+for label in labelLst:
+    dictLSTM = dict()
+    trainSet = 'comb-B10'
+    outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
+    for k, siteNo in enumerate(siteNoLst):
+        print('\t site {}/{}'.format(k, len(siteNoLst)), end='\r')
+        df = basins.loadSeq(outName, siteNo)
+        dictLSTM[siteNo] = df
+    dictLSTMLst.append(dictLSTM)
 # WRTDS
-dirWrtds = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10')
-file2 = os.path.join(dirWrtds, '{}-{}-corr'.format('B10N5', 'A10N5'))
-dfCorr2 = pd.read_csv(file2, dtype={'siteNo': str}).set_index('siteNo')
-for iCode, code in enumerate(codeLst):
-    indS = [siteNoLst.index(siteNo) for siteNo in dictSite[code]]
-    corrMat[indS, iCode, 1] = dfCorr2.iloc[indS][code].values
+dictWRTDS = dict()
+dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10', 'output')
+for k, siteNo in enumerate(siteNoLst):
+    print('\t site {}/{}'.format(k, len(siteNoLst)), end='\r')
+    saveFile = os.path.join(dirWRTDS, siteNo)
+    df = pd.read_csv(saveFile, index_col=None).set_index('date')
+    # df = utils.time.datePdf(df)
+    dictWRTDS[siteNo] = df
+# Observation
+dictObs = dict()
+for k, siteNo in enumerate(siteNoLst):
+    print('\t site {}/{}'.format(k, len(siteNoLst)), end='\r')
+    df = waterQuality.readSiteTS(siteNo, varLst=codeLst, freq='W')
+    dictObs[siteNo] = df
+
+# calculate correlation
+tt = np.datetime64('2010-01-01')
+ind1 = np.where(df.index.values < tt)[0]
+ind2 = np.where(df.index.values >= tt)[0]
+dictLSTM = dictLSTMLst[0]
+corrMat = np.full([len(siteNoLst), len(codeLst), 3], np.nan)
+for ic, code in enumerate(codeLst):
+    for siteNo in dictSite[code]:
+        indS = siteNoLst.index(siteNo)
+        v1 = dictLSTM[siteNo][code].iloc[ind2].values
+        v2 = dictWRTDS[siteNo][code].iloc[ind2].values
+        v3 = dictObs[siteNo][code].iloc[ind2].values
+        rmse1, corr1 = utils.stat.calErr(v1, v2)
+        rmse2, corr2 = utils.stat.calErr(v1, v3)
+        rmse3, corr3 = utils.stat.calErr(v2, v3)
+        corrMat[indS, ic, 0] = corr1
+        corrMat[indS, ic, 1] = corr2
+        corrMat[indS, ic, 2] = corr3
 
 # plot ts
 code = '00945'
 iCode = codeLst.index(code)
 indS = [siteNoLst.index(siteNo) for siteNo in dictSite[code]]
 siteNoLstCode = dictSite[code]
-matMap = [corrMat[indS, iCode, 0], corrMat[indS, iCode, 1],
-          corrMat[indS, iCode, 0]-corrMat[indS, iCode, 1]]
+matMapLst = [corrMat[indS, iCode, 0],
+             corrMat[indS, iCode, 1], corrMat[indS, iCode, 2]]
 dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLstCode)
 lat = dfCrd['LAT_GAGE'].values
@@ -77,9 +90,12 @@ shortName = usgs.codePdf.loc[code]['shortName']
 
 
 def funcMap():
-    figM, axM = plt.subplots(1, 1, figsize=(12, 4))
-    axplot.mapPoint(axM, lat, lon, matMap, vRange=[-0.3, 0.3], s=16)
-    axM.set_title('testing corr LSTM - corr WRTDS')
+    figM, axM = plt.subplots(1, 3, figsize=(12, 4))
+    for k in range(3):
+        axplot.mapPoint(axM[k], lat, lon, matMapLst[k], vRange=[0, 1], s=16)
+    axM[0].set_title('corr(LSTM, WRTDS)')
+    axM[1].set_title('corr(LSTM, obs)')
+    axM[2].set_title('corr(WRTDS, obs)')
     figP = plt.figure(figsize=[16, 6])
     gs = gridspec.GridSpec(3, 12)
     axTS = figP.add_subplot(gs[0, :])
@@ -99,9 +115,9 @@ def funcPoint(iP, axP):
     outName2 = '{}-{}-{}-{}'.format(dataName, 'comb', 'QT_C', trainSet)
     dfL1 = basins.loadSeq(outName1, siteNo)
     dfL2 = basins.loadSeq(outName2, siteNo)
-    dfW = pd.read_csv(os.path.join(dirWrtds, 'output', siteNo),
+    dfW = pd.read_csv(os.path.join(dirWRTDS, siteNo),
                       index_col=None).set_index('date')
-    dfO = waterQuality.readSiteTS(siteNo, codeLst+['00060'], freq=wqData.freq)
+    dfO = waterQuality.readSiteTS(siteNo, codeLst+['00060'], freq='W')
     dfOD = waterQuality.readSiteTS(siteNo, codeLst+['00060'], freq='D')
     t = dfO.index
     # ts
