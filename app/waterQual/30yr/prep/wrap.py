@@ -8,7 +8,8 @@ import os
 
 
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
-nsLst = [5, 2]
+# nsLst = [5, 2]
+nsLst = [10]
 for ns in nsLst:
     # ns = 5
     dataName = 'dictRB_Y30N{}.json'.format(ns)

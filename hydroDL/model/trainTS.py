@@ -149,6 +149,8 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
                     loss = lossFun(yP, yT)
                 elif type(lossFun) is crit.RmseLoss2D:
                     loss = lossFun(yP, yT[-1, :, :])
+                elif type(lossFun) is crit.SigmaLoss:
+                    loss = lossFun(yP, yT)
                 loss.backward()
                 optim.step()
                 model.zero_grad()

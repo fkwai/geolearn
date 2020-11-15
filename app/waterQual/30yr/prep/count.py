@@ -36,7 +36,7 @@ axplot.plotHeatMap(ax, outMat, labLst=[codeLst, nsLst])
 fig.show()
 
 # get siteNoLst
-ns = 2
+ns = 10
 pickMat = (count1 >= ns*30) & (count2 >= ns*10)
 siteNoLst = list(np.array(siteNoLstAll)[np.any(pickMat[:, 2:], axis=1)])
 len(siteNoLst)

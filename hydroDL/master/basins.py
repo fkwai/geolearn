@@ -126,6 +126,18 @@ def trainModelTS(outName):
 
     # train model
     [nx, nxc, ny, nyc, nt, ns] = trainTS.getSize(dataTup)
+    # define loss
+    if dictP['crit'] == 'RmseLoss':
+        lossFun = crit.RmseLoss()
+    elif dictP['crit'] == 'RmseLoss2D':
+        lossFun = crit.RmseLoss2D()
+    elif dictP['crit'] == 'SigmaLoss':
+        lossFun = crit.SigmaLoss()
+        ny = ny*2
+        nyc = nyc*2
+    else:
+        raise RuntimeError('loss function not specified')
+    # define model
     if dictP['modelName'] == 'CudnnLSTM':
         model = rnn.CudnnLstmModel(
             nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
@@ -135,12 +147,6 @@ def trainModelTS(outName):
     else:
         raise RuntimeError('Model not specified')
 
-    if dictP['crit'] == 'RmseLoss':
-        lossFun = crit.RmseLoss()
-    elif dictP['crit'] == 'RmseLoss2D':
-        lossFun = crit.RmseLoss2D()
-    else:
-        raise RuntimeError('loss function not specified')
     if torch.cuda.is_available():
         lossFun = lossFun.cuda()
         model = model.cuda()
@@ -181,6 +187,11 @@ def getObs(outName, testset, wqData=None):
 def testModel(outName, testset, wqData=None, ep=None, reTest=False):
     # load master
     master = loadMaster(outName)
+    if master['crit'] == 'SigmaLoss':
+        doSigma = True
+    else:
+        doSigma = False
+
     if ep is None:
         ep = master['nEpoch']
     outFolder = nameFolder(outName)
@@ -209,12 +220,24 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
         x = testDataLst[0]
         xc = testDataLst[1]
         ny = sizeLst[2]
-        # test model - point by point
-        yOut, ycOut = trainTS.testModel(model, x, xc, ny)
-        yP = wqData.transOut(yOut, statTup[2], master['varY'])
-        ycP = wqData.transOut(ycOut, statTup[3], master['varYC'])
-        np.savez(testFile, yP=yP, ycP=ycP)
-    return yP, ycP
+        if not doSigma:
+            # test model - point by point
+            yOut, ycOut = trainTS.testModel(model, x, xc, ny)
+            yP = wqData.transOut(yOut, statTup[2], master['varY'])
+            ycP = wqData.transOut(ycOut, statTup[3], master['varYC'])
+            np.savez(testFile, yP=yP, ycP=ycP)
+            return yP, ycP
+        else:
+            ny = ny*2
+            yOut, ycOut = trainTS.testModel(model, x, xc, ny)
+            yP = wqData.transOut(yOut[:, :, ::2], statTup[2], master['varY'])
+            sP = wqData.transOut(
+                np.sqrt(np.exp(yOut[:, :, 1::2])), statTup[2], master['varY'])
+            ycP = wqData.transOut(ycOut[:, ::2], statTup[3], master['varYC'])
+            scP = wqData.transOut(
+                np.sqrt(np.exp(ycOut[:, 1::2])), statTup[3], master['varYC'])
+            np.savez(testFile, yP=yP, ycP=ycP, sP=sP, scP=scP)
+            return yP, ycP, sP, scP
 
 
 def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
@@ -225,6 +248,10 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
     if type(siteNoLst) is not list:
         siteNoLst = [siteNoLst]
     master = loadMaster(outName)
+    if master['crit'] == 'SigmaLoss':
+        doSigma = True
+    else:
+        doSigma = False
     if ep is None:
         ep = master['nEpoch']
     outDir = nameFolder(outName)
@@ -273,9 +300,21 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
             nt = len(dfX)
             ny = len(varY) if varY is not None else 0
             nyc = len(varYC) if varYC is not None else 0
-            yP = np.full([nt, ny+nyc], np.nan)
-            yP[:, :ny] = wqData.transOut(yOut[:, 0, :ny], statY, varY)
-            yP[:, ny:] = wqData.transOut(yOut[:, 0, ny:], statYC, varYC)
+            if doSigma:
+                yP = np.full([nt, ny+nyc], np.nan)
+                sP = np.full([nt, ny+nyc], np.nan)
+                yP[:, :ny] = wqData.transOut(
+                    yOut[:, 0, :ny*2:2], statY, varY)
+                yP[:, ny:] = wqData.transOut(
+                    yOut[:, 0, ny*2::2], statYC, varYC)
+                sP[:, :ny] = wqData.transOut(
+                    np.sqrt(np.exp(yOut[:, 0, 1:ny*2:2])), statY, varY)
+                sP[:, ny:] = wqData.transOut(
+                    np.sqrt(np.exp(yOut[:, 0, ny*2+1::2])), statYC, varYC)
+            else:
+                yP = np.full([nt, ny+nyc], np.nan)
+                yP[:, :ny] = wqData.transOut(yOut[:, 0, :ny], statY, varY)
+                yP[:, ny:] = wqData.transOut(yOut[:, 0, ny:], statYC, varYC)
             # save output
             t = dfX.index.values.astype('datetime64[D]')
             colY = [] if varY is None else varY
@@ -284,6 +323,12 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
             dfOut.index.name = 'date'
             dfOut = dfOut.reset_index()
             dfOut.to_csv(os.path.join(saveDir, siteNo), index=False)
+            if doSigma:
+                dfOutS = pd.DataFrame(data=sP, columns=[colY+colYC], index=t)
+                dfOutS.index.name = 'date'
+                dfOutS = dfOut.reset_index()
+                dfOutS.to_csv(os.path.join(
+                    saveDir, siteNo+'_sigma'), index=False)
     # load all csv
     if returnOut:
         dictOut = dict()
@@ -291,6 +336,9 @@ def testModelSeq(outName, siteNoLst, wqData=None, ep=None,
             # print('loading {} from {} to {}'.format(siteNo, sdS, edS))
             dfOut = pd.read_csv(os.path.join(saveDir, siteNo))
             dictOut[siteNo] = dfOut
+            if doSigma:
+                dfOut = pd.read_csv(os.path.join(saveDir, siteNo+'_sigma'))
+                dictOut[siteNo+'_sigma'] = dfOut
         return dictOut
 
 
@@ -320,8 +368,10 @@ def modelLinear(outName, testset, trainset=None, wqData=None):
     # linear reg data
     statTup = loadStat(outName)
     varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
-    dataTup1 = wqData.transIn(subset=trainset, varTup=varTup, statTup=statTup)
-    dataTup2 = wqData.transIn(subset=testset, varTup=varTup, statTup=statTup)
+    dataTup1 = wqData.transIn(
+        subset=trainset, varTup=varTup, statTup=statTup)
+    dataTup2 = wqData.transIn(
+        subset=testset, varTup=varTup, statTup=statTup)
     dataTup1 = trainTS.dealNaN(dataTup1, master['optNaN'])
     dataTup2 = trainTS.dealNaN(dataTup2, master['optNaN'])
     varYC = varTup[3]

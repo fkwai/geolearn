@@ -41,3 +41,10 @@ def rmNan(xLst, returnInd=True):
         return [x[ind] for x in xLst], ind
     else:
         return [x[ind] for x in xLst]
+
+
+def rmExt(data, p=5):
+    v1 = np.percentile(data, p)
+    v2 = np.percentile(data, 100-p)
+    out = data[(data > v1) & (data < v2)]
+    return out

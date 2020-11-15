@@ -16,7 +16,7 @@ with open(os.path.join(dirSel, 'dictRB_Y30N2.json')) as f:
 
 
 # dataNameLst = ['rbWN5', 'rbDN5']
-dataNameLst = ['rbWN5-WRTDS']
+dataNameLst = ['rbWN10']
 for dataName in dataNameLst:
     wqData = waterQuality.DataModelWQ(dataName)
     info = wqData.info

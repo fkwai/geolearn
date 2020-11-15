@@ -45,32 +45,6 @@ class RmseEnd(torch.nn.Module):
         return loss
 
 
-class RmseMix(torch.nn.Module):
-    def __init__(self):
-        super(RmseMix, self).__init__()
-
-    def forward(self, outTs, outC, tarTs, tarC):
-        nts = outTs.shape[-1]
-        nc = outC.shape[-1]
-        # for time series
-        lossTs = 0
-        for k in range(nts):
-            p0 = outTs[:, :, k]
-            t0 = tarTs[:, :, k]
-            mask = t0 == t0
-            p = p0[mask]
-            t = t0[mask]
-            temp = torch.sqrt(((p - t)**2).mean())
-            if temp == temp:
-                lossTs = lossTs + temp
-        # for constant
-        mask = tarC == tarC
-        p = outC[mask]
-        t = tarC[mask]
-        lossC = torch.sqrt(((p - t)**2).sum())
-        return (lossTs+lossC)/(nts+nc)
-
-
 class RmseLoss(torch.nn.Module):
     def __init__(self):
         super(RmseLoss, self).__init__()
