@@ -32,4 +32,4 @@ basins.trainModelTS(outName)
 
 importlib.reload(basins)
 yp, sp, ycp, scp = basins.testModel(
-    outName, trainSet, wqData=wqData, ep=10,reTest=True)
+    outName, trainSet, wqData=wqData, ep=10, reTest=True)

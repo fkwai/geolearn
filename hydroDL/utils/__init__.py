@@ -15,9 +15,14 @@ def fillNan(mat, mask):
     return temp
 
 
-def sortData(x):
+def flatData(x):
     xArrayTemp = x.flatten()
     xArray = xArrayTemp[~np.isnan(xArrayTemp)]
+    return xArray
+
+
+def sortData(x):
+    xArray = flatData(x)
     xSort = np.sort(xArray)
     return xSort
 
@@ -43,8 +48,30 @@ def rmNan(xLst, returnInd=True):
         return [x[ind] for x in xLst]
 
 
-def rmExt(data, p=5):
-    v1 = np.percentile(data, p)
-    v2 = np.percentile(data, 100-p)
-    out = data[(data > v1) & (data < v2)]
-    return out
+def rmExt(data, p=5, returnInd=False):
+    v1 = np.nanpercentile(data, p)
+    v2 = np.nanpercentile(data, 100-p)
+    ind = np.where((data > v1) & (data < v2))[0]
+    out = data[ind]
+    if returnInd:
+        return out, ind
+    else:
+        return out
+
+class TimedOutExc(Exception):
+    pass
+
+def deadline(timeout, *args):
+    def decorate(f):
+        def handler(signum, frame):
+            raise TimedOutExc()
+
+        def new_f(*args):
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(timeout)
+            return f(*args)
+            signal.alarm(0)
+
+        new_f.__name__ = f.__name__
+        return new_f
+    return decorate

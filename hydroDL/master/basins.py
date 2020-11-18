@@ -228,6 +228,7 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
             np.savez(testFile, yP=yP, ycP=ycP)
             return yP, ycP
         else:
+            print('sigma model')
             ny = ny*2
             yOut, ycOut = trainTS.testModel(model, x, xc, ny)
             yP = wqData.transOut(yOut[:, :, ::2], statTup[2], master['varY'])

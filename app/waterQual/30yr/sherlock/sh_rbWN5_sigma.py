@@ -19,7 +19,7 @@ codeLst = ['comb']
 # labelLst = ['QT_C', 'QTFP_C', 'QFP_C', 'QTF_C']
 labelLst = ['FP_QC', 'FP_C', 'QT_C', 'QTFP_C', 'QFP_C']
 varF = gridMET.varLst
-varQ = ['00060']
+varQ = ['runoff']
 varP = ntn.varLst
 varT = ['sinT', 'cosT']
 

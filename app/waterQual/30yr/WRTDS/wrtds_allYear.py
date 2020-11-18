@@ -26,7 +26,7 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
 siteNoLst = dictSite['comb']
 t0 = time.time()
 
-dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10-rmExt')
+dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'All')
 dirOut = os.path.join(dirRoot, 'output')
 dirPar = os.path.join(dirRoot, 'params')
 for folder in [dirRoot, dirOut, dirPar]:
@@ -57,19 +57,19 @@ for kk, siteNo in enumerate(siteNoLst):
     t = yr+dfX.index.dayofyear.values/365
     dfX['sinT'] = np.sin(2*np.pi*t)
     dfX['cosT'] = np.cos(2*np.pi*t)
-    ind = np.where(yr < 2010)[0]
+    # ind = np.where(yr < 2010)[0]
     dfYP = pd.DataFrame(index=df.index, columns=codeLst)
     dfYP.index.name = 'date'
     # dfXN = (dfX-dfX.min())/(dfX.max()-dfX.min())
     dfXN = dfX
     for code in codeLst:
-        x = dfXN.iloc[ind].values
+        x = dfXN.values
         # y = np.log(df.iloc[ind][code].values+sn)
-        y = df.iloc[ind][code].values
-        [xv, yv], iv = utils.rmNan([x, y])
-        if len(yv) > 10:
-            yy, ind = utils.rmExt(yv, p=2.5, returnInd=True)
-            xx = xv[ind, :]
+        y = df[code].values
+        [xx, yy], iv = utils.rmNan([x, y])
+        if len(yy) > 10:
+            # yy, ind = utils.rmExt(yv, p=2.5, returnInd=True)
+            # xx = xv[ind, :]
             lrModel = LinearRegression()
             lrModel = lrModel.fit(xx, yy)
             b = dfXN.isna().any(axis=1)
