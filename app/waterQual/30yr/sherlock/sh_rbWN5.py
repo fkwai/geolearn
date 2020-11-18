@@ -38,6 +38,10 @@ for code in codeLst:
         elif label == 'FP_QC':
             varX = varF+varP
             varY = varQ
+        elif label == 'FP_Q':
+            varX = varF+varP
+            varY = varQ
+            varYC = None
         elif label == 'F_QC':
             varX = varF
             varY = varQ
