@@ -21,12 +21,12 @@ sn = 1
 codeLst = usgs.newC
 
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
-with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
+with open(os.path.join(dirSel, 'dictRB_Y30N2.json')) as f:
     dictSite = json.load(f)
 siteNoLst = dictSite['comb']
 t0 = time.time()
 
-dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10-rmExt')
+dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10')
 dirOut = os.path.join(dirRoot, 'output')
 dirPar = os.path.join(dirRoot, 'params')
 for folder in [dirRoot, dirOut, dirPar]:
@@ -66,10 +66,10 @@ for kk, siteNo in enumerate(siteNoLst):
         x = dfXN.iloc[ind].values
         # y = np.log(df.iloc[ind][code].values+sn)
         y = df.iloc[ind][code].values
-        [xv, yv], iv = utils.rmNan([x, y])
-        if len(yv) > 10:
-            yy, ind = utils.rmExt(yv, p=2.5, returnInd=True)
-            xx = xv[ind, :]
+        [xx, yy], iv = utils.rmNan([x, y])
+        if len(yy) > 0:
+            # yy, ind = utils.rmExt(yv, p=2.5, returnInd=True)
+            # xx = xv[ind, :]
             lrModel = LinearRegression()
             lrModel = lrModel.fit(xx, yy)
             b = dfXN.isna().any(axis=1)

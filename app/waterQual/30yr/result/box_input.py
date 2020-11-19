@@ -24,7 +24,7 @@ dataName = 'rbWN5'
 wqData = waterQuality.DataModelWQ(dataName)
 
 # single
-labelLst = ['QFP_C', 'QTFP_C', 'QT_C']
+labelLst = ['QFP_C', 'QTFP_C', 'FP_C', 'FP_QC']
 cLst = 'grmbc'
 labLst2 = [x.replace('_', '->') for x in labelLst]
 

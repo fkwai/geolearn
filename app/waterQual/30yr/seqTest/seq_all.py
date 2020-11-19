@@ -17,7 +17,7 @@ siteNoLst = dictSite['comb']
 dataName = 'rbWN5'
 wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
-labelLst = ['FP_QC', 'QFP_C', 'Q_C']
+labelLst = ['QT_C', 'QTFP_C','FP_QC']
 for label in labelLst:
     trainSet = 'comb-B10'
     outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
