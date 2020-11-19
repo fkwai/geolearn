@@ -229,7 +229,6 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
             yP = wqData.transOut(yOut, statTup[2], master['varY'])
             ycP = wqData.transOut(ycOut, statTup[3], master['varYC'])
             np.savez(testFile, yP=yP, ycP=ycP)
-            return yP, ycP
         else:
             print('sigma model')
             ny = ny*2
@@ -241,7 +240,10 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
             scP = wqData.transOut(
                 np.sqrt(np.exp(ycOut[:, 1::2])), statTup[3], master['varYC'])
             np.savez(testFile, yP=yP, ycP=ycP, sP=sP, scP=scP)
-            return yP, ycP, sP, scP
+    if doSigma:
+        return yP, ycP, sP, scP
+    else:
+        return yP, ycP
 
 
 def testModelSeq(outName, siteNoLst, wqData=None, ep=None,

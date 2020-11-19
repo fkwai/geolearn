@@ -57,6 +57,11 @@ codeLst2 = ['00095', '00400', '00405', '00600', '00605',
 # plot hist
 importlib.reload(axplot)
 importlib.reload(transform)
+importlib.reload(usgs)
+
+varRLst = [code+'-R' for code in usgs.newC]
+mtdLst = waterQuality.extractVarMtd(varRLst)
+matRN, stat = transform.transInAll(matR, mtdLst)
 
 fig, axes = plt.subplots(5, 4)
 ticks = [-0.5, 0, 0.5, 1]
@@ -66,15 +71,15 @@ for k, code in enumerate(codeLst2):
     siteNoCode = dictSite[code]
     indS = [siteNoLst.index(siteNo) for siteNo in siteNoCode]
     ic = usgs.newC.index(code)
-    data = matR[indS, :, ic]
+    data = matRN[indS, :, ic]
     x1 = utils.flatData(data)
     x2 = utils.rmExt(x1, p=5)
-    x3, stat = transform.transIn(x2, 'log2-norm')
+
     s, p = scipy.stats.kstest(x2/np.std(x2)-np.mean(x2), 'laplace')
     # s, p = scipy.stats.shapiro(x2)
     # s, p = scipy.stats.shapiro(x2)
     # scipy.stats.anderson(x2, dist='norm')
-    _ = ax.hist(x3, bins=200, density=True)
+    _ = ax.hist(x2, bins=200, density=True)
     shortName = usgs.codePdf.loc[code]['shortName']
     titleStr = '{} {} s={:.3f} p={:.3f}'.format(code, shortName, s, p)
     axplot.titleInner(ax, titleStr)
