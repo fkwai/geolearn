@@ -56,9 +56,9 @@ for rmCode, subset in zip(rmLst, subsetLst):
         saveName = '{}-{}-{}-{}'.format(dataName, subset, label, trainSet)
         caseName = basins.wrapMaster(
             dataName=dataName, trainName=trainSet, batchSize=[None, 500],
-            outName=saveName, varX=varX, varXC=varXC, varY=varY, varYC=varYC)
+            outName=saveName, varX=varX, varY=varY, varYC=varYC)
         caseLst.append(caseName)
 
-# cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
-# for caseName in caseLst:
-#     slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'
+for caseName in caseLst:
+    slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24)
