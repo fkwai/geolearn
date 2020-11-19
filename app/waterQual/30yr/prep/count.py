@@ -36,7 +36,7 @@ axplot.plotHeatMap(ax, outMat, labLst=[codeLst, nsLst])
 fig.show()
 
 # get siteNoLst
-ns = 10
+ns = 5
 pickMat = (count1 >= ns*30) & (count2 >= ns*10)
 siteNoLst = list(np.array(siteNoLstAll)[np.any(pickMat[:, 2:], axis=1)])
 len(siteNoLst)
@@ -47,10 +47,16 @@ len(siteNoLst)
 dictSite = dict()
 indS = np.where(np.any(pickMat, axis=1))[0]
 dictSite['comb'] = [siteNoLstAll[ind] for ind in indS]
-indS = np.where(np.any(pickMat[:, 1:], axis=1))[0]
-dictSite['combRmT'] = [siteNoLstAll[ind] for ind in indS]
-indS = np.where(np.any(pickMat[:, 2:], axis=1))[0]
-dictSite['combRmTK'] = [siteNoLstAll[ind] for ind in indS]
+
+rmLst = [['00010'], ['00010', '00095'], ['00010', '00095', '00400']]
+nameLst = ['rmT', 'rmTK', 'rmTKH']
+for rmCode, name in zip(rmLst, nameLst):
+    temp = pickMat.copy()
+    for code in rmCode:
+        temp[:, codeLst.index(code)] = False
+    indS = np.where(np.any(temp, axis=1))[0]
+    dictSite[name] = [siteNoLstAll[ind] for ind in indS]
+
 for code in codeLst:
     ic = codeLst.index(code)
     indS = np.where(pickMat[:, ic])[0]

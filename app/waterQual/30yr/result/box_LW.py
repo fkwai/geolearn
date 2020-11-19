@@ -56,7 +56,7 @@ for k, siteNo in enumerate(siteNoLst):
 tt = np.datetime64('2010-01-01')
 ind1 = np.where(df.index.values < tt)[0]
 ind2 = np.where(df.index.values >= tt)[0]
-dictLSTM = dictLSTMLst[0]
+dictLSTM = dictLSTMLst[1]
 corrMat = np.full([len(siteNoLst), len(codeLst), 3], np.nan)
 for ic, code in enumerate(codeLst):
     for siteNo in dictSite[code]:

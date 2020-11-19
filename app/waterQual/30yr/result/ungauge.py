@@ -42,6 +42,7 @@ yP, ycP = basins.testModel(
 dictP = dict()
 dictO = dict()
 for iCode, code in enumerate(codeLst):
+    print(code)
     pLst = list()
     oLst = list()
     ic = wqData.varC.index(code)
@@ -56,15 +57,11 @@ for iCode, code in enumerate(codeLst):
         rmse, corr = utils.stat.calErr(p[indS], o[indS])
         corrMat[iS, iCode] = corr
         rmseMat[iS, iCode] = rmse
-        pLst.append(p[indS])
-        oLst.append(o[indS])
-    dictP[code] = np.concatenate(pLst)
-    dictO[code] = np.concatenate(oLst)
+        pLst.append(np.nanmean(p[indS]))
+        oLst.append(np.nanmean(o[indS]))
+    dictP[code] = pLst
+    dictO[code] = oLst
 
-
-fig, ax = plt.subplots(1, 1)
-ax.plot(dictP['00955'], dictO['00955'],'*')
-fig.show()
 
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
@@ -77,4 +74,31 @@ for k in range(len(codeLst)):
     dataBox.append(temp)
 fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
                       figsize=(12, 4), yRange=[0, 1])
+fig.show()
+
+# 121 mean
+codeLst2 = ['00095', '00400', '00405', '00600', '00605',
+            '00618', '00660', '00665', '00681', '00915',
+            '00925', '00930', '00935', '00940', '00945',
+            '00950', '00955', '70303', '71846', '80154']
+fig, axes = plt.subplots(5, 4)
+ticks = [-0.5, 0, 0.5, 1]
+for k, code in enumerate(codeLst2):
+    j, i = utils.index2d(k, 5, 4)
+    ax = axes[j, i]
+    ind = codeLst.index(code)
+    x = np.array(dictP[code])
+    y = np.array(dictO[code])
+    axplot.plot121(ax, x, y)
+    rmse, corr = utils.stat.calErr(x, y)
+    titleStr = '{} {} {:.2f}'.format(
+        code, usgs.codePdf.loc[code]['shortName'], corr)
+    axplot.titleInner(ax, titleStr)
+    # print(i, j)
+    if i != 0:
+        _ = ax.set_yticklabels([])
+    if j != 4:
+        _ = ax.set_xticklabels([])
+    # _ = ax.set_aspect('equal')
+plt.subplots_adjust(wspace=0, hspace=0)
 fig.show()

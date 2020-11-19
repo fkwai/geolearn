@@ -203,6 +203,9 @@ def testModel(outName, testset, wqData=None, ep=None, reTest=False):
         npz = np.load(testFile, allow_pickle=True)
         yP = npz['yP']
         ycP = npz['ycP']
+        if doSigma:
+            sP = npz['sP']
+            scP = npz['scP']
     else:
         statTup = loadStat(outName)
         model = loadModel(outName, ep=ep)

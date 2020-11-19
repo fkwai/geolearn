@@ -11,6 +11,14 @@ def transIn(data, mtd, stat=None):
             stat = [np.nanpercentile(temp, 10),
                     np.nanpercentile(temp, 90)]
         out = (temp-stat[0])/(stat[1]-stat[0])
+    elif mtd == 'log2-norm':
+        temp = data.copy()
+        temp[data > 0] = np.log(data[data > 0]+1)
+        temp[data < 0] = -np.log(-data[data < 0]+1)
+        if stat is None:
+            stat = [np.nanpercentile(temp, 10),
+                    np.nanpercentile(temp, 90)]
+        out = (temp-stat[0])/(stat[1]-stat[0])
     elif mtd == 'log-stan':
         temp = np.log(data+sn)
         if stat is None:
@@ -35,6 +43,11 @@ def transOut(data, mtd, stat):
     if mtd == 'log-norm':
         temp = data*(stat[1]-stat[0])+stat[0]
         out = np.exp(temp)-sn
+    elif mtd == 'log2-norm':
+        temp = data*(stat[1]-stat[0])+stat[0]
+        out = temp.copy()
+        out[temp > 0] = np.exp(temp[temp > 0])-1
+        out[temp < 0] = -np.exp(-temp[temp < 0])+1
     elif mtd == 'log-stan':
         temp = data*stat[1]+stat[0]
         out = np.exp(temp)-sn

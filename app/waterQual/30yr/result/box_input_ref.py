@@ -17,7 +17,7 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
     dictSite = json.load(f)
 codeLst = sorted(usgs.newC)
 ep = 500
-reTest = True
+reTest = False
 siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
 dataName = 'rbWN5'
@@ -56,8 +56,12 @@ for iLab, label in enumerate(labelLst):
             corrMat[iS, iCode, iLab] = corr
             rmseMat[iS, iCode, iLab] = rmse
 
+dfRef = gageII.readData(
+    varLst=['LAT_GAGE', 'LNG_GAGE', 'CLASS'], siteNoLst=siteNoLst)
+dfRef = gageII.updateCode(dfRef)
+indRef=np.where(dfRef['CLASS'].values==1)[0]
+indNonRef=np.where(dfRef['CLASS'].values==0)[0]
 
-# find reference basins
 
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
@@ -67,7 +71,7 @@ for k in range(len(codeLst)):
     code = codeLst[k]
     temp = list()
     for i in range(len(labelLst)):
-        temp.append(corrMat[:, k, i])
+        temp.append(corrMat[indRef, k, i])
     dataBox.append(temp)
 fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst=cLst,
                       label2=labLst2, figsize=(12, 4), yRange=[0, 1])
@@ -76,18 +80,19 @@ fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst=cLst,
 fig.show()
 
 
-# significance test
-testLst = ['Q as target', 'Q as input']
-indLst = [[0, 2], [1, 2]]
-codeStrLst = ['{} {}'.format(
-    code, usgs.codePdf.loc[code]['shortName']) for code in codeLst]
-dfS = pd.DataFrame(index=codeStrLst, columns=testLst)
-for (test, ind) in zip(testLst, indLst):
-    for k, code in enumerate(codeLst):
-        data = [corrMat[:, k, x] for x in ind]
-        [a, b], _ = utils.rmNan(data)
-        s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
-        # s, p = scipy.stats.ttest_rel(a, b)
-        dfS.loc[codeStrLst[k]][test] = p
-pd.options.display.float_format = '{:,.2f}'.format
-print(dfS)
+
+# plot box
+labLst1 = [usgs.codePdf.loc[code]['shortName'] +
+           '\n'+code for code in codeLst]
+dataBox = list()
+for k in range(len(codeLst)):
+    code = codeLst[k]
+    temp = list()
+    for i in range(len(labelLst)):
+        temp.append(corrMat[indNonRef, k, i])
+    dataBox.append(temp)
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst=cLst,
+                      label2=labLst2, figsize=(12, 4), yRange=[0, 1])
+# fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
+#                       label2=labLst2, figsize=(12, 4), sharey=False)
+fig.show()
