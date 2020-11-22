@@ -19,10 +19,12 @@ for ns in nsLst:
     # freqLst = ['W', 'D']
     freqLst = ['W']
     # optCLst = ['seq']
-    optC = 'seq'
+    optC = 'end'
     for freq in freqLst:
-        dataName = 'rbT'+freq+'N'+str(ns)
-        rho = 365 if freq == 'D' else 52
+        # dataName = 'rbT'+freq+'N'+str(ns)
+        dataName = 'rbT'+freq+'N'+str(ns)+'T1'
+        # rho = 365 if freq == 'D' else 52
+        rho = 365 if freq == 'D' else 1
         print(dataName)
         wqData = waterQuality.DataModelWQ.new(
             dataName, siteNoLst, rho=rho, freq=freq, optC=optC)

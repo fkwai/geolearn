@@ -140,12 +140,17 @@ def plot121(ax, x, y, specP='b*', specL='k-', vR=None):
 
 
 def scatter121(ax, x, y, c, specL='k-', vR=None):
-    _ = ax.scatter(x, y, c=c)
+    if vR is None:
+        out = ax.scatter(x, y, c=c)
+    else:
+        out = ax.scatter(x, y, c=c, vmin=vR[0], vmax=vR[1])
+
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     vmin = np.min([xlim[0], ylim[0]])
     vmax = np.max([xlim[1], ylim[1]])
     _ = ax.plot([vmin, vmax], [vmin, vmax], specL)
+    return out
 
 
 def sortData(x):

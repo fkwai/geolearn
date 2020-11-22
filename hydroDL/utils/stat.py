@@ -15,6 +15,7 @@ def calErr(pred, obs, rmExt=True):
     if len(indV) > 0:
         rmse = np.sqrt(np.nanmean((a[indV]-b[indV])**2))
         corr = np.corrcoef(a[indV], b[indV])[0, 1]
+        nash = 1-np.sum((b-a)**2)/np.sum((a-np.mean(a))**2)
         return (rmse, corr)
     else:
         return (np.nan, np.nan)

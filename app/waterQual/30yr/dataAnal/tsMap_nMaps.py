@@ -76,7 +76,7 @@ for ic, code in enumerate(codeLst):
         corrMat[indS, ic, 2] = corr3
 
 # plot ts
-code = '00945'
+code = '00955'
 iCode = codeLst.index(code)
 indS = [siteNoLst.index(siteNo) for siteNo in dictSite[code]]
 siteNoLstCode = dictSite[code]

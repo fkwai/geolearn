@@ -1,3 +1,4 @@
+import matplotlib
 from hydroDL import kPath, utils
 from hydroDL.app import waterQuality
 from hydroDL.master import basins
@@ -11,7 +12,7 @@ import json
 
 codeLst = sorted(usgs.newC)
 ep = 500
-reTest = True
+reTest = False
 
 dataName = 'rbWN5'
 wqData = waterQuality.DataModelWQ(dataName)
@@ -77,21 +78,39 @@ for iT, subset in enumerate([trainSet, testSet]):
             corrComb[iS, iCode, iT] = corr
             rmseComb[iS, iCode, iT] = rmse
 
-# plot box
+matplotlib.rcParams.update({'font.size': 13})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
+
+# plot box1
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
-labLst2 = ['train solo', 'train comb', 'test solo', 'test comb']
+labLst2 = ['train', 'test']
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
     temp = list()
     for i in [0, 1]:
         temp.append(corrMat[:, k, i])
-        temp.append(corrComb[:, k, i])
-        # temp.append(rmseMat[:, k, i])
     dataBox.append(temp)
-fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
-                      label2=labLst2, figsize=(12, 4), yRange=[0, 1])
-# fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
-#                       label2=labLst2, figsize=(12, 4), sharey=False)
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='cm',
+                      label2=labLst2, figsize=(20, 5), yRange=[0, 1])
+fig.show()
+
+
+# plot box
+labLst1 = [usgs.codePdf.loc[code]['shortName'] +
+           '\n'+code for code in codeLst]
+labLst2 = ['train solo', 'test solo', 'train comb',  'test comb']
+dataBox = list()
+for k in range(len(codeLst)):
+    code = codeLst[k]
+    temp = list()
+    for i in [0, 1]:
+        temp.append(corrMat[:, k, i])
+    for i in [0, 1]:
+        temp.append(corrComb[:, k, i])
+    dataBox.append(temp)
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='cmbr',
+                      label2=labLst2, figsize=(20, 5), yRange=[0, 1])
 fig.show()

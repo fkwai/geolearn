@@ -1,3 +1,4 @@
+import matplotlib
 from hydroDL import kPath, utils
 from hydroDL.app import waterQuality
 from hydroDL.master import basins
@@ -15,79 +16,61 @@ import json
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
 with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
     dictSite = json.load(f)
-codeLst = sorted(usgs.newC)
+codeLst = [code+'-R' for code in sorted(usgs.newC)]
 ep = 500
 reTest = True
 siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
-dataName = 'rbWN5'
+dataName = 'rbWN5-WRTDS'
 wqData = waterQuality.DataModelWQ(dataName)
 
 # single
-labelLst = ['Q_C', 'QTFP_C', 'FP_C', 'FP_QC']
-cLst = 'grmbc'
-labLst2 = [x.replace('_', '->') for x in labelLst]
+label = 'QTFP_C'
+corrMat = np.full([nSite, len(codeLst), 2], np.nan)
+rmseMat = np.full([nSite, len(codeLst), 2], np.nan)
 
-
-corrMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
-rmseMat = np.full([nSite, len(codeLst), len(labelLst)], np.nan)
-for iLab, label in enumerate(labelLst):
-    trainSet = 'comb-B10'
-    testSet = 'comb-A10'
-    outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
-    master = basins.loadMaster(outName)
+trainSet = 'comb-B10'
+testSet = 'comb-A10'
+outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
+master = basins.loadMaster(outName)
+for iT, subset in enumerate([trainSet, testSet]):
     yP, ycP = basins.testModel(
-        outName, testSet, wqData=wqData, ep=ep, reTest=reTest)
+        outName, subset, wqData=wqData, ep=ep, reTest=reTest)
     for iCode, code in enumerate(codeLst):
         ic = wqData.varC.index(code)
-        ind = wqData.subset[testSet]
+        ind = wqData.subset[subset]
         info = wqData.info.iloc[ind].reset_index()
-        ic = wqData.varC.index(code)
         if len(wqData.c.shape) == 3:
             p = yP[-1, :, master['varY'].index(code)]
             o = wqData.c[-1, ind, ic]
         elif len(wqData.c.shape) == 2:
             p = ycP[:, master['varYC'].index(code)]
             o = wqData.c[ind, ic]
-        for siteNo in dictSite[code]:
+        for siteNo in dictSite[code[:5]]:
             iS = siteNoLst.index(siteNo)
             indS = info[info['siteNo'] == siteNo].index.values
             rmse, corr = utils.stat.calErr(p[indS], o[indS])
-            corrMat[iS, iCode, iLab] = corr
-            rmseMat[iS, iCode, iLab] = rmse
+            corrMat[iS, iCode, iT] = corr
+            rmseMat[iS, iCode, iT] = rmse
 
-
-# find reference basins
+matplotlib.rcParams.update({'font.size': 13})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
 
 # plot box
 labLst1 = [usgs.codePdf.loc[code]['shortName'] +
            '\n'+code for code in codeLst]
+labLst3 = ['train', 'test']
 dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
     temp = list()
-    for i in range(len(labelLst)):
+    for i in range(2):
         temp.append(corrMat[:, k, i])
     dataBox.append(temp)
-fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst=cLst,
-                      label2=labLst2, figsize=(12, 4), yRange=[0, 1])
+fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='br',
+                      label2=labLst3, figsize=(20, 5), yRange=[0, 1])
 # fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5,
 #                       label2=labLst2, figsize=(12, 4), sharey=False)
 fig.show()
 
-
-# significance test
-testLst = ['Q as target', 'Q as input']
-indLst = [[0, 2], [1, 2]]
-codeStrLst = ['{} {}'.format(
-    code, usgs.codePdf.loc[code]['shortName']) for code in codeLst]
-dfS = pd.DataFrame(index=codeStrLst, columns=testLst)
-for (test, ind) in zip(testLst, indLst):
-    for k, code in enumerate(codeLst):
-        data = [corrMat[:, k, x] for x in ind]
-        [a, b], _ = utils.rmNan(data)
-        s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
-        # s, p = scipy.stats.ttest_rel(a, b)
-        dfS.loc[codeStrLst[k]][test] = p
-pd.options.display.float_format = '{:,.2f}'.format
-print(dfS)

@@ -16,6 +16,7 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
 
 
 # dataNameLst = ['rbWN5', 'rbDN5']
+# dataNameLst = ['rbTWN5T1']
 dataNameLst = ['rbTWN5']
 addLst = ['comb', 'rmT', 'rmTK', 'rmTKH']
 for dataName in dataNameLst:

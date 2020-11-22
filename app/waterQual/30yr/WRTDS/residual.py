@@ -62,6 +62,7 @@ importlib.reload(usgs)
 varRLst = [code+'-R' for code in usgs.newC]
 mtdLst = waterQuality.extractVarMtd(varRLst)
 matRN, stat = transform.transInAll(matR, mtdLst)
+matRN2 = transform.transOutAll(matRN, mtdLst, stat)
 
 fig, axes = plt.subplots(5, 4)
 ticks = [-0.5, 0, 0.5, 1]
@@ -71,7 +72,7 @@ for k, code in enumerate(codeLst2):
     siteNoCode = dictSite[code]
     indS = [siteNoLst.index(siteNo) for siteNo in siteNoCode]
     ic = usgs.newC.index(code)
-    data = matRN[indS, :, ic]
+    data = matRN2[indS, :, ic]
     x1 = utils.flatData(data)
     x2 = utils.rmExt(x1, p=5)
 

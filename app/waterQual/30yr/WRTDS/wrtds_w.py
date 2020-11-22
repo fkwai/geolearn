@@ -21,7 +21,7 @@ sn = 1
 codeLst = usgs.newC
 
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
-with open(os.path.join(dirSel, 'dictRB_Y30N2.json')) as f:
+with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
     dictSite = json.load(f)
 siteNoLst = dictSite['comb']
 t0 = time.time()

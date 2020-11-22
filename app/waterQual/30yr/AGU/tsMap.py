@@ -1,4 +1,5 @@
 
+import matplotlib
 from astropy.timeseries import LombScargle
 import matplotlib.gridspec as gridspec
 import importlib
@@ -63,7 +64,7 @@ for iCode, code in enumerate(codeLst):
     corrMat[indS, iCode, 1] = dfCorr2.iloc[indS][code].values
 
 # plot ts
-code = '00945'
+code = '00955'
 iCode = codeLst.index(code)
 indS = [siteNoLst.index(siteNo) for siteNo in dictSite[code]]
 siteNoLstCode = dictSite[code]
@@ -80,76 +81,37 @@ def funcMap():
     axplot.mapPoint(axM, lat, lon, matMap, vRange=[-0.3, 0.3], s=16)
     axM.set_title('testing corr LSTM - corr WRTDS')
     figP = plt.figure(figsize=[16, 6])
-    gs = gridspec.GridSpec(3, 12)
-    axTS = figP.add_subplot(gs[0, :])
-    axH1 = figP.add_subplot(gs[1, :4])
-    axH2 = figP.add_subplot(gs[1, 4:8])
-    axH3 = figP.add_subplot(gs[1, 8:])
-    axP1 = figP.add_subplot(gs[2, :6])
-    axP2 = figP.add_subplot(gs[2, 6:])
-    axP = np.array([axTS, axH1, axH2, axH3, axP1, axP2])
+    figP, axP = plt.subplots(1, 1, figsize=(12, 4))
     return figM, axM, figP, axP, lon, lat
 
 
 def funcPoint(iP, axP):
-    [axTS, axH1, axH2, axH3, axP1, axP2] = axP
     siteNo = siteNoLstCode[iP]
     outName1 = '{}-{}-{}-{}'.format(dataName, 'comb', 'QTFP_C', trainSet)
-    outName2 = '{}-{}-{}-{}'.format(dataName, 'comb', 'QT_C', trainSet)
     dfL1 = basins.loadSeq(outName1, siteNo)
-    dfL2 = basins.loadSeq(outName2, siteNo)
     dfW = pd.read_csv(os.path.join(dirWrtds, 'output', siteNo),
                       index_col=None).set_index('date')
     dfO = waterQuality.readSiteTS(siteNo, codeLst+['00060'], freq=wqData.freq)
-    dfOD = waterQuality.readSiteTS(siteNo, codeLst+['00060'], freq='D')
     t = dfO.index
     # ts
     tBar = np.datetime64('2010-01-01')
     sd = np.datetime64('1980-01-01')
-    legLst = ['LSTM QTFP', 'LSTM QT', 'WRTDS', 'Obs']
-    axplot.plotTS(axTS, t, [dfL1[code], dfL2[code], dfW[code], dfO[code]],
-                  tBar=tBar, sd=sd, styLst='---*', cLst='mrbk', legLst=legLst)
+    legLst = ['LSTM', 'WRTDS', 'Obs']
+    axplot.plotTS(axP, t, [dfL1[code], dfW[code], dfO[code]],
+                  tBar=tBar, sd=sd, styLst='--*', cLst='rbk', legLst=legLst)
     corrL = corrMat[indS[iP], iCode, 0]
     corrW = corrMat[indS[iP], iCode, 1]
-    axplot.titleInner(
-        axTS, 'siteNo {} {:.2f} {:.2f}'.format(siteNo, corrL, corrW))
-    axTS.legend()
-    # hist
-    axH1.hist(dfOD[code].values, density=True, bins=50)
-    axplot.titleInner(axH1, 'histogram {}'.format(shortName))
-    axH2.hist(dfOD['00060'].values, density=True, bins=50)
-    axplot.titleInner(axH2, 'histogram {}'.format('Q'))
-    axH3.hist(np.log(dfOD['00060'].values+1), density=True, bins=50)
-    axplot.titleInner(axH3, 'histogram {}'.format('log Q'))
-    # periodgram
-    freqQ, powerQ, pQ = calPower('00060', dfOD)
-    freqC, powerC, pC = calPower(code, dfOD)
-    axP1.plot(1/freqQ, powerC, '-*b', label='Periodograms')
-    axP1.plot(1/freqQ, pQ, '-*r', label='baluev probability')
-    axplot.titleInner(axP1, 'streamflow')
-    axP1.legend()
-    axP2.plot(1/freqC, powerC, '-*b', label='Periodograms')
-    axP2.plot(1/freqC, pC, '-*r', label='baluev probability')
-    axplot.titleInner(axP2, shortName)
-    axP2.legend()
+    axP.set_title('{} site {}; LSTM corr={:.2f} WRTDS corr={:.2f}'.format(
+        shortName, siteNo, corrL, corrW))
+
+    # axplot.titleInner(
+    #     axP, 'siteNo {} {:.2f} {:.2f}'.format(siteNo, corrL, corrW))
+    axP.legend()
 
 
-def calPower(code, df):
-    tt = df.index.values
-    dfD = df[df[code].notna().values]
-    t = dfD.index.values
-    x = (t.astype('datetime64[D]') -
-         np.datetime64('1979-01-01')).astype(np.float)
-    y = dfD[code].values
-    nt = len(tt)
-    freq = np.fft.fftfreq(nt)[1:]
-    ind = np.where((1/freq >= 0) & (1/freq < 1000))[0]
-    freq = freq[ind]
-    ls = LombScargle(x, y)
-    power = ls.power(freq)
-    p = ls.false_alarm_probability(power)
-    return freq, power, 1-p
-
+matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 6})
 
 importlib.reload(axplot)
 figM, figP = figplot.clickMap(funcMap, funcPoint)
