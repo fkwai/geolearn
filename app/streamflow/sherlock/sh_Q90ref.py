@@ -19,4 +19,4 @@ caseName = basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,
                                 sd=sd, ed=ed)
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/model/cmd/basinFull.py -M {}'
-slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=48, nM=64)
+slurm.submitJobGPU(caseName, cmdP.format(caseName), nH=24, nM=32)
