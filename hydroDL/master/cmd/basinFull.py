@@ -7,4 +7,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-M', dest='masterName', type=str)
     args = parser.parse_args()
-    basinFull.trainModelTS(args.masterName)
+    basinFull.trainModel(args.masterName)
