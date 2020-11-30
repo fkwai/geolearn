@@ -131,8 +131,8 @@ for k, code in enumerate(codeLst2):
     siteNoCode = dictSite[code]
     indS = [siteNoLst.index(siteNo) for siteNo in siteNoCode]
     ic = usgs.newC.index(code)
-    mean = np.nanmean(matC[indS, :, ic], axis=1)
-    std = np.nanstd(matR[indS, :, ic], axis=1)
+    mean = np.nanstd(matC[indS, :, ic], axis=1)
+    std = np.nanmean(matR[indS, :, ic], axis=1)
     # mean = np.ndarray(len(indS))
     # std = np.ndarray(len(indS))
     # for k in range(len(indS)):
@@ -147,6 +147,15 @@ for k, code in enumerate(codeLst2):
     axplot.titleInner(ax, titleStr)
 # plt.subplots_adjust(wspace=0, hspace=0)
 # fig.colorbar()
+fig.show()
+
+code = '00915'
+indS = [siteNoLst.index(siteNo) for siteNo in siteNoCode]
+fig, ax = plt.subplots(1, 1)
+x = matC[indS[2], :, ic]
+y = matR[indS[2], :, ic]
+ax.plot(x, y, '*b')
+
 fig.show()
 
 #

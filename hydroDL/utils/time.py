@@ -21,6 +21,8 @@ def t2dt(t, hr=False):
     return tOut
 
 
+
+
 def tRange2Array(tRange, *, step=np.timedelta64(1, 'D')):
     sd = t2dt(tRange[0])
     ed = t2dt(tRange[1])

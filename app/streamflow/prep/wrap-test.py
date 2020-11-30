@@ -17,7 +17,7 @@ c will saved in sparse matrix
 
 # load sites
 dirInv = os.path.join(kPath.dirData, 'USGS', 'inventory')
-fileSiteNo = os.path.join(dirInv, 'siteSel', 'Q90')
+fileSiteNo = os.path.join(dirInv, 'siteSel', 'Q90ref')
 siteNoLst = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
 
 freq = 'D'

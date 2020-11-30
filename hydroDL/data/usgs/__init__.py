@@ -7,8 +7,7 @@ import pandas as pd
 fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
 codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
 codeLst = list(codePdf.index)
-# codeLst.remove('00440')
-varC = codeLst
+varC = sorted(codeLst)
 newC = varC.copy()
 newC.remove('00440')
 newC.remove('00410')

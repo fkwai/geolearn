@@ -28,7 +28,7 @@ nSite = len(siteNoLst)
 # load all sequence
 dictLSTMLst = list()
 # LSTM
-labelLst = ['Q_C', 'QFP_C', 'FP_QC']
+labelLst = ['QFP_C']
 for label in labelLst:
     dictLSTM = dict()
     trainSet = 'comb-B10'
@@ -40,7 +40,7 @@ for label in labelLst:
     dictLSTMLst.append(dictLSTM)
 # WRTDS
 dictWRTDS = dict()
-dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10', 'output')
+dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'Linear-W', 'B20', 'output')
 for k, siteNo in enumerate(siteNoLst):
     print('\t site {}/{}'.format(k, len(siteNoLst)), end='\r')
     saveFile = os.path.join(dirWRTDS, siteNo)
@@ -67,17 +67,17 @@ for ic, code in enumerate(codeLst):
         indS = siteNoLst.index(siteNo)
         v1 = dictLSTM[siteNo][code].iloc[ind2].values
         v2 = dictWRTDS[siteNo][code].iloc[ind2].values
-        v0 = dictObs[siteNo][code].iloc[ind2].values
-        [v0, v1, v2], ind = utils.rmNan([v0, v1, v2])
-        rmse1, corr1 = utils.stat.calErr(v1, v0, rmExt=False)
-        rmse2, corr2 = utils.stat.calErr(v2, v0, rmExt=False)
-        rmse3, corr3 = utils.stat.calErr(v1, v2, rmExt=False)
+        v3 = dictObs[siteNo][code].iloc[ind2].values
+        v4 = dictLSTM2[siteNo][code].iloc[ind2].values
+        [v1, v2, v3, v4], ind = utils.rmNan([v1, v2, v3, v4])
+        rmse1, corr1 = utils.stat.calErr(v1, v2, rmExt=False)
+        rmse2, corr2 = utils.stat.calErr(v1, v3, rmExt=False)
+        rmse3, corr3 = utils.stat.calErr(v2, v3, rmExt=False)
+        rmse4, corr4 = utils.stat.calErr(v4, v3, rmExt=False)
         corrMat[indS, ic, 0] = corr1
         corrMat[indS, ic, 1] = corr2
         corrMat[indS, ic, 2] = corr3
-        rmseMat[indS, ic, 0] = rmse1
-        rmseMat[indS, ic, 1] = rmse2
-        rmseMat[indS, ic, 2] = rmse3
+        corrMat[indS, ic, 3] = corr4
 
 matplotlib.rcParams.update({'font.size': 12})
 matplotlib.rcParams.update({'lines.linewidth': 2})
@@ -91,30 +91,12 @@ dataBox = list()
 for k in range(len(codeLst)):
     code = codeLst[k]
     temp = list()
-    for i in [2, 0, 1]:
+    for i in [0, 1, 2]:
         temp.append(corrMat[:, k, i])
     dataBox.append(temp)
 fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='grb',
                       label2=labLst2, figsize=(20, 5), yRange=[0, 1])
 fig.show()
-saveFolder = r'C:\Users\geofk\work\Presentation\AGU2020'
-fig.savefig(os.path.join(saveFolder, 'box2'))
-
-# plot box
-labLst1 = [usgs.codePdf.loc[code]['shortName'] +
-           '\n'+code for code in codeLst]
-labLst2 = ['LSTM', 'WRTDS']
-dataBox = list()
-for k in range(len(codeLst)):
-    code = codeLst[k]
-    temp = list()
-    for i in [0, 1]:
-        temp.append(corrMat[:, k, i])
-    dataBox.append(temp)
-fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='rb',
-                      label2=labLst2, figsize=(20, 5), yRange=[0, 1])
-fig.show()
-fig.savefig(os.path.join(saveFolder, 'box1'))
 
 
 # plot 121

@@ -106,10 +106,9 @@ class DataModelWQ():
         temp = list()
         for var in varLst:
             if var in self.varQ:
-                temp.append(self.q[:, :, 0])
+                temp.append(self.q[:, :, self.varF.index(var)])
             elif var in self.varF:
-                ind = self.varF.index(var)
-                temp.append(self.f[:, :, ind])
+                temp.append(self.f[:, :, self.varF.index(var)])
             elif var in self.varC:  # in
                 ind = self.varC.index(var)
                 temp.append(self.c[:, :, ind])
@@ -447,7 +446,7 @@ def calRunoff(q, info):
 
 def calRunoffArea(q, area):
     # transfer to m/yr
-    unitConv = 0.3048**3*365*24*60*60/1000**2 
+    unitConv = 0.3048**3*365*24*60*60/1000**2
     runoff = q/area*unitConv
     return runoff
 

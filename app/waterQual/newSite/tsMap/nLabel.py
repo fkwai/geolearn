@@ -16,7 +16,7 @@ with open(os.path.join(dirSel, 'dictNB_y16n36.json')) as f:
 
 ep = 500
 dataName = 'nbW'
-labelLst = ['Q_C', 'QF_C','QFP_C']
+labelLst = ['QF_C', 'QFP_C']
 code = '00955'
 trainSet = '{}-B16'.format('comb')
 testSet = '{}-A16'.format('comb')
@@ -83,6 +83,7 @@ def funcPoint(iP, axP):
         pLst2.append(dfP[yr > 2016].values)
     axplot.plotTS(axP[0], t1, pLst1+[o1], styLst='--*', cLst='bgr')
     axplot.plotTS(axP[1], t2,  pLst2+[o2], styLst='--*', cLst='bgr')
+    axP[0].set_title(siteNo)
 
 
 figM, figP = figplot.clickMap(funcMap, funcPoint)

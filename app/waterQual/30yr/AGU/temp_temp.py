@@ -23,14 +23,15 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
 code = '00010'
 siteNoLst = dictSite[code]
 nSite = len(siteNoLst)
+dataName = 'rbWN5'
 
 # load all sequence
 dictLSTMLst = list()
 # LSTM
 label = 'QTFP_C'
 dictLSTM = dict()
-trainSet = '{}-B10'.format(code)
-outName = '{}-{}-{}-{}'.format('rbWN5', code, label, trainSet)
+trainSet = '{}-B10'.format('comb')
+outName = '{}-{}-{}-{}'.format(dataName, 'comb', label, trainSet)
 for k, siteNo in enumerate(siteNoLst):
     print('\t site {}/{}'.format(k, len(siteNoLst)), end='\r')
     df = basins.loadSeq(outName, siteNo)
@@ -118,9 +119,9 @@ figM.show()
 
 def funcMap():
     figM, axM = plt.subplots(1, 1, figsize=(12, 4))
-    axplot.mapPoint(axM, lat, lon, matMap, s=24)
+    axplot.mapPoint(axM, lat, lon, rmseLSTM, s=24)
     axM.set_title('Testing corr LSTM ')
-    figP = plt.figure(figsize=[16, 6])
+    figP = plt.figure(figsize=[16, 4])
     figP, axP = plt.subplots(1, 1, figsize=(12, 4))
     return figM, axM, figP, axP, lon, lat
 
@@ -129,7 +130,7 @@ def funcPoint(iP, axP):
     siteNo = siteNoLstCode[iP]
     outName1 = '{}-{}-{}-{}'.format(dataName, 'comb', 'QTFP_C', trainSet)
     dfL1 = basins.loadSeq(outName1, siteNo)
-    dfO = waterQuality.readSiteTS(siteNo, codeLst+['00060'], freq=wqData.freq)
+    dfO = waterQuality.readSiteTS(siteNo, [code], freq='W')
     t = dfO.index
     # ts
     tBar = np.datetime64('2010-01-01')
@@ -148,10 +149,10 @@ matplotlib.rcParams.update({'lines.markersize': 6})
 importlib.reload(axplot)
 figM, figP = figplot.clickMap(funcMap, funcPoint)
 
+saveFolder = r'C:\Users\geofk\work\Presentation\AGU2020'
 # circled map
-tempLst = ['10343500', '07239450', '01594440']
-figM, axM = plt.subplots(1, 1, figsize=(8, 4))
-iCode = codeLst.index(code)
+tempLst = ['01634000', '08332010']
+# tempLst = ['11074000', '06902000', '01674500']
 siteNoLstCode = dictSite[code]
 indS = [siteNoLst.index(siteNo) for siteNo in siteNoLstCode]
 dfCrd = gageII.readData(
@@ -159,12 +160,49 @@ dfCrd = gageII.readData(
 lat = dfCrd['LAT_GAGE'].values
 lon = dfCrd['LNG_GAGE'].values
 shortName = usgs.codePdf.loc[code]['shortName']
+
+figM, axM = plt.subplots(1, 1, figsize=(8, 4))
 matMap = corrLSTM[indS, 1]
 axplot.mapPoint(axM, lat, lon, matMap, s=24)
 for siteNo in tempLst:
     xLoc = lon[siteNoLstCode.index(siteNo)]
     yLoc = lat[siteNoLstCode.index(siteNo)]
     circle = plt.Circle([xLoc, yLoc], 1,
-                        color='black', fill=False)
+                        color='red', fill=False)
     axM.add_patch(circle)
 figM.show()
+figM.savefig(os.path.join(saveFolder, 'corrMap_{}'.format(code)))
+
+
+figM, axM = plt.subplots(1, 1, figsize=(8, 4))
+matMap = rmseLSTM[indS, 1]
+axplot.mapPoint(axM, lat, lon, matMap, s=24)
+for siteNo in tempLst:
+    xLoc = lon[siteNoLstCode.index(siteNo)]
+    yLoc = lat[siteNoLstCode.index(siteNo)]
+    circle = plt.Circle([xLoc, yLoc], 1,
+                        color='r', fill=False)
+    axM.add_patch(circle)
+figM.show()
+figM.savefig(os.path.join(saveFolder, 'rmseMap_{}'.format(code)))
+
+for siteNo in tempLst:
+    figP, axP = plt.subplots(1, 1, figsize=(8, 2.5))
+    outName1 = '{}-{}-{}-{}'.format(dataName, 'comb', 'QTFP_C', trainSet)
+    dfL1 = basins.loadSeq(outName1, siteNo)
+    dfO = waterQuality.readSiteTS(siteNo, [code], freq='W')
+    t = dfO.index
+    # ts
+    tBar = np.datetime64('2010-01-01')
+    sd = np.datetime64('1980-01-01')
+    legLst = ['LSTM', 'Obs']
+    axplot.plotTS(axP, t, [dfL1[code],  dfO[code]],
+                  tBar=tBar, sd=sd, styLst='-*', cLst='rk', legLst=legLst)
+    iP = siteNoLst.index(siteNo)
+    axP.set_title('water temperature of site {} RMSE={:.2f} corr={:.2f}'.format(
+        siteNo, rmseLSTM[iP, 1], corrLSTM[iP, 1]))
+    axP.legend()
+    figP.show()
+    figP.savefig(os.path.join(saveFolder, 'ts_{}_{}'.format(code, siteNo)))
+
+np.nanmean(rmseLSTM[:,1])
