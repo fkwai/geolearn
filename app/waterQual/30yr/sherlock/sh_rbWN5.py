@@ -18,9 +18,9 @@ codeLst = ['comb']
 # labelLst = ['QFP_C', 'QF_C', 'FP_C', 'QP_C', 'Q_C', 'FP_QC']
 # labelLst = ['QT_C', 'QTFP_C', 'QFP_C', 'QTF_C']
 # labelLst = ['FP_QC', 'FP_C']
-labelLst = ['FP_Q']
+labelLst = ['FP_QC']
 varF = gridMET.varLst
-varQ = ['00060']
+varQ = ['runoff']
 varP = ntn.varLst
 varT = ['sinT', 'cosT']
 
@@ -64,10 +64,10 @@ for code in codeLst:
             varX = varQ+varT+varF+varP
             varY = None
         trainSet = '{}-B10'.format(code)
-        saveName = '{}-{}-{}-{}'.format(dataName, code, label, trainSet)
+        saveName = '{}-{}-{}-{}-neck'.format(dataName, code, label, trainSet)
         caseName = basins.wrapMaster(
             dataName=dataName, trainName=trainSet, batchSize=[None, 500],
-            outName=saveName, varX=varX, varY=varY, varYC=varYC)
+            outName=saveName, varX=varX, varY=varY, varYC=varYC,modelName='LstmModel')
         caseLst.append(caseName)
 
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/waterQual/model/cmdTrain.py -M {}'

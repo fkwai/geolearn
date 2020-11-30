@@ -728,8 +728,9 @@ class AgeLSTM2(torch.nn.Module):
                 # out[:, ny+j] = yt.mul(func).sum(dim=1)
             else:
                 for k in range(rho, nt):
-                    out[k, :, ny+j] = yt[k, :, :].mul(func).sum(dim=1)/yt[k, :, :].sum(dim=1)
-                    # out[k, :, ny+j] = yt[k, :,:].mul(func).sum(dim=1)                    
+                    out[k, :, ny+j] = yt[k, :,
+                                         :].mul(func).sum(dim=1)/yt[k, :, :].sum(dim=1)
+                    # out[k, :, ny+j] = yt[k, :,:].mul(func).sum(dim=1)
         if self.training:
             return out
         else:
@@ -749,13 +750,15 @@ class LstmModel(torch.nn.Module):
             inputSize=hiddenSize, hiddenSize=hiddenSize, dr=dr)
         self.lstm2 = CudnnLstm(
             inputSize=hiddenSize, hiddenSize=hiddenSize, dr=dr)
-        self.linearOut = torch.nn.Linear(hiddenSize, ny)
+        self.linearOut1 = torch.nn.Linear(hiddenSize, 3)
+        self.linearOut2 = torch.nn.Linear(3, ny)
         self.gpu = 1
 
     def forward(self, x, doDropMC=False):
         x0 = F.relu(self.linearIn(x))
         outLSTM, (hn, cn) = self.lstm(x0)
         outLSTM2, (hn, cn) = self.lstm2(outLSTM)
-        out = self.linearOut(outLSTM2)
+        out1 = self.linearOut1(outLSTM2)
+        out2 = self.linearOut1(out1)
         # out = rho/time * batchsize * Ntargetvar
-        return out
+        return out2

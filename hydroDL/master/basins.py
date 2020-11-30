@@ -141,6 +141,9 @@ def trainModelTS(outName):
     if dictP['modelName'] == 'CudnnLSTM':
         model = rnn.CudnnLstmModel(
             nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
+    elif dictP['modelName'] == 'LstmModel':
+        model = rnn.LstmModel(
+            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
     elif dictP['modelName'] == 'AgeLSTM':
         model = rnn.AgeLSTM2(
             nx=nx+nxc, ny=ny, nyc=nyc, rho=365, nh=dictP['hiddenSize'])
