@@ -106,7 +106,7 @@ class DataModelWQ():
         temp = list()
         for var in varLst:
             if var in self.varQ:
-                temp.append(self.q[:, :, self.varF.index(var)])
+                temp.append(self.q[:, :, self.varQ.index(var)])
             elif var in self.varF:
                 temp.append(self.f[:, :, self.varF.index(var)])
             elif var in self.varC:  # in

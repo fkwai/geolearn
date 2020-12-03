@@ -759,6 +759,6 @@ class LstmModel(torch.nn.Module):
         outLSTM, (hn, cn) = self.lstm(x0)
         outLSTM2, (hn, cn) = self.lstm2(outLSTM)
         out1 = self.linearOut1(outLSTM2)
-        out2 = self.linearOut1(out1)
+        out2 = self.linearOut2(out1)
         # out = rho/time * batchsize * Ntargetvar
         return out2
