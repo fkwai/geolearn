@@ -29,9 +29,9 @@ class DataModelFull():
         self.varC = dictData['varC']
         self.varG = dictData['varG']
         self.siteNoLst = dictData['siteNoLst']
-        sd = dictData['sd']
-        ed = dictData['ed']
-        self.t = pd.date_range(np.datetime64(sd), np.datetime64(ed))
+        self.sd = np.datetime64(dictData['sd'])
+        self.ed = np.datetime64(dictData['ed'])
+        self.t = pd.date_range(self.sd, self.ed)
         self.freq = dictData['freq']
         self.subset = self.loadSubset()
         self.dataProvision()
@@ -80,8 +80,14 @@ class DataModelFull():
                 for siteNo in self.subset[subName]]
         sd = np.datetime64(sd)
         ed = np.datetime64(ed)
-        indT1 = np.where(self.t == sd)[0][0]
-        indT2 = np.where(self.t == ed)[0][0]
+        if sd < self.sd:
+            indT1 = 0
+        else:
+            indT1 = np.where(self.t == sd)[0][0]
+        if ed > self.ed:
+            indT2 = len(self.t)
+        else:
+            indT2 = np.where(self.t == ed)[0][0]
         return indT1, indT2, indS
 
     def extractData(self, varTup, subName, sd, ed):
@@ -157,3 +163,16 @@ class DataModelFull():
                     outData = None
                 outDataLst.append(outData)
             return outDataLst
+
+    def transOut(self, data, stat, var):
+        mtd = io.extractVarMtd(var)
+        # normalize data out
+        t0 = time.time()
+        if data.shape[-1] == 0:
+            out = None
+        else:
+            out = transform.transOutAll(
+                data, mtd,  stat)
+        t1 = time.time()-t0
+        print('transform out {}'.format(time.time()-t0))
+        return out

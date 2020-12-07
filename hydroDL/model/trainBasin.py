@@ -173,7 +173,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
     return model, optim, lossEpLst
 
 
-def testModel(model, x, xc, ny=None, batchSize=2000):
+def testModel(model, x, xc, ny=None, batchSize=100):
     model.eval()
     nt, ns, nx = x.shape
     iS = np.arange(0, ns, batchSize)
