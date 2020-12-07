@@ -16,11 +16,11 @@ globalName = '{}-B10'.format(dataName)
 subsetLst = ['HUC{:02d}'.format(k+1) for k in range(18)]
 caseLst = list()
 for subset in subsetLst:
-    outName = '{}-{}-B10'.format(dataName, subset)
-    caseName = basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,
-                                    varY=varY, varXC=varXC, varYC=varYC, sd=sd, ed=ed,
-                                    subset=subset)
-    caseLst.append(caseName)
+    # outName = '{}-{}-B10'.format(dataName, subset)
+    # caseName = basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,
+    #                                 varY=varY, varXC=varXC, varYC=varYC, sd=sd, ed=ed,
+    #                                 subset=subset)
+    # caseLst.append(caseName)
 
     outName = '{}-{}-B10-gs'.format(dataName, subset)
     caseName = basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,

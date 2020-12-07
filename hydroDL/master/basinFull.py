@@ -124,6 +124,7 @@ def trainModel(outName):
         dataTup, statTup = DM.transIn(dataTup, varTup)
     else:
         statTup = loadStat(dictP['borrowStat'])
+        dataTup = DM.transIn(dataTup, varTup, statTup=statTup)
     dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
     wrapStat(outName, statTup)
 
