@@ -8,11 +8,11 @@ import importlib
 import time
 import numpy as np
 
-caseLst = ['080401', '080304', '080305','080503'
+caseLst = ['080401', '080304', '080305', '080503'
            '090401', '090402', '100105', '100204']
 
 dirEco = os.path.join(kPath.dirData, 'USGS', 'inventory', 'ecoregion')
-fileEco = os.path.join(dirEco, 'basinCode')
+fileEco = os.path.join(dirEco, 'basinEco')
 dfEco = pd.read_csv(fileEco, dtype={'siteNo': str}).set_index('siteNo')
 
 
@@ -32,11 +32,11 @@ for case in caseLst:
         dfEco['code1'] == lev1) & (dfEco['code2'] == lev2)
     ss = dfEco[temp0].index.tolist()
     subsetLst.append(list(set(dm.siteNoLst).intersection(ss)))
-    nameLst.append(case[:2])
+    nameLst.append('Eco'+case[:2])
     ss = dfEco[temp1].index.tolist()
     subsetLst.append(list(set(dm.siteNoLst).intersection(ss)))
-    nameLst.append(case[:4])
+    nameLst.append('Eco'+case[:4])
     ss = dfEco[temp2].index.tolist()
     subsetLst.append(list(set(dm.siteNoLst).intersection(ss)))
-    nameLst.append(case[:6])
+    nameLst.append('Eco'+case[:6])
     dm.saveSubset(nameLst, subsetLst)

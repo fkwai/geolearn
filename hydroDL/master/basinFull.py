@@ -20,7 +20,7 @@ defaultMaster = dict(
     modelName='CudnnLSTM', crit='RmseLoss', optim='AdaDelta',
     varX=gridMET.varLst, varXC=gageII.lstWaterQuality,
     varY=['00060'], varYC=None,
-    sd='1979-01-01', ed='2010-01-01', subset='all'
+    sd='1979-01-01', ed='2010-01-01', subset='all', borrowStat=None
 )
 
 
@@ -62,7 +62,9 @@ def loadMaster(outName):
     masterFile = os.path.join(modelFolder, 'master.json')
     with open(masterFile, 'r') as fp:
         master = json.load(fp)
-    return master
+    mm = defaultMaster.copy()
+    mm.update(master)
+    return mm
 
 
 def wrapStat(outName, statTup):
@@ -118,7 +120,10 @@ def trainModel(outName):
     varTup = (dictP['varX'], dictP['varXC'], dictP['varY'], dictP['varYC'])
     dataTup = DM.extractData(
         varTup, dictP['subset'], dictP['sd'], dictP['ed'])
-    dataTup, statTup = DM.transIn(dataTup, varTup)
+    if dictP['borrowStat'] is None:
+        dataTup, statTup = DM.transIn(dataTup, varTup)
+    else:
+        statTup = loadStat(dictP['borrowStat'])
     dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
     wrapStat(outName, statTup)
 

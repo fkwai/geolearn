@@ -1,44 +1,31 @@
-import scipy
-from hydroDL.data import dbBasin
+
 from hydroDL.master import basinFull
+from hydroDL.data import usgs, gageII, gridMET, transform, dbBasin
 import os
-import pandas as pd
-from hydroDL import kPath, utils
-import importlib
-import time
-import numpy as np
+import json
 
-importlib.reload(dbBasin.io)
-importlib.reload(dbBasin.dataModel)
-importlib.reload(dbBasin)
-importlib.reload(basinFull)
-# importlib.reload(trainBasin)
+dataName = 'Q90ref'
+globalName = '{}-B10'.format(dataName)
 
+modelFolder = basinFull.nameFolder(outName)
+masterFile = os.path.join(modelFolder, 'master.json')
+with open(masterFile, 'r') as fp:
+    master = json.load(fp)
 
+defaultMaster = dict(
+    dataName='test', trainName='all', outName=None,
+    hiddenSize=256, batchSize=[365, 500],
+    nEpoch=500, saveEpoch=100, resumeEpoch=0,
+    optNaN=[1, 1, 0, 0], overwrite=True,
+    modelName='CudnnLSTM', crit='RmseLoss', optim='AdaDelta',
+    varX=gridMET.varLst, varXC=gageII.lstWaterQuality,
+    varY=['00060'], varYC=None,
+    sd='1979-01-01', ed='2010-01-01', subset='all', borrowStat=None
+)
 
-# load sites
-dirInv = os.path.join(kPath.dirData, 'USGS', 'inventory')
-fileSiteNo = os.path.join(dirInv, 'siteSel', 'Q90ref')
-siteNoLst = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
+caseName = basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,
+                                varY=varY, varXC=varXC, varYC=varYC, sd=sd, ed=ed,
+                                subset=subset, borrowStat=globalName)
 
-dataName = 'F10'
-# dm = dbBasin.DataModelFull.new(dataName, siteNoLst[:10])
-
-dm = dbBasin.DataModelFull(dataName)
-dm.saveSubset('f3', siteNoLst[:3])
-
-# get subset
-subset = 'f3'
-sd = '1979-01-01'
-ed = '2010-01-01'
-varX = dm.varF
-varY = ['runoff']
-varXC = dm.varG
-varYC = None
-varTup = (varX, varXC, varY, varYC)
-(x, xc, y, yc) = dm.extractData(varTup, subset, sd, ed)
-outName = 'F10B10'
-basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,
-                     varY=varY, varXC=varXC, varYC=varYC,
-                     sd=sd, ed=ed, subset=subset)
-basinFull.trainModel(outName)
+mm = defaultMaster.copy()
+out = mm.update(master)
