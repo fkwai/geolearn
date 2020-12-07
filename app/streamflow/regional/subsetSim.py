@@ -8,7 +8,7 @@ import importlib
 import time
 import numpy as np
 
-caseLst = ['080305', '090301', '090303',
+caseLst = ['080401', '080304', '080305','080503'
            '090401', '090402', '100105', '100204']
 
 dirEco = os.path.join(kPath.dirData, 'USGS', 'inventory', 'ecoregion')
