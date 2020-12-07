@@ -169,7 +169,7 @@ def trainModel(outName):
     pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
 
-def testModel(outName,  dataName=None, testSet='all', ep=None, reTest=False, batchSize=20):
+def testModel(outName,  DM=None, testSet='all', ep=None, reTest=False, batchSize=20):
     # load master
     master = loadMaster(outName)
     if ep is None:
@@ -187,9 +187,8 @@ def testModel(outName,  dataName=None, testSet='all', ep=None, reTest=False, bat
         statTup = loadStat(outName)
         model = loadModel(outName, ep=ep)
         # load test data
-        if dataName is None:
-            dataName = master['dataName']
-        DM = dbBasin.DataModelFull(master['dataName'])
+        if DM is None:
+            DM = dbBasin.DataModelFull(master['dataName'])
         varTup = (master['varX'], master['varXC'],
                   master['varY'], master['varYC'])
         # test for full sequence for now
@@ -211,3 +210,15 @@ def testModel(outName,  dataName=None, testSet='all', ep=None, reTest=False, bat
         ycP = DM.transOut(ycOut, statTup[3], master['varYC'])
         np.savez(testFile, yP=yP, ycP=ycP)
     return yP, ycP
+
+
+def getObs(outName, testSet, DM=None):
+    master = loadMaster(outName)
+    sd = '1979-01-01'
+    ed = '2020-01-01'
+    if DM is None:
+        DM = dbBasin.DataModelFull(master['dataName'])
+    varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
+    dataTup = DM.extractData(varTup, testSet, sd, ed)
+    yT, ycT = dataTup[2:]
+    return yT, ycT

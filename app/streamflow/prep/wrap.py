@@ -11,8 +11,9 @@ c will saved in sparse matrix
 
 # load sites
 dirInv = os.path.join(kPath.dirData, 'USGS', 'inventory')
-fileSiteNo = os.path.join(dirInv, 'siteSel', 'Q90ref')
+# fileSiteNo = os.path.join(dirInv, 'siteSel', 'Q90ref')
+fileSiteNo = os.path.join(dirInv, 'siteSel', 'Q90')
 siteNoLst = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
 
-dataName = 'Q90ref'
+dataName = 'Q90'
 dm = dbBasin.DataModelFull.new(dataName, siteNoLst)
