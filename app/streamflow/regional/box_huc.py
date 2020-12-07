@@ -41,7 +41,7 @@ for subset in subsetLst:
     testSet = subset
     outName = '{}-{}-B10'.format(dataName, subset)
     yP, ycP = basinFull.testModel(
-        outName, DM=dm, batchSize=20, testSet=testSet)
+        outName, DM=dm, batchSize=20, testSet=testSet,reTest=True)
     yO, ycO = basinFull.getObs(outName, testSet, DM=dm)
     nash2 = utils.stat.calNash(yP[indT:, :, 0], yO[indT:, :, 0])
     rmse2 = utils.stat.calRmse(yP[indT:, :, 0], yO[indT:, :, 0])

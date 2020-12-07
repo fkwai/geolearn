@@ -13,21 +13,21 @@ dataName = 'Q90ref'
 sd = '1979-01-01'
 ed = '2010-01-01'
 
-# subsetLst = [
-#     '09', '0903', '090303',
-#     '0904', '090402',
-#     '08', '0803', '080305',
-# ]
+l3Lst = ['080304', '080305', '080401', '080404',
+         '080503', '080501', '090402', '090303']
+subsetLst = list()
+for l3 in l3Lst:
+    subsetLst.append('Eco'+l3[:2])
+    subsetLst.append('Eco'+l3[:4])
+    subsetLst.append('Eco'+l3[:6])
+subsetLst = list(set(subsetLst))
+
 dataName = 'Q90ref'
 globalName = '{}-B10'.format(dataName)
 
-subsetLst = [
-    '0804', '080401', '080304',
-    '0805', '080503'
-]
 caseLst = list()
 for subset in subsetLst:
-    outName = '{}-{}-B10'.format(dataName, subset)
+    outName = '{}-{}-B10-gs'.format(dataName, subset)
     caseName = basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,
                                     varY=varY, varXC=varXC, varYC=varYC, sd=sd, ed=ed,
                                     subset=subset, borrowStat=globalName)

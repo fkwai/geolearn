@@ -8,8 +8,8 @@ import importlib
 import time
 import numpy as np
 
-caseLst = ['080401', '080304', '080305', '080503'
-           '090401', '090402', '100105', '100204']
+caseLst = ['080304', '080305', '080401', '080404',
+           '080503', '080501', '090402', '090303']
 
 dirEco = os.path.join(kPath.dirData, 'USGS', 'inventory', 'ecoregion')
 fileEco = os.path.join(dirEco, 'basinEco')
@@ -39,4 +39,4 @@ for case in caseLst:
     ss = dfEco[temp2].index.tolist()
     subsetLst.append(list(set(dm.siteNoLst).intersection(ss)))
     nameLst.append('Eco'+case[:6])
-    dm.saveSubset(nameLst, subsetLst)
+dm.saveSubset(nameLst, subsetLst)
