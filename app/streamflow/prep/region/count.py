@@ -10,7 +10,7 @@ import numpy as np
 
 
 dirCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'ecoregion')
-fileCode = os.path.join(dirCode, 'basinCode')
+fileCode = os.path.join(dirCode, 'basinEco')
 dfCode = pd.read_csv(fileCode, dtype={'siteNo': str}).set_index('siteNo')
 
 dfCode['code0'] = dfCode['code0'].astype(int).astype(str).str.zfill(2)
@@ -18,7 +18,8 @@ dfCode['code1'] = dfCode['code1'].astype(int).astype(str).str.zfill(2)
 dfCode['code2'] = dfCode['code2'].astype(int).astype(str).str.zfill(2)
 dfCode['comb'] = dfCode[['code0', 'code1', 'code2']].agg('-'.join, axis=1)
 
-dataName = 'Q90ref'
+# dataName = 'Q90ref'
+dataName = 'Q90'
 dm = dbBasin.DataModelFull(dataName)
 siteNoLst = dm.siteNoLst
 dfTemp = pd.DataFrame(index=siteNoLst, columns=[
