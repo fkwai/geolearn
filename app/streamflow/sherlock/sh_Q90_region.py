@@ -28,7 +28,6 @@ for l3 in l3Lst:
     subsetLst.append('Eco'+l3[:6])
 subsetLst = list(set(subsetLst))
 
-dataName = 'Q90ref'
 globalName = '{}-B10'.format(dataName)
 
 caseLst = list()
