@@ -12,14 +12,7 @@ import numpy as np
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 
 
-caseLst = ['080401',
-           '080305',
-           '080304',
-           '090203',
-           '090402',
-           '080301',
-           '090403',
-           '050301']
+caseLst = ['08', '09']
 
 
 dataName = 'Q90'
@@ -54,7 +47,7 @@ for case in caseLst:
     corrLstTemp.append(corr0[indS])
     biasLstTemp.append(bias0[indS])
 
-    trainLst = [case[:2], case[:4], case[:6]]
+    trainLst = [case[:2]]
     outLst = ['{}-Eco{}-B10-gs'.format(dataName, x)
               for x in trainLst]
     for outName in outLst:
@@ -75,12 +68,10 @@ for case in caseLst:
     biasLst.append(biasLstTemp)
 
 
-
 # plot box
 label1 = caseLst
-label2 = ['CONUS', 'lev0', 'lev1', 'lev2']
-dataBox = biasLst
+label2 = ['CONUS', 'lev0']
+dataBox = rmseLst
 fig = figplot.boxPlot(dataBox, widths=0.5, cLst='brgk', label1=label1,
                       label2=label2, figsize=(6, 4))
 fig.show()
-

@@ -1,3 +1,4 @@
+import matplotlib.cm as cm
 from sklearn import decomposition
 from astropy.timeseries import LombScargle
 import matplotlib.gridspec as gridspec
@@ -45,25 +46,37 @@ indSel = np.where(countMat[:, codeCount.index(code)] > n)[0]
 siteNoLst = [siteNoLstAll[ind] for ind in indSel]
 dfG = dfGeo.loc[siteNoLst]
 
-# pca by group
-dictVar = gageII.getVariableDict()
-# grpLst = list(dictVar.keys())
-grpLst = ['LC06_Basin', 'LC06_Mains100', 'LC_Crops']
-matPca = np.ndarray([len(siteNoLst), len(grpLst), 10])
-for k, grp in enumerate(grpLst):
-    varG = list(set(dfG.columns.tolist()).intersection(dictVar[grp]))
-    npca = min(len(varG), 10)
-    x = dfG[varG].values
-    x[np.isnan(x)] = -1
-    pca = decomposition.PCA(n_components=npca)
-    pca.fit(x)
-    xx = pca.transform(x)
-    matPca[:, k, :npca] = xx
+# eco region
+dirEco = os.path.join(kPath.dirData, 'USGS', 'inventory', 'ecoregion')
+fileEco = os.path.join(dirEco, 'basinEco')
+dfEcoAll = pd.read_csv(fileEco, dtype={'siteNo': str}).set_index('siteNo')
+dfEco = dfEcoAll.loc[siteNoLst]
+for field in ['code'+str(k) for k in range(3)]:
+    dfEco[field] = dfEco[field].astype(int).astype(str).str.zfill(2)
+dfEco['comb'] = dfEco[['code0', 'code1']].agg('-'.join, axis=1)
+ecoLst = sorted(dfEco['comb'].unique().tolist())
 
 # plot
+geoField = 'FORESTNLCD06'
+# geoField = 'PLANTNLCD06'
 corrMat = dfCorr.loc[siteNoLst][code].values
-for k, grp in enumerate(grpLst):
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(matPca[:, k, 0], corrMat, '*')
-    ax.set_title(grp)
-    fig.show()
+geoMat = dfG[geoField].values
+cLst = cm.rainbow(np.linspace(0, 1, len(ecoLst)))
+fig, ax = plt.subplots(1, 1)
+for k, eco in enumerate(ecoLst):
+    ind = np.where((dfEco['comb'] == eco).values)[0]
+    ax.plot(geoMat[ind], corrMat[ind], c=cLst[k],
+            label=eco, marker='*', ls='')
+ax.legend()
+fig.show()
+
+# plot
+geoField = 'FORESTNLCD06'
+# geoField = 'PLANTNLCD06'
+corrMat = dfCorr.loc[siteNoLst][code].values
+geoMat = dfG[geoField].values
+eco = '10-01'
+fig, ax = plt.subplots(1, 1)
+ind = np.where((dfEco['comb'] == eco).values)[0]
+ax.plot(geoMat[ind], corrMat[ind],'*')
+fig.show()

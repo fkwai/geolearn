@@ -64,7 +64,11 @@ for iCode, code in enumerate(codeLst):
     corrMat[indS, iCode, 1] = dfCorr2.iloc[indS][code].values
 
 # plot ts
-code = '00915'
+codeLst = ['00605', '00915']
+siteNoTemp = list()
+for code in codeLst:
+    siteNoTemp = siteNoTemp+[siteNo for siteNo in dictSite[code]]
+siteNoCode = list(set(siteNoTemp))
 iCode = codeLst.index(code)
 indS = [siteNoLst.index(siteNo) for siteNo in dictSite[code]]
 siteNoLstCode = dictSite[code]

@@ -43,3 +43,9 @@ def calCorr(pred, obs):
         indV = np.where(~np.isnan(a) & ~np.isnan(b))
         corr[k] = np.corrcoef(a[indV], b[indV])[0, 1]
     return corr
+
+
+def calBias(pred, obs):
+    # data in [nT,nS]
+    bias = np.abs(np.nanmean(pred, axis=0)-np.nanmean(obs, axis=0))
+    return bias
