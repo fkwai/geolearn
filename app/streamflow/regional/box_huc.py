@@ -39,7 +39,7 @@ rmseLst2 = list()
 corrLst2 = list()
 for subset in subsetLst:
     testSet = subset
-    outName = '{}-{}-B10'.format(dataName, subset)
+    outName = '{}-{}-B10-gs'.format(dataName, subset)
     yP, ycP = basinFull.testModel(
         outName, DM=dm, batchSize=20, testSet=testSet,reTest=True)
     yO, ycO = basinFull.getObs(outName, testSet, DM=dm)

@@ -12,7 +12,8 @@ import numpy as np
 dirEco = os.path.join(kPath.dirData, 'USGS', 'inventory', 'ecoregion')
 fileEco = os.path.join(dirEco, 'basinHUC')
 dfEco = pd.read_csv(fileEco, dtype={'siteNo': str}).set_index('siteNo')
-dataName = 'Q90ref'
+# dataName = 'Q90ref'
+dataName = 'Q90'
 dm = dbBasin.DataModelFull(dataName)
 
 #
