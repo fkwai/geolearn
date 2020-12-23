@@ -11,12 +11,12 @@ import time
 import numpy as np
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 
-dataName = 'Q90ref'
+dataName = 'Q90'
 dm = dbBasin.DataModelFull(dataName)
 indT = np.where(dm.t == np.datetime64('2010-01-01'))[0][0]
-ecoIdLst = ['A', 'B', 'C', 'D', 'E', 'F', 'G',
-            'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'Q']
-subsetLst = ['Eco{:02d}'.format(k+1) for k in range(18)]
+ecoIdLst = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+            'I', 'J', 'K', 'L', 'M', 'N', 'O', 'Q']
+subsetLst = ['Eco{}'.format(k) for k in ecoIdLst]
 
 # global model
 nashLst1 = list()
@@ -48,9 +48,6 @@ for subset in subsetLst:
     nash2 = utils.stat.calNash(yP[indT:, :, 0], yO[indT:, :, 0])
     rmse2 = utils.stat.calRmse(yP[indT:, :, 0], yO[indT:, :, 0])
     corr2 = utils.stat.calCorr(yP[indT:, :, 0], yO[indT:, :, 0])
-    # nash2 = utils.stat.calNash(yP[:indT, :, 0], yO[:indT, :, 0])
-    # rmse2 = utils.stat.calRmse(yP[:indT, :, 0], yO[:indT, :, 0])
-    # corr2 = utils.stat.calCorr(yP[:indT, :, 0], yO[:indT, :, 0])
     nashLst2.append(nash2)
     rmseLst2.append(rmse2)
     corrLst2.append(corr2)

@@ -17,10 +17,7 @@ ecoIdLst = ['A', 'B', 'C', 'D', 'E', 'F', 'G',
             'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'Q']
 
 subsetLst = ['Eco{}'.format(x) for x in ecoIdLst]
-
-dataName = 'Q90ref'
 globalName = '{}-B10'.format(dataName)
-
 caseLst = list()
 for subset in subsetLst:
     outName = '{}-{}-B10-gs'.format(dataName, subset)
