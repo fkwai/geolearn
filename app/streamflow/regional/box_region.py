@@ -46,15 +46,7 @@ for case in caseLst:
     rmseLstTemp = list()
     corrLstTemp = list()
     biasLstTemp = list()
-
-    # global model
-    indS = [dm.siteNoLst.index(siteNo) for siteNo in dm.subset[testSet]]
-    nashLstTemp.append(nash0[indS])
-    rmseLstTemp.append(rmse0[indS])
-    corrLstTemp.append(corr0[indS])
-    biasLstTemp.append(bias0[indS])
-
-    trainLst = [case[:2], case[:4], case[:6]]
+    trainLst = [case[:6], case[:4], case[:2]]
     outLst = ['{}-Eco{}-B10-gs'.format(dataName, x)
               for x in trainLst]
     for outName in outLst:
@@ -69,18 +61,64 @@ for case in caseLst:
         rmseLstTemp.append(rmse2)
         corrLstTemp.append(corr2)
         biasLstTemp.append(bias2)
+    # global model
+    indS = [dm.siteNoLst.index(siteNo) for siteNo in dm.subset[testSet]]
+    nashLstTemp.append(nash0[indS])
+    rmseLstTemp.append(rmse0[indS])
+    corrLstTemp.append(corr0[indS])
+    biasLstTemp.append(bias0[indS])
     nashLst.append(nashLstTemp)
     rmseLst.append(rmseLstTemp)
     corrLst.append(corrLstTemp)
     biasLst.append(biasLstTemp)
 
 
-
 # plot box
-label1 = caseLst
-label2 = ['CONUS', 'lev0', 'lev1', 'lev2']
-dataBox = biasLst
-fig = figplot.boxPlot(dataBox, widths=0.5, cLst='brgk', label1=label1,
-                      label2=label2, figsize=(6, 4))
-fig.show()
+labLst = list()
+for case in caseLst:
+    labLst.append('{}.{}.{}'.format(
+        int(case[:2]), int(case[2:4]), int(case[4:6])))
+label1 = labLst
+matLst = [rmseLst, corrLst, nashLst]
+nameLst = ['rmse', 'corr', 'nash']
+saveFolder = r'C:\Users\geofk\work\paper\SMAP-regional'
 
+tempLst = ['080401', '080305', '080304', '090203', '080301', '050301']
+rangeLst = [[0, 1], [0.7, 1], [0.4, 1]]
+for kk in range(3):
+    name = nameLst[kk]
+    mat = [matLst[kk][caseLst.index(x)] for x in tempLst]
+    yRange = rangeLst[kk]
+    lab1 = [labLst[caseLst.index(x)] for x in tempLst]
+    if kk == 0:
+        label2 = ['lev2', 'lev1', 'lev0', 'CONUS']
+    else:
+        label2 = None
+    fig = figplot.boxPlot(mat, widths=0.5, cLst='ygbr', label1=lab1,
+                          label2=label2, figsize=(12, 4), yRange=yRange)
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0, hspace=0)
+    saveFile = os.path.join(saveFolder, 'q_sim_{}'.format(name))
+    fig.savefig(saveFile)
+    fig.show()
+
+
+# another
+tempLst = ['090402', '090403']
+rangeLst = [[0, 1], [0.0, 1], [-0.4, 1]]
+for kk in range(3):
+    name = nameLst[kk]
+    mat = [matLst[kk][caseLst.index(x)] for x in tempLst]
+    yRange = rangeLst[kk]
+    lab1 = [labLst[caseLst.index(x)] for x in tempLst]
+    if kk == 0:
+        label2 = ['lev2', 'lev1', 'lev0', 'CONUS']
+    else:
+        label2 = None
+    fig = figplot.boxPlot(mat, widths=0.5, cLst='ygbr', label1=lab1,
+                          label2=label2, figsize=(4, 4), yRange=yRange)
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0, hspace=0)
+    saveFile = os.path.join(saveFolder, 'q_sim2_{}'.format(name))
+    fig.savefig(saveFile)
+    fig.show()

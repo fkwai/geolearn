@@ -11,7 +11,7 @@ import time
 import numpy as np
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 
-dataName = 'Q90ref'
+dataName = 'Q90'
 dm = dbBasin.DataModelFull(dataName)
 indT = np.where(dm.t == np.datetime64('2010-01-01'))[0][0]
 subsetLst = ['HUC{:02d}'.format(k+1) for k in range(18)]
@@ -41,7 +41,7 @@ for subset in subsetLst:
     testSet = subset
     outName = '{}-{}-B10-gs'.format(dataName, subset)
     yP, ycP = basinFull.testModel(
-        outName, DM=dm, batchSize=20, testSet=testSet,reTest=True)
+        outName, DM=dm, batchSize=20, testSet=testSet,reTest=False)
     yO, ycO = basinFull.getObs(outName, testSet, DM=dm)
     nash2 = utils.stat.calNash(yP[indT:, :, 0], yO[indT:, :, 0])
     rmse2 = utils.stat.calRmse(yP[indT:, :, 0], yO[indT:, :, 0])
@@ -54,7 +54,8 @@ for subset in subsetLst:
     corrLst2.append(corr2)
 
 # plot box
-matLst = [nashLst1, nashLst2]
+# matLst = [nashLst1, nashLst2]
+matLst = [corrLst1, corrLst2]
 label1 = subsetLst
 label2 = ['CONUS', 'Local']
 dataBox = list()
