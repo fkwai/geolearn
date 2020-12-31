@@ -14,7 +14,8 @@ fileEco = os.path.join(dirEco, 'basinRegionB')
 dfEco = pd.read_csv(fileEco, dtype={'siteNo': str}).set_index('siteNo')
 
 
-dataName = 'Q90'
+dataName = 'Q90ref'
+# dataName = 'Q90'
 dm = dbBasin.DataModelFull(dataName)
 
 #
