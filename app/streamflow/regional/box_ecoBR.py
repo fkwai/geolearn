@@ -12,7 +12,7 @@ import numpy as np
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 import matplotlib
 
-dataName = 'Q90'
+dataName = 'Q90ref'
 dm = dbBasin.DataModelFull(dataName)
 indT = np.where(dm.t == np.datetime64('2010-01-01'))[0][0]
 ecoIdLst = ['A', 'B', 'C', 'D', 'E', 'F', 'G',
@@ -67,10 +67,10 @@ rangeLst = [[0.3, 1], [0, 1]]
 matLst = [[rmseLst2, rmseLst1],
           [corrLst2, corrLst1],
           [nashLst2, nashLst1]]
-nameLst = ['rmse','corr', 'nash']
-rangeLst = [[0,1],[0.3, 1], [0, 1]]
+nameLst = ['rmse', 'corr', 'nash']
+rangeLst = [[0, 1], [0.3, 1], [0, 1]]
 saveFolder = r'C:\Users\geofk\work\paper\SMAP-regional'
-for kk in range(2):
+for kk in range(3):
     name = nameLst[kk]
     mat = matLst[kk]
     yRange = rangeLst[kk]
@@ -101,6 +101,19 @@ for k, ecoId in enumerate(ecoIdLst):
     dfS.loc[ecoId]['corr'] = p
     s, p = scipy.stats.ttest_ind(nashLst2[k], nashLst1[k])
     dfS.loc[ecoId]['nash'] = p
+
+rmse2 = np.concatenate(rmseLst2, axis=-1)
+rmse1 = np.concatenate(rmseLst1, axis=-1)
+s, p = scipy.stats.ttest_ind(rmse2, rmse1)
+print(p)
+corr2 = np.concatenate(corrLst2, axis=-1)
+corr1 = np.concatenate(corrLst1, axis=-1)
+s, p = scipy.stats.ttest_ind(corr2, corr1)
+print(p)
+nash2 = np.concatenate(nashLst2, axis=-1)
+nash1 = np.concatenate(nashLst1, axis=-1)
+s, p = scipy.stats.ttest_ind(nash2, nash1)
+print(p)
 
 # # significance test
 # testLst = ['Q as target', 'Q as input']
