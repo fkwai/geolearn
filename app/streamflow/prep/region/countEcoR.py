@@ -13,7 +13,7 @@ fileEco = os.path.join(dirEco, 'basinEco')
 dfEco = pd.read_csv(fileEco, dtype={'siteNo': str}).set_index('siteNo')
 
 
-dataName = 'Q90'
+dataName = 'Q90ref'
 dm = dbBasin.DataModelFull(dataName)
 
 siteNoLst = dm.siteNoLst

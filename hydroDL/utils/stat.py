@@ -20,6 +20,15 @@ def calErr(pred, obs, rmExt=False):
         return (np.nan, np.nan)
 
 
+def calStat(pred, obs):
+    nash = calNash(pred, obs)
+    rmse = calRmse(pred, obs)
+    corr = calCorr(pred, obs)
+    bias = calBias(pred, obs)
+    outDict = dict(Bias=bias, RMSE=rmse, NSE=nash, Corr=corr)
+    return outDict
+
+
 def calNash(pred, obs):
     # data in [nT,nS]
     nash = 1-np.nansum((pred-obs)**2, axis=0) / \

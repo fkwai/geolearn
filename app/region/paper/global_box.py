@@ -56,3 +56,4 @@ for k in range(len(keyLst)):
     fig.show()
     saveFile = os.path.join(saveFolder, 'ecoRegion_box_' + key)
     fig.savefig(saveFile)
+    fig.savefig(saveFile+'.eps')
