@@ -94,7 +94,7 @@ for (test, ind) in zip(testLst, indLst):
         data = [corrMat[:, k, x] for x in ind]
         [a, b], _ = utils.rmNan(data)
         # s, p = scipy.stats.ttest_ind(a, b, equal_var=False)
-        s, p = scipy.stats.ttest_rel(a, b)
+        s, p = scipy.stats.wilcoxon(a, b)
         dfS.loc[codeStrLst[k]][test] = p
-pd.options.display.float_format = '{:,.2f}'.format
+# pd.options.display.float_format = '{:,.2f}'.format
 print(dfS)

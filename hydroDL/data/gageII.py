@@ -155,6 +155,23 @@ def updateCode(pdf):
     return pdf.replace(dictCode)
 
 
+def removeField(pdf):
+    # remove some fields that are not necessary
+    rmColLst = ['REACHCODE', 'STANAME']
+    for yr in range(1950, 2010):
+        rmColLst.append('PPT{}_AVG'.format(yr))
+        rmColLst.append('TMP{}_AVG'.format(yr))
+    for yr in range(1900, 2010):
+        rmColLst.append('wy{}'.format(yr))
+    monthLst = ['JAN', 'FEB', 'APR', 'MAY', 'JUN',
+                'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    for m in monthLst:
+        rmColLst.append('{}_PPT7100_CM'.format(m))
+        rmColLst.append('{}_TMP7100_DEGC'.format(m))
+    dfG = pdf.drop(rmColLst, axis=1)
+    return dfG
+
+
 def extractBasins(siteNoLst, outShapeFile):
     """ extract shape of sites    
     Arguments:

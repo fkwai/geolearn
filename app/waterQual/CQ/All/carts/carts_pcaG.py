@@ -13,6 +13,8 @@ import json
 import sklearn.tree
 import matplotlib.gridspec as gridspec
 
+from sklearn import decomposition
+
 # load gageII
 dfGeo = gageII.readData()
 dfGeo = gageII.updateCode(dfGeo)
@@ -32,7 +34,7 @@ for ic, code in enumerate(codeCount):
 # select site
 n = 40*2
 codeLst = ['00915']
-saveFolder = os.path.join(dirTree, 'tree_00915')
+saveFolder = os.path.join(dirTree, 'tree_pcaG_00915')
 nc = len(codeLst)
 icLst = [codeCount.index(code) for code in codeLst]
 bMat = countMat[:, icLst] > n
@@ -47,13 +49,38 @@ dfCorr = pd.read_csv(fileCorr, dtype={'siteNo': str}).set_index('siteNo')
 mat = dfCorr.loc[siteNoLst][codeLst].values
 dfG = dfGeo.loc[siteNoLst]
 
+# pca by group
+dictVar = gageII.getVariableDict()
+grpLst = list(dictVar.keys())
+# grpLst = ['LC06_Basin', 'LC06_Mains100', 'LC_Crops']
+matPcaLst = list()
+pcaNameLst = list()
+rLst = list()
+for k, grp in enumerate(grpLst):
+    varG = list(set(dfG.columns.tolist()).intersection(dictVar[grp]))
+    npca = min(len(varG), 10)
+    if npca > 0:
+        x = dfG[varG].values
+        x[np.isnan(x)] = -1
+        pca = decomposition.PCA(n_components=npca)
+        pca.fit(x)
+        xx = pca.transform(x)
+        r = pca.explained_variance_ratio_
+        ind = np.where(r > 0.1)[0]
+        for k in ind:
+            pcaNameLst.append('{}_PCA{}'.format(grp, k))
+            matPcaLst.append(xx[:, k])
+            rLst.append(r[k])
+matPca = np.stack(matPcaLst,axis=-1)
+
+
 # plant tree
-varLst = dfG.columns.tolist()
+varLst = pcaNameLst
 # x = dfG.astype(np.float32).values
-x = dfG.values
+x = matPca
 y = mat[:, 0]
-x[np.isnan(x)] = -99
-# y[np.isnan(y)] = -99
+x[np.isnan(x)] = -1
+y[np.isnan(y)] = -1
 clf = sklearn.tree.DecisionTreeRegressor(
     max_leaf_nodes=20, min_samples_leaf=0.1)
 clf = clf.fit(x, y)
@@ -109,7 +136,7 @@ def plotNode(nodeId, indInput, indLeft, indRight, title):
         data = y[indTemp]
         axplot.mapPoint(ax, lat, lon, data, vRange=[0, 1], marker=sty, s=20)
     # fig.suptitle(title)
-    ax.set_title(title,fontsize=16)
+    ax.set_title(title, fontsize=16)
     plt.tight_layout()
     figName = 'node{}.png'.format(nodeId)
     plt.savefig(os.path.join(saveFolder, figName))

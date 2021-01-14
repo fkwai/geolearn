@@ -17,7 +17,7 @@ siteNoLstAll = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
 codeLst = sorted(usgs.codeLst)
 dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE', 'CLASS'], siteNoLst=siteNoLstAll)
- = gageII.updateCode(dfCrd)
+dfCrd = gageII.updateCode(dfCrd)
 
 # extract a 4d matrix of data count
 yrLst = list(range(1980, 2020))
