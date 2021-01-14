@@ -18,7 +18,7 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
     dictSite = json.load(f)
 codeLst = [code+'-R' for code in sorted(usgs.newC)]
 ep = 500
-reTest = True
+reTest = False
 siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
 dataName = 'rbWN5-WRTDS'
@@ -53,7 +53,7 @@ for iT, subset in enumerate([trainSet, testSet]):
             corrMat[iS, iCode, iT] = corr
             rmseMat[iS, iCode, iT] = rmse
 
-matplotlib.rcParams.update({'font.size': 13})
+matplotlib.rcParams.update({'font.size': 14})
 matplotlib.rcParams.update({'lines.linewidth': 2})
 matplotlib.rcParams.update({'lines.markersize': 10})
 

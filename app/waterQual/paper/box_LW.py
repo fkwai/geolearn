@@ -26,7 +26,7 @@ nSite = len(siteNoLst)
 # load all sequence
 dictLSTMLst = list()
 # LSTM
-labelLst = ['QT_C', 'QTFP_C', 'FP_QC']
+labelLst = ['QT_C', 'QTFP_C','FP_QC']
 for label in labelLst:
     dictLSTM = dict()
     trainSet = 'comb-B10'
@@ -87,14 +87,3 @@ fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='bgr',
 fig.show()
 
 # significance test
-for k, code in enumerate(codeLst):
-    a = corrMat[:, k, 1]
-    b = corrMat[:, k, 2]
-    aa, bb = utils.rmNan([a, b], returnInd=False)
-    s, p = scipy.stats.ttest_ind(aa, bb)
-    # bb = aa.copy()
-    # bb[-1] = bb[-1]+1
-    # s, p = scipy.stats.wilcoxon(aa, bb)
-    print(code, p)
-
-scipy.stats.wilcoxon([1, 2, 3, 4, 5], [1, 2, 3, 4, 5.5])
