@@ -5,7 +5,7 @@ from hydroDL.master import basinFull
 
 
 varX = gridMET.varLst
-varY = ['runoff']+dm.varC
+varY = ['runoff']+usgs.newC
 varXC = gageII.lstWaterQuality
 varYC = None
 dataName = 'sbTest'
