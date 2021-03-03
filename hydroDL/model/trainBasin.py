@@ -139,21 +139,19 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
         lossEp = 0
         t0 = time.time()
         # somehow the first iteration always failed
-        try:
-            xT, yT = subsetRandom(dataLst, batchSize, sizeLst)
-            yP = model(xT)
-        except:
-            print('first iteration failed again for CUDNN_STATUS_EXECUTION_FAILED ')
-
+        if iEp == 1:
+            try:
+                xT, yT = subsetRandom(dataLst, batchSize, sizeLst)
+                yP = model(xT)
+            except:
+                print('first iteration failed again for CUDNN_STATUS_EXECUTION_FAILED ')
         for iIter in range(nIterEp):
             xT, yT = subsetRandom(dataLst, batchSize, sizeLst)
             try:
                 yP = model(xT)
-                if type(lossFun) is crit.RmseLoss:
-                    loss = lossFun(yP, yT)
-                elif type(lossFun) is crit.RmseLoss2D:
+                if type(lossFun) is crit.RmseLoss2D:
                     loss = lossFun(yP, yT[-1, :, :])
-                elif type(lossFun) is crit.SigmaLoss:
+                else:
                     loss = lossFun(yP, yT)
                 loss.backward()
                 optim.step()

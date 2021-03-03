@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from . import axplot
 from hydroDL import utils
+import matplotlib.gridspec as gridspec
 
 
 def clickMap(funcMap, funcPoint):
@@ -36,6 +37,46 @@ def clickMap(funcMap, funcPoint):
         figP.canvas.draw()
     figM.canvas.mpl_connect('button_press_event',
                             lambda event: onclick(event, figP, axP))
+    figM.show()
+    figP.show()
+    return figM, figP
+
+
+def clickMulti(funcM, funcP, funcT=None, circleSize=None):
+    figM, axM, figP, axP, xMat, yMat, labelLst = funcM()
+    if type(axM) is not np.ndarray:
+        axM = np.array([axM])
+    if circleSize is None:
+        xR = np.nanmax(xMat, axis=0)-np.nanmin(xMat, axis=0)
+        yR = np.nanmax(yMat, axis=0)-np.nanmin(yMat, axis=0)
+        circleSize = np.min([xR, yR], axis=0)/10
+
+    def onclick(event):
+        xClick = event.xdata
+        yClick = event.ydata
+        label = event.inaxes.get_label()
+        iM = labelLst.index(label)
+        xx = xMat[:, iM]
+        yy = yMat[:, iM]
+        iP = np.nanargmin(np.sqrt((xClick - xx)**2 + (yClick - yy)**2))
+        for k, (ax, labelT) in enumerate(zip(axM.flatten(), labelLst)):
+            [p.remove() for p in reversed(ax.patches)]
+            xc = xMat[iP, k]
+            yc = yMat[iP, k]
+            color = 'red' if labelT == label else 'black'
+            circle = plt.Circle([xc, yc], circleSize[k],
+                                color=color, fill=False)
+            ax.add_patch(circle)
+        for ax in axP:
+            ax.clear()
+        funcP(axP, iP, iM)
+        if funcT is not None:
+            title = funcT(iP, iM)
+            figP.suptitle(title)
+        figM.canvas.draw()
+        figP.canvas.draw()
+    figM.canvas.mpl_connect('button_press_event',
+                            lambda event: onclick(event))
     figM.show()
     figP.show()
     return figM, figP
@@ -102,3 +143,59 @@ def tsYr(t, y, cLst='rbkgcmy', figsize=(12, 4), showCorr=False):
         else:
             _ = axes[iYr].set_xlabel('{}'.format(yr))
     return fig
+
+
+def scatter121Batch(xMat, yMat, cMat, labelLst, nXY,
+                    optCb=1, cR=None, ticks=None, s=15,
+                    figsize=None, titleLst=None, cmap='viridis'):
+    # plot nx*nx 121 maps
+    # xMat, yMat - [#data, #features]
+    # optCb - 0 no colorbar; 1 shared color bar; 2 - individual colorbar
+    figM = plt.figure(figsize=figsize)
+    [nfx, nfy] = nXY
+    rCb = 10  # colorbar will be of width 1/rCb of subplot
+    if optCb == 0:
+        gsM = gridspec.GridSpec(nfy*rCb, nfx*rCb)
+    elif optCb == 1:
+        gsM = gridspec.GridSpec(nfy*rCb, nfx*rCb+1)
+        if cR is None:
+            cR = [np.nanmin(cMat), np.nanmax(cMat)]
+    elif optCb == 2:
+        gsM = gridspec.GridSpec(nfy*rCb, nfx*(rCb+1))
+    # plot scatter
+    axM = list()
+    for k, label in enumerate(labelLst):
+        j, i = utils.index2d(k, nfy, nfx)
+        if optCb == 0:
+            ax = figM.add_subplot(gsM[j:j+1, i:i+1])
+        elif optCb == 1:
+            ax = figM.add_subplot(gsM[(j)*rCb:(j+1)*rCb, i*rCb:(i+1)*rCb])
+        elif optCb == 2:
+            ax = figM.add_subplot(
+                gsM[(j)*rCb:(j+1)*rCb, i*(rCb+1):i*(rCb+1)+rCb])
+        ax.set_label(label)
+        axM.append(ax)
+        c = cMat[:, k] if cMat.ndim == 2 else cMat
+        sc = axplot.scatter121(
+            ax, xMat[:, k], yMat[:, k], c, vR=cR, size=s, cmap=cmap)
+        corr = utils.stat.calCorr(xMat[:, k], yMat[:, k])
+        titleStr = '{} {:.2f}'.format(label, corr)
+        axplot.titleInner(ax, titleStr)
+        if ticks is not None:
+            _ = ax.set_xlim([ticks[0], ticks[-1]])
+            _ = ax.set_ylim([ticks[0], ticks[-1]])
+            _ = ax.set_yticks(ticks)
+            _ = ax.set_xticks(ticks)
+            if i != 0:
+                _ = ax.set_yticklabels([])
+            if j != 4:
+                _ = ax.set_xticklabels([])
+            figM.subplots_adjust(wspace=0, hspace=0)
+        if optCb == 2:
+            cax = figM.add_subplot(
+                gsM[(j)*rCb:(j+1)*rCb, (i+1)*(rCb+1)])
+            figM.colorbar(sc, cax=cax)
+    if optCb == 1:
+        cax = figM.add_subplot(gsM[:, -1])
+        figM.colorbar(sc, cax=cax)
+    return figM, axM

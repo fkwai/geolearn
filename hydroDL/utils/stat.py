@@ -44,6 +44,10 @@ def calRmse(pred, obs):
 
 def calCorr(pred, obs):
     # data in [nT,nS]
+    bV = pred.ndim == 1
+    if bV:
+        pred = pred[:, None]
+        obs = obs[:, None]
     [nT, nS] = pred.shape
     corr = np.full([nS], np.nan)
     for k in range(nS):
@@ -51,10 +55,22 @@ def calCorr(pred, obs):
         b = obs[:, k]
         indV = np.where(~np.isnan(a) & ~np.isnan(b))
         corr[k] = np.corrcoef(a[indV], b[indV])[0, 1]
-    return corr
+    if bV:
+        return corr[0]
+    else:
+        return corr
 
 
 def calBias(pred, obs):
     # data in [nT,nS]
     bias = np.abs(np.nanmean(pred, axis=0)-np.nanmean(obs, axis=0))
     return bias
+
+
+def calPercent(x, p, rank=True):
+    if rank:
+        return np.nanpercentile(x, p*100)
+    else:
+        vmin = np.nanmin(x)
+        vmax = np.nanmax(x)
+        return (vmax-vmin)*p+vmin

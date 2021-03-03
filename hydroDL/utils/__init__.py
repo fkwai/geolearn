@@ -58,20 +58,20 @@ def rmExt(data, p=5, returnInd=False):
     else:
         return out
 
-class TimedOutExc(Exception):
-    pass
+# class TimedOutExc(Exception):
+#     pass
 
-def deadline(timeout, *args):
-    def decorate(f):
-        def handler(signum, frame):
-            raise TimedOutExc()
+# def deadline(timeout, *args):
+#     def decorate(f):
+#         def handler(signum, frame):
+#             raise TimedOutExc()
 
-        def new_f(*args):
-            signal.signal(signal.SIGALRM, handler)
-            signal.alarm(timeout)
-            return f(*args)
-            signal.alarm(0)
+#         def new_f(*args):
+#             signal.signal(signal.SIGALRM, handler)
+#             signal.alarm(timeout)
+#             return f(*args)
+#             signal.alarm(0)
 
-        new_f.__name__ = f.__name__
-        return new_f
-    return decorate
+#         new_f.__name__ = f.__name__
+#         return new_f
+#     return decorate

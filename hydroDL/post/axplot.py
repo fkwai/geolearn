@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def mapPoint(ax, lat, lon, data, vRange=None, cmap=plt.cm.jet, s=30, marker='o'):
+def mapPoint(ax, lat, lon, data, vRange=None, cmap='jet', s=30, marker='o', cb=True):
     if np.isnan(data).all():
         print('all nan in data')
         return
@@ -21,7 +21,8 @@ def mapPoint(ax, lat, lon, data, vRange=None, cmap=plt.cm.jet, s=30, marker='o')
     ind = np.where(~np.isnan(data))[0]
     cs = mm.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
                     s=s, marker=marker, vmin=vmin, vmax=vmax)
-    mm.colorbar(cs, location='bottom', pad='5%')
+    if cb is True:
+        mm.colorbar(cs, location='bottom', pad='5%')
     return mm
 
 
@@ -139,12 +140,14 @@ def plot121(ax, x, y, specP='b*', specL='k-', vR=None):
     _ = ax.plot([vmin, vmax], [vmin, vmax], specL)
 
 
-def scatter121(ax, x, y, c, specL='k-', vR=None):
+def scatter121(ax, x, y, c, specL='k-', vR=None, size=None, cmap='viridis'):
     if vR is None:
-        out = ax.scatter(x, y, c=c)
+        vmax = None
+        vmin = None
     else:
-        out = ax.scatter(x, y, c=c, vmin=vR[0], vmax=vR[1])
-
+        vmin = vR[0]
+        vmax = vR[1]
+    out = ax.scatter(x, y, c=c, s=size, vmin=vmin, vmax=vmax, cmap=cmap)
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     vmin = np.min([xlim[0], ylim[0]])

@@ -28,6 +28,7 @@ edStr = '2019-12-31'
 varF = gridMET.varLst
 varQ = usgs.varQ
 varG = gageII.lstWaterQuality
+# varC=
 
 # gageII
 tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLst)

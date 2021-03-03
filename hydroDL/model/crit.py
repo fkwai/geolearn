@@ -17,7 +17,7 @@ class SigmaLoss(torch.nn.Module):
             p0 = output[:, :, k * 2]
             s0 = output[:, :, k * 2 + 1]
             t0 = target[:, :, k]
-            mask = t0 == t0
+            mask = t0 == RmseLoss
             p = p0[mask]
             s = s0[mask]
             t = t0[mask]
@@ -62,6 +62,42 @@ class RmseLoss(torch.nn.Module):
             if temp == temp:
                 loss = loss + temp
         return loss/ny
+
+
+class RmseSample(torch.nn.Module):
+    def __init__(self):
+        super(RmseSample, self).__init__()
+
+    def forward(self, output, target):
+        D = (output-target)**2
+        nt, ns, ny = target.shape
+        loss = 0
+        for k in range(ny):
+            tempLoss = 0
+            cs = 0
+            for j in range(ns):
+                d = D[:, j, k]
+                mask = d == d
+                l = d[mask].mean()
+                if l == l:
+                    tempLoss = tempLoss+l
+                    cs = cs+1
+            if cs > 0:
+                loss = loss + tempLoss/cs
+        return loss/ny
+
+    # def forward(self, output, target):
+    #     D = (output-target)**2
+    #     M = (target == target).float()
+    #     D[D != D] = 0
+    #     D1 = D.sum(dim=0)/M.sum(dim=0)
+    #     M1 = (D1 == D1).float()
+    #     D1[D1 != D1] = 0
+    #     D2 = D1.sum(dim=0)/M1.sum(dim=0)
+    #     M2 = (D2 == D2).float()
+    #     D2[D2 != D2] = 0
+    #     out = D2.sum()/M2.sum()
+    #     return out
 
 
 class RmseLoss2D(torch.nn.Module):

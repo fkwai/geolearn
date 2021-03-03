@@ -28,7 +28,7 @@ def pointInPoly(y, x, shapeLst):
     return indLst
 
 
-def gridMask(lat, lon, polygon):
+def gridMask(lat, lon, polygon, calArea=True):
     if not is_ascend(lon) and is_descend(lat):
         raise ValueError('not ascended or descended')
     mask = np.zeros([len(lat), len(lon)])
@@ -41,16 +41,20 @@ def gridMask(lat, lon, polygon):
     dy = (lat[indY1] - lat[indY2]) / (indY2 - indY1)
     for i in range(indX1, indX2 + 1):
         for j in range(indY1, indY2 + 1):
-            x1 = lon[i] - dx / 2
-            x2 = lon[i] + dx / 2
-            y1 = lat[j] + dy / 2
-            y2 = lat[j] - dy / 2
-            # pp = Polygon([(x1, y1), (x1, y2), (x2, y1)])
-            pp = box(x1, y2, x2, y1)
-            if polygon.contains(pp):
-                mask[j, i] = 1
-            elif not polygon.intersects(pp):
-                mask[j, i] = 0
+            if calArea is True:
+                x1 = lon[i] - dx / 2
+                x2 = lon[i] + dx / 2
+                y1 = lat[j] + dy / 2
+                y2 = lat[j] - dy / 2
+                # pp = Polygon([(x1, y1), (x1, y2), (x2, y1)])
+                pp = box(x1, y2, x2, y1)
+                if polygon.contains(pp):
+                    mask[j, i] = 1
+                elif not polygon.intersects(pp):
+                    mask[j, i] = 0
+                else:
+                    mask[j, i] = polygon.intersection(pp).area/dx/dy
             else:
-                mask[j, i] = polygon.intersection(pp).area/dx/dy
+                p = Point(lon[i],lat[j])
+                mask[j, i] = 1 if p.within(polygon) else 0
     return mask

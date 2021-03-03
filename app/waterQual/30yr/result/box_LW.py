@@ -64,9 +64,10 @@ for ic, code in enumerate(codeLst):
         v1 = dictLSTM[siteNo][code].iloc[ind2].values
         v2 = dictWRTDS[siteNo][code].iloc[ind2].values
         v3 = dictObs[siteNo][code].iloc[ind2].values
-        rmse1, corr1 = utils.stat.calErr(v1, v2)
-        rmse2, corr2 = utils.stat.calErr(v1, v3)
-        rmse3, corr3 = utils.stat.calErr(v2, v3)
+        vv1, vv2, vv3 = utils.rmNan([v1, v2, v3], returnInd=False)
+        rmse1, corr1 = utils.stat.calErr(vv1, vv2)
+        rmse2, corr2 = utils.stat.calErr(vv1, vv3)
+        rmse3, corr3 = utils.stat.calErr(vv2, vv3)
         corrMat[indS, ic, 0] = corr1
         corrMat[indS, ic, 1] = corr2
         corrMat[indS, ic, 2] = corr3

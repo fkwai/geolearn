@@ -78,7 +78,7 @@ columns = ['local vs near',
            'far vs dissimilar',
            'near vs dissimilar']
 dfS = pd.DataFrame(index=caseLabLst+['All'], columns=columns+['N'])
-key = 'RMSE'
+key = 'Corr'
 aLst, bLst, cLst, dLst = [list() for k in range(4)]
 for k, eco in enumerate(caseLabLst):
     a = errLstAll[k][0][key]

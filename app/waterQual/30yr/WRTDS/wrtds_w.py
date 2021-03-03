@@ -57,6 +57,7 @@ for kk, siteNo in enumerate(siteNoLst):
     t = yr+dfX.index.dayofyear.values/365
     dfX['sinT'] = np.sin(2*np.pi*t)
     dfX['cosT'] = np.cos(2*np.pi*t)
+    dfX['yr'] = yr
     ind = np.where(yr < 2010)[0]
     dfYP = pd.DataFrame(index=df.index, columns=codeLst)
     dfYP.index.name = 'date'

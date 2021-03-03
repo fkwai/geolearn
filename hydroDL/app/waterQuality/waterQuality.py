@@ -476,7 +476,8 @@ def indYrOddEven(info):
 
 def readSiteTS(siteNo, varLst, freq='D', area=None,
                sd=np.datetime64('1979-01-01'),
-               ed=np.datetime64('2019-12-31')):
+               ed=np.datetime64('2019-12-31'),
+               rmFlag=False):
     # read data
     td = pd.date_range(sd, ed)
     varC = list(set(varLst).intersection(usgs.varC))
@@ -486,7 +487,12 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
 
     dfD = pd.DataFrame({'date': td}).set_index('date')
     if len(varC) > 0:
-        dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd)
+        if rmFlag:
+            dfC, dfCF = usgs.readSample(
+                siteNo, codeLst=varC, startDate=sd, flag=2)
+            dfC = usgs.removeFlag(dfC, dfCF)
+        else:
+            dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd)
         dfD = dfD.join(dfC)
     if len(varQ) > 0:
         dfQ = usgs.readStreamflow(siteNo, startDate=sd)

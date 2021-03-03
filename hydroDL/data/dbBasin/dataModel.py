@@ -17,10 +17,11 @@ class DataModelFull():
         t0 = time.time()
         saveFolder = io.caseFolder(caseName)
         self.saveFolder = saveFolder
-        self.q = np.load(os.path.join(saveFolder, 'Q.npy'))
-        self.f = np.load(os.path.join(saveFolder, 'F.npy'))
-        self.c = np.load(os.path.join(saveFolder, 'C.npy'))
-        self.g = np.load(os.path.join(saveFolder, 'G.npy'))
+        npz=np.load(os.path.join(saveFolder, 'data.npz'))
+        self.q=npz['q']
+        self.f=npz['f']
+        self.c=npz['c']
+        self.g=npz['g']
         with open(os.path.join(saveFolder, 'info')+'.json', 'r') as fp:
             dictData = json.load(fp)
         self.name = dictData['name']

@@ -4,6 +4,8 @@ import numpy as np
 from hydroDL import utils
 from scipy.optimize import curve_fit
 from astropy.timeseries import LombScargle
+from hydroDL.utils.stat import calPercent
+
 
 def slopeModel(q, c, x=None):
     x1 = np.log(q)
@@ -48,3 +50,28 @@ def kateModel(q, c, x=None):
     else:
         out = ceq/(1+x/dw)
     return ceq, dw, out
+
+
+def analRange(x, y, rIn, rOut, bIn=False, bOut=True):
+    xIn = np.full([len(rIn)], np.nan)
+    yIn = np.full([len(rIn)], np.nan)
+    for j, r in enumerate(rIn):
+        xIn[j] = calPercent(x, r, rank=bIn)
+        yIn[j] = calPercent(y, r, rank=bIn)
+    xOut = np.full([len(rIn)-1, len(rOut)], np.nan)
+    yOut = np.full([len(rIn)-1, len(rOut)], np.nan)
+    for j in range(len(rIn)-1):
+        r1, r2 = (rIn[j], rIn[j+1])
+        x1 = calPercent(x, r1, rank=bIn)
+        x2 = calPercent(x, r2, rank=bIn)
+        indX = np.where((x > x1) & (x <= x2))[0]
+        yy = y[indX]
+        for i in range(len(rOut)):
+            yOut[j, i] = calPercent(yy, rOut[i], rank=bOut)
+        y1 = calPercent(y, r1, rank=bIn)
+        y2 = calPercent(y, r2, rank=bIn)
+        indY = np.where((y > y1) & (y <= y2))[0]
+        xx = x[indY]
+        for i in range(len(rOut)):
+            xOut[j, i] = calPercent(xx, rOut[i], rank=bOut)
+    return xIn, yIn, xOut, yOut

@@ -54,7 +54,7 @@ def wrapMaster(**kw):
         os.mkdir(outFolder)
     with open(os.path.join(outFolder, 'master.json'), 'w') as fp:
         json.dump(dictPar, fp)
-    return dictPar['outName']
+    return dictPar
 
 
 def loadMaster(outName):
@@ -131,19 +131,16 @@ def trainModel(outName):
     # train model
     [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
     # define loss
-    if dictP['crit'] == 'RmseLoss':
-        lossFun = crit.RmseLoss()
-    elif dictP['crit'] == 'RmseLoss2D':
-        lossFun = crit.RmseLoss2D()
-    elif dictP['crit'] == 'SigmaLoss':
-        lossFun = crit.SigmaLoss()
+    lossFun = getattr(crit, dictP['crit'])()
+    if dictP['crit'] == 'SigmaLoss':
         ny = ny*2
         nyc = nyc*2
-    else:
-        raise RuntimeError('loss function not specified')
     # define model
     if dictP['modelName'] == 'CudnnLSTM':
         model = rnn.CudnnLstmModel(
+            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
+    elif dictP['modelName'] == 'LstmModel':
+        model = rnn.LstmModel(
             nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
     else:
         raise RuntimeError('Model not specified')

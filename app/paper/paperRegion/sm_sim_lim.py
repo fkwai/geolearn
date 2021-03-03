@@ -54,25 +54,6 @@ for key in keyLst:
         for err in errLst:
             temp.append(err[key])
         dataBox.append(temp)
-    fig = plot.plotBoxFig(dataBox, caseLabLst, colorLst=cLst,
-                          figsize=(12, 4), sharey=True)
-    plt.tight_layout()
-    plt.subplots_adjust(wspace=0, hspace=0)
-    fig.show()
-    saveFile = os.path.join(saveFolder, 'sim_box_lim_{}'.format(key))
-    fig.savefig(saveFile)
-
-
-# plot box
-cLst = 'ygbr'
-keyLst = ['RMSE', 'Corr']
-for key in keyLst:
-    dataBox = list()
-    for errLst in errLstAll:
-        temp = list()
-        for err in errLst:
-            temp.append(err[key])
-        dataBox.append(temp)
     fig = figplot.boxPlot(dataBox, label1=caseLabLst, cLst=cLst,
                           figsize=(12, 4), sharey=True)
     plt.tight_layout()
@@ -97,7 +78,7 @@ columns = ['local vs near',
            'far vs dissimilar',
            'near vs dissimilar']
 dfS = pd.DataFrame(index=caseLabLst+['All'], columns=columns+['N'])
-key = 'Corr'
+key = 'RMSE'
 aLst, bLst, cLst, dLst = [list() for k in range(4)]
 for k, eco in enumerate(caseLabLst):
     a = errLstAll[k][0][key]

@@ -18,7 +18,9 @@ dataName = 'rbWN5'
 wqData = waterQuality.DataModelWQ(dataName)
 codeLst = wqData.varC
 labelLst = ['QTFP_C']
-codeLst = ['00010', '00300']
+# codeLst = ['00010', '00300']
+codeLst = sorted(usgs.newC)
+
 for code in codeLst:
     for label in labelLst:
         trainSet = '{}-B10'.format(code)

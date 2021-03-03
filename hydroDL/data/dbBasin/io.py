@@ -25,7 +25,7 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
     varF = gridMET.varLst
     varQ = usgs.varQ
     varG = gageII.lstWaterQuality
-    varC = ['00010']
+    varC = usgs.newC
 
     # gageII
     tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLst)
@@ -63,10 +63,7 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
     saveFolder = caseFolder(caseName)
     if not os.path.exists(saveFolder):
         os.mkdir(saveFolder)
-    np.save(os.path.join(saveFolder, 'Q'), q)
-    np.save(os.path.join(saveFolder, 'F'), f)
-    np.save(os.path.join(saveFolder, 'G'), g)
-    np.save(os.path.join(saveFolder, 'C'), c)
+    np.savez_compressed(os.path.join(saveFolder, 'data'), c=c, q=q, f=f, g=g)
     dictData = dict(name=caseName, varG=varG,  varQ=varQ, varF=varF, varC=varC,
                     sd=sdStr, ed=edStr, freq=freq, siteNoLst=siteNoLst)
     with open(os.path.join(saveFolder, 'info')+'.json', 'w') as fp:
@@ -75,17 +72,22 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
 
 def readSiteTS(siteNo, varLst, freq='D', area=None,
                sd=np.datetime64('1979-01-01'),
-               ed=np.datetime64('2019-12-31')):
+               ed=np.datetime64('2019-12-31'),
+               rmFlag=False):
     # read data
     td = pd.date_range(sd, ed)
     varC = list(set(varLst).intersection(usgs.varC))
     varQ = list(set(varLst).intersection(usgs.varQ))
     varF = list(set(varLst).intersection(gridMET.varLst))
     varP = list(set(varLst).intersection(ntn.varLst))
-
     dfD = pd.DataFrame({'date': td}).set_index('date')
     if len(varC) > 0:
-        dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd)
+        if rmFlag:
+            dfC, dfCF = usgs.readSample(
+                siteNo, codeLst=varC, startDate=sd, flag=2)
+            dfC = usgs.removeFlag(dfC, dfCF)
+        else:
+            dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd)
         dfD = dfD.join(dfC)
     if len(varQ) > 0:
         dfQ = usgs.readStreamflow(siteNo, startDate=sd)

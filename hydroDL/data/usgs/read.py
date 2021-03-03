@@ -5,7 +5,7 @@ from hydroDL import kPath
 
 # fileName = r'C:\Users\geofk\work\waterQuality\USGS\dailyTS\08075400'
 
-__all__ = ['readSample', 'readStreamflow', 'readUsgsText']
+__all__ = ['readSample', 'readStreamflow', 'readUsgsText', 'removeFlag']
 
 
 def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
@@ -78,7 +78,8 @@ def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
                 dfO2 = dfO2[dfO2.index >= startDate]
     if flag > 0:
         if flag == 2:
-            dfO3 = pd.DataFrame(index=dfO2.index, columns=dfO2.columns)
+            dfO3 = pd.DataFrame(
+                index=dfO2.index, columns=dfO2.columns, dtype=int)
             dfO3[(dfO2 == 'x') | (dfO2 == 'X')] = 0
             dfO3[(dfO2 != 'x') & (dfO2 != 'X') & (dfO2.notna())] = 1
             dfO2 = dfO3
@@ -220,3 +221,14 @@ def renameSample(pdf):
     # pdf['datetime'] = pd.to_datetime(temp, format='%Y-%m-%d %H:%M')
     pdf['date'] = pd.to_datetime(pdf['sample_dt'], format='%Y-%m-%d')
     return pdf
+
+
+def removeFlag(dfC, dfCF):
+    codeLstF = dfCF.columns.tolist()
+    codeLst = [code[:5] for code in codeLstF]
+    dfOut = dfC.copy()
+    data = dfC[codeLst].values
+    dataF = dfCF[codeLstF].values
+    data[dataF == 1] = np.nan
+    dfOut[codeLst] = data
+    return dfOut

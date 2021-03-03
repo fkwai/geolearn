@@ -172,6 +172,26 @@ def removeField(pdf):
     return dfG
 
 
+def updateRegion(dfG):
+    # PNV2 - merge to upper classes
+    fileT = os.path.join(dirTab, 'lookupPNV.csv')
+    tabT = pd.read_csv(fileT).set_index('PNV_CODE')
+    for code in range(1, 63):
+        siteNoTemp = dfG[dfG['PNV_BAS_DOM'] == code].index
+        dfG.at[siteNoTemp, 'PNV_BAS_DOM2'] = tabT.loc[code]['PNV_CLASS_CODE']
+    # Eco3
+    fileT = os.path.join(dirTab, 'lookupEco.csv')
+    tabT = pd.read_csv(fileT).set_index('Eco3code')
+    for code in range(1, 85):
+        siteNoTemp = dfG[dfG['ECO3_BAS_DOM'] == code].index
+        eco3 = tabT.loc[code]['Eco3']
+        EcoB1, EcoB2, EcoB3 = eco3.split('.')
+        dfG.at[siteNoTemp, 'EcoB1'] = int(EcoB1)
+        dfG.at[siteNoTemp, 'EcoB2'] = int(EcoB2)
+        dfG.at[siteNoTemp, 'EcoB3'] = int(EcoB3)
+    return dfG
+
+
 def extractBasins(siteNoLst, outShapeFile):
     """ extract shape of sites    
     Arguments:
