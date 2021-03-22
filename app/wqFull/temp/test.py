@@ -18,7 +18,7 @@ importlib.reload(dbBasin)
 importlib.reload(basinFull)
 
 
-dataName = 'sbTest'
+dataName = 'sbY30N5'
 dm = dbBasin.DataModelFull(dataName)
 outName = '{}-B10'.format(dataName)
 master = basinFull.loadMaster(outName)
@@ -32,7 +32,7 @@ yO, ycO = basinFull.getObs(outName, testSet, DM=dm)
 
 indT = np.where(dm.t == np.datetime64('2010-01-01'))[0][0]
 importlib.reload(utils.stat)
-ic = 17
+ic = 0
 nash1 = utils.stat.calNash(yP[:indT, :, ic], yO[:indT, :, ic])
 nash2 = utils.stat.calNash(yP[indT:, :, ic], yO[indT:, :, ic])
 rmse1 = utils.stat.calRmse(yP[:indT, :, ic], yO[:indT, :, ic])

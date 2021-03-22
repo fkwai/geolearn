@@ -26,7 +26,7 @@ siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
 
 # load all sequence
-if False:
+if True:
     importlib.reload(wq.wqLoad)
     outNameLSTM = '{}-{}-{}-{}'.format('rbWN5', 'comb', 'QTFP_C', 'comb-B10')
     dictLSTM, dictWRTDS, dictObs = wq.loadModel(
@@ -61,7 +61,7 @@ if False:
 
 
 # calculate LombScargle
-if False:
+if True:
     pMat = np.full([len(siteNoLst), len(codeLst)], np.nan)
     for ic, code in enumerate(codeLst):
         for siteNo in dictSite[code]:
@@ -74,8 +74,20 @@ if False:
             pMat[indS, ic] = p
 
 
+# calculate linear CQ relationship
+if True:
+    rMat = np.full([len(siteNoLst), len(codeLst)], np.nan)
+    for ic, code in enumerate(codeLst):
+        for siteNo in dictSite[code]:
+            indS = siteNoLst.index(siteNo)
+            q = dictObs[siteNo]['00060'].values
+            c = dictObs[siteNo][code].values
+            qq, cc = utils.rmNan([q, c], returnInd=False)
+            corr = np.corrcoef(np.log(qq+1), cc)[1, 0]
+            rMat[indS, ic] = corr**2
+
 # plot 121
-plt.close('all')
+# plt.close('all')
 # codeLst2 = ['00095', '00400', '00405', '00600', '00605',
 #             '00618', '00660', '00665', '00681', '00915',
 #             '00925', '00930', '00935', '00940', '00945',
@@ -84,32 +96,37 @@ plt.close('all')
 
 
 nfy, nfx = [3, 2]
-codeLst2 = ['00915', '00925', '00930', '00935',
-            '00940', '00945']
-# codeLst2 = ['00010', '00300', '00400', '00405']
-nfy, nfx = [3, 2]
+# codeLst2 = ['00010', '00300']
+codeLst2 = ['00400', '00405', '00600', '00605',
+            '00618', '00660', '00665', '00681', '00095']
+nfy, nfx = [3, 3]
+
+codeLst2 = ['00915', '00925', '00930', '00935', '00940', '00945',
+            '00955', '70303', '80154']
+nfy, nfx = [3, 3]
 
 
 # color mat
-cVar = 'STRAHLER_MAX'
-cMat = dfG[cVar].values
+# cVar = 'STRAHLER_MAX'
+# cMat = dfG[cVar].values
 # cMat = np.log(cMat+1)
 
 indC = [codeLst.index(code) for code in codeLst2]
 # cMat = intMatC[:, indC, 2]
-# cMat=pMat[:,indC]
+cMat = rMat[:, indC]
+cVar = 'power'
 # cR = [np.nanpercentile(cMat, 10), np.nanpercentile(cMat, 90)]
-cR = [np.nanmin(cMat), np.nanmax(cMat)]
+# cR = [np.nanmin(cMat), np.nanmax(cMat)]
 # cR = [0, 100]
-# cR=[0,1]
-cR = [0, 20]
+cR = [0, 0.5]
+# cR = [0, 20]
 
 # attr vs diff
 fig, axes = plt.subplots(nfy, nfx)
 for k, code in enumerate(codeLst2):
     j, i = utils.index2d(k, nfy, nfx)
     ax = axes[j, i]
-    ic=codeLst.index(code)
+    ic = codeLst.index(code)
     x = cMat[:, k] if cMat.ndim == 2 else cMat
     y = corrMat[:, ic, 1]**2-corrMat[:, ic, 2]**2
     ax.plot(x, y, '*')
@@ -190,3 +207,10 @@ def funcT(iP, iM):
 
 importlib.reload(figplot)
 figM, figP = figplot.clickMulti(funcM, funcP, funcT=funcT)
+
+# count for some data
+code = '00915'
+ic = codeLst.index(code)
+[p, c1, c2], _ = utils.rmNan(
+    [pMat[:, ic], corrMat[:, ic, 1], corrMat[:, ic, 2]])
+len(np.where(p > 0.5)[0])

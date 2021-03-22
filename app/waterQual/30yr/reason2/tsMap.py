@@ -26,7 +26,7 @@ siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
 
 # load all sequence
-if False:
+if True:
     outNameLSTM = '{}-{}-{}-{}'.format('rbWN5', 'comb', 'QTFP_C', 'comb-B10')
     dictLSTM, dictWRTDS, dictObs = wq.loadModel(
         siteNoLst, outNameLSTM, codeLst)
@@ -43,7 +43,7 @@ ind1 = np.where((t < tt) & (t >= t0))[0]
 ind2 = np.where(t >= tt)[0]
 
 # plot 121
-code = '00930'
+code = '00010'
 ic = codeLst.index(code)
 xMat = corrMat[:, ic, 1]
 yMat = corrMat[:, ic, 2]

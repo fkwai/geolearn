@@ -14,7 +14,7 @@ f and q will be saved in full matirx
 c will saved in sparse matrix 
 """
 
-dataName = 'sbTest'
+dataName = 'sbY30N5'
 # dm = dbBasin.DataModelFull.new(dataName, siteNoLst)
 dm = dbBasin.DataModelFull(dataName)
 
@@ -31,4 +31,9 @@ dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                              sd=sd, ed=ed, nEpoch=100,
                              batchSize=[365, 100])
+
+# master = basinFull.wrapMaster(outName=outName, dataName=dataName, varX=varX,
+#                               varY=varY, varXC=varXC, varYC=varYC,
+#                               sd=sd, ed=ed)
+
 basinFull.trainModel(outName)

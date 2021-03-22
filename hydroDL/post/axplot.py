@@ -133,10 +133,13 @@ def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange=None):
 
 def plot121(ax, x, y, specP='b*', specL='k-', vR=None):
     _ = ax.plot(x, y, specP)
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    vmin = np.min([xlim[0], ylim[0]])
-    vmax = np.max([xlim[1], ylim[1]])
+    if vR is None:
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        vmin = np.min([xlim[0], ylim[0]])
+        vmax = np.max([xlim[1], ylim[1]])
+    else:
+        [vmin, vmax] = vR
     _ = ax.plot([vmin, vmax], [vmin, vmax], specL)
 
 

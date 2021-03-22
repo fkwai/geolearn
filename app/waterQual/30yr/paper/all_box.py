@@ -28,7 +28,7 @@ nSite = len(siteNoLst)
 outNameLSTM = '{}-{}-{}-{}'.format('rbWN5', 'comb', 'QTFP_C', 'comb-B10')
 dictLSTM, dictWRTDS, dictObs = wq.loadModel(
     siteNoLst, outNameLSTM, codeLst)
-corrMat, rmseMat = wq.dictErr(dictLSTM, dictWRTDS, dictObs,codeLst)
+corrMat, rmseMat = wq.dictErr(dictLSTM, dictWRTDS, dictObs, codeLst)
 
 # load basin attributes
 dfG = gageII.readData(siteNoLst=siteNoLst)
@@ -73,6 +73,18 @@ fig = figplot.boxPlot(dataBox, label1=labLst1, widths=0.5, cLst='rb',
 fig.show()
 dirFig = r'C:\Users\geofk\work\paper\waterQuality'
 fig.savefig(os.path.join(dirFig, 'box_all'))
+
+
+a = np.log(np.log(1/dfS['corr'].values.astype(float)))
+b = np.log(np.nanmedian(corrMat[:, :, 1], axis=0))
+
+fig, ax = plt.subplots(1, 1)
+for k in range(len(codeLst)):
+    ax.text(b[k], a[k], usgs.codePdf.loc[codeLst[k]]['shortName'])
+ax.plot(b, a, '*')
+# ax.set_xlim([0.2, 1.2])
+ax.set_ylim([-1.5, 3])
+fig.show()
 
 np.nanmean(corrMat[:, :, 1], axis=0)-np.nanmean(corrMat[:, :, 2], axis=0)
 np.nanmedian(corrMat[:, :, 1], axis=0)-np.nanmedian(corrMat[:, :, 2], axis=0)
