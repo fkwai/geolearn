@@ -155,7 +155,7 @@ def scatter121Batch(xMat, yMat, cMat, labelLst, nXY,
     [nfx, nfy] = nXY
     rCb = 10  # colorbar will be of width 1/rCb of subplot
     if optCb == 0:
-        gsM = gridspec.GridSpec(nfy*rCb, nfx*rCb)
+        gsM = gridspec.GridSpec(nfy, nfx)
     elif optCb == 1:
         gsM = gridspec.GridSpec(nfy*rCb, nfx*rCb+1)
         if cR is None:
@@ -193,7 +193,7 @@ def scatter121Batch(xMat, yMat, cMat, labelLst, nXY,
             figM.subplots_adjust(wspace=0, hspace=0)
         if optCb == 2:
             cax = figM.add_subplot(
-                gsM[(j)*rCb:(j+1)*rCb, (i+1)*(rCb+1)])
+                gsM[(j)*rCb:(j+1)*rCb, (i+1)*(rCb+1)-1])
             figM.colorbar(sc, cax=cax)
     if optCb == 1:
         cax = figM.add_subplot(gsM[:, -1])

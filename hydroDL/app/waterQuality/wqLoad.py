@@ -19,8 +19,7 @@ def loadModel(siteNoLst, outNameLSTM, codeLst):
         dictLSTM[siteNo] = df
     # WRTDS
     dictWRTDS = dict()
-    dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat',
-                            'WRTDS-W', 'B10', 'output')
+    dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10')
     for k, siteNo in enumerate(siteNoLst):
         print('\t WRTDS site {}/{}'.format(k, len(siteNoLst)), end='\r')
         saveFile = os.path.join(dirWRTDS, siteNo)

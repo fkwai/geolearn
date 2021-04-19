@@ -26,7 +26,7 @@ def mapPoint(ax, lat, lon, data, vRange=None, cmap='jet', s=30, marker='o', cb=T
     return mm
 
 
-def mapGrid(ax, lat, lon, data, vRange=None, cmap=plt.cm.jet):
+def mapGrid(ax, lat, lon, data, vRange=None, cmap='jet'):
     if np.isnan(data).all():
         print('all nan in data')
         return

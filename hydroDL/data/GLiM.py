@@ -17,7 +17,7 @@ dataCode = [
     ['ev', 'Evaporites', 6],  # Ca
     ['va', 'Acid volcanic rocks', 7],
     ['vi', 'Intermediate volcanic rocks', 8],
-    ['vb', 'Basic volcanic rocks', 9],
+    ['vb', 'Basic volcanic rocks', 9], # volcanic less active compare to plutonic
     ['pa', 'Acid plutonic rocks', 10],
     ['pi', 'Intermediate plutonic rocks', 11],
     ['pb', 'Basic plutonic rocks', 12],
@@ -27,9 +27,8 @@ dataCode = [
 
 combineLst = [
     [1, 2],
-    [4, 5],
+    [4, 5, 6],
     [1, 2, 4],
-    [7, 8, 10],
     [7, 8, 10, 11],
     [9, 12]
 ]

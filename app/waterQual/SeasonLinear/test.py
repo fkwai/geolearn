@@ -78,65 +78,30 @@ fig.show()
 dfG = gageII.readData(siteNoLst=siteNoLst)
 dfG = gageII.updateRegion(dfG)
 dfG = gageII.updateCode(dfG)
-cMat=
-fig, axes = plt.subplots(nfy, nfx)
-for k, code in enumerate(codeLst2):
-    j, i = utils.index2d(k, nfy, nfx)
-    ax = axes[j, i]
-    ic = codeLst.index(code)
-    x = rMat[:, ic, 1]
-    y = rMat[:, ic, 0]
-    axplot.scatter121(ax, x, y, cvR=[0, 1])
-    titleStr = '{} {} '.format(
-        code, usgs.codePdf.loc[code]['shortName'])
-    axplot.titleInner(ax, titleStr)
+
+fileGlim = os.path.join(kPath.dirData, 'USGS', 'GLiM', 'tab_1KM')
+tabGlim = pd.read_csv(fileGlim, dtype={'siteNo': str}).set_index('siteNo')
+matV = np.argmax(tabGlim.values, axis=1)
+
+labelLst = ['{} {}'.format(code, usgs.codePdf.loc[code]['shortName'])
+            for code in codeLst2]
+icLst = [codeLst.index(code) for code in codeLst2]
+figM, axM = figplot.scatter121Batch(
+    rMat[:, icLst, 1], rMat[:, icLst, 0], matV, labelLst, [nfx, nfy], optCb=1,
+    ticks=[0, 0.5, 1])
+figM.show()
+
+
+
+temp = ['00930', '00940']
+ic1 = codeLst.index(temp[0])
+ic2 = codeLst.index(temp[1])
+nameLst = [usgs.codePdf.loc[code]['shortName'] for code in temp]
+fig, axes = plt.subplots(1, 2)
+axplot.scatter121(axes[0], rMat[:, ic1, 0], rMat[:, ic2, 0], qMat, vR=[0, .6])
+axes[0].set_xlabel('Linearity of {}'.format(nameLst[0]))
+axes[0].set_ylabel('Linearity of {}'.format(nameLst[1]))
+axplot.scatter121(axes[1], rMat[:, ic1, 1], rMat[:, ic2, 1], qMat, vR=[0, .6])
+axes[1].set_xlabel('Seasonality of {}'.format(nameLst[0]))
+axes[1].set_ylabel('Seasonality of {}'.format(nameLst[1]))
 fig.show()
-
-# Cart
-dfA = pd.DataFrame(index=range(10), columns=codeLst)
-dfV = pd.DataFrame(index=range(10), columns=codeLst)
-
-for code in codeLst:
-    ic = codeLst.index(code)
-    matAll = rMat[]
-    [mat], indS = utils.rmNan([matAll])
-    siteNoCode = [siteNoLst[ind] for ind in indS]
-    dfGC = dfG.loc[siteNoCode]
-
-    def subTree(indInput, varLst):
-        x = dfGC.iloc[indInput][varLst].values.astype(float)
-        y = mat[indInput]
-        x[np.isnan(x)] = -99
-        clf = sklearn.tree.DecisionTreeRegressor(
-            max_depth=1, min_samples_leaf=0.2)
-        clf = clf.fit(x, y)
-        tree = clf.tree_
-        feat = varLst[tree.feature[0]]
-        th = tree.threshold[0]
-        indLeft = np.where(x[:, tree.feature[0]] <= tree.threshold[0])[0]
-        indRight = np.where(x[:, tree.feature[0]] > tree.threshold[0])[0]
-        indLeftG = indInput[indLeft]
-        indRightG = indInput[indRight]
-        return indLeftG, indRightG, feat, th
-
-    colLst = dfGC.columns.tolist()
-    # for yr in range(1950, 2010):
-    #     colLst.remove('PPT{}_AVG'.format(yr))
-    #     colLst.remove('TMP{}_AVG'.format(yr))
-    # for yr in range(1900, 2010):
-    #     colLst.remove('wy{}'.format(yr))
-    # monthLst = ['JAN', 'FEB', 'APR', 'MAY', 'JUN',
-    #             'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-    # for m in monthLst:
-    #     colLst.remove('{}_PPT7100_CM'.format(m))
-    #     colLst.remove('{}_TMP7100_DEGC'.format(m))
-    for k in range(10):
-        ind0 = np.arange(len(siteNoCode))
-        ind1, ind2, feat, th = subTree(ind0, varLst=colLst)
-        dfA.at[k, code] = feat
-        dfV.at[k, code] = th
-        colLst.remove(feat)
-dfA.to_csv('temp2')
-dfV.to_csv('temp1')
-
-(unique, counts) = np.unique(dfA.values.flatten(), return_counts=True)

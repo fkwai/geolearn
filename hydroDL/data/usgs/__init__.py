@@ -11,6 +11,8 @@ varC = sorted(codeLst)
 newC = varC.copy()
 newC.remove('00440')
 newC.remove('00410')
+newC.remove('00950')
+
 varQ = ['00060', 'runoff']
 chemLst = ['00300', '00405', '00410', '00440', '00600',
            '00605', '00618', '00660', '00665', '71846',

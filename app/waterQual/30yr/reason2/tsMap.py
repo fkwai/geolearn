@@ -43,7 +43,7 @@ ind1 = np.where((t < tt) & (t >= t0))[0]
 ind2 = np.where(t >= tt)[0]
 
 # plot 121
-code = '00010'
+code = '00915'
 ic = codeLst.index(code)
 xMat = corrMat[:, ic, 1]
 yMat = corrMat[:, ic, 2]

@@ -25,7 +25,9 @@ dictS = dict()
 dirS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-DS', 'All', 'output')
 dictQ = dict()
 dirQ = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-DQ', 'All', 'output')
-for dirTemp, dictTemp in zip([dirL, dirS, dirQ], [dictL, dictS, dictQ]):
+dictP = dict()
+dirP = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-DQ', 'All', 'output')
+for dirTemp, dictTemp in zip([dirL, dirS, dirQ,dirP], [dictL, dictS, dictQ,dictP]):
     for k, siteNo in enumerate(siteNoLst):
         print('\t WRTDS site {}/{}'.format(k, len(siteNoLst)), end='\r')
         saveFile = os.path.join(dirTemp, siteNo)
@@ -61,8 +63,8 @@ for siteNo in siteNoLst:
     rmse, corr = utils.stat.calErr(vv1, vv0)
     qMat[indS] = corr**2
 
-codeLst2 = ['00915', '00925', '00930', '00935', '00940', '00945',
-            '00955', '70303', '80154']
+codeLst2 = ['00915', '00925', '00935', '00930', '00940', '00945',
+            '00955', '70303']
 [nfy, nfx] = [3, 3]
 
 # codeLst2 = ['00010', '00300', '00405', '00600', '00605',
@@ -71,43 +73,33 @@ codeLst2 = ['00915', '00925', '00930', '00935', '00940', '00945',
 #             '00950', '00955', '70303', '71846', '80154']
 # nfy, nfx = [4, 5]
 
-fig, axes = plt.subplots(nfy, nfx)
-for k, code in enumerate(codeLst2):
-    j, i = utils.index2d(k, nfy, nfx)
-    ax = axes[j, i]
-    ic = codeLst.index(code)
-    x = qMat
-    y = rMat[:, ic, 0]
-    axplot.plot121(ax, x, y, vR=[0, 1])
-    titleStr = '{} {} '.format(
-        code, usgs.codePdf.loc[code]['shortName'])
-    axplot.titleInner(ax, titleStr)
-fig.show()
+# load dilution factor
+bMat = np.full([len(siteNoLst), len(codeLst)], np.nan)
+for k, code in enumerate(codeLst):
+    dirC = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-DL', 'All', 'params')
+    fileParC = os.path.join(dirC, code)
+    parC = pd.read_csv(fileParC, dtype={'siteNo': str}).set_index('siteNo')
+    bMat[:, k] = parC['pQ']
+bMat2 = np.full([len(siteNoLst), len(codeLst)], np.nan)
 
-cMat = qMat
-fig, axes = plt.subplots(nfy, nfx)
-for k, code in enumerate(codeLst2):
-    j, i = utils.index2d(k, nfy, nfx)
-    ax = axes[j, i]
-    ic = codeLst.index(code)
-    x = rMat[:, ic, 1]
-    y = rMat[:, ic, 0]
-    axplot.scatter121(ax, x, y, qMat, vR=[0, 0.5])
-    titleStr = '{} {} '.format(
-        code, usgs.codePdf.loc[code]['shortName'])
-    axplot.titleInner(ax, titleStr)
-fig.show()
+bMat2[bMat > 0] = np.log(bMat[bMat > 0]+1)
+bMat2[bMat <= 0] = -np.log(-bMat[bMat <= 0]+1)
 
+
+importlib.reload(figplot)
 indC = [codeLst.index(code) for code in codeLst2]
 labelLst = ['{} {}'.format(code, usgs.codePdf.loc[code]['shortName'])
             for code in codeLst2]
 xMat = rMat[:, indC, 1]
 yMat = rMat[:, indC, 0]
+cMat = bMat2[:, indC]
 nXY = [nfx, nfy]
 figM, axM = figplot.scatter121Batch(
-    xMat, yMat, qMat, labelLst, nXY, optCb=1, cR=[0, 0.6],
-    ticks=[0, 0.5, 1], s=20)
+    xMat, yMat, cMat, labelLst, nXY, optCb=1,
+    ticks=[0, 0.5, 1], s=20, cmap='jet')
 figM.show()
+
+###############
 
 ic1 = codeLst.index('00915')
 ic2 = codeLst.index('00955')
@@ -147,20 +139,6 @@ axes[1].set_xlabel('Seasonality of {}'.format(nameLst[0]))
 axes[1].set_ylabel('Seasonality of {}'.format(nameLst[1]))
 fig.show()
 
-temp = ['00945', '00935']
-ic1 = codeLst.index(temp[0])
-ic2 = codeLst.index(temp[1])
-nameLst = [usgs.codePdf.loc[code]['shortName'] for code in temp]
-fig, axes = plt.subplots(1, 2)
-axplot.plot121(axes[0], rMat[:, ic1, 0], rMat[:, ic2, 0], vR=[0, 1])
-axes[0].set_xlabel('Linearity of {}'.format(nameLst[0]))
-axes[0].set_ylabel('Linearity of {}'.format(nameLst[1]))
-axplot.plot121(axes[1], rMat[:, ic1, 1], rMat[:, ic2, 1], vR=[0, 1])
-axes[1].set_xlabel('Seasonality of {}'.format(nameLst[0]))
-axes[1].set_ylabel('Seasonality of {}'.format(nameLst[1]))
-fig.show()
-
-
 temp = ['00915', '00955']
 ic1 = codeLst.index(temp[0])
 ic2 = codeLst.index(temp[1])
@@ -173,3 +151,27 @@ axplot.scatter121(axes[1], qMat, rMat[:, ic2, 1],  rMat[:, ic2, 0], vR=[0, 1])
 axes[1].set_xlabel('Seasonality of Q')
 axes[1].set_ylabel('Seasonality of {}'.format(nameLst[1]))
 fig.show()
+
+# rock type - Na Cl
+fileGlim = os.path.join(kPath.dirData, 'USGS', 'GLiM', 'tab_1KM')
+tabGlim = pd.read_csv(fileGlim, dtype={'siteNo': str}).set_index('siteNo')
+matV = np.argmax(tabGlim.values, axis=1)
+matV = tabGlim.values[:, 4]
+for k in range(15):
+    matV = tabGlim.values[:, k]
+    temp = ['00930', '00940']
+    ic1 = codeLst.index(temp[0])
+    ic2 = codeLst.index(temp[1])
+    nameLst = [usgs.codePdf.loc[code]['shortName'] for code in temp]
+    fig, axes = plt.subplots(1, 2)
+    cb = axplot.scatter121(axes[0], rMat[:, ic1, 0],
+                        rMat[:, ic2, 0], matV, cmap='jet')
+    axes[0].set_xlabel('Linearity of {}'.format(nameLst[0]))
+    axes[0].set_ylabel('Linearity of {}'.format(nameLst[1]))
+    fig.colorbar(cb, ax=axes[0])
+    cb = axplot.scatter121(axes[1], rMat[:, ic1, 1],
+                        rMat[:, ic2, 1], matV, cmap='jet')
+    axes[1].set_xlabel('Seasonality of {}'.format(nameLst[0]))
+    axes[1].set_ylabel('Seasonality of {}'.format(nameLst[1]))
+    fig.colorbar(cb, ax=axes[1])
+    fig.show()
