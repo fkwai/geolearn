@@ -7,7 +7,7 @@ codePath = os.path.join(kPath.dirCode, 'app',
                         'data', 'GLASS', 'createMask.py')
 cmdPtn = 'python {} -S {} -E {}'
 nSite = 7111
-iSLst = list(range(0, nSite, 500))
+iSLst = list(range(0, nSite, 200))
 iELst = iSLst[1:]+[nSite]
 for iS, iE in zip(iSLst, iELst):
     cmdLine = cmdPtn.format(codePath, iS, iE)
