@@ -51,7 +51,6 @@ if iEnd == 0:  # do mask for every basin
 t0 = time.time()
 for k in range(iStart, iEnd):
     t1 = time.time()
-    k = siteNoLst.index(siteNo)
     geog = shape(shapeLst[k])
     mask = gis.gridMask(lat, lon, geog)
     outFile = os.path.join(saveDir, siteNoLst[k])
