@@ -13,8 +13,8 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-S', dest='iStart', type=int, default=7000)
-    parser.add_argument('-E', dest='iEnd', type=int, default=7111)
+    parser.add_argument('-S', dest='iStart', type=int, default=0)
+    parser.add_argument('-E', dest='iEnd', type=int, default=6)
     args = parser.parse_args()
     iStart = args.iStart
     iEnd = args.iEnd
