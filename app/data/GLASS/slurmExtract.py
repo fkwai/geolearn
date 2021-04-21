@@ -18,4 +18,4 @@ for iS, iE in zip(iSLst, iELst):
     cmdLine = cmdPtn.format(codePath, iS, iE)
     jobName = 'ed{}-{}'.format(iS, iE)
     slurm.submitJob(jobName, cmdLine, nH=12, nM=16)
-os.system(cmdLine)
+# os.system(cmdLine)

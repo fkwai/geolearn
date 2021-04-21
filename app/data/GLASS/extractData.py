@@ -1,13 +1,8 @@
-from shapely.geometry import shape
-import shapefile
 import time
 from hydroDL import kPath
-from pyhdf.SD import SD, SDC
 import os
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import glob
 import argparse
 
 if __name__ == '__main__':
