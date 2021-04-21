@@ -2,6 +2,7 @@ from pyhdf.SD import SD, SDC
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from osgeo import gdal
 
 folder = r'D:\data\GLASS\LAI\AVHRR\1981'
 fileName = 'GLASS01B02.V40.A1981001.2019353.hdf'
@@ -16,3 +17,8 @@ fig.show()
 
 lon = np.arange(-179.95, 180, 0.1)
 lat = np.arange(89.95, -90, -0.1)
+
+
+hdf_file = gdal.Open(os.path.join(folder, fileName)) 
+subDatasets = hdf_file.GetSubDatasets()
+dataset = gdal.Open(subDatasets[0][0])
