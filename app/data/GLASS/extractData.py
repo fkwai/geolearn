@@ -29,7 +29,7 @@ nk = len(k1Lst)
 tLst, yrLst, dLst = [list(), list(), list()]
 for yr in np.arange(1982, 2019):
     for d in np.arange(1, 366, 8):
-        t = np.datetime64(str(yr))+np.timedelta64(d-1, 'D')
+        t = np.datetime64(str(yr))+np.timedelta64(int(d-1), 'D')
         tLst.append(t)
         yrLst.append(yr)
         dLst.append(d)
@@ -61,7 +61,7 @@ for yr in np.arange(1982, 1983):
         dataTemp = np.load(tempFile)['out']
         t1 = time.time()
         for iD, d in enumerate(np.arange(1, 366, 8)):
-            t = np.datetime64(str(yr))+np.timedelta64(d-1, 'D')
+            t = np.datetime64(str(yr))+np.timedelta64(int(d-1), 'D')
             iT = np.where(tAry == t)[0][0]
             data = dataTemp[:, :, iD]
             iy, ix = np.where(data == 2550)
