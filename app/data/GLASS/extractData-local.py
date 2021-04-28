@@ -1,29 +1,45 @@
+from hydroDL.utils import gis
+from shapely.geometry import shape
+import shapefile
 import time
 from hydroDL import kPath
+from pyhdf.SD import SD, SDC
 import os
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import argparse
+import glob
+from joblib import Parallel, delayed
+import json
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-S', dest='iStart', type=int, default=0)
-    parser.add_argument('-E', dest='iEnd', type=int, default=3)
-    args = parser.parse_args()
-    iStart = args.iStart
-    iEnd = args.iEnd
+# only selected sites
+dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
+with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
+    dictSite = json.load(f)
+siteNoLst = dictSite['comb']
 
-# default parameters
+# global to US
 [j1, j2] = [800, 1300]
 [i1, i2] = [1100, 2300]
-ns = 7111
+
+# read all masks - save to temp npz files
+ns = len(siteNoLst)
 maskDir = os.path.join(kPath.dirData, 'USGS', 'GLASS', 'mask')
 tempDir = os.path.join(kPath.dirData, 'USGS', 'GLASS', 'temp')
 
-# from temp masks by tempMask.py
-k1Lst = np.arange(0, ns, 100)
-k2Lst = np.append(k1Lst[1:], ns)
-nk = len(k1Lst)
+# load masks
+# maskAry = np.ndarray([j2-j1, i2-i1, ns])
+# t0 = time.time()
+# for k, siteNo in enumerate(siteNoLst):
+#     maskFile = os.path.join(maskDir, siteNo)
+#     mask = np.load(maskFile+'.npz')['mask']
+#     maskAry[:, :, k] = mask[j1:j2, i1:i2]
+#     print('{}/{} {:.2f}'.format(k, ns, time.time()-t0))
+# tempFile = os.path.join(tempDir, 'mask_Y30N5')
+# np.savez_compressed(tempFile, mask=maskAry, siteNoLst=siteNoLst)
+tempFile = os.path.join(tempDir, 'mask_Y30N5.npz')
+npz = np.load(tempFile)
+maskAry = npz['mask']
 
 # construct time
 tLst, yrLst, dLst = [list(), list(), list()]
@@ -36,26 +52,13 @@ for yr in np.arange(1982, 2019):
 tAry = np.array(tLst)
 nt = len(tAry)
 
-# load mask
-maskLst = list()
-siteNoLst = list()
-for k in range(iStart, iEnd):
-    k1 = k1Lst[k]
-    k2 = k2Lst[k]
-    tempFile = os.path.join(tempDir, 'mask{}_{}'.format(k1, k2))
-    npz = np.load(tempFile+'.npz')
-    maskLst.append(npz['mask'])
-    siteNoLst = siteNoLst+list(npz['siteNoLst'])
-    print('read mask {} {}'.format(k1, k2), flush=True)
-maskAry = np.concatenate(maskLst, axis=2)
-
 # extract data
 varLst = ['LAI', 'FAPAR', 'NPP']
 # tempDir = os.path.join(kPath.dirData, 'GLASS', 'temp')
 tempDir = r'D:\data\GLASS\temp'
 matAll = np.ndarray([len(siteNoLst), nt, len(varLst)])
 t0 = time.time()
-for yr in np.arange(1982, 1983):
+for yr in np.arange(1982, 2019):
     for iV, var in enumerate(varLst):
         tempFile = os.path.join(tempDir, '{}_{}.npz'.format(var, yr))
         dataTemp = np.load(tempFile)['out']
@@ -80,3 +83,4 @@ for k, siteNo in enumerate(siteNoLst):
     df.index.name = 'date'
     df.to_csv(os.path.join(outDir, siteNo))
     print('saving {}'.format(siteNo), flush=True)
+# some issues with the output data. Memory issue during running?

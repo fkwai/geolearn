@@ -4,12 +4,15 @@
 
 class Dataframe(object):
     def getGeo(self, ndigit=8):
-        return self.lat, self.lon
+        # return self.lat, self.lon
+        pass
 
     def getT(self):
-        return self.time
+        # return self.time
+        pass
 
 
 class DataModel():
     def getDataTrain(self):
-        return self.x, self.y, self.c
+        # return self.x, self.y, self.c
+        pass

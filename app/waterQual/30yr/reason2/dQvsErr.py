@@ -1,3 +1,4 @@
+import random
 import importlib
 from hydroDL import kPath, utils
 from hydroDL.app import waterQuality as wq
@@ -42,57 +43,70 @@ t0 = np.datetime64('1980-01-01')
 ind1 = np.where((t < tt) & (t >= t0))[0]
 ind2 = np.where(t >= tt)[0]
 
-# color mat
-cVar = 'NUTR_ECO_SITE'
-cMat = dfG[cVar].values
-cMat = np.log(cMat+1)
-cR = [np.nanpercentile(cMat, 10), np.nanpercentile(cMat, 90)]
-cR = [np.nanmin(cMat), np.nanmax(cMat)]
+# calculate dQ/dt and error
+dictErr = dict()
+for siteNo in siteNoLst:
+    dfObs = dictObs[siteNo]
+    dfLSTM = dictLSTM[siteNo]
+    area = dfG['DRAIN_SQKM'][siteNo]
+    dfDQ = dfObs['00060'].diff()/area
+    dfDQ.name = 'dQ'
+    dfErr = dfLSTM[codeLst]-dfObs[codeLst]
+    dfErr = dfErr.join(dfDQ)
+    dictErr[siteNo] = dfErr
 
-# caluculate interval
-if False:
-    intMatC = np.full([len(siteNoLst), len(codeLst), 4], np.nan)
-    for k, siteNo in enumerate(siteNoLst):
-        dfC = dictObs[siteNo]
-        print('\t {}/{}'.format(k, len(siteNoLst)), end='\r')
-        for j, code in enumerate(codeLst):
-            tC = dfC.iloc[ind1][code].dropna().index.values
-            if len(tC) > 1:
-                dt = tC[1:]-tC[:-1]
-                dd = dt.astype('timedelta64[D]').astype(int)
-                intMatC[k, j, 0] = len(tC)
-                intMatC[k, j, 1] = np.percentile(dd, 25)
-                intMatC[k, j, 2] = np.percentile(dd, 50)
-                intMatC[k, j, 3] = np.percentile(dd, 75)
-
-
-# plot 121
-plt.close('all')
 codeLst2 = ['00010', '00095', '00300', '00400', '00405',
             '00600', '00605', '00618', '00660', '00665',
             '00681', '00915', '00925', '00930', '00935',
             '00940', '00945', '00955', '71846', '80154']
 nfy, nfx = [5, 4]
 
-# codeLst2 = ['00600', '00605', '00618', '00660', '00665', '71846']
-# nfy, nfx = [3, 2]
+code = '00915'
+xLst = list()
+yLst = list()
+for siteNo in siteNoLst:
+    dfErr = dictErr[siteNo]
+    x = dfErr['dQ']
+    y = dfErr[code].values
+    [xx, yy] = utils.rmNan([x[ind2], y[ind2]], returnInd=False)
+    xLst.append(xx)
+    yLst.append(yy)
+xMat = np.concatenate(xLst)
+yMat = np.concatenate(yLst)
+fig, ax = plt.subplots(1, 1)
+ax.plot(xMat, yMat, '*')
+ax.set_xlabel('dQ/dt')
+ax.set_ylabel('error')
+fig.show()
 
-indC = [codeLst.index(code) for code in codeLst2]
-cMat = intMatC[:, indC, 3]
-cR = [0, 100]
+siteNoCode = dictSite[code]
+siteNo = random.choice(siteNoCode)
+dfErr = dictErr[siteNo]
+x = dfErr['dQ']
+y = dfErr[code].values
+[xx, yy] = utils.rmNan([x[ind2], y[ind2]], returnInd=False)
+fig, ax = plt.subplots(1, 1)
+ax.plot(xx, yy, '*')
+fig.show()
+
 
 # attr vs diff
 fig, axes = plt.subplots(nfy, nfx)
 for k, code in enumerate(codeLst2):
     j, i = utils.index2d(k, nfy, nfx)
     ax = axes[j, i]
-    ic = codeLst.index(code)
-    x = cMat[:, ic]
-    y = corrMat[:, ic, 1]**2-corrMat[:, ic, 2]**2
-    ax.plot(x, y, '*')
-    ax.plot([np.nanmin(x), np.nanmax(x)], [0, 0], 'k-')
-    ax.set_ylim([-0.5, 0.5])
-    ax.set_xlim([0, 500])
+    xLst = list()
+    yLst = list()
+    for siteNo in siteNoLst:
+        dfErr = dictErr[siteNo]
+        x = dfErr['dQ']
+        y = dfErr[code].values
+        [xx, yy] = utils.rmNan([x[ind2], y[ind2]], returnInd=False)
+        xLst.append(xx)
+        yLst.append(yy)
+    xMat = np.concatenate(xLst)
+    yMat = np.concatenate(yLst)
+    ax.plot(xMat, yMat, '*')
     titleStr = '{} {} '.format(
         code, usgs.codePdf.loc[code]['shortName'])
     axplot.titleInner(ax, titleStr)

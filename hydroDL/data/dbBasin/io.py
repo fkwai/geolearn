@@ -8,9 +8,6 @@ import json
 """
 functions for read rawdata and write in caseFolder
 
-[ISSUE] can not deal with water quality for now. 
-Need figure out a way to save 3D sparse matrix.
-use water temperature for a test
 """
 __all__ = ['wrapData', 'readSiteTS', 'extractVarMtd']
 
@@ -21,12 +18,9 @@ def caseFolder(caseName):
 
 
 def wrapData(caseName, siteNoLst, nFill=5, freq='D',
-             sdStr='1979-01-01', edStr='2019-12-31'):
-    varF = gridMET.varLst
-    varQ = usgs.varQ
-    varG = gageII.lstWaterQuality
-    varC = usgs.newC
-
+             sdStr='1979-01-01', edStr='2019-12-31',
+             varF=gridMET.varLst+ntn.varLst,
+             varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.newC):
     # gageII
     tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLst)
     tabG = gageII.updateCode(tabG)
@@ -64,7 +58,7 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
     if not os.path.exists(saveFolder):
         os.mkdir(saveFolder)
     np.savez_compressed(os.path.join(saveFolder, 'data'), c=c, q=q, f=f, g=g)
-    dictData = dict(name=caseName, varG=varG,  varQ=varQ, varF=varF, varC=varC,
+    dictData = dict(name=caseName, varC=varC, varQ=varQ, varF=varF, varG=varG,
                     sd=sdStr, ed=edStr, freq=freq, siteNoLst=siteNoLst)
     with open(os.path.join(saveFolder, 'info')+'.json', 'w') as fp:
         json.dump(dictData, fp, indent=4)

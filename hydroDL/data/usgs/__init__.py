@@ -8,11 +8,12 @@ fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
 codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
 codeLst = list(codePdf.index)
 varC = sorted(codeLst)
-newC = varC.copy()
-newC.remove('00440')
-newC.remove('00410')
-newC.remove('00950')
 
+newC = ['00010', '00095', '00300', '00400', '00405',
+        '00600', '00605', '00618', '00660', '00665',
+        '00681', '00915', '00925', '00930', '00935',
+        '00940', '00945', '00955', '71846', '80154']
+        
 varQ = ['00060', 'runoff']
 chemLst = ['00300', '00405', '00410', '00440', '00600',
            '00605', '00618', '00660', '00665', '71846',

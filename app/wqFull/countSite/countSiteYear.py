@@ -1,5 +1,4 @@
 from hydroDL import kPath, utils
-from hydroDL.app import waterQuality
 from hydroDL.data import gageII, usgs, gridMET
 from hydroDL.master import basins
 from hydroDL.post import axplot, figplot
