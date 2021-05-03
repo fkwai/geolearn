@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import json
 from . import io
+from hydroDL import utils
 
 __all__ = ['DataModelFull']
 
@@ -17,11 +18,11 @@ class DataModelFull():
         t0 = time.time()
         saveFolder = io.caseFolder(caseName)
         self.saveFolder = saveFolder
-        npz=np.load(os.path.join(saveFolder, 'data.npz'))
-        self.q=npz['q']
-        self.f=npz['f']
-        self.c=npz['c']
-        self.g=npz['g']
+        npz = np.load(os.path.join(saveFolder, 'data.npz'))
+        self.q = npz['q']
+        self.f = npz['f']
+        self.c = npz['c']
+        self.g = npz['g']
         with open(os.path.join(saveFolder, 'info')+'.json', 'r') as fp:
             dictData = json.load(fp)
         self.name = dictData['name']
@@ -32,9 +33,10 @@ class DataModelFull():
         self.siteNoLst = dictData['siteNoLst']
         self.sd = np.datetime64(dictData['sd'])
         self.ed = np.datetime64(dictData['ed'])
-        self.t = pd.date_range(self.sd, self.ed)
+        self.t = pd.date_range(self.sd, self.ed).values.astype('datetime64[D]')
         self.freq = dictData['freq']
         self.subset = self.loadSubset()
+        self.addT()
         self.dataProvision()
         print('loading data {} {:.2f}s'.format(caseName, time.time()-t0))
 
@@ -44,6 +46,11 @@ class DataModelFull():
         print('creating data class')
         io.wrapData(caseName, siteNoLst, nFill=nFill,
                     freq=freq, sdStr=sdStr, edStr=edStr)
+        # init subset
+        subsetFile = os.path.join(io.caseFolder(caseName), 'subset.json')
+        dictSubset = dict(all=siteNoLst)
+        with open(subsetFile, 'w') as fp:
+            json.dump(dictSubset, fp, indent=4)
         wqData = cls(caseName)
         return wqData
 
@@ -88,7 +95,7 @@ class DataModelFull():
         if ed > self.ed:
             indT2 = len(self.t)
         else:
-            indT2 = np.where(self.t == ed)[0][0]
+            indT2 = np.where(self.t == ed)[0][0]+1
         return indT1, indT2, indS
 
     def extractData(self, varTup, subName, sd, ed):
@@ -177,3 +184,16 @@ class DataModelFull():
         t1 = time.time()-t0
         print('transform out {}'.format(time.time()-t0))
         return out
+
+    def addT(self):
+        t = self.t
+        tn = utils.time.date2num(t)
+        ns = len(self.siteNoLst)
+        sinT = np.sin(2*np.pi*tn/365.24)
+        cosT = np.sin(2*np.pi*tn/365.24)
+        matT = np.stack([tn, sinT, cosT], axis=1)
+        matTE = np.repeat(matT[:, None, :], ns, axis=1)
+        self.f = np.concatenate([self.f, matTE], axis=2)
+        self.varF.append('datenum')
+        self.varF.append('sinT')
+        self.varF.append('cosT')

@@ -1,5 +1,5 @@
-from hydroDL.data import usgs, gageII, gridMET, ntn, transform
-from hydroDL import kPath
+from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform
+from hydroDL import kPath, utils
 import os
 import time
 import pandas as pd
@@ -11,6 +11,8 @@ functions for read rawdata and write in caseFolder
 """
 __all__ = ['wrapData', 'readSiteTS', 'extractVarMtd']
 
+varTLst = ['datenum', 'sinT', 'cosT']
+
 
 def caseFolder(caseName):
     saveFolder = os.path.join(kPath.dirWQ, 'trainDataFull', caseName)
@@ -19,7 +21,7 @@ def caseFolder(caseName):
 
 def wrapData(caseName, siteNoLst, nFill=5, freq='D',
              sdStr='1979-01-01', edStr='2019-12-31',
-             varF=gridMET.varLst+ntn.varLst,
+             varF=gridMET.varLst+ntn.varLst+GLASS.varLst,
              varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.newC):
     # gageII
     tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLst)
@@ -74,6 +76,9 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
     varQ = list(set(varLst).intersection(usgs.varQ))
     varF = list(set(varLst).intersection(gridMET.varLst))
     varP = list(set(varLst).intersection(ntn.varLst))
+    varR = list(set(varLst).intersection(GLASS.varLst))
+    varT = list(set(varLst).intersection(varTLst))
+
     dfD = pd.DataFrame({'date': td}).set_index('date')
     if len(varC) > 0:
         if rmFlag:
@@ -99,10 +104,14 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
     if len(varP) > 0:
         dfP = ntn.readBasin(siteNo, varLst=varP, freq='D')
         dfD = dfD.join(dfP)
-    if 'sinT' in varLst or 'cosT' in varLst:
-        t = dfD.index.dayofyear.values/365
-        dfD['sinT'] = np.sin(2*np.pi*t)
-        dfD['cosT'] = np.cos(2*np.pi*t)
+    if len(varR) > 0:
+        dfR = GLASS.readBasin(siteNo, varLst=varR, freq='D')
+        dfD = dfD.join(dfR)
+    if len(varT) > 0:
+        t = dfD.index.values
+        matT, _ = calT(t)
+        dfT = pd.DataFrame(index=t, columns=varTLst, data=matT)
+        dfD = dfD.join(dfT[varT])
     dfD = dfD[varLst]
     if freq == 'D':
         return dfD
@@ -116,6 +125,15 @@ def calRunoffArea(q, area):
     unitConv = 0.3048**3*365*24*60*60/1000**2
     runoff = q/area*unitConv
     return runoff
+
+
+def calT(t):
+    # t of datetime64[D]
+    tn = utils.time.date2num(t)
+    sinT = np.sin(2*np.pi*tn/365.24)
+    cosT = np.sin(2*np.pi*tn/365.24)
+    matT = np.stack([tn, sinT, cosT], axis=1)
+    return matT, varTLst
 
 
 def extractVarMtd(varLst):
@@ -132,6 +150,10 @@ def extractVarMtd(varLst):
                 mtd = usgs.dictStat[var]
             elif var in ntn.dictStat.keys():
                 mtd = ntn.dictStat[var]
+            elif var in GLASS.dictStat.keys():
+                mtd = GLASS.dictStat[var]
+            elif var in ['datenum', 'sinT', 'cosT']:
+                mtd = 'norm'
             else:
                 raise Exception('Variable {} not found!'.format(var))
             mtdLst.append(mtd)

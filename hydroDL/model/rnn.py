@@ -292,7 +292,7 @@ class CudnnLstm(torch.nn.Module):
                 1, batchSize, self.hiddenSize, requires_grad=False)
 
         # cuDNN backend - disabled flat weight
-        handle = torch.backends.cudnn.get_handle()
+        # handle = torch.backends.cudnn.get_handle()
         if doDrop is True:
             self.reset_mask()
             weight = [

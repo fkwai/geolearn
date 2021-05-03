@@ -99,7 +99,8 @@ def transInAll(dataIn, mtdLst, statLst=None):
         return data
 
 
-def transOutAll(data, mtdLst, statLst=list()):
+def transOutAll(dataIn, mtdLst, statLst=list()):
+    data = dataIn.copy()
     vS = np.ndarray([data.shape[-1], 2])
     out = np.full(data.shape, np.nan)
     # calculate vS and out = (in-vS[0])/vS[1]

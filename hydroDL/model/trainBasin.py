@@ -5,7 +5,7 @@ from hydroDL.model import rnn, crit
 from hydroDL.data import transform
 
 
-def subsetRandom(dataLst, batchSize, sizeLst=None):
+def subsetRandom(dataLst, batchSize, sizeLst):
     """get a random subset of training data
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -147,18 +147,18 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
                 print('first iteration failed again for CUDNN_STATUS_EXECUTION_FAILED ')
         for iIter in range(nIterEp):
             xT, yT = subsetRandom(dataLst, batchSize, sizeLst)
-            try:
-                yP = model(xT)
-                if type(lossFun) is crit.RmseLoss2D:
-                    loss = lossFun(yP, yT[-1, :, :])
-                else:
-                    loss = lossFun(yP, yT)
-                loss.backward()
-                optim.step()
-                model.zero_grad()
-                lossEp = lossEp + loss.item()
-            except:
-                print('iteration Failed: iter {} ep {}'.format(iIter, iEp+cEp))
+            # try:
+            yP = model(xT)
+            if type(lossFun) is crit.RmseLoss2D:
+                loss = lossFun(yP, yT[-1, :, :])
+            else:
+                loss = lossFun(yP, yT)
+            loss.backward()
+            optim.step()
+            model.zero_grad()
+            lossEp = lossEp + loss.item()
+            # except:
+            #     print('iteration Failed: iter {} ep {}'.format(iIter, iEp+cEp))
         lossEp = lossEp / nIterEp
         ct = time.time() - t0
         logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp+cEp, lossEp, ct)
@@ -182,8 +182,11 @@ def testModel(model, x, xc, ny=None, batchSize=100):
         batchSize = ns
     for k in range(len(iS)):
         print('batch: '+str(k))
-        xT = torch.from_numpy(np.concatenate(
-            [x[:, iS[k]:iE[k], :], np.tile(xc[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
+        if xc is not None:
+            xT = torch.from_numpy(np.concatenate(
+                [x[:, iS[k]:iE[k], :], np.tile(xc[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
+        else:
+            xT = torch.from_numpy(x[:, iS[k]:iE[k], :]).float()
         if torch.cuda.is_available():
             xT = xT.cuda()
             model = model.cuda()

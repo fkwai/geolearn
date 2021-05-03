@@ -21,8 +21,10 @@ def readBasin(siteNo, varLst=varLst, freq='D'):
     """
     if freq == 'R':  # raw frequency
         dirF = os.path.join(kPath.dirData, 'USGS', 'GLASS', 'output')
-    if freq == 'D':  
+    if freq == 'D':
         dirF = os.path.join(kPath.dirData, 'USGS', 'GLASS', 'Daily')
+    if freq == 'W':
+        dirF = os.path.join(kPath.dirData, 'USGS', 'GLASS', 'Weekly')
     fileF = os.path.join(dirF, siteNo)
     dfF = pd.read_csv(fileF)
     dfF['date'] = pd.to_datetime(dfF['date'], format='%Y-%m-%d')

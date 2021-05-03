@@ -2,6 +2,8 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 
+rd = np.datetime64('2000-01-01', 'D')  # reference date
+
 
 def t2dt(t, hr=False):
     tOut = None
@@ -19,8 +21,6 @@ def t2dt(t, hr=False):
     if tOut is None:
         raise Exception('hydroDL.utils.t2dt failed')
     return tOut
-
-
 
 
 def tRange2Array(tRange, *, step=np.timedelta64(1, 'D')):
@@ -46,3 +46,11 @@ def datePdf(df, field='date'):
     df['date'] = pd.to_datetime(df[field])
     df = df.set_index('date')
     return df
+
+
+def date2num(t):
+    return (t.astype('datetime64[D]')-rd).astype(int)
+
+
+def num2date(tn):
+    return rd+tn
