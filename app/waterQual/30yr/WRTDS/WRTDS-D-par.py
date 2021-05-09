@@ -1,8 +1,10 @@
+from joblib import Parallel, delayed
 import importlib
 from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath, utils
 from hydroDL.model import trainTS
+from hydroDL.data import gageII, usgs
 from hydroDL.post import axplot, figplot
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 import torch
@@ -25,25 +27,23 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
 siteNoLst = dictSite['comb']
 t0 = time.time()
 
-dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W')
+dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-D',)
 dirOut = os.path.join(dirRoot, 'B10')
 for folder in [dirRoot, dirOut]:
     if not os.path.exists(folder):
         os.mkdir(folder)
 
 
-# WRTDS window [Y Q S] copy from EGRET
-fitAll = True
-for k, siteNo in enumerate(siteNoLst):
-    print(siteNo)
+def func(siteNo, fitAll=True):
     # prep data
+    print(siteNo)
     saveName = os.path.join(dirOut, siteNo)
     if os.path.exists(saveName):
-        continue
+        return()
     t0 = time.time()
     varQ = '00060'
     varLst = codeLst+[varQ]
-    df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='W')
+    df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='D')
     dfYP = pd.DataFrame(index=df.index, columns=codeLst)
     dfX = pd.DataFrame({'date': df.index}).set_index('date')
     dfX = dfX.join(np.log(df[varQ]+sn)).rename(
@@ -103,6 +103,10 @@ for k, siteNo in enumerate(siteNoLst):
             yp = model.predict(xp)[0]
             dfYP.loc[t][code] = np.exp(yp)-sn
         t1 = time.time()
-        print(k, siteNo, code, t1-t0)
+        print(siteNoLst.index(siteNo), siteNo, code, t1-t0)
     saveName = os.path.join(dirOut, siteNo)
     dfYP.to_csv(saveName)
+    return
+
+
+results = Parallel(n_jobs=-1)(delayed(func)(siteNo) for siteNo in siteNoLst)

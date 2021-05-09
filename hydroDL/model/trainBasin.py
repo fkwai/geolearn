@@ -5,7 +5,7 @@ from hydroDL.model import rnn, crit
 from hydroDL.data import transform
 
 
-def subsetRandom(dataLst, batchSize, sizeLst):
+def subsetRandom(dataLst, batchSize, sizeLst, opt='Random', matB=None):
     """get a random subset of training data
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -23,19 +23,22 @@ def subsetRandom(dataLst, batchSize, sizeLst):
     [x, xc, y, yc] = dataLst
     [rho, nbatch] = batchSize
     [nx, nxc, ny, nyc, nt, ns] = sizeLst
-
-    iS = np.random.randint(0, ns, [nbatch])
-    iT = np.random.randint(0, nt-rho, [nbatch])
+    if opt == 'Random':
+        iS = np.random.randint(0, ns, [nbatch])
+        iT = np.random.randint(0, nt-rho, [nbatch])
+    elif opt == 'Weight':
+        matB = ~np.isnan(y[rho:, :, :]) if matB is None else matB
+        iS, iT = randomWeight(matB, ns, nt, nbatch, rho)
     xTemp = np.full([rho, nbatch, nx], np.nan)
     xcTemp = np.full([rho, nbatch, nxc], np.nan)
     yTemp = np.full([rho, nbatch, ny], np.nan)
     ycTemp = np.full([rho, nbatch, nyc], np.nan)
     if x is not None:
         for k in range(nbatch):
-            xTemp[:, k, :] = x[iT[k]:iT[k]+rho, iS[k], :]
+            xTemp[:, k, :] = x[iT[k]+1:iT[k]+rho+1, iS[k], :]
     if y is not None:
         for k in range(nbatch):
-            yTemp[:, k, :] = y[iT[k]:iT[k]+rho, iS[k], :]
+            yTemp[:, k, :] = y[iT[k]+1:iT[k]+rho+1, iS[k], :]
     if xc is not None:
         xcTemp = np.tile(xc[iS, :], [rho, 1, 1])
     if yc is not None:
@@ -48,6 +51,19 @@ def subsetRandom(dataLst, batchSize, sizeLst):
         xTensor = xTensor.cuda()
         yTensor = yTensor.cuda()
     return xTensor, yTensor
+
+
+def randomWeight(matB, ns, nt, nbatch, rho):
+    # random by weight that from number of observations
+    s1 = np.sum(matB, axis=2)
+    s2 = np.sum(matB, axis=(0, 2))
+    wT = s1/s2
+    wS = s2 / np.sum(s2)
+    iS = np.random.choice(ns, nbatch, p=wS)
+    iT = np.zeros(nbatch).astype(int)
+    for k in range(nbatch):
+        iT[k] = np.random.choice(nt-rho, p=wT[:, iS[k]])
+    return iS, iT
 
 
 def getSize(dataTup):
@@ -92,7 +108,8 @@ def dealNaN(dataTup, optNaN):
     return dataLst
 
 
-def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, cEp=0, logFile=None):
+def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
+               nEp=100, cEp=0, logFile=None, optBatch='Weight'):
     """[summary]    
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -122,10 +139,19 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
     batchSize = [rho, nbatch]
 
     # training
-    if nbatch*rho > ns*nt:
-        nIterEp = 1
-    else:
-        nIterEp = int(np.ceil(np.log(0.01) / np.log(1 - nbatch*rho/ns/nt)))
+    matB = ~np.isnan(dataLst[2][rho:, :, :])
+    if optBatch == 'Random':
+        if nbatch*rho > ns*nt:
+            nIterEp = 1
+        else:
+            nIterEp = int(np.ceil(np.log(0.01) / np.log(1 - nbatch*rho/ns/nt)))
+    elif optBatch == 'Weight':
+        nSample = np.sum(matB)
+        if nbatch*ny > nSample:
+            nIterEp = 1
+        else:
+            nIterEp = int(
+                np.ceil(np.log(0.01) / np.log(1 - nbatch*ny/nSample)))
 
     lossEp = 0
     lossEpLst = list()
@@ -134,27 +160,33 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100], nEp=100, c
     model.zero_grad()
     if logFile is not None:
         log = open(logFile, 'a')
-
     for iEp in range(1, nEp + 1):
         lossEp = 0
         t0 = time.time()
         # somehow the first iteration always failed
         if iEp == 1:
             try:
-                xT, yT = subsetRandom(dataLst, batchSize, sizeLst)
+                xT, yT = subsetRandom(dataLst, batchSize,
+                                      sizeLst, opt='Weight')
                 yP = model(xT)
             except:
                 print('first iteration failed again for CUDNN_STATUS_EXECUTION_FAILED ')
         for iIter in range(nIterEp):
-            xT, yT = subsetRandom(dataLst, batchSize, sizeLst)
-            # try:
+            xT, yT = subsetRandom(dataLst, batchSize,
+                                  sizeLst, opt='Weight', matB=matB)
             yP = model(xT)
             if type(lossFun) is crit.RmseLoss2D:
                 loss = lossFun(yP, yT[-1, :, :])
             else:
                 loss = lossFun(yP, yT)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optim.step()
+            # test for nans
+            for name, par in model.named_parameters():
+                if par.requires_grad:
+                    if torch.any(torch.isnan(par)):
+                        print(name)
             model.zero_grad()
             lossEp = lossEp + loss.item()
             # except:

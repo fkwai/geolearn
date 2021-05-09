@@ -3,6 +3,7 @@ from hydroDL.master import basins
 from hydroDL.app import waterQuality
 from hydroDL import kPath, utils
 from hydroDL.model import trainTS
+from hydroDL.data import gageII, usgs
 from hydroDL.post import axplot, figplot
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 import torch
@@ -25,7 +26,7 @@ with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
 siteNoLst = dictSite['comb']
 t0 = time.time()
 
-dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W')
+dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-D',)
 dirOut = os.path.join(dirRoot, 'B10')
 for folder in [dirRoot, dirOut]:
     if not os.path.exists(folder):
@@ -43,7 +44,7 @@ for k, siteNo in enumerate(siteNoLst):
     t0 = time.time()
     varQ = '00060'
     varLst = codeLst+[varQ]
-    df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='W')
+    df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='D')
     dfYP = pd.DataFrame(index=df.index, columns=codeLst)
     dfX = pd.DataFrame({'date': df.index}).set_index('date')
     dfX = dfX.join(np.log(df[varQ]+sn)).rename(

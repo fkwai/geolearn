@@ -1,49 +1,40 @@
-import importlib
-from hydroDL.master import basins
-from hydroDL.app import waterQuality
-from hydroDL import kPath, utils
-from hydroDL.model import trainTS
-from hydroDL.post import axplot, figplot
-from hydroDL.data import usgs, gageII, gridMET, ntn, transform
-import torch
 import os
 import json
 import numpy as np
 import pandas as pd
 import time
-import matplotlib.pyplot as plt
+from hydroDL import kPath, utils
+from hydroDL.data import usgs, transform, dbBasin
 import statsmodels.api as sm
 
-startDate = pd.datetime(1979, 1, 1)
-endDate = pd.datetime(2020, 1, 1)
 sn = 1
-codeLst = usgs.newC
-
-dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
-with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
-    dictSite = json.load(f)
-siteNoLst = dictSite['comb']
-t0 = time.time()
-
-dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W')
-dirOut = os.path.join(dirRoot, 'B10')
-for folder in [dirRoot, dirOut]:
-    if not os.path.exists(folder):
-        os.mkdir(folder)
 
 
-# WRTDS window [Y Q S] copy from EGRET
-fitAll = True
-for k, siteNo in enumerate(siteNoLst):
-    print(siteNo)
-    # prep data
+def loadWRTDS(siteNo, freq, trainSet='B10', the=[150, 50], codeLst=usgs.varC):
+    dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-{}'.format(freq))
+    dirOut = os.path.join(dirRoot, trainSet)
+    saveName = os.path.join(dirOut, siteNo+'.csv')
+    if os.path.exists(saveName):
+        dfW = pd.read_csv(saveName, index_col=None).set_index('date')
+    else:
+        print('do calWRTDS before')
+        dfW = calWRTDS(siteNo, freq, trainSet=trainSet,
+                       the=the, codeLst=usgs.varC)
+    return dfW
+
+
+def calWRTDS(siteNo, freq, trainSet='B10', the=[150, 50], fitAll=True, codeLst=usgs.varC, reCal=False):
+    dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-{}'.format(freq))
+    dirOut = os.path.join(dirRoot, trainSet)
     saveName = os.path.join(dirOut, siteNo)
     if os.path.exists(saveName):
-        continue
+        print('calculated {}'.format(siteNo))
+        if reCal is False:
+            return
     t0 = time.time()
     varQ = '00060'
     varLst = codeLst+[varQ]
-    df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='W')
+    df = dbBasin.readSiteTS(siteNo, varLst=varLst, freq=freq)
     dfYP = pd.DataFrame(index=df.index, columns=codeLst)
     dfX = pd.DataFrame({'date': df.index}).set_index('date')
     dfX = dfX.join(np.log(df[varQ]+sn)).rename(
@@ -55,14 +46,15 @@ for k, siteNo in enumerate(siteNoLst):
     dfX['yr'] = yr
     dfX['t'] = t
     xVarLst = ['yr', 'logQ', 'sinT', 'cosT']
+    ind1, ind2 = defineTrainSet(df.index, trainSet)
     # train / test
     fitCodeLst = list()
     for code in codeLst:
-        if siteNo in dictSite[code]:
+        b1 = df.iloc[ind1][code].dropna().shape[0] > the[0]
+        b2 = df.iloc[ind2][code].dropna().shape[0] > the[1]
+        if b1 and b2:
             fitCodeLst.append(code)
     for code in fitCodeLst:
-        ind1 = np.where(yr < 2010)[0]
-        ind2 = np.where(yr >= 2010)[0]
         dfXY = dfX.join(np.log(df[code]+sn))
         df1 = dfXY.iloc[ind1].dropna()
         if fitAll:
@@ -106,3 +98,12 @@ for k, siteNo in enumerate(siteNoLst):
         print(k, siteNo, code, t1-t0)
     saveName = os.path.join(dirOut, siteNo)
     dfYP.to_csv(saveName)
+    return dfYP
+
+
+def defineTrainSet(t, trainSet):
+    if trainSet == 'B10':
+        yr = t.year.values
+        ind1 = np.where(yr < 2010)[0]
+        ind2 = np.where(yr >= 2010)[0]
+    return ind1, ind2

@@ -38,9 +38,9 @@ class RmseEnd(torch.nn.Module):
         super(RmseEnd, self).__init__()
 
     def forward(self, output, target):
-        mask = target == target
-        p = output[-1:, :, :][mask]
-        t = target[mask]
+        mask = ~torch.isnan(target[-1, :, :])
+        p = output[-1, :, :][mask]
+        t = target[-1, :, :][mask]
         loss = torch.sqrt(((p - t)**2).mean())
         return loss
 
@@ -86,19 +86,6 @@ class RmseSample(torch.nn.Module):
                 loss = loss + tempLoss/cs
         return loss/ny
 
-    # def forward(self, output, target):
-    #     D = (output-target)**2
-    #     M = (target == target).float()
-    #     D[D != D] = 0
-    #     D1 = D.sum(dim=0)/M.sum(dim=0)
-    #     M1 = (D1 == D1).float()
-    #     D1[D1 != D1] = 0
-    #     D2 = D1.sum(dim=0)/M1.sum(dim=0)
-    #     M2 = (D2 == D2).float()
-    #     D2[D2 != D2] = 0
-    #     out = D2.sum()/M2.sum()
-    #     return out
-
 
 class RmseLoss2D(torch.nn.Module):
     def __init__(self):
@@ -143,24 +130,26 @@ class NSELoss(torch.nn.Module):
 
     def forward(self, output, target):
         Ngage = target.shape[1]
-        losssum = 0
-        nsample = 0
-        for ii in range(Ngage):
-            p0 = output[:, ii, 0]
-            t0 = target[:, ii, 0]
-            mask = t0 == t0
-            if len(mask[mask == True]) > 0:
-                p = p0[mask]
-                t = t0[mask]
-                tmean = t.mean()
-                SST = torch.sum((t - tmean) ** 2)
-                if SST != 0:
-                    SSRes = torch.sum((t - p) ** 2)
-                    temp = 1 - SSRes / SST
-                    losssum = losssum + temp
-                    nsample = nsample + 1
-        # minimize the opposite average NSE
-        loss = -(losssum/nsample)
+        ny = target.shape[2]
+        loss = 0
+        for k in range(ny):
+            losssum = 0
+            nsample = 0
+            for ii in range(Ngage):
+                p0 = output[:, ii, k]
+                t0 = target[:, ii, k]
+                mask = t0 == t0
+                if len(mask[mask == True]) > 0:
+                    p = p0[mask]
+                    t = t0[mask]
+                    tmean = t.mean()
+                    SST = torch.sum((t - tmean) ** 2)
+                    if SST != 0:
+                        SSRes = torch.sum((t - p) ** 2)
+                        temp = 1 - SSRes / SST
+                        losssum = losssum + temp
+                        nsample = nsample + 1
+            loss = -(losssum/nsample)+loss
         return loss
 
 

@@ -57,6 +57,7 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, sd=
             y[k] = y[k][ind]
     for k in range(len(y)):
         yy = y[k]
+        # todo - find out continuous / distinct        
         sty = '--*' if styLst is None else styLst[k]
         legStr = None if legLst is None else legLst[k]
         ax.plot(t, yy, sty, color=cLst[k], label=legStr, **kw)

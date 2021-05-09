@@ -78,8 +78,8 @@ def transInAll(dataIn, mtdLst, statLst=None):
         for i, mtd in enumerate(mtdLst):
             temp = mtd.split('-')
             if temp[-1] == 'norm':
-                stat = [np.nanpercentile(data[..., i], 10),
-                        np.nanpercentile(data[..., i], 90)]
+                stat = [np.nanpercentile(data[..., i], 1),
+                        np.nanpercentile(data[..., i], 99)]
             if temp[-1] == 'stan':
                 stat = [np.nanmean(data[..., i]), np.nanstd(data[..., i])]
             statLst.append(stat)

@@ -17,7 +17,7 @@ dfCrd = gageII.readData(
     varLst=['LAT_GAGE', 'LNG_GAGE', 'CLASS', 'DRAIN_SQKM'], siteNoLst=siteNoLstAll)
 
 # find sites for code
-codeP = ['00915', '00925']
+codeP = ['00915', '00600']
 nc = len(codeP)
 ic = [codeLst.index(code) for code in codeP]
 countP = np.sum(countD[:, :, ic], axis=1)

@@ -1,0 +1,23 @@
+from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS
+from hydroDL.master import slurm
+from hydroDL.data import dbBasin
+from hydroDL.master import basinFull
+
+dataName = 'bsWN5'
+label = 'QFPRT_C'
+
+varX = dbBasin.label2var(label.split('_')[0])
+varY = dbBasin.label2var(label.split('_')[1])
+varXC = gageII.varLst
+varYC = None
+sd = '1982-01-01'
+ed = '2009-12-31'
+
+outName = '{}-B10'.format(dataName)
+dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
+                             varX=varX, varY=varY, varXC=varXC, varYC=varYC,
+                             sd=sd, ed=ed, nEpoch=100,
+                             batchSize=[365, 100])
+
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
+slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)

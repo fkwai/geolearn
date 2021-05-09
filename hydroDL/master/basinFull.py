@@ -17,7 +17,7 @@ defaultMaster = dict(
     hiddenSize=256, batchSize=[365, 500],
     nEpoch=500, saveEpoch=100, resumeEpoch=0,
     optNaN=[1, 1, 0, 0], overwrite=True,
-    modelName='CudnnLSTM', crit='RmseLoss', optim='AdaDelta',
+    modelName='LstmModel', crit='RmseLoss', optim='AdaDelta',
     varX=gridMET.varLst, varXC=gageII.varLst,
     varY=['00060'], varYC=None,
     sd='1979-01-01', ed='2010-01-01', subset='all', borrowStat=None

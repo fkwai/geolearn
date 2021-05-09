@@ -131,7 +131,7 @@ def calT(t):
     # t of datetime64[D]
     tn = utils.time.date2num(t)
     sinT = np.sin(2*np.pi*tn/365.24)
-    cosT = np.sin(2*np.pi*tn/365.24)
+    cosT = np.cos(2*np.pi*tn/365.24)
     matT = np.stack([tn, sinT, cosT], axis=1)
     return matT, varTLst
 

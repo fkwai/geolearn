@@ -187,13 +187,8 @@ class DataModelFull():
 
     def addT(self):
         t = self.t
-        tn = utils.time.date2num(t)
         ns = len(self.siteNoLst)
-        sinT = np.sin(2*np.pi*tn/365.24)
-        cosT = np.sin(2*np.pi*tn/365.24)
-        matT = np.stack([tn, sinT, cosT], axis=1)
+        matT, varTLst = io.calT(t)
         matTE = np.repeat(matT[:, None, :], ns, axis=1)
         self.f = np.concatenate([self.f, matTE], axis=2)
-        self.varF.append('datenum')
-        self.varF.append('sinT')
-        self.varF.append('cosT')
+        self.varF = self.varF+varTLst

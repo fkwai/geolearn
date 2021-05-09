@@ -30,7 +30,7 @@ siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
 
 # load all sequence
-if False:
+if True:
     outNameLSTM = '{}-{}-{}-{}'.format('rbWN5', 'comb', 'QTFP_C', 'comb-B10')
     dictLSTM, dictWRTDS, dictObs = wq.loadModel(
         siteNoLst, outNameLSTM, codeLst)
@@ -66,13 +66,13 @@ for ic, code in enumerate(codeLst):
 
 # ts map
 dictPlot = dict()
-dictPlot['00010'] = ['02338500', '12323770', '11141050']
-dictPlot['00300'] = ['01668000', '05288705', '06426500']
-dictPlot['00915'] = ['09371492', '05465500', '02175000']
+# dictPlot['00010'] = ['02338500', '12323770', '11141050']
+# dictPlot['00300'] = ['01668000', '05288705', '06426500']
+# dictPlot['00915'] = ['09371492', '05465500', '02175000']
 dictPlot['00955'] = ['10343500', '05465500', '10172200']
-dictPlot['00600'] = ['01118500', '10336698', '02215500']
-dictPlot['00600'] = ['01118500', '10336698', '02215500']
-dictPlot['00405'] = ['06324500', '06313500', '01196500']
+# dictPlot['00600'] = ['01118500', '10336698', '02215500']
+# dictPlot['00600'] = ['01118500', '10336698', '02215500']
+# dictPlot['00405'] = ['06324500', '06313500', '01196500']
 
 for code in dictPlot.keys():
     siteNoCode = dictSite[code]
@@ -140,3 +140,4 @@ for code in dictPlot.keys():
     fig.show()
     dirFig = r'C:\Users\geofk\work\paper\waterQuality'
     fig.savefig(os.path.join(dirFig, 'plot_{}'.format(code)))
+    fig.savefig(os.path.join(dirFig, 'plot_{}.svg'.format(code)))

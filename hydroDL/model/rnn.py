@@ -738,27 +738,17 @@ class AgeLSTM2(torch.nn.Module):
 
 
 class LstmModel(torch.nn.Module):
-    def __init__(self, *, nx, ny, hiddenSize, dr=0.5):
+    def __init__(self, nx, ny, hiddenSize, dr=0.5):
         super(LstmModel, self).__init__()
-        self.nx = nx
-        self.ny = ny
-        self.hiddenSize = hiddenSize
-        self.ct = 0
-        self.nLayer = 1
+        self.relu = nn.ReLU()
         self.linearIn = torch.nn.Linear(nx, hiddenSize)
-        self.lstm = CudnnLstm(
-            inputSize=hiddenSize, hiddenSize=hiddenSize, dr=dr)
-        self.lstm2 = CudnnLstm(
-            inputSize=hiddenSize, hiddenSize=hiddenSize, dr=dr)
-        self.linearOut1 = torch.nn.Linear(hiddenSize, 3)
-        self.linearOut2 = torch.nn.Linear(3, ny)
+        self.dropout = nn.Dropout(p=dr)
+        self.lstm = torch.nn.LSTM(hiddenSize, hiddenSize, 3, dropout=dr)
+        self.linearOut = torch.nn.Linear(hiddenSize, ny)
         self.gpu = 1
 
     def forward(self, x, doDropMC=False):
-        x0 = F.relu(self.linearIn(x))
-        outLSTM, (hn, cn) = self.lstm(x0)
-        outLSTM2, (hn, cn) = self.lstm2(outLSTM)
-        out1 = self.linearOut1(outLSTM2)
-        out2 = self.linearOut2(out1)
-        # out = rho/time * batchsize * Ntargetvar
-        return out2
+        x0 = self.dropout(self.relu(self.linearIn(x)))
+        y, (hn, cn) = self.lstm(x0)
+        out = self.linearOut(y)
+        return out
