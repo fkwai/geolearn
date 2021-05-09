@@ -9,7 +9,7 @@ import json
 functions for read rawdata and write in caseFolder
 
 """
-__all__ = ['wrapData', 'readSiteTS', 'extractVarMtd']
+__all__ = ['wrapData', 'readSiteTS', 'extractVarMtd','label2var']
 
 varTLst = ['datenum', 'sinT', 'cosT']
 
@@ -158,3 +158,16 @@ def extractVarMtd(varLst):
                 raise Exception('Variable {} not found!'.format(var))
             mtdLst.append(mtd)
     return mtdLst
+
+def label2var(label):
+    dictVar = dict(
+        F=gridMET.varLst,
+        Q=['runoff'],
+        P=ntn.varLst,
+        T=['datenum', 'sinT', 'cosT'],
+        R=GLASS.varLst,
+        C=usgs.newC)
+    varLst = list()
+    for x in label:
+        varLst = varLst + dictVar[x]
+    return varLst
