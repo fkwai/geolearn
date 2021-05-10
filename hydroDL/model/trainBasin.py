@@ -152,7 +152,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
         else:
             nIterEp = int(
                 np.ceil(np.log(0.01) / np.log(1 - nbatch*ny/nSample)))
-
+    print('iter per epoch {}'.format(nIterEp), flush=True)
     lossEp = 0
     lossEpLst = list()
     t0 = time.time()
