@@ -186,7 +186,8 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
             for name, par in model.named_parameters():
                 if par.requires_grad:
                     if torch.any(torch.isnan(par)):
-                        print(name)
+                        print('nan par in {} epoch {}'.format(
+                            name, iEp+cEp), flush=True)
             model.zero_grad()
             lossEp = lossEp + loss.item()
             # except:
@@ -194,7 +195,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
         lossEp = lossEp / nIterEp
         ct = time.time() - t0
         logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp+cEp, lossEp, ct)
-        print(logStr)
+        print(logStr, flush=True)
         # log.write(logStr+'\n')
         print(logStr, file=log, flush=True)
         lossEpLst.append(lossEp)
