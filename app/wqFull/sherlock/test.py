@@ -22,5 +22,6 @@ if __name__ == '__main__':
                 try:
                     yP, ycP = basinFull.testModel(
                         outName, DM=dm, batchSize=20, testSet=testSet, ep=100)
+                    print('tested {}'.format(outName), flush=True)
                 except:
-                    print('skiped {}'.format(outname))
+                    print('skiped {}'.format(outName), flush=True)
