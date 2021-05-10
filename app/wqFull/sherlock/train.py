@@ -5,13 +5,12 @@ from hydroDL.master import basinFull
 
 dataNameLst = ['bsWN5', 'bsDN5', 'brWN5', 'brDN5']
 
-dataName='bsWN5'
+dataName = 'bsWN5'
 
 dm = dbBasin.DataModelFull(dataName)
 
-varX = dm.varF
-varY = ['runoff']+dm.varC
-# varY = ['runoff']
+varX = dm.varF + ['runoff']
+varY = usgs.newC
 varXC = dm.varG
 varYC = None
 sd = '1982-01-01'
