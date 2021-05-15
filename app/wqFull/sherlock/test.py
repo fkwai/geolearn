@@ -14,8 +14,6 @@ if __name__ == '__main__':
                 varY = dbBasin.label2var(label.split('2')[1])
                 varXC = gageII.varLst
                 varYC = None
-                sd = '1982-01-01'
-                ed = '2009-12-31'
                 outName = '{}-{}-t{}-B10'.format(dataName, label, rho)
                 dm = dbBasin.DataModelFull(dataName)
                 testSet = 'all'

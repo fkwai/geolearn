@@ -17,7 +17,7 @@ tR = npz['tR']
 codeLst = list(npz['codeLst'])
 siteNoLst = list(npz['siteNoLst'])
 
-matB = matC & (~matCF) & matQ
+matB = matC & (~matCF) 
 
 # devide train / test
 t1 = np.datetime64('1982-01-01', 'D')

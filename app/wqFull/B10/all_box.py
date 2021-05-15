@@ -21,6 +21,8 @@ rhoLst = [365, 10]
 dataName = 'brDN5'
 labelLst = ['QFPRT2C', 'QFPT2C']
 rho = 365
+corrMat = np.ndarray([ns, nc, 2])
+
 for k, label in enumerate(labelLst):
     outName = '{}-{}-t{}-B10'.format(dataName, label, rho)
     dm = dbBasin.DataModelFull(dataName)
@@ -34,8 +36,6 @@ for k, label in enumerate(labelLst):
     yP, ycP = basinFull.testModel(
         outName, DM=dm, batchSize=20, testSet=testSet, ep=100)
     yO, ycO = basinFull.getObs(outName, testSet, DM=dm)
-
-    corrMat = np.ndarray([ns, nc, 2])
     for ic in range(nc):
         indT = np.where(dm.t == np.datetime64('2010-01-01'))[0][0]
         corr1 = utils.stat.calCorr(yP[:indT, :, ic], yO[:indT, :, ic])
@@ -45,7 +45,6 @@ for k, label in enumerate(labelLst):
 dataBox = list()
 for ic in range(nc):
     temp = [corrMat[:, ic, 0], corrMat[:, ic, 1]]
-    # temp = [rmseMat[:, ic, 0], rmseMat[:, ic, 1]]
     dataBox.append(temp)
 
 labLst1 = ['{}\n{}'.format(usgs.codePdf.loc[code]

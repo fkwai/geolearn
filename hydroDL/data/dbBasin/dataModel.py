@@ -59,6 +59,7 @@ class DataModelFull():
         if np.any(bq):
             print('Find negative Q, filled zero')
             self.q[bq] = 0
+        self.c = io.nanExt(self.c)
 
     def saveSubset(self, nameLst, siteNoLst):
         if type(nameLst) is not list:
@@ -155,7 +156,7 @@ class DataModelFull():
             for (data, var) in zip(dataTup, varTup):
                 if data is not None:
                     mtd = io.extractVarMtd(var)
-                    outData, outStat = transform.transInAll(data, mtd)
+                    outData, outStat = transform.transIn(data, mtd)
                 else:
                     (outData, outStat) = (None, None)
                 outDataLst.append(outData)
@@ -166,7 +167,7 @@ class DataModelFull():
             for (data, var, stat) in zip(dataTup, varTup, statTup):
                 if data is not None:
                     mtd = io.extractVarMtd(var)
-                    outData = transform.transInAll(data, mtd, statLst=stat)
+                    outData = transform.transIn(data, mtd, statIn=stat)
                 else:
                     outData = None
                 outDataLst.append(outData)
@@ -179,9 +180,7 @@ class DataModelFull():
         if data.shape[-1] == 0:
             out = None
         else:
-            out = transform.transOutAll(
-                data, mtd,  stat)
-        t1 = time.time()-t0
+            out = transform.transOut(data, mtd, stat)
         print('transform out {}'.format(time.time()-t0))
         return out
 

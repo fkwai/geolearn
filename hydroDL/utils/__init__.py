@@ -58,6 +58,64 @@ def rmExt(data, p=5, returnInd=False):
     else:
         return out
 
+
+
+def addDim(xTup):
+    yLst = list()
+    for x in xTup:
+        if type(x) is np.ndarray:
+            yLst.append(x[..., None])
+        elif type(x) is list:
+            yLst.append([x])
+        else:
+            raise Exception('Unknown type')
+    return tuple(yLst)
+
+
+def rmDim(xTup):
+    yLst = list()
+    for x in xTup:
+        if type(x) is np.ndarray:
+            if x.shape[-1] == 1:
+                yLst.append(x[..., 0])
+            else:
+                raise Exception('multi dim ndarray')
+        elif type(x) is list:
+            if len(x) == 1:
+                yLst.append(x[0])
+            else:
+                raise Exception('multi dim list')
+        else:
+            raise Exception('Unknown type')
+    return tuple(yLst)
+
+
+def array2Lst(xTup):
+    yLst = list()
+    for x in xTup:
+        if x is None:
+            yLst.append(None)
+        else:
+            yLst.append(x.tolist())
+    if type(xTup) is tuple:
+        return tuple(yLst)
+    else:
+        return yLst
+
+
+def lst2Ary(xTup):
+    yLst = list()
+    for x in xTup:
+        if x is None:
+            yLst.append(None)
+        else:
+            yLst.append(np.array(x))
+    if type(xTup) is tuple:
+        return tuple(yLst)
+    else:
+        return yLst
+
+
 # class TimedOutExc(Exception):
 #     pass
 

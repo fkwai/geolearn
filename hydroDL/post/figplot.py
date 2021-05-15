@@ -199,3 +199,16 @@ def scatter121Batch(xMat, yMat, cMat, labelLst, nXY,
         cax = figM.add_subplot(gsM[:, -1])
         figM.colorbar(sc, cax=cax)
     return figM, axM
+
+
+def multiTS(t, dataPlot, labelLst=None, cLst='krbgcmy', tBar=None):
+    # dataPlot - list [ndarray1[nt,ny], ndarray2[nt,ny], ...]
+    # or just ndarray1[nt,ny]
+    if type(dataPlot) is list:
+        nd = dataPlot[0].shape[1]
+    elif type(dataPlot) is np.ndarray:
+        nd = dataPlot.shape[1]
+    fig, axes = plt.subplots(nd, 1)
+    axplot.multiTS(axes, t, dataPlot, labelLst=labelLst, cLst=cLst, tBar=tBar)
+    fig.subplots_adjust(hspace=0)
+    return fig, axes

@@ -76,7 +76,7 @@ yP = DM.transOut(yOut, statTup[2], varY)
 # plot
 dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-W', 'B10')
 saveFile = os.path.join(dirWRTDS, siteNo)
-df = pd.read_csv(saveFile, index_col=None).set_index('date')
+df = pd.read_csv(saveFile, index_col=None, parse_dates=True).set_index('date')
 # output
 yT = dataTupRaw[2]
 nc = len(varY)

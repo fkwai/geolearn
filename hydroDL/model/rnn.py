@@ -743,7 +743,7 @@ class LstmModel(torch.nn.Module):
         self.relu = nn.ReLU()
         self.linearIn = torch.nn.Linear(nx, hiddenSize)
         self.dropout = nn.Dropout(p=dr)
-        self.lstm = torch.nn.LSTM(hiddenSize, hiddenSize, 3, dropout=dr)
+        self.lstm = torch.nn.LSTM(hiddenSize, hiddenSize, 2, dropout=dr)
         self.linearOut = torch.nn.Linear(hiddenSize, ny)
         self.gpu = 1
 

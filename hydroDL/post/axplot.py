@@ -1,6 +1,7 @@
 from mpl_toolkits import basemap
 import matplotlib.pyplot as plt
 import numpy as np
+from hydroDL import utils
 
 
 def mapPoint(ax, lat, lon, data, vRange=None, cmap='jet', s=30, marker='o', cb=True):
@@ -48,7 +49,7 @@ def mapGrid(ax, lat, lon, data, vRange=None, cmap='jet'):
     return mm
 
 
-def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, sd=None, **kw):
+def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='krbgcmy', legLst=None, sd=None, **kw):
     y = y if type(y) is list else [y]
     if sd is not None:
         ind = np.where(t >= sd)[0]
@@ -57,8 +58,13 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, sd=
             y[k] = y[k][ind]
     for k in range(len(y)):
         yy = y[k]
-        # todo - find out continuous / distinct        
-        sty = '--*' if styLst is None else styLst[k]
+        # find out continuous / distinct
+        if styLst is None:
+            [_, _], ind = utils.rmNan([t, yy])
+            r = len(ind)/(ind[-1]-ind[0])
+            sty = '-' if r > 0.9 else '*'
+        else:
+            sty = styLst[k]
         legStr = None if legLst is None else legLst[k]
         ax.plot(t, yy, sty, color=cLst[k], label=legStr, **kw)
     if tBar is not None:
@@ -71,6 +77,28 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='rbkgcmy', legLst=None, sd=
         ax.legend(loc='upper right')
     ax.xaxis_date()
     return ax
+
+
+def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', tBar=None):
+    # dataPlot - list [ndarray1[nt,ny], ndarray2[nt,ny], ...]
+    # or just ndarray1[nt,ny]
+    if type(dataPlot) is list:
+        nd = dataPlot[0].shape[1]
+    elif type(dataPlot) is np.ndarray:
+        nd = dataPlot.shape[1]
+
+    for k in range(nd):
+        if type(dataPlot) is list:
+            temp = [data[:, k] for data in dataPlot]
+        elif type(dataPlot) is np.ndarray:
+            temp = dataPlot[:, k]
+        plotTS(axes[k], t, temp, cLst=cLst, tBar=tBar)
+        axes[k].set_xlim(t[0], t[-1])
+        if labelLst is not None:
+            titleInner(axes[k], labelLst[k])
+        if k != nd-1:
+            axes[k].set_xticklabels([])
+    return axes
 
 
 def plotCDF(ax, x, cLst='rbkgcmy', legLst=None):

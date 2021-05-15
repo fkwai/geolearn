@@ -20,7 +20,8 @@ defaultMaster = dict(
     modelName='LstmModel', crit='RmseLoss', optim='AdaDelta',
     varX=gridMET.varLst, varXC=gageII.varLst,
     varY=['00060'], varYC=None,
-    sd='1979-01-01', ed='2010-01-01', subset='all', borrowStat=None
+    sd='1979-01-01', ed='2010-01-01', subset='all', borrowStat=None,
+    optBatch='Weight', nIterEp=None
 )
 
 
@@ -69,8 +70,9 @@ def loadMaster(outName):
 
 def wrapStat(outName, statTup):
     outFolder = nameFolder(outName)
-    dictStat = dict(statX=statTup[0], statXC=statTup[1],
-                    statY=statTup[2], statYC=statTup[3])
+    statLstTup = utils.array2Lst(statTup)
+    dictStat = dict(statX=statLstTup[0], statXC=statLstTup[1],
+                    statY=statLstTup[2], statYC=statLstTup[3])
     with open(os.path.join(outFolder, 'stat.json'), 'w') as fp:
         json.dump(dictStat, fp)
 
@@ -80,10 +82,10 @@ def loadStat(outName):
     statFile = os.path.join(outFolder, 'stat.json')
     with open(statFile, 'r') as fp:
         dictStat = json.load(fp)
-        statX = dictStat['statX']
-        statXC = dictStat['statXC']
-        statY = dictStat['statY']
-        statYC = dictStat['statYC']
+        statLstTup = (dictStat['statX'], dictStat['statXC'],
+                      dictStat['statY'], dictStat['statYC'])
+        statAryTup = utils.lst2Ary(statLstTup)
+        statX, statXC, statY, statYC = statAryTup
     return statX, statXC, statY, statYC
 
 
@@ -163,7 +165,8 @@ def trainModel(outName):
     for k in range(0, nEp, sEp):
         model, optim, lossEp = trainBasin.trainModel(
             dataTup, model, lossFun, optim, batchSize=dictP['batchSize'],
-            nEp=sEp, cEp=k, logFile=logFile)
+            nEp=sEp, cEp=k, logFile=logFile,
+            optBatch=dictP['optBatch'], nIterEp=dictP['nIterEp'])
         # save model
         saveModel(outName, k+sEp, model, optim=optim)
         lossLst = lossLst+lossEp

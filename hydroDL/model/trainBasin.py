@@ -109,7 +109,7 @@ def dealNaN(dataTup, optNaN):
 
 
 def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
-               nEp=100, cEp=0, logFile=None, optBatch='Weight'):
+               nEp=100, cEp=0, logFile=None, optBatch='Weight', nIterEp=None):
     """[summary]    
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -140,18 +140,20 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
 
     # training
     matB = ~np.isnan(dataLst[2][rho:, :, :])
-    if optBatch == 'Random':
-        if nbatch*rho > ns*nt:
-            nIterEp = 1
-        else:
-            nIterEp = int(np.ceil(np.log(0.01) / np.log(1 - nbatch*rho/ns/nt)))
-    elif optBatch == 'Weight':
-        nSample = np.sum(matB)
-        if nbatch*ny > nSample:
-            nIterEp = 1
-        else:
-            nIterEp = int(
-                np.ceil(np.log(0.01) / np.log(1 - nbatch*ny/nSample)))
+    if nIterEp is None:
+        if optBatch == 'Random':
+            if nbatch*rho > ns*nt:
+                nIterEp = 1
+            else:
+                nIterEp = int(
+                    np.ceil(np.log(0.01) / np.log(1 - nbatch*rho/ns/nt)))
+        elif optBatch == 'Weight':
+            nSample = np.sum(matB)
+            if nbatch*ny > nSample:
+                nIterEp = 1
+            else:
+                nIterEp = int(
+                    np.ceil(np.log(0.01) / np.log(1 - nbatch*ny/nSample)))
     print('iter per epoch {}'.format(nIterEp), flush=True)
     lossEp = 0
     lossEpLst = list()

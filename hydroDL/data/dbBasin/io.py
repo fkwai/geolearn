@@ -9,7 +9,7 @@ import json
 functions for read rawdata and write in caseFolder
 
 """
-__all__ = ['wrapData', 'readSiteTS', 'extractVarMtd','label2var']
+__all__ = ['wrapData', 'readSiteTS', 'extractVarMtd', 'label2var']
 
 varTLst = ['datenum', 'sinT', 'cosT']
 
@@ -159,10 +159,11 @@ def extractVarMtd(varLst):
             mtdLst.append(mtd)
     return mtdLst
 
+
 def label2var(label):
     dictVar = dict(
         F=gridMET.varLst,
-        Q=['runoff'],
+        Q=['00060'],
         P=ntn.varLst,
         T=['datenum', 'sinT', 'cosT'],
         R=GLASS.varLst,
@@ -171,3 +172,25 @@ def label2var(label):
     for x in label:
         varLst = varLst + dictVar[x]
     return varLst
+
+
+def nanPerc(data, p=5):
+    v1 = np.nanpercentile(data, p, axis=0)
+    v2 = np.nanpercentile(data, 100-p)
+    out = data.copy()
+    out[out < v1] = np.nan
+    out[out > v2] = np.nan
+    return out
+
+
+def nanExt(data, p=10, n=5):
+    out = data.copy()
+    v1 = np.nanpercentile(data, p, axis=0)
+    v2 = np.nanpercentile(data, 100-p, axis=0)
+    vr = v2-v1
+    b1 = data > (v2+vr*n)
+    b2 = data < (v1-vr*n)
+    out[b1] = np.nan
+    out[b2] = np.nan
+    print('{} extremes removed'.format(np.sum(b1)+np.sum(b2)))
+    return out
