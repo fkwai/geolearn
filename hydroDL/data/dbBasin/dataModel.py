@@ -6,10 +6,10 @@ import time
 import pandas as pd
 import numpy as np
 import json
-from . import io
+from . import io, func
 from hydroDL import utils
 
-__all__ = ['DataModelFull']
+__all__ = ['DataModelFull', 'DataTrain']
 
 
 class DataModelFull():
@@ -46,86 +46,19 @@ class DataModelFull():
         print('creating data class')
         io.wrapData(caseName, siteNoLst, nFill=nFill,
                     freq=freq, sdStr=sdStr, edStr=edStr)
-        # init subset
-        subsetFile = os.path.join(io.caseFolder(caseName), 'subset.json')
-        dictSubset = dict(all=siteNoLst)
-        with open(subsetFile, 'w') as fp:
-            json.dump(dictSubset, fp, indent=4)
+        io.initSubset(caseName)
         wqData = cls(caseName)
         return wqData
 
     def dataProvision(self):
+        # set negtive Q to 0
         bq = np.less(self.q, 0., where=~np.isnan(self.q))
         if np.any(bq):
             print('Find negative Q, filled zero')
             self.q[bq] = 0
-        self.c = io.nanExt(self.c)
+        self.c = io.nanExt(self.c)  # remove extreme
 
-    def saveSubset(self, nameLst, siteNoLst):
-        if type(nameLst) is not list:
-            nameLst = [nameLst]
-            siteNoLst = [siteNoLst]
-        dictNew = dict(zip(nameLst, siteNoLst))
-        subsetFile = os.path.join(self.saveFolder, 'subset.json')
-        dictSubset = self.loadSubset()
-        dictSubset.update(dictNew)
-        with open(subsetFile, 'w') as fp:
-            json.dump(dictSubset, fp, indent=4)
-        self.subset = self.loadSubset()
-
-    def loadSubset(self):
-        subsetFile = os.path.join(self.saveFolder, 'subset.json')
-        if os.path.exists(subsetFile):
-            with open(subsetFile, 'r') as fp:
-                dictSubset = json.load(fp)
-        else:
-            dictSubset = dict(all=self.siteNoLst)
-            with open(subsetFile, 'w') as fp:
-                json.dump(dictSubset, fp, indent=4)
-        return dictSubset
-
-    def getSubsetInd(self, subName, sd, ed):
-        indS = [self.siteNoLst.index(siteNo)
-                for siteNo in self.subset[subName]]
-        sd = np.datetime64(sd)
-        ed = np.datetime64(ed)
-        if sd < self.sd:
-            indT1 = 0
-        else:
-            indT1 = np.where(self.t == sd)[0][0]
-        if ed > self.ed:
-            indT2 = len(self.t)
-        else:
-            indT2 = np.where(self.t == ed)[0][0]+1
-        return indT1, indT2, indS
-
-    def extractData(self, varTup, subName, sd, ed):
-        dataTup = self.extractVar(varTup)
-        outTup = self.extractSubset(dataTup, subName, sd, ed)
-        return outTup
-
-    def extractSubset(self, dataTup, subName, sd, ed):
-        indT1, indT2, indS = self.getSubsetInd(subName, sd, ed)
-        outLst = list()
-        for data in dataTup:
-            if data is None:
-                out = None
-            elif data.ndim == 3:
-                out = data[indT1:indT2, indS, :]
-            elif data.ndim == 2:
-                out = data[indS, :]
-            outLst.append(out)
-        return tuple(outLst)
-
-    def extractVar(self, varTup):
-        (varX, varXC, varY, varYC) = varTup
-        x = self.extractVarT(varX) if varX is not None else None
-        xc = self.extractVarC(varXC) if varXC is not None else None
-        y = self.extractVarT(varY) if varY is not None else None
-        yc = self.extractVarC(varYC) if varYC is not None else None
-        return (x, xc, y, yc)
-
-    def extractVarT(self, varLst):
+    def extractT(self, varLst):
         temp = list()
         varTemp = [self.varQ, self.varF, self.varC]
         dataTemp = [self.q, self.f, self.c]
@@ -137,7 +70,7 @@ class DataModelFull():
             raise Exception('Variable {} not found!'.format(var))
         return (np.stack(temp, axis=2))
 
-    def extractVarC(self, varLst):
+    def extractC(self, varLst):
         temp = list()
         varTemp = [self.varG]
         dataTemp = [self.g]
@@ -149,39 +82,69 @@ class DataModelFull():
             raise Exception('Variable {} not found!'.format(var))
         return (np.stack(temp, axis=1))
 
-    def transIn(self, dataTup, varTup, statTup=None):
-        # normalize data in
-        if statTup is None:
-            [outDataLst, outStatLst] = [list(), list()]
-            for (data, var) in zip(dataTup, varTup):
-                if data is not None:
-                    mtd = io.extractVarMtd(var)
-                    outData, outStat = transform.transIn(data, mtd)
-                else:
-                    (outData, outStat) = (None, None)
-                outDataLst.append(outData)
-                outStatLst.append(outStat)
-            return outDataLst, outStatLst
-        else:
-            outDataLst = list()
-            for (data, var, stat) in zip(dataTup, varTup, statTup):
-                if data is not None:
-                    mtd = io.extractVarMtd(var)
-                    outData = transform.transIn(data, mtd, statIn=stat)
-                else:
-                    outData = None
-                outDataLst.append(outData)
-            return outDataLst
+    def saveSubset(self, name, dateLst=[None, None], siteNoLst=None, mask=None):
+        subsetFile = os.path.join(self.saveFolder, 'subset.json')
+        dictSubset = self.loadSubset()
+        if type(dateLst) is np.ndarray:
+            dateStrAry = np.datetime_as_string(dateLst, unit='D')
+            dateLst = dateStrAry.tolist()
+        dictNew = {name: dict(dateLst=dateLst, siteNoLst=siteNoLst, mask=mask)}
+        dictSubset.update(dictNew)
+        with open(subsetFile, 'w') as fp:
+            json.dump(dictSubset, fp, indent=4)
+        self.subset = self.loadSubset()
 
-    def transOut(self, data, stat, var):
-        mtd = io.extractVarMtd(var)
-        # normalize data out
-        t0 = time.time()
-        if data.shape[-1] == 0:
-            out = None
+    def loadSubset(self, name=None):
+        subsetFile = os.path.join(self.saveFolder, 'subset.json')
+        if os.path.exists(subsetFile):
+            with open(subsetFile, 'r') as fp:
+                dictSubset = json.load(fp)
+        if name is not None:
+            return dictSubset[name]
         else:
-            out = transform.transOut(data, mtd, stat)
-        print('transform out {}'.format(time.time()-t0))
+            return dictSubset
+
+    def readSubset(self, name):
+        subset = self.loadSubset(name)
+        # date
+        if len(subset['dateLst']) == 2:
+            sdStr = subset['dateLst'][0]
+            edStr = subset['dateLst'][1]
+            sd = self.t[0] if sdStr is None else np.datetime64(sdStr)
+            ed = self.t[-1] if edStr is None else np.datetime64(edStr)
+            indT1 = np.where(self.t == sd)[0][0]
+            indT2 = np.where(self.t == ed)[0][0]
+            indT = np.arange(indT1, indT2+1)
+        else:
+            tAry = np.array(subset['dateLst']).astype('datetime64[D]')
+            ind, indT = utils.time.intersect(tAry, self.t)
+            if len(ind) != len(tAry):
+                raise Exception('Wrong dateLst in subset')
+        # site
+        if subset['siteNoLst'] is None:
+            indS = np.arange(len(self.siteNoLst))
+        else:
+            raise Exception('TODO siteNo subset')
+        # mask
+        if type(subset['mask']) is str:
+            raise Exception('TODO read mask mat')
+        else:
+            mask = None
+        return indT, indS, mask
+
+    def extractSubset(self, data, subsetName=None, **kw):
+        if subsetName is not None:
+            indT, indS, mask = self.readSubset(subsetName)
+        else:
+            indT, indS, mask = (kw['indT'], kw['indS'], kw['mask'])
+        if data is None:
+            out = None
+        elif data.ndim == 3:
+            out = data[indT, :, :][:, indS, :]
+            if mask is not None:
+                raise Exception('TODO mask mat')
+        elif data.ndim == 2:
+            out = data[indS, :]
         return out
 
     def addT(self):
@@ -191,3 +154,63 @@ class DataModelFull():
         matTE = np.repeat(matT[:, None, :], ns, axis=1)
         self.f = np.concatenate([self.f, matTE], axis=2)
         self.varF = self.varF+varTLst
+
+
+class DataTrain():
+    def __init__(self, DM: DataModelFull, **kw):
+        dictD = dict(subset='all', varX=DM.varF+DM.varQ,
+                     varXC=DM.varG, varY=DM.varC, varYC=None)
+        dictD.update(kw)
+        self.caseName = DM.caseName
+        self.subset = dictD['subset']
+        indT, indS, mask = DM.readSubset(self.subset)
+        self.varX = dictD['varX']
+        self.varY = dictD['varY']
+        self.varXC = dictD['varXC']
+        self.varYC = dictD['varYC']
+        # upper/lower case for raw/fine data
+        X = DM.extractT(self.varX) if self.varX is not None else None
+        XC = DM.extractC(self.varXC) if self.varXC is not None else None
+        Y = DM.extractT(self.varY) if self.varY is not None else None
+        YC = DM.extractC(self.varYC) if self.varYC is not None else None
+        kw = dict(indT=indT, indS=indS, mask=mask)
+        self.X = DM.extractSubset(X, **kw)
+        self.XC = DM.extractSubset(XC, **kw)
+        self.Y = DM.extractSubset(Y, **kw)
+        self.YC = DM.extractSubset(YC, **kw)
+        self.t = DM.t[indT]
+        self.siteNoLst = [DM.siteNoLst[k] for k in indS]
+        self.x, self.statX = self.transIn(self.X, self.varX)
+        self.xc, self.statXC = self.transIn(self.XC, self.varXC)
+        self.y, self.statY = self.transIn(self.Y, self.varY)
+        self.yc, self.statYC = self.transIn(self.YC, self.varYC)
+
+    def tupDataRaw(self):
+        return (self.X, self.XC, self.Y, self.YC)
+
+    def tupData(self):
+        return (self.x, self.xc, self.y, self.yc)
+
+    def tupVar(self):
+        return (self.varX, self.varXC, self.varY, self.varYC)
+
+    def tupStat(self):
+        return (self.statX, self.statXC, self.statY, self.statYC)
+
+    def transIn(self, data, var):
+        mtd = io.extractVarMtd(var)
+        # normalize data in
+        if data is not None:
+            outData, outStat = transform.transIn(data, mtd)
+        else:
+            (outData, outStat) = (None, None)
+        return outData, outStat
+
+    def transOutY(self, data):
+        mtd = io.extractVarMtd(self.varY)
+        # normalize data out
+        if data.shape[-1] == 0:
+            out = None
+        else:
+            out = transform.transOut(data, mtd, self.statY)
+        return out

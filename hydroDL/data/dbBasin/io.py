@@ -66,6 +66,15 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
         json.dump(dictData, fp, indent=4)
 
 
+def initSubset(caseName):
+    saveFolder = caseFolder(caseName)
+    subsetFile = os.path.join(saveFolder, 'subset.json')
+    dictSubset = dict(
+        all=dict(dateLst=[None, None], siteNoLst=None, mask=None))
+    with open(subsetFile, 'w') as fp:
+        json.dump(dictSubset, fp, indent=4)
+
+
 def readSiteTS(siteNo, varLst, freq='D', area=None,
                sd=np.datetime64('1979-01-01'),
                ed=np.datetime64('2019-12-31'),

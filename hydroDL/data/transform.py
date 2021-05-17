@@ -5,8 +5,6 @@ sn = 1
 
 
 def transIn(dataIn, mtdLst, statIn=None):
-    # if type(mtdLst) is not list:
-
     data = dataIn.copy()
     noStat = True if statIn is None else False
     # find colums that need to do log
