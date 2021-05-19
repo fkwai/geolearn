@@ -10,50 +10,72 @@ import importlib
 importlib.reload(axplot)
 importlib.reload(figplot)
 
-dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
-dictSiteName = 'dictWeathering.json'
-with open(os.path.join(dirSel, dictSiteName)) as f:
-    dictSite = json.load(f)
-siteNoLst = dictSite['k12']
 
-sd = '1982-01-01'
-ed = '2018-12-31'
-dataName = 'weathering'
-freq = 'D'
-# DM = dbBasin.DataModelFull.new(
-#     dataName, siteNoLst, sdStr=sd, edStr=ed, freq=freq)
-DM = dbBasin.DataModelFull(dataName)
+dm = dbBasin.DataModelFull('weathering')
+
+# subset
+dm.saveSubset('B10', ed='2009-12-31')
+dm.saveSubset('A10', sd='2010-01-01')
+
+
+yrIn = np.arange(1985, 2020, 5).tolist()
+t1 = dbBasin.func.pickByYear(dm.t, yrIn, pick=False)
+t2 = dbBasin.func.pickByYear(dm.t, yrIn)
+dm.createSubset('pkYr5', dateLst=t1)
+dm.createSubset('rmYr5', dateLst=t2)
+
+codeSel = ['00915', '00925', '00930', '00935', '00940', '00945', '00955']
+d1 = dbBasin.DataTrain(dm, varY=codeSel, subset='B10')
+d2 = dbBasin.DataTrain(dm, varY=codeSel, subset='A10')
+d1 = dbBasin.DataTrain(dm, varY=codeSel, subset='rmYr5')
+d2 = dbBasin.DataTrain(dm, varY=codeSel, subset='pkYr5')
 
 
 # check hist
-codeSel = ['00915', '00925', '00930', '00935', '00940', '00945', '00955']
-
 varLst = codeSel
-# varLst = usgs.varQ
-a = DM.extractVarT(varLst)
-mtd = dbBasin.io.extractVarMtd(varLst)
-b, s = transform.transIn(a, mtd)
-c = transform.transOut(b, mtd, s)
-
-b = np.ndarray(a.shape)
-qtLst = list()
-for k, code in enumerate(codeSel):
-    qt = QuantileTransformer(
-        n_quantiles=10, random_state=0, output_distribution='normal')
-    qt.fit(a[:, :, k])
-    b[:, :, k] = qt.transform(a[:, :, k])
-    c[:, :, k] = qt.inverse_transform(b[:, :, k])
-    qtLst.append(qt)
-np.nansum(np.abs(a-c))
-
 nd = len(varLst)
-bins = 20
+bins = 50
 fig, axes = plt.subplots(nd, 2)
 for k, var in enumerate(varLst):
-    _ = axes[k, 0].hist(a[..., k].flatten(), bins=bins)
-    _ = axes[k, 1].hist(b[..., k].flatten(), bins=bins)
+    _ = axes[k, 0].hist(d1.y[:, :, k].flatten(), bins=bins)
+    _ = axes[k, 1].hist(d2.y[:, :, k].flatten(), bins=bins)
 fig.show()
 
+a1 = d1.Y.reshape(-1, d1.Y.shape[-1])
+qt = QuantileTransformer(
+    n_quantiles=50, random_state=0, output_distribution='normal')
+# qt = PowerTransformer(method='yeo-johnson')
+
+qt.fit(a1)
+b1 = qt.transform(a1)
+c1 = qt.inverse_transform(b1)
+a2 = d2.Y.reshape(-1, d2.Y.shape[-1])
+b2 = qt.transform(a2)
+c2 = qt.inverse_transform(b2)
+
+np.nansum(np.abs(a1-c1))
+np.nansum(np.abs(a2-c2))
+
+fig, axes = plt.subplots(nd, 2)
+for k, var in enumerate(varLst):
+    _ = axes[k, 0].hist(b1[:, k].flatten(), bins=bins)
+    _ = axes[k, 1].hist(b2[:, k].flatten(), bins=bins)
+    axes[k, 0].set_xlim([-3, 3])
+    axes[k, 1].set_xlim([-3, 3])
+fig.show()
+
+fig, axes = plt.subplots(nd, 2)
+for k, var in enumerate(varLst):
+    _ = axes[k, 0].hist(c1[:, k].flatten(), bins=bins)
+    _ = axes[k, 1].hist(c2[:, k].flatten(), bins=bins)
+fig.show()
+
+A1 = a1.reshape(d1.Y.shape)
+B1 = b1.reshape(d1.Y.shape)
+C1 = c1.reshape(d1.Y.shape)
+A2 = a2.reshape(d2.Y.shape)
+B2 = b2.reshape(d2.Y.shape)
+C2 = c2.reshape(d2.Y.shape)
 # difference in and out
 labelLst = list()
 for ic, code in enumerate(codeSel):
@@ -61,11 +83,22 @@ for ic, code in enumerate(codeSel):
     temp = '{} {}'.format(
         code, shortName)
     labelLst.append(temp)
-k = 0
-for k in range(len(siteNoLst)):
+
+for k in range(len(dm.siteNoLst)):
     fig, axes = figplot.multiTS(
-        DM.t, [c[:, k, :], a[:, k, :]], labelLst=labelLst, cLst='rk')
+        d1.t, [C1[:, k, :], A1[:, k, :]], labelLst=labelLst, cLst='rk')
     fig.show()
+np.nansum(np.abs(A1-C1))
 
 
-pt = PowerTransformer(method='box-cox', standardize=False)
+for k in range(len(dm.siteNoLst)):
+    fig, axes = figplot.multiTS(
+        d2.t, [C2[:, k, :], A2[:, k, :]], labelLst=labelLst, cLst='rk')
+    fig.show()
+np.nansum(np.abs(A2-C2))
+
+
+for k in range(len(dm.siteNoLst)):
+    fig, axes = figplot.multiTS(
+        d2.t, [B2[:, k, :]], labelLst=labelLst, cLst='rk')
+    fig.show()

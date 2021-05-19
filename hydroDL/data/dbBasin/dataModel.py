@@ -82,13 +82,15 @@ class DataModelFull():
             raise Exception('Variable {} not found!'.format(var))
         return (np.stack(temp, axis=1))
 
-    def saveSubset(self, name, dateLst=[None, None], siteNoLst=None, mask=None):
+    def saveSubset(self, name, sd=None, ed=None, siteNoLst=None, mask=False):
         subsetFile = os.path.join(self.saveFolder, 'subset.json')
         dictSubset = self.loadSubset()
-        if type(dateLst) is np.ndarray:
-            dateStrAry = np.datetime_as_string(dateLst, unit='D')
-            dateLst = dateStrAry.tolist()
-        dictNew = {name: dict(dateLst=dateLst, siteNoLst=siteNoLst, mask=mask)}
+        if type(mask) is np.ndarray:
+            maskFile = os.path.join(
+                self.saveFolder, 'mask', name+'.npy')
+            np.save(maskFile, mask)
+            mask = True
+        dictNew = {name: dict(sd=sd, ed=ed, siteNoLst=siteNoLst, mask=mask)}
         dictSubset.update(dictNew)
         with open(subsetFile, 'w') as fp:
             json.dump(dictSubset, fp, indent=4)
@@ -104,45 +106,53 @@ class DataModelFull():
         else:
             return dictSubset
 
+    def createSubset(self, name, sd=None, ed=None, siteNoLst=None, **kw):
+        # create subset by some kws and input - a summary function
+        if 'dateLst' in kw:
+            tSub = kw['dateLst']
+            sdT = self.sd if sd is None else np.datetime64(sd)
+            edT = self.ed if ed is None else np.datetime64(ed)
+            ns = len(self.siteNoLst) if siteNoLst is None else len(siteNoLst)
+            mask = func.createMaskByT(sdT, edT, ns, tSub)
+        self.saveSubset(name, sd=sd, ed=ed, siteNoLst=siteNoLst, mask=mask)
+
     def readSubset(self, name):
         subset = self.loadSubset(name)
         # date
-        if len(subset['dateLst']) == 2:
-            sdStr = subset['dateLst'][0]
-            edStr = subset['dateLst'][1]
-            sd = self.t[0] if sdStr is None else np.datetime64(sdStr)
-            ed = self.t[-1] if edStr is None else np.datetime64(edStr)
-            indT1 = np.where(self.t == sd)[0][0]
-            indT2 = np.where(self.t == ed)[0][0]
-            indT = np.arange(indT1, indT2+1)
-        else:
-            tAry = np.array(subset['dateLst']).astype('datetime64[D]')
-            ind, indT = utils.time.intersect(tAry, self.t)
-            if len(ind) != len(tAry):
-                raise Exception('Wrong dateLst in subset')
+        sdStr = subset['sd']
+        edStr = subset['ed']
+        sd = self.t[0] if sdStr is None else np.datetime64(sdStr)
+        ed = self.t[-1] if edStr is None else np.datetime64(edStr)
+        if sd < self.t[0] or ed > self.t[-1]:
+            raise Exception('Wrong sd or ed in subset')
+        indT1 = np.where(self.t == sd)[0][0]
+        indT2 = np.where(self.t == ed)[0][0]+1
         # site
         if subset['siteNoLst'] is None:
             indS = np.arange(len(self.siteNoLst))
         else:
-            raise Exception('TODO siteNo subset')
+            indS = [self.siteNoLst.index(s) for s in subset['siteNoLst']]
         # mask
-        if type(subset['mask']) is str:
-            raise Exception('TODO read mask mat')
+        if subset['mask'] is True:
+            maskFile = os.path.join(
+                self.saveFolder, 'mask', name+'.npy')
+            mask = np.load(maskFile)
         else:
             mask = None
-        return indT, indS, mask
+        return indT1, indT2, indS, mask
 
     def extractSubset(self, data, subsetName=None, **kw):
         if subsetName is not None:
-            indT, indS, mask = self.readSubset(subsetName)
+            indT1, indT2, indS, mask = self.readSubset(subsetName)
         else:
-            indT, indS, mask = (kw['indT'], kw['indS'], kw['mask'])
+            indT1, indT2, indS, mask = (
+                kw['indT1'], kw['indT2'], kw['indS'], kw['mask'])
         if data is None:
             out = None
         elif data.ndim == 3:
-            out = data[indT, :, :][:, indS, :]
+            out = data[indT1:indT2, :, :][:, indS, :]
             if mask is not None:
-                raise Exception('TODO mask mat')
+                out[mask, :] = np.nan
         elif data.ndim == 2:
             out = data[indS, :]
         return out
@@ -159,31 +169,42 @@ class DataModelFull():
 class DataTrain():
     def __init__(self, DM: DataModelFull, **kw):
         dictD = dict(subset='all', varX=DM.varF+DM.varQ,
-                     varXC=DM.varG, varY=DM.varC, varYC=None)
+                     varXC=DM.varG, varY=DM.varC, varYC=None,
+                     statX=None, statXC=None, statY=None, statYC=None)
         dictD.update(kw)
         self.caseName = DM.caseName
+        # write exclusively, hate those warnings
         self.subset = dictD['subset']
-        indT, indS, mask = DM.readSubset(self.subset)
         self.varX = dictD['varX']
         self.varY = dictD['varY']
         self.varXC = dictD['varXC']
         self.varYC = dictD['varYC']
+        self.statX = dictD['statX']
+        self.statXC = dictD['statXC']
+        self.statY = dictD['statY']
+        self.statYC = dictD['statYC']
+
+        indT1, indT2, indS, mask = DM.readSubset(self.subset)
+        self.t = DM.t[indT1:indT2]
+        self.siteNoLst = [DM.siteNoLst[k] for k in indS]
         # upper/lower case for raw/fine data
         X = DM.extractT(self.varX) if self.varX is not None else None
         XC = DM.extractC(self.varXC) if self.varXC is not None else None
         Y = DM.extractT(self.varY) if self.varY is not None else None
         YC = DM.extractC(self.varYC) if self.varYC is not None else None
-        kw = dict(indT=indT, indS=indS, mask=mask)
+        kw = dict(indT1=indT1, indT2=indT2, indS=indS, mask=mask)
         self.X = DM.extractSubset(X, **kw)
         self.XC = DM.extractSubset(XC, **kw)
         self.Y = DM.extractSubset(Y, **kw)
         self.YC = DM.extractSubset(YC, **kw)
-        self.t = DM.t[indT]
-        self.siteNoLst = [DM.siteNoLst[k] for k in indS]
-        self.x, self.statX = self.transIn(self.X, self.varX)
-        self.xc, self.statXC = self.transIn(self.XC, self.varXC)
-        self.y, self.statY = self.transIn(self.Y, self.varY)
-        self.yc, self.statYC = self.transIn(self.YC, self.varYC)
+        self.x, self.statX = self.transIn(
+            self.X, self.varX, stat=self.statX)
+        self.xc, self.statXC = self.transIn(
+            self.XC, self.varXC, stat=self.statXC)
+        self.y, self.statY = self.transIn(
+            self.Y, self.varY, stat=self.statY)
+        self.yc, self.statYC = self.transIn(
+            self.YC, self.varYC, stat=self.statYC)
 
     def tupDataRaw(self):
         return (self.X, self.XC, self.Y, self.YC)
@@ -197,11 +218,11 @@ class DataTrain():
     def tupStat(self):
         return (self.statX, self.statXC, self.statY, self.statYC)
 
-    def transIn(self, data, var):
+    def transIn(self, data, var, stat=None):
         mtd = io.extractVarMtd(var)
         # normalize data in
         if data is not None:
-            outData, outStat = transform.transIn(data, mtd)
+            outData, outStat = transform.transIn(data, mtd, stat)
         else:
             (outData, outStat) = (None, None)
         return outData, outStat

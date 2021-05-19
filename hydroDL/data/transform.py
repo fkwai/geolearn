@@ -35,11 +35,8 @@ def transIn(dataIn, mtdLst, statIn=None):
     for i in range(data.shape[-1]):
         # turn out to be faster than (data-vS0)/vS1
         data[..., i] = (data[..., i]-vS[i, 0])/vS[i, 1]
-    if noStat:
-        return data, vS
-    else:
-        return data
-
+    return data, vS
+    
 
 def transOut(dataIn, mtdLst, statIn):
     data = dataIn.copy()

@@ -22,3 +22,16 @@ for freq in freqLst:
     siteNoLst = dictSite['rmTK']
     DM = dbBasin.DataModelFull.new(
         dataName, siteNoLst, sdStr=sd, edStr=ed, freq=freq)
+
+# dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
+# dictSiteName = 'dictWeathering.json'
+# with open(os.path.join(dirSel, dictSiteName)) as f:
+#     dictSite = json.load(f)
+# siteNoLst = dictSite['k12']
+
+# sd = '1982-01-01'
+# ed = '2018-12-31'
+# dataName = 'weathering'
+# freq = 'D'
+# DM = dbBasin.DataModelFull.new(
+#     dataName, siteNoLst, sdStr=sd, edStr=ed, freq=freq)

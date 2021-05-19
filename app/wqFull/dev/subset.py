@@ -24,21 +24,33 @@ freq = 'D'
 DM = dbBasin.DataModelFull.new(
     dataName, siteNoLst, sdStr=sd, edStr=ed, freq=freq)
 
-
-# define a subset
-d1 = dict(type='chunk', dateLst=[None, '2009-12-31'], siteNoLst=None)
-# d2 = dict(name='pkYr5', type='slice',  dateLst=dateLst, siteNoLst=None)
-d3 = dict(name='test', type='sparse')
-
+siteNoTemp = DM.siteNoLst[:5]
 
 importlib.reload(dbBasin)
-DM.saveSubset('B10', dateLst=[None, '2009-12-31'])
+DM.saveSubset('B10', ed='2009-12-31')
+DM.saveSubset('A10', sd='2010-01-01')
 
 yrIn = np.arange(1985, 2020, 5).tolist()
-tOut = dbBasin.func.pickByYear(DM.t, yrIn)
-DM.saveSubset('pkYr5',  dateLst=tOut)
+t1 = dbBasin.func.pickByYear(DM.t, yrIn)
+t2 = dbBasin.func.pickByYear(DM.t, yrIn, pick=False)
+
+DM.createSubset('pkYr5', dateLst=t1)
+DM.createSubset('rmYr5', dateLst=t2)
+
+DM.createSubset('test', dateLst=t2, sd='2000-01-01',
+                ed='2010-01-01', siteNoLst=siteNoTemp)
+
 
 dictSub = DM.loadSubset()
-indT, indS, mask = DM.readSubset('pkYr5')
+indT1, indT2, indS, mask = DM.readSubset('rmYr5')
 
-aa = dbBasin.DataTrain(DM, subset='B10')
+d1 = dbBasin.DataTrain(DM, subset='pkYr5')
+d2 = dbBasin.DataTrain(DM, subset='rmYr5')
+
+k = 0
+fig, axes = figplot.multiTS(
+    d2.t, [d1.Y[:, k, :], d2.Y[:, k, :]],  cLst='rb')
+fig.show()
+
+
+# aa = np.ndarray([5, 3])

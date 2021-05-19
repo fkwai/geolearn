@@ -70,9 +70,12 @@ def initSubset(caseName):
     saveFolder = caseFolder(caseName)
     subsetFile = os.path.join(saveFolder, 'subset.json')
     dictSubset = dict(
-        all=dict(dateLst=[None, None], siteNoLst=None, mask=None))
+        all=dict(sd=None, ed=None, siteNoLst=None, mask=False))
     with open(subsetFile, 'w') as fp:
         json.dump(dictSubset, fp, indent=4)
+    maskFolder = os.path.join(saveFolder, 'mask')
+    if not os.path.exists(maskFolder):
+        os.mkdir(maskFolder)
 
 
 def readSiteTS(siteNo, varLst, freq='D', area=None,
