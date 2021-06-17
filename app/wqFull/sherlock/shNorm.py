@@ -6,12 +6,13 @@ from hydroDL.master import basinFull
 dataNameLst = ['G200Norm', 'G400Norm']
 
 for dataName in dataNameLst:
-    DF = dbBasin.DataFrameBasin(dataName)
-    varX = DF.varF+DF.varQ
+    # DF = dbBasin.DataFrameBasin(dataName)
+    varX = gridMET.varLst+ntn.varLst+GLASS.varLst+dbBasin.io.varTLst
     mtdX = dbBasin.io.extractVarMtd(varX)
     varY = [c+'-N' for c in usgs.newC]
     mtdY = dbBasin.io.extractVarMtd(varY)
-    varXC = DF.varG
+    varXC = gageII.varLst + \
+        [c+'-M' for c in usgs.newC] + [c+'-S' for c in usgs.newC]
     mtdXC = dbBasin.io.extractVarMtd(varXC)
     varYC = None
     mtdYC = dbBasin.io.extractVarMtd(varYC)
