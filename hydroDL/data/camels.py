@@ -239,7 +239,7 @@ def calStatAll():
         statDict[var] = calStat(attrData[:, k])
     statFile = os.path.join(dirDB, 'Statistics_basinnorm.json')
     with open(statFile, 'w') as fp:
-        json.dump(statDict, fp, indent=4)
+        (statDict, fp, indent=4)
 
 
 # module variable

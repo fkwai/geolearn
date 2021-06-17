@@ -59,30 +59,20 @@ dictStat = {
     '39087': 'log-norm',
     '70303': 'log-norm',
     '71846': 'log-norm',
-    '80154': 'log-norm',
-    '00010-R': 'norm',
-    '00095-R': 'log2-norm',
-    '00300-R': 'norm',
-    '00400-R': 'norm',
-    '00405-R': 'log2-norm',
-    '00600-R': 'log2-norm',
-    '00605-R': 'log2-norm',
-    '00618-R': 'log2-norm',
-    '00660-R': 'log2-norm',
-    '00665-R': 'log2-norm',
-    '00681-R': 'log2-norm',
-    '00915-R': 'log2-norm',
-    '00925-R': 'log2-norm',
-    '00930-R': 'log2-norm',
-    '00935-R': 'log2-norm',
-    '00940-R': 'log2-norm',
-    '00945-R': 'log2-norm',
-    '00950-R': 'log2-norm',
-    '00955-R': 'log2-norm',
-    '70303-R': 'log2-norm',
-    '71846-R': 'log2-norm',
-    '80154-R': 'norm'
+    '80154': 'log-norm'
 }
+
+# update stat mtd for mean, std and norm
+dictStatApp = dict()
+for code in newC:
+    dictStatApp[code+'-N'] = 'skip'
+    if code in ['00010', '00300', '00400']:
+        dictStatApp[code+'-M'] = 'norm'
+        dictStatApp[code+'-S'] = 'norm'
+    else:
+        dictStatApp[code+'-M'] = 'log-norm'
+        dictStatApp[code+'-S'] = 'log-norm'
+dictStat.update(dictStatApp)
 
 # code of remarks
 dfFlagC = pd.DataFrame([

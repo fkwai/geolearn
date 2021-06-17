@@ -1,51 +1,52 @@
+from joblib import Parallel, delayed
+import importlib
+from hydroDL.master import basins
+from hydroDL.app import waterQuality
+from hydroDL import kPath, utils
+from hydroDL.model import trainTS
+from hydroDL.data import gageII, usgs
+from hydroDL.post import axplot, figplot
+from hydroDL.data import usgs, gageII, gridMET, ntn, transform
+import torch
 import os
 import json
 import numpy as np
 import pandas as pd
 import time
-from hydroDL import kPath, utils
-from hydroDL.data import usgs, transform, dbBasin
+import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
+startDate = pd.datetime(1982, 1, 1)
+endDate = pd.datetime(2019, 1, 1)
 sn = 1
+codeLst = usgs.newC
+
+dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
+dictSiteName = 'dictWeathering.json'
+with open(os.path.join(dirSel, dictSiteName)) as f:
+    dictSite = json.load(f)
+siteNoLst = dictSite['k12']
+
+t0 = time.time()
+
+dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-D',)
+dirOut = os.path.join(dirRoot, 'weathering-pkY5')
+for folder in [dirRoot, dirOut]:
+    if not os.path.exists(folder):
+        os.mkdir(folder)
 
 
-def loadSite(siteNo, freq='D', trainSet='B10', the=[150, 50], codeLst=usgs.varC):
-    dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-{}'.format(freq))
-    dirOut = os.path.join(dirRoot, trainSet)
-    saveName = os.path.join(dirOut, siteNo+'.csv')
-    if os.path.exists(saveName):
-        dfW = pd.read_csv(saveName, index_col=None).set_index('date')
-    else:
-        print('do calWRTDS before')
-        dfW = calWRTDS(siteNo, freq, trainSet=trainSet,
-                       the=the, codeLst=usgs.varC)
-    return dfW[codeLst]
-
-
-def loadMat(siteNoLst, codeLst, freq='D', trainSet='B10'):
-    dfW = loadSite(siteNoLst[0])
-    nt = len(dfW)
-    out = np.ndarray([nt, len(siteNoLst), len(siteNoLst)])
-    for indS, siteNo in enumerate(siteNoLst):
-        for indC, code in enumerate(codeLst):
-            dfW = loadSite(siteNo, freq=freq,
-                           trainSet=trainSet, codeLst=codeLst)
-            out[:, indS, indC] = dfW[codeLst].values
-
-
-def calWRTDS(siteNo, freq, trainSet='B10', the=[150, 50], fitAll=True, codeLst=usgs.varC, reCal=False):
-    dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-{}'.format(freq))
-    dirOut = os.path.join(dirRoot, trainSet)
+def func(siteNo):
+    # prep data
+    fitAll = True
+    # print(siteNo)
     saveName = os.path.join(dirOut, siteNo)
     if os.path.exists(saveName):
-        print('calculated {}'.format(siteNo))
-        if reCal is False:
-            return
+        return()
     t0 = time.time()
     varQ = '00060'
     varLst = codeLst+[varQ]
-    df = dbBasin.readSiteTS(siteNo, varLst=varLst, freq=freq)
+    df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='D')
     dfYP = pd.DataFrame(index=df.index, columns=codeLst)
     dfX = pd.DataFrame({'date': df.index}).set_index('date')
     dfX = dfX.join(np.log(df[varQ]+sn)).rename(
@@ -57,15 +58,14 @@ def calWRTDS(siteNo, freq, trainSet='B10', the=[150, 50], fitAll=True, codeLst=u
     dfX['yr'] = yr
     dfX['t'] = t
     xVarLst = ['yr', 'logQ', 'sinT', 'cosT']
-    ind1, ind2 = defineTrainSet(df.index, trainSet)
+    yrIn = np.arange(1985, 2020, 5).tolist()
     # train / test
-    fitCodeLst = list()
-    for code in codeLst:
-        b1 = df.iloc[ind1][code].dropna().shape[0] > the[0]
-        b2 = df.iloc[ind2][code].dropna().shape[0] > the[1]
-        if b1 and b2:
-            fitCodeLst.append(code)
+    fitCodeLst = ['00915', '00925', '00930',
+                  '00935', '00940', '00945', '00955']
     for code in fitCodeLst:
+        print(siteNo, code)
+        ind1 = np.where(~np.in1d(yr, yrIn))[0]
+        ind2 = np.where(np.in1d(yr, yrIn))[0]
         dfXY = dfX.join(np.log(df[code]+sn))
         df1 = dfXY.iloc[ind1].dropna()
         if fitAll:
@@ -106,15 +106,12 @@ def calWRTDS(siteNo, freq, trainSet='B10', the=[150, 50], fitAll=True, codeLst=u
             yp = model.predict(xp)[0]
             dfYP.loc[t][code] = np.exp(yp)-sn
         t1 = time.time()
-        print(siteNo, code, t1-t0)
+        print(siteNoLst.index(siteNo), siteNo, code, t1-t0)
     saveName = os.path.join(dirOut, siteNo)
     dfYP.to_csv(saveName)
-    return dfYP
+    return
 
 
-def defineTrainSet(t, trainSet):
-    if trainSet == 'B10':
-        yr = t.year.values
-        ind1 = np.where(yr < 2010)[0]
-        ind2 = np.where(yr >= 2010)[0]
-    return ind1, ind2
+results = Parallel(n_jobs=6)(delayed(func)(siteNo) for siteNo in siteNoLst)
+# for siteNo in siteNoLst:
+#     func(siteNo)

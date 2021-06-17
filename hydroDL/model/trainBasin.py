@@ -140,20 +140,13 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
 
     # training
     matB = ~np.isnan(dataLst[2][rho:, :, :])
+    nD = np.sum(np.any(matB, axis=2))
     if nIterEp is None:
         if optBatch == 'Random':
-            if nbatch*rho > ns*nt:
-                nIterEp = 1
-            else:
-                nIterEp = int(
-                    np.ceil(np.log(0.01) / np.log(1 - nbatch*rho/ns/nt)))
-        elif optBatch == 'Weight':
-            nSample = np.sum(matB)
-            if nbatch*ny > nSample:
-                nIterEp = 1
-            else:
-                nIterEp = int(
-                    np.ceil(np.log(0.01) / np.log(1 - nbatch*ny/nSample)))
+            pr = nbatch*rho/ns/nt
+        elif optBatch == 'Weight':            
+            pr = nbatch*rho/(ns*nt)*nD/(ns*nt)
+        nIterEp = 1 if pr < 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
     print('iter per epoch {}'.format(nIterEp), flush=True)
     lossEp = 0
     lossEpLst = list()
@@ -182,7 +175,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
             else:
                 loss = lossFun(yP, yT)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optim.step()
             # test for nans
             for name, par in model.named_parameters():
@@ -190,11 +183,12 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
                     if torch.any(torch.isnan(par)):
                         print('nan par in {} epoch {}'.format(
                             name, iEp+cEp), flush=True)
-            model.zero_grad()
+            # model.zero_grad()
             lossEp = lossEp + loss.item()
             # except:
             #     print('iteration Failed: iter {} ep {}'.format(iIter, iEp+cEp))
         lossEp = lossEp / nIterEp
+        model.zero_grad()
         ct = time.time() - t0
         logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp+cEp, lossEp, ct)
         print(logStr, flush=True)

@@ -56,6 +56,14 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
 
     # save
+    saveDataFrame(caseName, c=c, q=q, f=f, g=g, varC=varC, varQ=varQ,
+                  varF=varF, varG=varG, sdStr=sdStr, edStr=edStr,
+                  freq=freq, siteNoLst=siteNoLst)
+
+
+def saveDataFrame(caseName, *, c, q, f, g, varC, varQ, varF, varG,
+                  sdStr, edStr, freq, siteNoLst):
+    # save
     saveFolder = caseFolder(caseName)
     if not os.path.exists(saveFolder):
         os.mkdir(saveFolder)
@@ -81,7 +89,7 @@ def initSubset(caseName):
 def readSiteTS(siteNo, varLst, freq='D', area=None,
                sd=np.datetime64('1979-01-01'),
                ed=np.datetime64('2019-12-31'),
-               rmFlag=False):
+               rmFlag=True):
     # read data
     td = pd.date_range(sd, ed)
     varC = list(set(varLst).intersection(usgs.varC))

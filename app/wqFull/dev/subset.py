@@ -19,38 +19,43 @@ siteNoLst = dictSite['k12']
 dataName = 'weathering'
 sd = '1982-01-01'
 ed = '2018-12-31'
+
 dataName = 'weathering'
 freq = 'D'
-DM = dbBasin.DataModelFull.new(
+DF = dbBasin.DataFrameBasin.new(
     dataName, siteNoLst, sdStr=sd, edStr=ed, freq=freq)
 
-siteNoTemp = DM.siteNoLst[:5]
+siteNoTemp = DF.siteNoLst[:5]
 
 importlib.reload(dbBasin)
-DM.saveSubset('B10', ed='2009-12-31')
-DM.saveSubset('A10', sd='2010-01-01')
+DF.saveSubset('B10', ed='2009-12-31')
+DF.saveSubset('A10', sd='2010-01-01')
 
+# pick by year
 yrIn = np.arange(1985, 2020, 5).tolist()
-t1 = dbBasin.func.pickByYear(DM.t, yrIn)
-t2 = dbBasin.func.pickByYear(DM.t, yrIn, pick=False)
+t1 = dbBasin.func.pickByYear(DF.t, yrIn)
+t2 = dbBasin.func.pickByYear(DF.t, yrIn, pick=False)
+DF.createSubset('pkYr5', dateLst=t1)
+DF.createSubset('rmYr5', dateLst=t2)
 
-DM.createSubset('pkYr5', dateLst=t1)
-DM.createSubset('rmYr5', dateLst=t2)
+# pick by day
+t1 = dbBasin.func.pickByDay(DF.t, dBase=5, dSel=1)
+t2 = dbBasin.func.pickByDay(DF.t, dBase=5, dSel=1, pick=False)
+DF.createSubset('pkD5', dateLst=t1)
+DF.createSubset('rmD5', dateLst=t2)
 
-DM.createSubset('test', dateLst=t2, sd='2000-01-01',
-                ed='2010-01-01', siteNoLst=siteNoTemp)
+# pick by random
+t1 = dbBasin.func.pickRandT(DF.t, 0.2)
+t2 = dbBasin.func.pickRandT(DF.t, 0.2, pick=False)
+DF.createSubset('pkRT20', dateLst=t1)
+DF.createSubset('rmRT20', dateLst=t2)
 
-
-dictSub = DM.loadSubset()
-indT1, indT2, indS, mask = DM.readSubset('rmYr5')
-
-d1 = dbBasin.DataTrain(DM, subset='pkYr5')
-d2 = dbBasin.DataTrain(DM, subset='rmYr5')
+# plot
+codeSel = ['00915', '00925', '00930', '00935', '00940', '00945', '00955']
+d1 = dbBasin.DataModelBasin(DF, subset='pkR20', varY=codeSel)
+d2 = dbBasin.DataModelBasin(DF, subset='rmR20', varY=codeSel)
 
 k = 0
 fig, axes = figplot.multiTS(
-    d2.t, [d1.Y[:, k, :], d2.Y[:, k, :]],  cLst='rb')
+    d2.t, [d2.Y[:, k, :], d1.Y[:, k, :]],  cLst='br', styLst='..')
 fig.show()
-
-
-# aa = np.ndarray([5, 3])

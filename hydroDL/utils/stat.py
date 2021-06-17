@@ -63,7 +63,7 @@ def calCorr(pred, obs):
 
 def calBias(pred, obs):
     # data in [nT,nS]
-    bias = np.abs(np.nanmean(pred, axis=0)-np.nanmean(obs, axis=0))
+    bias = np.nanmean(pred, axis=0)-np.nanmean(obs, axis=0)
     return bias
 
 

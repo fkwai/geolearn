@@ -1,30 +1,43 @@
-
-from scipy import sparse
-import os
 import numpy as np
-dirData = r'C:\Users\geofk\work\waterQuality\trainDataFull\Q90ref'
+import pandas as pd
+from hydroDL import kPath
+from hydroDL.data import usgs, gageII, gridMET, ntn, transform, GLASS
+from hydroDL.app import waterQuality
+import matplotlib.pyplot as plt
+from hydroDL.post import axplot, figplot
 
-cFile = os.path.join(dirData, 'c.npy')
-qFile = os.path.join(dirData, 'q.npy')
-cFile2 = os.path.join(dirData, 'c.npz')
-qFile2 = os.path.join(dirData, 'q.npz')
+siteNo = '10343500'
+dfV = GLASS.readBasin(siteNo)
 
-c = np.load(cFile)
-q = np.load(qFile)
+varF = gridMET.varLst+ntn.varLst+['distNTN']
+varC = usgs.varC
+varQ = usgs.varQ
+varG = gageII.lstWaterQuality
+varLst = varQ+varC+varF
+df = waterQuality.readSiteTS(siteNo, varLst=varLst, freq='D')
+df = df.join(dfV)
 
-len(np.where(~np.isnan(c))[0])
-len(np.where(~np.isnan(q))[0])
+pVar = ['00915', 'NPP', '00060']
+fig, axes = plt.subplots(len(pVar), 1)
+for k, var in enumerate(pVar):
+    axplot.plotTS(axes[k], df.index, df[var])
+fig.show()
 
-sc = sparse.csc_matrix(c[:, :, 0])
-sparse.save_npz(cFile2, sc)
 
-np.savez_compressed(qFile2, q=q)
-np.save(qFile, q)
+# interpolation of R
+var = 'NPP'
+sdStr = '1982-01-01'
+edStr = '2018-12-31'
+tR = pd.date_range(np.datetime64(sdStr), np.datetime64(edStr))
+dfVP = pd.DataFrame({'date': tR}).set_index('date').join(df[var])
+dfVP = dfVP.interpolate(method='cubicspline')
+fig, ax = plt.subplots(1, 1)
+axplot.plotTS(ax, dfV.index, dfV[var], styLst='*', cLst='r')
+axplot.plotTS(ax, dfVP.index, dfVP[var], styLst='-', cLst='b')
+fig.show()
 
-q.save(qFile)
-
-np.savez_compressed(cFile2, c=c)
-
-cc=np.load(cFile2)
-
-# savez_compressed is the one I need!!!
+fig, ax = plt.subplots(1, 1)
+ax2 = ax.twinx()
+ax.plot(df.index, df['00915'], '*r')
+ax2.plot(dfVP.index, dfVP['NPP'],'-b')
+fig.show()

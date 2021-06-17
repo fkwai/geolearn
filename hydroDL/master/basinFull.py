@@ -9,19 +9,18 @@ import warnings
 from hydroDL import kPath, utils
 from hydroDL.data import usgs, gageII, gridMET, transform, dbBasin
 from hydroDL.model import rnn, crit, trainBasin
-# from sklearn.linear_model import LinearRegression
 
 
 defaultMaster = dict(
-    dataName='test', trainName='all', outName=None,
+    dataName='test', trainSet='all', outName=None,
     hiddenSize=256, batchSize=[365, 500],
     nEpoch=500, saveEpoch=100, resumeEpoch=0,
     optNaN=[1, 1, 0, 0], overwrite=True,
     modelName='LstmModel', crit='RmseLoss', optim='AdaDelta',
     varX=gridMET.varLst, varXC=gageII.varLst,
-    varY=['00060'], varYC=None,
-    sd='1979-01-01', ed='2010-01-01', subset='all', borrowStat=None,
-    optBatch='Weight', nIterEp=None
+    varY=['00060'], varYC=None, borrowStat=None,
+    optBatch='Weight', nIterEp=None,
+    mtdX=None, mtdY=None, mtdXC=None, mtdYC=None
 )
 
 
@@ -40,7 +39,7 @@ def wrapMaster(**kw):
 
     # create model folder
     if dictPar['outName'] is None:
-        dictPar['outName'] = dictPar['dataName']+'_'+dictPar['trainName']
+        dictPar['outName'] = dictPar['dataName']+'_'+dictPar['trainSet']
     outFolder = nameFolder(dictPar['outName'])
     if os.path.exists(outFolder):
         if dictPar['overwrite'] is False:
@@ -66,27 +65,6 @@ def loadMaster(outName):
     mm = defaultMaster.copy()
     mm.update(master)
     return mm
-
-
-def wrapStat(outName, statTup):
-    outFolder = nameFolder(outName)
-    statLstTup = utils.array2Lst(statTup)
-    dictStat = dict(statX=statLstTup[0], statXC=statLstTup[1],
-                    statY=statLstTup[2], statYC=statLstTup[3])
-    with open(os.path.join(outFolder, 'stat.json'), 'w') as fp:
-        json.dump(dictStat, fp)
-
-
-def loadStat(outName):
-    outFolder = nameFolder(outName)
-    statFile = os.path.join(outFolder, 'stat.json')
-    with open(statFile, 'r') as fp:
-        dictStat = json.load(fp)
-        statLstTup = (dictStat['statX'], dictStat['statXC'],
-                      dictStat['statY'], dictStat['statYC'])
-        statAryTup = utils.lst2Ary(statLstTup)
-        statX, statXC, statY, statYC = statAryTup
-    return statX, statXC, statY, statYC
 
 
 def loadModel(outName, ep=None, opt=False):
@@ -118,17 +96,17 @@ def trainModel(outName):
     dictP = loadMaster(outName)
 
     # load data
-    DM = dbBasin.DataModelFull(dictP['dataName'])
-    varTup = (dictP['varX'], dictP['varXC'], dictP['varY'], dictP['varYC'])
-    dataTup = DM.extractData(
-        varTup, dictP['subset'], dictP['sd'], dictP['ed'])
-    if dictP['borrowStat'] is None:
-        dataTup, statTup = DM.transIn(dataTup, varTup)
-    else:
-        statTup = loadStat(dictP['borrowStat'])
-        dataTup = DM.transIn(dataTup, varTup, statTup=statTup)
+    DF = dbBasin.DataFrameBasin(dictP['dataName'])
+    dictVar = {k: dictP[k]
+               for k in ('varX', 'varXC', 'varY', 'varYC')}
+    DM = dbBasin.DataModelBasin(DF, subset=dictP['trainSet'], **dictVar)
+    if dictP['borrowStat'] is not None:
+        DM.loadStat(dictP['borrowStat'])
+    DM.trans(mtdX=dictP['mtdX'], mtdXC=dictP['mtdXC'],
+             mtdY=dictP['mtdY'], mtdYC=dictP['mtdYC'])
+    DM.saveStat(outFolder)
+    dataTup = DM.getData()
     dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
-    wrapStat(outName, statTup)
 
     # train model
     [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
@@ -175,11 +153,11 @@ def trainModel(outName):
     pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
 
-def testModel(outName,  DM=None, testSet='all', ep=None, reTest=False, batchSize=20):
+def testModel(outName,  DF=None, testSet='all', ep=None, reTest=False, batchSize=20):
     # load master
-    master = loadMaster(outName)
+    dictP = loadMaster(outName)
     if ep is None:
-        ep = master['nEpoch']
+        ep = dictP['nEpoch']
     outFolder = nameFolder(outName)
     testFileName = 'testP-{}-Ep{}.npz'.format(testSet, ep)
     testFile = os.path.join(outFolder, testFileName)
@@ -190,41 +168,25 @@ def testModel(outName,  DM=None, testSet='all', ep=None, reTest=False, batchSize
         yP = npz['yP']
         ycP = npz['ycP']
     else:
-        statTup = loadStat(outName)
         model = loadModel(outName, ep=ep)
         # load test data
-        if DM is None:
-            DM = dbBasin.DataModelFull(master['dataName'])
-        varTup = (master['varX'], master['varXC'],
-                  master['varY'], master['varYC'])
-        # test for full sequence for now
-        sd = '1979-01-01'
-        ed = '2020-01-01'
-        dataTup = DM.extractData(varTup, testSet, sd, ed)
-        dataTup = DM.transIn(dataTup, varTup, statTup=statTup)
+        if DF is None:
+            DF = dbBasin.DataFrameBasin(dictP['dataName'])
+        dictVar = {k: dictP[k]
+                   for k in ('varX', 'varXC', 'varY', 'varYC')}
+        DM = dbBasin.DataModelBasin(DF, subset=testSet, **dictVar)
+        DM.loadStat(outFolder)
+        dataTup = DM.getData()
         sizeLst = trainBasin.getSize(dataTup)
-        if master['optNaN'] == [2, 2, 0, 0]:
-            master['optNaN'] = [0, 0, 0, 0]
-        dataTup = trainBasin.dealNaN(dataTup, master['optNaN'])
+        dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
         x = dataTup[0]
         xc = dataTup[1]
         ny = sizeLst[2]
         # test model - point by point
         yOut, ycOut = trainBasin.testModel(
             model, x, xc, ny, batchSize=batchSize)
-        yP = DM.transOut(yOut, statTup[2], master['varY'])
-        ycP = DM.transOut(ycOut, statTup[3], master['varYC'])
+        yP = DM.transOutY(yOut)
+        ycP = DM.transOutYC(ycOut)
         np.savez(testFile, yP=yP, ycP=ycP)
     return yP, ycP
 
-
-def getObs(outName, testSet, DM=None):
-    master = loadMaster(outName)
-    sd = '1979-01-01'
-    ed = '2020-01-01'
-    if DM is None:
-        DM = dbBasin.DataModelFull(master['dataName'])
-    varTup = (master['varX'], master['varXC'], master['varY'], master['varYC'])
-    dataTup = DM.extractData(varTup, testSet, sd, ed)
-    yT, ycT = dataTup[2:]
-    return yT, ycT

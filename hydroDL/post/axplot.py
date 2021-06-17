@@ -1,4 +1,4 @@
-from mpl_toolkits import basemap
+# from mpl_toolkits import basemap
 import matplotlib.pyplot as plt
 import numpy as np
 from hydroDL import utils
@@ -79,7 +79,7 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='krbgcmy', legLst=None, sd=
     return ax
 
 
-def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', tBar=None):
+def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', styLst=None, tBar=None):
     # dataPlot - list [ndarray1[nt,ny], ndarray2[nt,ny], ...]
     # or just ndarray1[nt,ny]
     if type(dataPlot) is list:
@@ -92,7 +92,7 @@ def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', tBar=None):
             temp = [data[:, k] for data in dataPlot]
         elif type(dataPlot) is np.ndarray:
             temp = dataPlot[:, k]
-        plotTS(axes[k], t, temp, cLst=cLst, tBar=tBar)
+        plotTS(axes[k], t, temp, cLst=cLst, styLst=styLst, tBar=tBar)
         axes[k].set_xlim(t[0], t[-1])
         if labelLst is not None:
             titleInner(axes[k], labelLst[k])
@@ -195,6 +195,10 @@ def sortData(x):
     return xSort
 
 
-def titleInner(ax, titleStr):
-    _ = ax.text(.5, .9, titleStr, horizontalalignment='center',
-                transform=ax.transAxes)
+def titleInner(ax, titleStr, top=True):
+    if top:
+        _ = ax.text(.5, .9, titleStr, horizontalalignment='center',
+                    transform=ax.transAxes)
+    else:
+        _ = ax.text(.5, .1, titleStr, horizontalalignment='center',
+                    transform=ax.transAxes)
