@@ -3,7 +3,7 @@ from hydroDL.master import slurm
 from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
 
-dataNameLst = ['G200Norm', 'G400Norm']
+dataNameLst = ['G400Norm', 'G200Norm']
 
 for dataName in dataNameLst:
     # DF = dbBasin.DataFrameBasin(dataName)
@@ -26,4 +26,18 @@ for dataName in dataNameLst:
                                  nEpoch=500, batchSize=[365, 1000],
                                  mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
+    # slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
+    basinFull.trainModel(outName)
+
+    DF = dbBasin.DataFrameBasin(dictP['dataName'])
+    dictVar = {k: dictP[k]
+               for k in ('varX', 'varXC', 'varY', 'varYC')}
+    DM = dbBasin.DataModelBasin(DF, subset=dictP['trainSet'], **dictVar)
+    dataTup = DM.getDataRaw()
+    [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
+    [rho, nbatch] = [365, 1000]
+    matB = ~np.isnan(dataTup[2][rho:, :, :])
+    nD = np.sum(np.any(matB, axis=2))
+    pr = nbatch*rho/ns/nt*nD/ns/nt
+    int(np.ceil(np.log(0.01) / np.log(1 - pr)))
+

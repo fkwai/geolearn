@@ -145,8 +145,8 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
         if optBatch == 'Random':
             pr = nbatch*rho/ns/nt
         elif optBatch == 'Weight':            
-            pr = nbatch*rho/(ns*nt)*nD/(ns*nt)
-        nIterEp = 1 if pr < 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
+            pr = nD/ns/nt*nbatch*rho/ns/nt # careful number may go above limit
+        nIterEp = 1 if pr > 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
     print('iter per epoch {}'.format(nIterEp), flush=True)
     lossEp = 0
     lossEpLst = list()
