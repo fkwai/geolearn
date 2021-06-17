@@ -26,4 +26,4 @@ for dataName in dataNameLst:
                                  varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                                  mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
+    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
