@@ -1,11 +1,7 @@
-import pandas as pd
-from hydroDL.data import dbBasin
-import numpy as np
-import matplotlib.pyplot as plt
+
 import os
 from hydroDL.master import basinFull
 import torch
-from hydroDL.model import rnn, crit, trainBasin
 
 outLst = ['G200Norm', 'G400Norm']
 epLst = list(range(100, 1100, 100))
