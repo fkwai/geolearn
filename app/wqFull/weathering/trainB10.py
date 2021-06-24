@@ -20,20 +20,26 @@ dataName = 'weathering'
 freq = 'D'
 # DM = dbBasin.DataModelFull.new(
 #     dataName, siteNoLst, sdStr=sd, edStr=ed, freq=freq)
-DM = dbBasin.DataModelFull(dataName)
+DF = dbBasin.DataFrameBasin(dataName)
 codeSel = ['00915', '00925', '00930', '00935', '00940', '00945', '00955']
 
 label = 'FPR2QC'
 varX = dbBasin.label2var(label.split('2')[0])
+mtdX = dbBasin.io.extractVarMtd(varX)
 varY = codeSel
+mtdY = dbBasin.io.extractVarMtd(varY)
 varXC = gageII.varLst
+mtdXC = dbBasin.io.extractVarMtd(varXC)
 varYC = None
+mtdYC = dbBasin.io.extractVarMtd(varYC)
+
 sd = '1982-01-01'
 ed = '2009-12-31'
 rho = 365
+trainSet = 'B10'
 outName = '{}-{}-t{}-B10'.format(dataName, label, rho)
-dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
+dictP = basinFull.wrapMaster(outName=outName, dataName=dataName, trainSet=trainSet,
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
-                             sd=sd, ed=ed, nEpoch=100,
-                             batchSize=[rho, 200], nIterEp=20)
+                             nEpoch=100, batchSize=[rho, 200], nIterEp=20,
+                             mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
 basinFull.trainModel(outName)

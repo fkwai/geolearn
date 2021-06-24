@@ -7,7 +7,7 @@ from hydroDL import kPath, utils
 from hydroDL.data import usgs, transform, dbBasin
 import statsmodels.api as sm
 
-sn = 1
+sn = 1e-5
 
 
 def loadSite(siteNo, freq='D', trainSet='B10', the=[150, 50], codeLst=usgs.varC):
@@ -34,7 +34,7 @@ def loadMat(siteNoLst, codeLst, freq='D', trainSet='B10'):
             out[:, indS, indC] = dfW[codeLst].values
 
 
-def calWRTDS(siteNo, freq, trainSet='B10', the=[150, 50], fitAll=True, codeLst=usgs.varC, reCal=False):
+def calWRTDS(siteNo, freq='D', trainSet='B10', the=[150, 50], fitAll=True, codeLst=usgs.varC, reCal=False):
     dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-{}'.format(freq))
     dirOut = os.path.join(dirRoot, trainSet)
     saveName = os.path.join(dirOut, siteNo)
@@ -84,20 +84,7 @@ def calWRTDS(siteNo, freq, trainSet='B10', the=[150, 50], fitAll=True, codeLst=u
             dS = np.min(
                 np.stack([abs(np.ceil(dY)-dY), abs(dY-np.floor(dY))]), axis=0)
             d = np.stack([dY, dQ, dS])
-            if n > 100:
-                hh = np.repeat(h[:, None], n, axis=1)
-                bW = False
-                while ~bW:
-                    bW = np.min(np.sum((hh-d) > 0, axis=1)) > 100
-                    hh = hh*1.1 if not bW else hh
-            else:
-                htemp = np.max(d, axis=1)*1.1
-                hh = np.repeat(htemp[:, None], n, axis=1)
-            w = (1-(d/hh)**3)**3
-            w[w < 0] = 0
-            wAll = w[0]*w[1]*w[2]
-            ind = np.where(wAll > 0)[0]
-            ww = wAll[ind]
+            ww, ind = calWeight(d)
             # fit WLS
             Y = df1.iloc[ind][code].values
             X = df1.iloc[ind][xVarLst].values
@@ -118,3 +105,71 @@ def defineTrainSet(t, trainSet):
         ind1 = np.where(yr < 2010)[0]
         ind2 = np.where(yr >= 2010)[0]
     return ind1, ind2
+
+
+def testWRTDS(dataName, trainSet, testSet, codeLst):
+    DF = dbBasin.DataFrameBasin(dataName)
+    # Calculate WRTDS from train and test set
+    varX = ['00060']
+    varY = codeLst
+    d1 = dbBasin.DataModelBasin(DF, subset=trainSet, varX=varX, varY=varY)
+    d2 = dbBasin.DataModelBasin(DF, subset=testSet, varX=varX, varY=varY)
+    tt = pd.to_datetime(DF.t)
+    yr = tt.year.values
+    t = yr+tt.dayofyear.values/365
+    sinT = np.sin(2*np.pi*t)
+    cosT = np.cos(2*np.pi*t)
+    ###
+    yOut = np.full([len(d2.t), len(d2.siteNoLst), len(varY)], np.nan)
+    t0 = time.time()
+    for indS, siteNo in enumerate(d2.siteNoLst):
+        for indC, code in enumerate(varY):
+            print('{} {} {} {}'.format(indS, siteNo, code, time.time()-t0))
+            y1 = d1.Y[:, indS, indC].copy()
+            q1 = d1.X[:, indS, 0].copy()
+            q1[q1 < 0] = 0
+            logq1 = np.log(q1+sn)
+            x1 = np.stack([logq1, yr, sinT, cosT]).T
+            y2 = d2.Y[:, indS, indC].copy()
+            q2 = d2.X[:, indS, 0].copy()
+            q2[q2 < 0] = 0
+            logq2 = np.log(q2+sn)
+            x2 = np.stack([logq1, yr, sinT, cosT]).T
+            [xx1, yy1], ind1 = utils.rmNan([x1, y1])
+            if testSet == 'all':
+                [xx2], ind2 = utils.rmNan([x2])
+            else:
+                [xx2, yy2], ind2 = utils.rmNan([x2, y2])
+            if len(ind1) < 50:
+                continue
+            for k in ind2:
+                dY = np.abs(t[k]-t[ind1])
+                dQ = np.abs(logq2[k]-logq1[ind1])
+                dS = np.min(
+                    np.stack([abs(np.ceil(dY)-dY), abs(dY-np.floor(dY))]), axis=0)
+                d = np.stack([dY, dQ, dS])
+                ww, ind = calWeight(d)
+                model = sm.WLS(yy1[ind], xx1[ind], weights=ww).fit()
+                yp = model.predict(x2[k, :])[0]
+                yOut[k, indS, indC] = yp
+    return yOut
+
+
+def calWeight(d, h=[7, 2, 0.5], the=100):
+    # window [Y Q S] from EGRET
+    n = d.shape[1]
+    if n > the:
+        hh = np.tile(h, [n, 1]).T
+        bW = False
+        while ~bW:
+            bW = np.sum(np.all(hh > d, axis=0)) > the
+            hh = hh*1.1 if not bW else hh
+    else:
+        htemp = np.max(d, axis=1)*1.1
+        hh = np.repeat(htemp[:, None], n, axis=1)
+    w = (1-(d/hh)**3)**3
+    w[w < 0] = 0
+    wAll = w[0]*w[1]*w[2]
+    ind = np.where(wAll > 0)[0]
+    ww = wAll[ind]
+    return ww, ind

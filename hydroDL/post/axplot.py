@@ -61,7 +61,7 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='krbgcmy', legLst=None, sd=
         # find out continuous / distinct
         if styLst is None:
             [_, _], ind = utils.rmNan([t, yy])
-            r = len(ind)/(ind[-1]-ind[0])
+            r = len(ind)/(ind[-1]-ind[0]) if len(ind) > 0 else 0
             sty = '-' if r > 0.9 else '*'
         else:
             sty = styLst[k]

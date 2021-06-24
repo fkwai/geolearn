@@ -120,7 +120,7 @@ def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',
         if legOnly is True:
             ax.set_position([0, 0, 0.1, 1])
             ax.legend(bp['boxes'], label2, bbox_to_anchor=(1, 1))
-    return fig
+    return fig, axes
 
 
 def tsYr(t, y, cLst='rbkgcmy', figsize=(12, 4), showCorr=False):

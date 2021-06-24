@@ -168,7 +168,6 @@ def testModel(outName,  DF=None, testSet='all', ep=None, reTest=False, batchSize
         yP = npz['yP']
         ycP = npz['ycP']
     else:
-        model = loadModel(outName, ep=ep)
         # load test data
         if DF is None:
             DF = dbBasin.DataFrameBasin(dictP['dataName'])
@@ -177,11 +176,23 @@ def testModel(outName,  DF=None, testSet='all', ep=None, reTest=False, batchSize
         DM = dbBasin.DataModelBasin(DF, subset=testSet, **dictVar)
         DM.loadStat(outFolder)
         dataTup = DM.getData()
-        sizeLst = trainBasin.getSize(dataTup)
+        [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
         dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
+        # load model
+        if dictP['modelName'] == 'CudnnLSTM':
+            model = rnn.CudnnLstmModel(
+                nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
+        elif dictP['modelName'] == 'LstmModel':
+            model = rnn.LstmModel(
+                nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
+        else:
+            raise RuntimeError('Model not specified')
+        outFolder = nameFolder(outName)
+        modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
+        model.load_state_dict(torch.load(modelStateFile))
+        # test
         x = dataTup[0]
         xc = dataTup[1]
-        ny = sizeLst[2]
         # test model - point by point
         yOut, ycOut = trainBasin.testModel(
             model, x, xc, ny, batchSize=batchSize)

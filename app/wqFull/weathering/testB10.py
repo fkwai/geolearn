@@ -8,29 +8,30 @@ from hydroDL.post import axplot, figplot
 import matplotlib.pyplot as plt
 from hydroDL import utils
 import os
+from hydroDL.app.waterQuality import WRTDS
 
 sd = '1982-01-01'
 ed = '2018-12-31'
 dataName = 'weathering'
 codeSel = ['00915', '00925', '00930', '00935', '00940', '00945', '00955']
 rho = 365
-label = 'QFPRT2C'
-# label = 'FPR2QC'
+# label = 'QFPRT2C'
+label = 'FPR2QC'
 outName = '{}-{}-t{}-B10'.format(dataName, label, rho)
-dm = dbBasin.DataModelFull(dataName)
+DF = dbBasin.DataFrameBasin(dataName)
 testSet = 'all'
 yP, ycP = basinFull.testModel(
-    outName, DM=dm, batchSize=20, testSet=testSet, ep=100)
-yO = dm.extractVarT(codeSel)
-siteNoLst = dm.siteNoLst
+    outName, DF=DF, batchSize=20, testSet=testSet, ep=100)
+yO = DF.extractT(codeSel)
+siteNoLst = DF.siteNoLst
 
 
 t0 = np.datetime64('1982-01-01', 'D')
 t1 = np.datetime64('2010-01-01', 'D')
 t2 = np.datetime64('2018-12-31', 'D')
-indT0 = np.where(dm.t == t0)[0][0]
-indT1 = np.where(dm.t == t1)[0][0]
-indT2 = np.where(dm.t == t2)[0][0]
+indT0 = np.where(DF.t == t0)[0][0]
+indT1 = np.where(DF.t == t1)[0][0]
+indT2 = np.where(DF.t == t2)[0][0]
 
 # load WRTDS
 yW = np.ndarray(yO.shape)
@@ -43,6 +44,8 @@ for k, siteNo in enumerate(siteNoLst):
     ind = (df.index >= t0) & (df.index <= t2)
     yW[:, k, :] = df.loc[ind][codeSel].values
 
+yW2 = WRTDS.testWRTDS(dataName, 'B10', 'all', codeSel)
+
 # calculate err
 errL = np.ndarray([len(siteNoLst), len(codeSel), 2])
 errW = np.ndarray([len(siteNoLst), len(codeSel), 2])
@@ -52,9 +55,19 @@ for k, siteNo in enumerate(siteNoLst):
     errL[k, :, 1] = utils.stat.calCorr(
         yP[indT1:indT2, k, :], yO[indT1:indT2, k, :])
     errW[k, :, 0] = utils.stat.calCorr(
-        yW[indT0:indT1, k, :], yO[indT0:indT1, k, :])
+        yW2[indT0:indT1, k, :], yO[indT0:indT1, k, :])
     errW[k, :, 1] = utils.stat.calCorr(
-        yW[indT1:indT2, k, :], yO[indT1:indT2, k, :])
+        yW2[indT1:indT2, k, :], yO[indT1:indT2, k, :])
+
+# box plot
+labelLst = [usgs.codePdf.loc[code]['shortName'] +
+            '\n'+code for code in codeSel]
+temp = list()
+for ic, code in enumerate(codeSel):
+    temp.append([errL[:, ic, 1], errW[:, ic, 1]])
+fig, axes = figplot.boxPlot(temp, widths=0.5, figsize=(12, 4),
+                            label2=['LSTM', 'WRTDS'], label1=labelLst,  sharey=True)
+fig.show()
 
 
 dfCrd = gageII.readData(siteNoLst=siteNoLst, varLst=[

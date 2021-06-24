@@ -178,6 +178,7 @@ class DataFrameBasin():
             mask = np.load(maskFile)
         else:
             mask = False
+        # out = np.
         return indT1, indT2, indS, mask
 
     def extractSubset(self, data, subsetName=None, **kw):
