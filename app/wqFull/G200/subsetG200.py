@@ -84,7 +84,7 @@ for code in DF.varC:
         n2 = np.sum(y, axis=0)
         indS = np.where((n1 > 160) & (n2 > 40))[0]
         # temp.append(n2[indS]/n1[indS])
-        df.at[code, trainSet]=len(indS)
+        df.at[code, trainSet] = len(indS)
         temp.append(n1[indS])
     dataBox.append(temp)
 labLst1 = ['{}\n{}'.format(usgs.codePdf.loc[code]

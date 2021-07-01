@@ -91,6 +91,7 @@ def linearIn(dataIn, mtdLst, statIn=None):
 
     for i in range(data.shape[-1]):
         # turn out to be faster than (data-vS0)/vS1
+        vS[i, 1] = 1 if vS[i, 1] == 0 else vS[i, 1]
         data[..., i] = (data[..., i]-vS[i, 0])/vS[i, 1]
     return data, vS
 
