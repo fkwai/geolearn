@@ -11,10 +11,12 @@ maskDir = os.path.join(kPath.dirData, 'USGS', 'GLiM', 'mask_gageII_1KM')
 rasterTiff = os.path.join(kPath.dirData, 'GLiM', 'NA_gageII_1KM.tif')
 
 # siteNo
-dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
-with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
-    dictSite = json.load(f)
-siteNoLst = dictSite['comb']
+# dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
+# with open(os.path.join(dirSel, 'dictRB_Y30N5.json')) as f:
+#     dictSite = json.load(f)
+# siteNoLst = dictSite['comb']
+fileSiteNo = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoLst-1979')
+siteNoLst = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()
 
 # read raster
 tabCode = GLiM.tabCode
@@ -25,7 +27,7 @@ raster = ds.GetRasterBand(1).ReadAsArray()
 # output
 tabOut = pd.DataFrame(index=siteNoLst, columns=codeLst)
 t0 = time.time()
-for k, siteNo in enumerate(siteNoLst):
+for k, siteNo in enumerate(siteNoLst[:10]):
     mask = np.load(os.path.join(maskDir, siteNo+'.npy'))
     iy, ix = np.where(mask > 0)
     tempMask = mask[iy, ix]

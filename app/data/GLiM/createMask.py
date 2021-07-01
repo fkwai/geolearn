@@ -13,7 +13,7 @@ import pandas as pd
 
 
 basinShp = os.path.join(kPath.dirData, 'USGS',
-                        'basins', 'basinN5.shp')
+                        'basins', 'basinAll.shp')
 rasterTiff = os.path.join(kPath.dirData, 'GLiM', 'NA_gageII_1KM.tif')
 
 # get shapefile crs
@@ -57,5 +57,5 @@ for k in range(len(shapeLst)):
     mask = gis.gridMask(yP, xP, geog)
     print('basin {} {:.2f} {:.2f}'.format(k, time.time()-t1, time.time()-t0))
     outFile = os.path.join(saveDir, siteNoLst[k])
-    np.save(outFile, mask)
+    np.savez_compressed(outFile, mask)
 print('total time {}'.format(time.time() - t0))

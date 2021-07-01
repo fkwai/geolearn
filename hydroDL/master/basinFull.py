@@ -67,28 +67,37 @@ def loadMaster(outName):
     return mm
 
 
-def loadModel(outName, ep=None, opt=False):
-    outFolder = nameFolder(outName)
-    if ep is None:
-        mDict = loadMaster(outName)
-        ep = mDict['nEpoch']
-    modelFile = os.path.join(outFolder, 'model_ep{}'.format(ep))
-    model = torch.load(modelFile)
-    if opt:
-        optFile = os.path.join(outFolder, 'optim_ep{}'.format(ep))
-        optim = torch.load(optFile)
-        return model, optim
+def defineModel(dataTup, dictP):
+    [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
+    if dictP['crit'] == 'SigmaLoss':
+        ny = ny*2
+        nyc = nyc*2
+    # define model
+    if dictP['modelName'] == 'CudnnLSTM':
+        model = rnn.CudnnLstmModel(
+            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
+    elif dictP['modelName'] == 'LstmModel':
+        model = rnn.LstmModel(
+            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
     else:
-        return model
+        raise RuntimeError('Model not specified')
+    return model
 
 
-def saveModel(outName, ep, model, optim=None):
+def loadModelState(outName, model):
     outFolder = nameFolder(outName)
-    modelFile = os.path.join(outFolder, 'model_ep{}'.format(ep))
-    torch.save(model, modelFile)
+    modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
+    model.load_state_dict(torch.load(modelStateFile))
+    return model
+
+
+def saveModelState(outName, ep, model, optim=None):
+    outFolder = nameFolder(outName)
+    modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
+    torch.save(model.state_dict(), modelStateFile)
     if optim is not None:
-        optFile = os.path.join(outFolder, 'optim_ep{}'.format(ep))
-        torch.save(optim, optFile)
+        optStateFile = os.path.join(outFolder, 'optimState_ep{}'.format(ep))
+        torch.save(optim.state_dict(), optStateFile)
 
 
 def trainModel(outName):
@@ -108,22 +117,10 @@ def trainModel(outName):
     dataTup = DM.getData()
     dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
 
-    # train model
-    [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
     # define loss
     lossFun = getattr(crit, dictP['crit'])()
-    if dictP['crit'] == 'SigmaLoss':
-        ny = ny*2
-        nyc = nyc*2
     # define model
-    if dictP['modelName'] == 'CudnnLSTM':
-        model = rnn.CudnnLstmModel(
-            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
-    elif dictP['modelName'] == 'LstmModel':
-        model = rnn.LstmModel(
-            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
-    else:
-        raise RuntimeError('Model not specified')
+    model = defineModel(dataTup, dictP)
 
     if torch.cuda.is_available():
         lossFun = lossFun.cuda()
@@ -146,7 +143,7 @@ def trainModel(outName):
             nEp=sEp, cEp=k, logFile=logFile,
             optBatch=dictP['optBatch'], nIterEp=dictP['nIterEp'])
         # save model
-        saveModel(outName, k+sEp, model, optim=optim)
+        saveModelState(outName, k+sEp, model, optim=optim)
         lossLst = lossLst+lossEp
 
     lossFile = os.path.join(outFolder, 'loss.csv')
@@ -176,20 +173,8 @@ def testModel(outName,  DF=None, testSet='all', ep=None, reTest=False, batchSize
         DM = dbBasin.DataModelBasin(DF, subset=testSet, **dictVar)
         DM.loadStat(outFolder)
         dataTup = DM.getData()
-        [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
-        dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
-        # load model
-        if dictP['modelName'] == 'CudnnLSTM':
-            model = rnn.CudnnLstmModel(
-                nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
-        elif dictP['modelName'] == 'LstmModel':
-            model = rnn.LstmModel(
-                nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
-        else:
-            raise RuntimeError('Model not specified')
-        outFolder = nameFolder(outName)
-        modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
-        model.load_state_dict(torch.load(modelStateFile))
+        model = defineModel(dataTup, dictP)
+        model = loadModelState(model)
         # test
         x = dataTup[0]
         xc = dataTup[1]
@@ -200,4 +185,3 @@ def testModel(outName,  DF=None, testSet='all', ep=None, reTest=False, batchSize
         ycP = DM.transOutYC(ycOut)
         np.savez(testFile, yP=yP, ycP=ycP)
     return yP, ycP
-

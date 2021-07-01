@@ -30,7 +30,7 @@ mat1 = np.sum(matB[:, indT1, :][:, :, indC], axis=1)
 mat2 = np.sum(matB[:, indT2, :][:, :, indC], axis=1)
 
 # threshold
-ns = 5
+ns = 10
 yr = tR.astype('M8[Y]')
 ny1 = np.unique(yr[indT1]).shape[0]
 ny2 = np.unique(yr[indT2]).shape[0]

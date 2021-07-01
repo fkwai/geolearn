@@ -7,11 +7,11 @@ import os
 from hydroDL import kPath, utils
 import numpy as np
 
-dataName = 'G400Norm'
+dataName = 'G200Norm'
 outName = dataName
 trainSet = 'rmRT20'
-# testSet = 'pkRT20'
-testSet = 'all'
+testSet = 'pkRT20'
+# testSet = 'all'
 
 DF = dbBasin.DataFrameBasin(outName)
 code = usgs.newC

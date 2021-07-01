@@ -32,7 +32,7 @@ for k, code in enumerate(codeLst):
 # WRTDS
 # yW = WRTDS.testWRTDS(dataName, trainSet, testSet, codeLst)
 dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
-fileName = '{}-{}-{}'.format(dataName, trainSet, testSet)
+fileName = '{}-{}-{}'.format(dataName, trainSet, 'all')
 yW = np.load(os.path.join(dirRoot, fileName)+'.npy')
 
 # correlation matrix
@@ -54,43 +54,32 @@ for indS, siteNo in enumerate(siteNoLst):
         mat2[indS, indC, 2] = stat2['NSE']
         mat2[indS, indC, 3] = stat2['Corr']
 
-# select sites
+mat1[131, 11, :]
+
+# selected sites
 dictSiteName = 'dict{}.json'.format(dataName[:4])
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
 with open(os.path.join(dirSel, dictSiteName)) as f:
     dictSite = json.load(f)
 
-statStrLst = ['Bias', 'RMSE', 'NSE', 'Corr']
-dataPlot = list()
-labelLst = [usgs.codePdf.loc[code]['shortName'] +
-            '\n'+code for code in codeLst]
-for k, statStr in enumerate(statStrLst):
-    temp = list()
-    for ic, code in enumerate(codeLst):
-        indS = [siteNoLst.index(siteNo)
-                for siteNo in dictSite[code] if siteNo in siteNoLst]
-        a = mat1[indS, ic, k]
-        b = mat2[indS, ic, k]
-        indV = np.where(~np.isnan(a) & ~np.isnan(b))
-        c = a[indV]
 
-        temp.append([c, a, b])
-    fig, axes = figplot.boxPlot(temp, widths=0.5, figsize=(12, 4),
-                                label2=['LSTM', 'WRTDS'], label1=labelLst,
-                                sharey=True)
-    # for ax in axes:
-    #     ax.axhline(0)
-    fig.show()
+siteNo = dictSite['00915'][0]
+indS = siteNoLst.index(siteNo)
 
-#
-# DF2 = dbBasin.DataFrameBasin('G400')
+code = '00915'
+indC = codeLst.index(code)
+fig, ax = plt.subplots(1, 1)
+dataPlot = [yW[:, indS, indC], yOut[:, indS, indC],
+            d1.Y[:, indS, indC], d2.Y[:, indS, indC]]
+cLst = ['black', 'green', 'blue', 'red']
+axplot.plotTS(ax, DF.t, dataPlot, cLst=cLst)
+fig.show()
 
-# labelLst = [usgs.codePdf.loc[code]['shortName'] + code for code in codeLst]
-# d1 = dbBasin.DataModelBasin(DF2, subset=trainSet, varY=codeLst)
-# d2 = dbBasin.DataModelBasin(DF2, subset=testSet, varY=codeLst)
-# k = 60
-# dataPlot = [yW[:, k, :], d1.Y[:, k, :], d2.Y[:, k, :]]
-# cLst = ['red', 'grey', 'black']
-# fig, axes = figplot.multiTS(
-#     DF.t, dataPlot, labelLst=labelLst, cLst=cLst)
-# fig.show()
+
+a = mat1[:, indC, 0]
+b = mat1[:, indC, 1]
+indS = np.where(a > 5)[0]
+fig, ax = plt.subplots(1, 1)
+ax.plot(a, b, '*')
+fig.show()
+mat1[131, 11, :]

@@ -180,7 +180,7 @@ def extractVarMtd(varLst):
     return mtdLst
 
 
-def label2var(label):
+def label2var(label, norm=False):
     dictVar = dict(
         F=gridMET.varLst,
         Q=['00060'],
@@ -188,10 +188,14 @@ def label2var(label):
         T=['datenum', 'sinT', 'cosT'],
         R=GLASS.varLst,
         C=usgs.newC)
+    if norm is True:
+        dictVar['C'] = [c+'-N' for c in usgs.newC]
     varLst = list()
     for x in label:
         varLst = varLst + dictVar[x]
     return varLst
+
+
 
 
 def nanPerc(data, p=5):
