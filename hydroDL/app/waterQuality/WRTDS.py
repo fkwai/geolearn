@@ -114,11 +114,16 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
     varY = codeLst
     d1 = dbBasin.DataModelBasin(DF, subset=trainSet, varX=varX, varY=varY)
     d2 = dbBasin.DataModelBasin(DF, subset=testSet, varX=varX, varY=varY)
-    tt = pd.to_datetime(DF.t)
-    yr = tt.year.values
-    t = yr+tt.dayofyear.values/365
-    sinT = np.sin(2*np.pi*t)
-    cosT = np.cos(2*np.pi*t)
+    tt1 = pd.to_datetime(d1.t)
+    yr1 = tt1.year.values
+    t1= yr1+tt1.dayofyear.values/365
+    sinT1 = np.sin(2*np.pi*t1)
+    cosT1 = np.cos(2*np.pi*t1)
+    tt2 = pd.to_datetime(d2.t)
+    yr2 = tt2.year.values
+    t2= yr2+tt2.dayofyear.values/365
+    sinT2 = np.sin(2*np.pi*t2)
+    cosT2 = np.cos(2*np.pi*t2)
     ###
     yOut = np.full([len(d2.t), len(d2.siteNoLst), len(varY)], np.nan)
     t0 = time.time()
@@ -129,21 +134,21 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
             q1 = d1.X[:, indS, 0].copy()
             q1[q1 < 0] = 0
             logq1 = np.log(q1+sn)
-            x1 = np.stack([logq1, yr, sinT, cosT]).T
+            x1 = np.stack([logq1, yr1, sinT1, cosT1]).T
             y2 = d2.Y[:, indS, indC].copy()
             q2 = d2.X[:, indS, 0].copy()
             q2[q2 < 0] = 0
             logq2 = np.log(q2+sn)
-            x2 = np.stack([logq1, yr, sinT, cosT]).T
+            x2 = np.stack([logq2, yr2, sinT2, cosT2]).T
             [xx1, yy1], ind1 = utils.rmNan([x1, y1])
             if testSet == 'all':
                 [xx2], ind2 = utils.rmNan([x2])
             else:
                 [xx2, yy2], ind2 = utils.rmNan([x2, y2])
-            if len(ind1) < 50:
+            if len(ind1) < 40:
                 continue
             for k in ind2:
-                dY = np.abs(t[k]-t[ind1])
+                dY = np.abs(t2[k]-t1[ind1])
                 dQ = np.abs(logq2[k]-logq1[ind1])
                 dS = np.min(
                     np.stack([abs(np.ceil(dY)-dY), abs(dY-np.floor(dY))]), axis=0)

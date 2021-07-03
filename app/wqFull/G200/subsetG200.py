@@ -62,8 +62,8 @@ DF.saveSubset('B10', ed='2009-12-31')
 DF.saveSubset('A10', sd='2010-01-01')
 
 # examine test/train rate
-trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
-testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
+trainLst = ['rmYr5', 'rmR20', 'rmL20', 'rmRT20',  'B10']
+testLst = ['rmYr5', 'pkR20', 'pkL20', 'pkRT20',  'A10']
 df = pd.DataFrame(index=DF.varC, columns=trainLst)
 aLst = list()
 bLst = list()
@@ -83,7 +83,7 @@ for code in DF.varC:
         n1 = np.sum(x, axis=0)
         n2 = np.sum(y, axis=0)
         indS = np.where((n1 > 160) & (n2 > 40))[0]
-        # temp.append(n2[indS]/n1[indS])
+        temp.append(n2[indS]/n1[indS])
         df.at[code, trainSet] = len(indS)
         temp.append(n1[indS])
     dataBox.append(temp)

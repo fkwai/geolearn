@@ -84,7 +84,7 @@ def defineModel(dataTup, dictP):
     return model
 
 
-def loadModelState(outName, model):
+def loadModelState(outName, ep, model):
     outFolder = nameFolder(outName)
     modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
     model.load_state_dict(torch.load(modelStateFile))
@@ -173,11 +173,14 @@ def testModel(outName,  DF=None, testSet='all', ep=None, reTest=False, batchSize
         DM = dbBasin.DataModelBasin(DF, subset=testSet, **dictVar)
         DM.loadStat(outFolder)
         dataTup = DM.getData()
+        dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
+
         model = defineModel(dataTup, dictP)
-        model = loadModelState(model)
+        model = loadModelState(outName, ep, model)
         # test
         x = dataTup[0]
         xc = dataTup[1]
+        ny = np.shape(dataTup[2])[2]
         # test model - point by point
         yOut, ycOut = trainBasin.testModel(
             model, x, xc, ny, batchSize=batchSize)

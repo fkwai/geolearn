@@ -11,11 +11,11 @@ import importlib
 from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 
-dataName = 'G400Norm'
-outName = dataName
+dataName = 'G200N'
+outName = '{}-{}-{}'.format(dataName, label, trainSet)
 trainSet = 'rmRT20'
 testSet = 'pkRT20'
-DF = dbBasin.DataFrameBasin(outName)
+DF = dbBasin.DataFrameBasin(dataName)
 codeLst = usgs.newC
 siteNoLst = DF.siteNoLst
 d1 = dbBasin.DataModelBasin(DF, subset=trainSet, varY=codeLst)
@@ -27,7 +27,7 @@ dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
 with open(os.path.join(dirSel, dictSiteName)) as f:
     dictSite = json.load(f)
 
-epLst = list(range(100, 1100, 100))
+epLst = list(range(100, 800, 100))
 corrMat = np.full([len(siteNoLst), len(codeLst), len(epLst)], np.nan)
 for iEp, ep in enumerate(epLst):
     yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=ep)
@@ -54,8 +54,7 @@ for ic, code in enumerate(codeLst):
         temp.append(corrMat[:, ic, iEp])
     dataBox.append(temp)
 fig, axes = figplot.boxPlot(dataBox, widths=0.5, figsize=(12, 4),
-                            label2=['LSTM', 'WRTDS'], label1=labelLst,
-                            sharey=True, cLst='rrrrrrrrrr',)
+                            label1=labelLst,sharey=True, cLst='rrrrrrrrrr',)
 # for ax in axes:
 #     ax.axhline(0)
 fig.show()
