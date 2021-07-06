@@ -16,8 +16,7 @@ for label in labelLst:
         mtdX = dbBasin.io.extractVarMtd(varX)
         varY = dbBasin.label2var(label.split('2')[1])
         mtdY = dbBasin.io.extractVarMtd(varY)
-        varXC = gageII.varLst + \
-            [c+'-M' for c in usgs.newC] + [c+'-S' for c in usgs.newC]
+        varXC = gageII.varLst 
         mtdXC = dbBasin.io.extractVarMtd(varXC)
         varYC = None
         mtdYC = dbBasin.io.extractVarMtd(varYC)
