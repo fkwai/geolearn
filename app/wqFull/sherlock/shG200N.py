@@ -3,18 +3,21 @@ from hydroDL.master import slurm
 from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
 
-dataName = 'G200'
-labelLst = ['QFPRT2C']
-trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
-testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
+dataName = 'G200N'
+# labelLst = ['QFPRT2C', 'FPRT2C']
+# trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
+# testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 # DF = dbBasin.DataFrameBasin(dataName)
+
+labelLst = ['FPRT2C']
+trainLst = ['rmL20', 'B10']
 
 
 for label in labelLst:
     for trainSet in trainLst:
-        varX = dbBasin.label2var(label.split('2')[0])
+        varX = dbBasin.label2var(label.split('2')[0], norm=True)
         mtdX = dbBasin.io.extractVarMtd(varX)
-        varY = dbBasin.label2var(label.split('2')[1])
+        varY = dbBasin.label2var(label.split('2')[1], norm=True)
         mtdY = dbBasin.io.extractVarMtd(varY)
         varXC = gageII.varLst + \
             [c+'-M' for c in usgs.newC] + [c+'-S' for c in usgs.newC]
