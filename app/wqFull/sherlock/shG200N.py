@@ -5,12 +5,10 @@ from hydroDL.master import basinFull
 
 dataName = 'G200N'
 # labelLst = ['QFPRT2C', 'FPRT2C']
-# trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
-# testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
+labelLst = ['FPRT2QC', 'QFPT2C', 'QFRT2C']
+trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
+testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 # DF = dbBasin.DataFrameBasin(dataName)
-
-labelLst = ['FPRT2C']
-trainLst = ['rmL20', 'B10']
 
 
 for label in labelLst:
