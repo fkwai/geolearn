@@ -23,7 +23,7 @@ outName = '{}-{}-{}'.format(dataName, label, trainSet)
 yP1, ycP1 = basinFull.testModel(
     outName, DF=DF, testSet=testSet, ep=500)
 
-label = 'FPRT2C'
+label = 'FPRT2QC'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 yP2, ycP2 = basinFull.testModel(
     outName, DF=DF, testSet=testSet, ep=500)

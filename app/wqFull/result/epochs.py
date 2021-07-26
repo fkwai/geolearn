@@ -12,9 +12,11 @@ from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 
 dataName = 'G200N'
+label = 'QFPRT2C'
+trainSet = 'rmL20'
+testSet = 'pkL20'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
-trainSet = 'rmRT20'
-testSet = 'pkRT20'
+
 DF = dbBasin.DataFrameBasin(dataName)
 codeLst = usgs.newC
 siteNoLst = DF.siteNoLst
@@ -27,7 +29,7 @@ dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
 with open(os.path.join(dirSel, dictSiteName)) as f:
     dictSite = json.load(f)
 
-epLst = list(range(100, 800, 100))
+epLst = list(range(100, 2100, 100))
 corrMat = np.full([len(siteNoLst), len(codeLst), len(epLst)], np.nan)
 for iEp, ep in enumerate(epLst):
     yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=ep)
@@ -44,17 +46,10 @@ for iEp, ep in enumerate(epLst):
         corr = utils.stat.calCorr(yOut[:, indS, indC], d2.Y[:, indS, indC])
         corrMat[indS, indC, iEp] = corr
 
-# plot
-labelLst = [usgs.codePdf.loc[code]['shortName'] +
-            '\n'+code for code in codeLst]
-dataBox = list()
+dataPlot = np.nanmean(corrMat, axis=0)
+fig, ax = plt.subplots(1, 1)
 for ic, code in enumerate(codeLst):
-    temp = list()
-    for iEp, ep in enumerate(epLst):
-        temp.append(corrMat[:, ic, iEp])
-    dataBox.append(temp)
-fig, axes = figplot.boxPlot(dataBox, widths=0.5, figsize=(12, 4),
-                            label1=labelLst,sharey=True, cLst='rrrrrrrrrr',)
-# for ax in axes:
-#     ax.axhline(0)
+    label = code + ' ' + usgs.codePdf.loc[code]['shortName']
+    ax.plot(epLst, np.nanmean(corrMat[:, ic, :], axis=0), label=label)
+ax.legend(bbox_to_anchor=(1.1, 1.05))
 fig.show()

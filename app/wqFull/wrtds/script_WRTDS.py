@@ -17,6 +17,7 @@ testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 DF = dbBasin.DataFrameBasin(dataName)
 
 for trainSet, testSet in zip(trainLst, testLst):
+    testSet = 'all'
     code = usgs.newC
     yW = WRTDS.testWRTDS(dataName, trainSet, testSet, usgs.newC)
     dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')

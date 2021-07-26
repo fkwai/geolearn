@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 
 def calErr(pred, obs, rmExt=False):
@@ -21,12 +22,15 @@ def calErr(pred, obs, rmExt=False):
 
 
 def calStat(pred, obs):
-    nash = calNash(pred, obs)
-    rmse = calRmse(pred, obs)
-    corr = calCorr(pred, obs)
-    bias = calBias(pred, obs)
-    outDict = dict(Bias=bias, RMSE=rmse, NSE=nash, Corr=corr)
-    return outDict
+    if np.isnan(pred).all() or np.isnan(obs).all():
+        return dict(Bias=np.nan, RMSE=np.nan, NSE=np.nan, Corr=np.nan)
+    else:
+        nash = calNash(pred, obs)
+        rmse = calRmse(pred, obs)
+        corr = calCorr(pred, obs)
+        bias = calBias(pred, obs)
+        outDict = dict(Bias=bias, RMSE=rmse, NSE=nash, Corr=corr)
+        return outDict
 
 
 def calNash(pred, obs):
@@ -53,8 +57,12 @@ def calCorr(pred, obs):
     for k in range(nS):
         a = pred[:, k]
         b = obs[:, k]
-        indV = np.where(~np.isnan(a) & ~np.isnan(b))
-        corr[k] = np.corrcoef(a[indV], b[indV])[0, 1]
+        indV = np.where(~np.isnan(a) & ~np.isnan(b))[0]
+        with warnings.catch_warnings():
+            if np.nanmin(b) == np.nanmax(b):
+                print('WARNING connstant observation in calculating corrcoef')
+                warnings.simplefilter('ignore', category=RuntimeWarning)
+            corr[k] = np.corrcoef(a[indV], b[indV])[0, 1]
     if bV:
         return corr[0]
     else:

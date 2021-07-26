@@ -16,20 +16,30 @@ def sameClass(obj1, obj2):
     if (obj1.__name__ == obj2.__name__) and (obj1.__module__ == obj2.__module__):
         return True
 
-# class TimedOutExc(Exception):
-#     pass
 
-# def deadline(timeout, *args):
-#     def decorate(f):
-#         def handler(signum, frame):
-#             raise TimedOutExc()
+def vRange(data, centerZero=False, prct=10):
+    vmin = np.percentile(data[~np.isnan(data)], prct)
+    vmax = np.percentile(data[~np.isnan(data)], 100-prct)
+    if centerZero:
+        vv = np.max([np.abs(vmin), np.abs(vmax)])
+        vmin = -vv
+        vmax = vv
+    return vmin, vmax
 
-#         def new_f(*args):
-#             signal.signal(signal.SIGALRM, handler)
-#             signal.alarm(timeout)
-#             return f(*args)
-#             signal.alarm(0)
+    # class TimedOutExc(Exception):
+    #     pass
 
-#         new_f.__name__ = f.__name__
-#         return new_f
-#     return decorate
+    # def deadline(timeout, *args):
+    #     def decorate(f):
+    #         def handler(signum, frame):
+    #             raise TimedOutExc()
+
+    #         def new_f(*args):
+    #             signal.signal(signal.SIGALRM, handler)
+    #             signal.alarm(timeout)
+    #             return f(*args)
+    #             signal.alarm(0)
+
+    #         new_f.__name__ = f.__name__
+    #         return new_f
+    #     return decorate

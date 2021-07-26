@@ -144,7 +144,7 @@ def funcM():
     axM.append(figM.add_subplot(gsM[0, 0]))
     axM.append(figM.add_subplot(gsM[0, 1:3]))
     axM.append(figM.add_subplot(gsM[0, 3:5]))
-    axM = np.array(axM)
+    axM = np.array(axM)g
     x = corrMat[indS, codeLst.index(codeM[0]), 1]
     y = corrMat[indS, codeLst.index(codeM[1]), 1]
     sc = axplot.scatter121(axM[0], x, y, cMat)

@@ -96,7 +96,7 @@ def boxPlot(data, label1=None, label2=None, cLst='rbkgcmy',
         if type(temp) is list:
             for kk in range(len(temp)):
                 tt = temp[kk]
-                if tt is not None and tt != []:
+                if tt is not None and len(tt) != 0:
                     tt = tt[~np.isnan(tt)]
                     temp[kk] = tt
                 else:
@@ -188,7 +188,7 @@ def scatter121Batch(xMat, yMat, cMat, labelLst, nXY,
             _ = ax.set_xticks(ticks)
             if i != 0:
                 _ = ax.set_yticklabels([])
-            if j != 4:
+            if j != nfy:
                 _ = ax.set_xticklabels([])
             figM.subplots_adjust(wspace=0, hspace=0)
         if optCb == 2:
