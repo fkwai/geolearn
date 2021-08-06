@@ -51,13 +51,7 @@ for indS, siteNo in enumerate(siteNoLst):
         if n1 >= 160 and n2 >= 40:
             stat = utils.stat.calStat(yOut[:, indS, indC], d2.Y[:, indS, indC])
             stat2 = utils.stat.calStat(yW[:, indS, indC], d2.Y[:, indS, indC])
-            mat1[indS, indC, 0] = stat['Bias']
-            mat1[indS, indC, 1] = stat['RMSE']
-            mat1[indS, indC, 2] = stat['NSE']
             mat1[indS, indC, 3] = stat['Corr']
-            mat2[indS, indC, 0] = stat2['Bias']
-            mat2[indS, indC, 1] = stat2['RMSE']
-            mat2[indS, indC, 2] = stat2['NSE']
             mat2[indS, indC, 3] = stat2['Corr']
 
 indT1 = np.where(~np.isnan(d1.Y[:, indS, indC]))
