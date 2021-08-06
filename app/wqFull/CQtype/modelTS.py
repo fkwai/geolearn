@@ -19,20 +19,20 @@ from hydroDL.master import basinFull
 
 # load models
 dataName = 'G200N'
-DF = dbBasin.DataFrameBasin(dataName)
+DFN = dbBasin.DataFrameBasin(dataName)
 codeLst = usgs.newC
 trainSet = 'rmR20'
 testSet = 'pkR20'
 label = 'QFPRT2C'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 yP, ycP = basinFull.testModel(
-    outName, DF=DF, testSet=testSet, ep=500)
+    outName, DF=DFN, testSet=testSet, ep=500)
 yL = np.ndarray(yP.shape)
 for k, code in enumerate(codeLst):
-    m = DF.g[:, DF.varG.index(code+'-M')]
-    s = DF.g[:, DF.varG.index(code+'-S')]
+    m = DFN.g[:, DFN.varG.index(code+'-M')]
+    s = DFN.g[:, DFN.varG.index(code+'-S')]
     yL[:, :, k] = yP[:, :, k]*s+m
-siteNoLst = DF.siteNoLst
+siteNoLst = DFN.siteNoLst
 ns = len(siteNoLst)
 nc = len(codeLst)
 
@@ -43,9 +43,9 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 
 
 # correlation matrix
-d1 = dbBasin.DataModelBasin(DF, subset=trainSet, varY=codeLst)
-d2 = dbBasin.DataModelBasin(DF, subset=testSet, varY=codeLst)
-siteNoLst = DF.siteNoLst
+d1 = dbBasin.DataModelBasin(DFN, subset=trainSet, varY=codeLst)
+d2 = dbBasin.DataModelBasin(DFN, subset=testSet, varY=codeLst)
+siteNoLst = DFN.siteNoLst
 matW = np.full([len(siteNoLst), len(codeLst), 4], np.nan)
 matL = np.full([len(siteNoLst), len(codeLst), 4], np.nan)
 for indS, siteNo in enumerate(siteNoLst):

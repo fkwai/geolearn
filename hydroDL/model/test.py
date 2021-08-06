@@ -2,6 +2,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from .layers import PositionalEncoding
+import math
 
 
 class LSTM(torch.nn.Module):
@@ -62,16 +64,29 @@ class GRU(torch.nn.Module):
 
 
 class Transformer(torch.nn.Module):
-    def __init__(self, nx, ny, hiddenSize, dr=0.5):
+    def __init__(self, nx, ny, hiddenSize=512, nhead=8, nlayer=6, dr=0.5):
         super(Transformer, self).__init__()
+        self.d_model = hiddenSize
         self.linearIn = torch.nn.Linear(nx, hiddenSize)
-        self.trans = nn.Transformer(nhead=16, num_encoder_layers=12)
+        self.posEncoder = PositionalEncoding(hiddenSize, dr).cuda()
+
+        encoder = nn.TransformerEncoderLayer(
+            d_model=hiddenSize, nhead=nhead, dropout=dr, activation='gelu')
+        self.transEncoder = nn.TransformerEncoder(encoder, nlayer)
         self.linearOut = torch.nn.Linear(hiddenSize, ny)
         self.gpu = 1
+        self.init_weights()
+
+    def init_weights(self) -> None:
+        initrange = 0.1
+        self.linearIn.bias.data.zero_()
+        self.linearIn.weight.data.uniform_(-initrange, initrange)
+        self.linearOut.bias.data.zero_()
+        self.linearOut.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, x, doDropMC=False):
-        x0 = self.linearIn(x)
-        y, (hn, cn) = self.trans(x0)
-        out = self.linearOut(y)
-        # out = y.mean(dim=2, keepdim=True)
+        x0 = self.linearIn(x) * math.sqrt(self.d_model)
+        x1 = self.posEncoder(x0)
+        x2 = self.transEncoder(x1)
+        out = self.linearOut(x2)
         return out
