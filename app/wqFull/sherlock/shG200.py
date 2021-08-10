@@ -4,7 +4,7 @@ from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
 
 dataName = 'G200'
-labelLst = ['QT2C']
+labelLst = ['FPRT2QC', 'QFRT2C', 'QFPT2C']
 trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
 testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 # DF = dbBasin.DataFrameBasin(dataName)
@@ -16,7 +16,7 @@ for label in labelLst:
         mtdX = dbBasin.io.extractVarMtd(varX)
         varY = dbBasin.label2var(label.split('2')[1])
         mtdY = dbBasin.io.extractVarMtd(varY)
-        varXC = gageII.varLst 
+        varXC = gageII.varLst
         mtdXC = dbBasin.io.extractVarMtd(varXC)
         varYC = None
         mtdYC = dbBasin.io.extractVarMtd(varYC)

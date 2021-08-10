@@ -68,7 +68,7 @@ for indS, siteNo in enumerate(siteNoLst):
         if n1 >= 160 and n2 >= 40:
             statW = utils.stat.calStat(yW[:, indS, indC], d2.Y[:, indS, indC])
             matW[indS, indC, :] = list(statW.values())
-            for k,yL in enumerate(yLst):
+            for k, yL in enumerate(yLst):
                 yL = yLst[k]
                 statL = utils.stat.calStat(
                     yL[:, indS, indC], d2.Y[:, indS, indC])
@@ -87,7 +87,7 @@ for k, statStr in enumerate(statStrLst):
         dataPlot.append(temp2)
     sharey = False if statStr in ['Bias', 'RMSE'] else True
     fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(12, 4),
-                                label2=dataNameLst+['WRTDS'], label1=codeLabLst,
+                                label2=['LSTM','LSTM Norm','WRTDS'], label1=codeLabLst,
                                 sharey=sharey)
     if statStr == 'Bias':
         for ax in axes:

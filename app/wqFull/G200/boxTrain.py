@@ -14,7 +14,7 @@ from hydroDL.app.waterQuality import WRTDS
 import warnings
 # warnings.simplefilter('error')
 
-dataName = 'G200N'
+dataName = 'G200'
 
 # with warnings.catch_warnings():
 #     warnings.simplefilter('ignore', category=RuntimeWarning)
@@ -26,21 +26,22 @@ codeLst = usgs.newC
 trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
 testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 
-label = 'QFPRT2C'
-nL = len(trainLst)
+trainSet = 'rmRT20'
+testSet = 'pkRT20'
+# trainSet = 'B10'
+# testSet = 'A10'
+labelLst = ['QFPRT2C', 'QFRT2C', 'QFPT2C', 'FPRT2C']
+nL = len(labelLst)
 yLst = list()
-for trainSet, testSet in zip(trainLst, testLst):
+for label in labelLst:
     outName = '{}-{}-{}'.format(dataName, label, trainSet)
     yP, ycP = basinFull.testModel(
         outName, DF=DF, testSet=testSet, ep=500)
-    if dataName[-1] == 'N':
-        yOut = np.ndarray(yP.shape)
-        for k, code in enumerate(codeLst):
-            m = DF.g[:, DF.varG.index(code+'-M')]
-            s = DF.g[:, DF.varG.index(code+'-S')]
-            yOut[:, :, k] = yP[:, :, k]*s+m
-    else:
-        yOut = yP
+    yOut = np.ndarray(yP.shape)
+    for k, code in enumerate(codeLst):
+        m = DF.g[:, DF.varG.index(code+'-M')]
+        s = DF.g[:, DF.varG.index(code+'-S')]
+        yOut[:, :, k] = yP[:, :, k]*s+m
     yLst.append(yOut)
 
 
@@ -55,7 +56,7 @@ d1 = dbBasin.DataModelBasin(DF, subset=trainSet, varY=codeLst)
 d2 = dbBasin.DataModelBasin(DF, subset=testSet, varY=codeLst)
 siteNoLst = DF.siteNoLst
 matW = np.full([len(siteNoLst), len(codeLst), 4], np.nan)
-matLst = [np.full([len(siteNoLst), len(codeLst), 4], np.nan) for x in trainLst]
+matLst = [np.full([len(siteNoLst), len(codeLst), 4], np.nan) for x in labelLst]
 
 for indS, siteNo in enumerate(siteNoLst):
     print(indS)
@@ -84,7 +85,7 @@ for k, statStr in enumerate(statStrLst):
         dataPlot.append(temp2)
     sharey = False if statStr in ['Bias', 'RMSE'] else True
     fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(12, 4),
-                                label2=trainLst+['WRTDS'], label1=codeLabLst,
+                                label2=labelLst+['WRTDS'], label1=codeLabLst,
                                 sharey=sharey)
     if statStr == 'Bias':
         for ax in axes:
