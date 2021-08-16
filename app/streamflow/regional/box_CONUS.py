@@ -12,7 +12,8 @@ import numpy as np
 from hydroDL.data import usgs, gageII, gridMET, ntn, transform
 
 dataName = 'Q90ref'
-dm = dbBasin.DataModelFull(dataName)
+# dm = dbBasin.DataModelFull(dataName)
+dm = dbBasin.DataFrameBasin(dataName)
 
 outName = '{}-B10'.format(dataName)
 nashLst1 = list()

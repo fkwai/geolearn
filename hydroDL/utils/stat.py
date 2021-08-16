@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 
 
+
 def calErr(pred, obs, rmExt=False):
     a = obs
     b = pred
@@ -47,6 +48,19 @@ def calRmse(pred, obs):
 
 
 def calCorr(pred, obs):
+    mask = np.isnan(obs) | np.isnan(pred)
+    A = pred.copy()
+    B = obs.copy()
+    A[mask] = np.nan
+    B[mask] = np.nan
+    mA = A - np.nanmean(A, axis=0)
+    mB = B - np.nanmean(B, axis=0)
+    p1 = np.nansum(mA*mB, axis=0)
+    p2 = np.sqrt(np.nansum(mA**2, axis=0)*np.nansum(mB**2, axis=0))
+    return p1/p2
+
+
+def calCorrOld(pred, obs):
     # data in [nT,nS]
     bV = pred.ndim == 1
     if bV:
