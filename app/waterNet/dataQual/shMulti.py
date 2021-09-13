@@ -3,10 +3,9 @@ from hydroDL.master import basinFull
 from hydroDL.data import gageII, dbBasin
 
 dataName = 'G200'
-DF = dbBasin.DataFrameBasin(dataName)
+# DF = dbBasin.DataFrameBasin(dataName)
 
 # count for code
-code = '00600'
 codeLst = ['00600', '00618', '00915', '00945', '00955']
 pLst = [100, 75, 50, 25]
 nyLst = [6, 8, 10]
