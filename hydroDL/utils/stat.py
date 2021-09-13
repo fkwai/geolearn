@@ -2,7 +2,6 @@ import numpy as np
 import warnings
 
 
-
 def calErr(pred, obs, rmExt=False):
     a = obs
     b = pred

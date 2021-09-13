@@ -20,7 +20,7 @@ def clickMap(funcMap, funcPoint):
         if xClick is None or yClick is None:
             print('click on map plz')
             return
-        iP = np.argmin(np.sqrt((xClick - xLoc)**2 + (yClick - yLoc)**2))
+        iP = np.nanargmin(np.sqrt((xClick - xLoc)**2 + (yClick - yLoc)**2))
         for ax in axM.flatten():
             # for ax in temp:
             [p.remove() for p in reversed(ax.patches)]
