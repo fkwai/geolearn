@@ -39,5 +39,5 @@ for code in codeLst:
 print(outLst)
 for outName in outLst:
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-    # slurm.submitJobGPU(outName, cmdP.format(outName))
+    slurm.submitJobGPU(outName, cmdP.format(outName))
     # basinFull.trainModel(outName)
