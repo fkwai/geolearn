@@ -1,3 +1,4 @@
+import random
 from hydroDL.post import axplot, figplot
 from hydroDL import kPath, utils
 from hydroDL.data import gageII, usgs, gridMET, dbBasin
@@ -5,8 +6,10 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from scipy import stats
 
-DF = dbBasin.DataFrameBasin('G400')
+
+DF = dbBasin.DataFrameBasin('G200')
 
 siteNoLst = DF.siteNoLst
 codeLst = DF.varC
@@ -21,9 +24,45 @@ for ic, code in enumerate(codeLst):
 
 code = '00915'
 indC = codeLst.index(code)
+indS = np.where(matCount[:, indC] > 200)[0]
 lat = dfCrd.loc[siteNoLst]['LAT_GAGE']
 lon = dfCrd.loc[siteNoLst]['LNG_GAGE']
 t = DF.t
+
+C = DF.c[:, indS, indC]
+Q = DF.q[:, indS, 1]/365*1000
+P = DF.f[:, indS, DF.varF.index('pr')]
+iP = 10
+
+fig, ax = plt.subplots(1, 1)
+ax.hist(C[:, iP], bins=20, density=True)
+ax.hist(np.log(P[:, iP]+0.0001), bins=20, density=True)
+
+fig.show()
+
+# fit gamma
+iP = random.randint(0, len(indS))
+[c], _ = utils.rmNan([C[:, iP]])
+c = c-np.mean(c)
+stats.shapiro(c)
+pars = stats.gamma.fit(c)
+stats.kstest(c, 'gamma', pars)
+fig, ax = plt.subplots(1, 1)
+ax.hist(c, bins=20, density=True)
+x = np.linspace(stats.gamma.ppf(0.01, pars),
+                stats.gamma.ppf(0.99, pars), 100)
+ax.plot(x, stats.gamma.pdf(x, pars))
+fig.show()
+
+
+gkde = stats.gaussian_kde(c)
+ind = np.linspace(-7, 7, 101)
+kdepdf = gkde.evaluate(ind)
+fig, ax = plt.subplots(1, 1)
+ax.hist(c, bins=10, normed=1)
+ax.plot(ind, stats.norm.pdf(ind), color="r", label='DGP normal')
+fig.show()
+stats.shapiro(C[:, iP])
 
 
 def funcM():

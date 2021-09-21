@@ -1,36 +1,31 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from hydroDL.data import dbBasin
 
-p = 1
-n = 10
-i = np.random.lognormal(size=n)
-w = np.random.lognormal(size=(n, n))
-o = np.random.lognormal(size=n)
-s = np.ones(n)*100
+# test case
+siteNo = '07144100'
+df = dbBasin.readSiteTS(siteNo, ['pr', 'runoff', 'pet'])
+P = df['pr'].values
+Q = df['runoff'].values
+E = df['pet'].values
 
-# update w
-row, col = np.diag_indices_from(w)
-# w[row, col] = 0
-# w[row, col] = 1-np.sum(w, axis=1)
+n = 100
+nt = len(Q)
+i = np.random.random_sample(size=n)
+o = np.random.random_sample(size=n)
+s = np.zeros(n)
+sMat = np.zeros([nt, n])
+out = np.zeros(nt)
+for k in range(nt):
+    p = P[k]
+    s = p*i-s*o
+    s[s < 0] = 0
+    # s[s > 6] = 6
+    sMat[k, :] = s
+    out[k] = np.mean(s*o)
 
-outLst = list()
-
-for k in range(10):
-    s = np.matmul(s, w)+s-s*o 
-    # s[s < 0] = 0
-    outLst.append(np.sum(s*o))
-
-s = np.ones(n)
-s = np.matmul(s, w)
-np.sum(s)
-
-a,b=np.linalg.eig(w)
-
-fig, ax = plt.subplots(1, 1)
-# ax.set_yscale('log')
-ax.plot(outLst)
+fig, axes = plt.subplots(3, 1)
+axes[0].plot(P)
+axes[1].plot(out, '-r')
+axes[1].plot(Q)
 fig.show()
-
-# fig, ax = plt.subplots(1, 1)
-# ax.imshow(w)
-# fig.show()
