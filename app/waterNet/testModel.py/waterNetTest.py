@@ -1,89 +1,123 @@
+from hydroDL import utils
 import numpy as np
 import matplotlib.pyplot as plt
 from hydroDL.data import dbBasin
 import torch
 import importlib
-from hydroDL.model import waterNet, crit
+from hydroDL.model import waterNet
 
 # test case
 siteNo = '07241550'
-df = dbBasin.readSiteTS(siteNo, ['pr', 'runoff', 'pet'])
+siteNo = '06752260'
+df = dbBasin.readSiteTS(
+    siteNo,  ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr', 'runoff'])
 P = df['pr'].values
-Q = df['runoff'].values
+Q = df['runoff'].values/365*1000
 E = df['pet'].values
+# T = (df['tmmn'].values+df['tmmx'].values)/2 - 273.15
+T = df['tmmn'].values - 273.15
+t = df.index.values.astype('datetime64[D]')
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(df['srad'], 'r')
+ax.twinx().plot(df['pr'])
+fig.show()
 
 
-p = (P-np.nanmin(P))/(np.nanpercentile(P, 90)-np.nanmin(P))
-q = (Q-np.nanmin(Q))/(np.nanpercentile(Q, 90)-np.nanmin(Q))
-e = (E-np.nanmin(E))/(np.nanpercentile(E, 90)-np.nanmin(E))
-# sn = 1e-5
-# logp = np.log(P+sn)
-# logq = np.log(Q+sn)
-# p = (logp-np.nanmin(logp))/(np.nanmax(logp)-np.nanmin(logp))
-# q = (logq-np.nanmin(logq))/(np.nanmax(logq)-np.nanmin(logq))
+fig, ax = plt.subplots(1, 1)
+ax.plot(df['pet'], 'r')
+ax.twinx().plot(df['pr'])
+fig.show()
 
-# fig, ax = plt.subplots(1, 1)
-# ax.hist(p[P != 0], bins=100)
-# # ax.hist(q[Q != 0], bins=100)
-# fig.show()
 
 importlib.reload(waterNet)
-nh = 8
-nbatch = 50
-rho = 100
+nh = 16
+nbatch = 100
+rho = 365
 nt = len(P)
+
+# nt1 = np.where(df.index.values.astype('datetime64[D]'))
 nt1 = 12000
-model = waterNet.RnnModel(nh)
+model = waterNet.WaterNetModel(nh, nm=0)
 model = model.cuda()
-optim = torch.optim.Adagrad(model.parameters(), lr=0.1)
+optim = torch.optim.Adagrad(model.parameters(), lr=1)
+# optim = torch.optim.Adadelta(model.parameters(), lr=1)
 
 lossFun = torch.nn.MSELoss().cuda()
-
+model.state_dict()
 model.train()
-for kk in range(1000):
+for kk in range(100):
     iT = np.random.randint(0, nt1-rho, [nbatch])
-    xTemp = np.full([rho, nbatch], np.nan)
-    yTemp = np.full([rho, nbatch], np.nan)
+    pTemp = np.full([rho, nbatch], np.nan)
+    qTemp = np.full([rho, nbatch], np.nan)
+    tTemp = np.full([rho, nbatch], np.nan)
+    eTemp = np.full([rho, nbatch], np.nan)
     for k in range(nbatch):
-        xTemp[:, k] = p[iT[k]+1:iT[k]+rho+1]
-        yTemp[:, k] = q[iT[k]+1:iT[k]+rho+1]
-    xT = torch.from_numpy(xTemp).float().cuda()
-    yT = torch.from_numpy(yTemp).float().cuda()
+        pTemp[:, k] = P[iT[k]+1:iT[k]+rho+1]
+        qTemp[:, k] = Q[iT[k]+1:iT[k]+rho+1]
+        tTemp[:, k] = T[iT[k]+1:iT[k]+rho+1]
+        eTemp[:, k] = E[iT[k]+1:iT[k]+rho+1]
+    pT = torch.from_numpy(pTemp).float().cuda()
+    qT = torch.from_numpy(qTemp).float().cuda()
+    tT = torch.from_numpy(tTemp).float().cuda()
+    eT = torch.from_numpy(eTemp).float().cuda()
     model.zero_grad()
-    # model.state_dict()['rnn.w_i']
-    # model.state_dict()['rnn.w_o']
-    yP, hP = model(xT)
-    loss = lossFun(yP, yT)
+    qP, hP, sP = model(pT, tT)
+    loss = lossFun(qP, qT)
     optim.zero_grad()
     loss.backward()
     optim.step()
     print(loss)
+    print(model.state_dict()['SN.w'])
 
 
 model.eval()
-xT = torch.from_numpy(p[nt1:, None]).float().cuda()
-yT = torch.from_numpy(q[nt1:, None]).float().cuda()
-yOut, hOut = model(xT)
-model.zero_grad()
-loss = lossFun(yOut, yT)
-yP = yOut[:, 0].detach().cpu().numpy()
+qT = torch.from_numpy(Q[nt1:, None]).float().cuda()
+pT = torch.from_numpy(P[nt1:, None]).float().cuda()
+tT = torch.from_numpy(T[nt1:, None]).float().cuda()
+eT = torch.from_numpy(T[nt1:, None]).float().cuda()
 
+qP, hP, sP = model(pT, tT)
+model.zero_grad()
+loss = lossFun(qP, qT)
+yP = qP[:, 0].detach().cpu().numpy()
+hOut = hP[:, 0].detach().cpu().numpy()
+sOut = sP[:, 0].detach().cpu().numpy()
+
+
+tt = df.index.values[nt1:]
+fig, axes = plt.subplots(2, 1)
+axes[0].plot(tt, P[nt1:])
+axes[0].plot(tt, yP, '-r')
+axes[1].plot(tt, Q[nt1:])
+axes[1].plot(tt, yP, '-r')
+fig.show()
+
+fig, axes = plt.subplots(3, 1)
+axes[0].plot(df.index.values, P)
+axes[1].plot(df.index.values, Q)
+axes[2].plot(df.index.values, T)
+axes[2].plot(df.index.values, Q)
+fig.show()
 
 fig, axes = plt.subplots(2, 1)
-axes[0].plot(yP, '-r')
-axes[0].plot(p[nt1:])
-axes[1].plot(yP, '-r')
-axes[1].plot(q[nt1:])
+axes[0].plot(tt, hOut)
+axes[1].plot(tt, sOut)
 fig.show()
+
 
 dictPar = model.state_dict()
 dictPar.keys()
-w_i = dictPar['rnn.w_i'].detach().cpu().numpy().flatten()
-w_o = dictPar['rnn.w_o'].detach().cpu().numpy().flatten()
-b_i = dictPar['rnn.b_i'].detach().cpu().numpy().flatten()
-b_o = dictPar['rnn.b_o'].detach().cpu().numpy().flatten()
-# dictPar['rnn.b_h']
-# dictPar['rnn.b_o']
+torch.sigmoid(dictPar['w_i'])
+torch.softmax(dictPar['w_o'], dim=0)
 
-x = np.ones([1, 1])
-h = np.zeros([1, nh])
+torch.sum(torch.softmax(dictPar['w_o'], dim=0))
+
+
+torch.sigmoid(dictPar['LN.w'])
+torch.exp(dictPar['SN.w'])
+
+utils.stat.calNash(yP, Q[nt1:])
+
+torch.pow(torch.tensor([-1, 0, 1, 2]), torch.tensor([-1, 0, 1, 2]))
+torch.exp(torch.tensor([-1, 0, 1, 2]))

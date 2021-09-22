@@ -4,12 +4,13 @@ import matplotlib.pyplot as plt
 from hydroDL.data import dbBasin
 import torch
 import importlib
-from hydroDL.model import waterNet, crit
+from hydroDL.model import waterNet
 
 # test case
 siteNo = '07241550'
 siteNo = '06752260'
-df = dbBasin.readSiteTS(siteNo, ['pr', 'runoff', 'pet', 'tmmn', 'tmmx'])
+df = dbBasin.readSiteTS(
+    siteNo,  ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr', 'runoff'])
 P = df['pr'].values
 Q = df['runoff'].values/365*1000
 E = df['pet'].values
@@ -17,25 +18,27 @@ E = df['pet'].values
 T = df['tmmn'].values - 273.15
 t = df.index.values.astype('datetime64[D]')
 
-# sn = 1e-5
-# logp = np.log(P+sn)
-# logq = np.log(Q+sn)
-# p = (logp-np.nanmin(logp))/(np.nanmax(logp)-np.nanmin(logp))
-# q = (logq-np.nanmin(logq))/(np.nanmax(logq)-np.nanmin(logq))
+# fig, ax = plt.subplots(1, 1)
+# ax.plot(df['srad'], 'r')
+# ax.twinx().plot(df['pr'])
+# fig.show()
+
 
 # fig, ax = plt.subplots(1, 1)
-# ax.hist(p[P != 0], bins=100)
-# # ax.hist(q[Q != 0], bins=100)
+# ax.plot(df['pet'], 'r')
+# ax.twinx().plot(df['pr'])
 # fig.show()
+
 
 importlib.reload(waterNet)
 nh = 16
-nbatch = 365
-rho = 3650
+nbatch = 100
+rho = 365
 nt = len(P)
 
-nt1 = np.where(df.index.values.astype('datetime64[D]'))
-model = waterNet.WaterNetModel(nh, nm=0)
+# nt1 = np.where(df.index.values.astype('datetime64[D]'))
+nt1 = 12000
+model = waterNet.WaterNetModel2(nh, nm=0)
 model = model.cuda()
 optim = torch.optim.Adagrad(model.parameters(), lr=1)
 # optim = torch.optim.Adadelta(model.parameters(), lr=1)
@@ -59,7 +62,7 @@ for kk in range(100):
     tT = torch.from_numpy(tTemp).float().cuda()
     eT = torch.from_numpy(eTemp).float().cuda()
     model.zero_grad()
-    qP, hP, sP = model(pT, tT)
+    qP, fP, hP, gP = model(pT, tT, eT)
     loss = lossFun(qP, qT)
     optim.zero_grad()
     loss.backward()
@@ -91,10 +94,10 @@ axes[1].plot(tt, yP, '-r')
 fig.show()
 
 fig, axes = plt.subplots(3, 1)
-axes[0].plot(tt, P)
-axes[1].plot(tt, Q)
-axes[2].plot(tt, T)
-axes[2].plot(tt, Q)
+axes[0].plot(df.index.values, P)
+axes[1].plot(df.index.values, Q)
+axes[2].plot(df.index.values, T)
+axes[2].plot(df.index.values, Q)
 fig.show()
 
 fig, axes = plt.subplots(2, 1)
@@ -115,3 +118,6 @@ torch.sigmoid(dictPar['LN.w'])
 torch.exp(dictPar['SN.w'])
 
 utils.stat.calNash(yP, Q[nt1:])
+
+torch.pow(torch.tensor([-1, 0, 1, 2]), torch.tensor([-1, 0, 1, 2]))
+torch.exp(torch.tensor([-1, 0, 1, 2]))

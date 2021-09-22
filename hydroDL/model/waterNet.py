@@ -1,6 +1,6 @@
 import math
 import torch
-# import torch.nn as nn
+import torch.nn as nn
 from torch.nn.parameter import Parameter as P
 import torch.nn.functional as F
 
@@ -76,7 +76,7 @@ class WaterNetCell(torch.nn.Module):
         return y1, h1
 
 
-class LinearReservoir(torch.nn.Module):
+class LinearBucket(torch.nn.Module):
     def __init__(self, nh, *, wR=(0, 1)):
         super().__init__()
         self.nh = nh
@@ -92,7 +92,26 @@ class LinearReservoir(torch.nn.Module):
         return q, hn
 
 
-class SnowReservoir(torch.nn.Module):
+class PowerBucket(torch.nn.Module):
+    def __init__(self, nh, *, wR=(0, 1)):
+        super().__init__()
+        self.nh = nh
+        self.wk = P(torch.Tensor(nh))
+        self.wa = P(torch.Tensor(nh))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.wk.data.uniform_(-1, 1)
+        self.wa.data.uniform_(-1, 1)
+
+    def forward(self, x, h):
+        q = torch.pow(torch.sigmoid(self.wa)+1, x+h)*torch.sigmoid(self.wk)
+        qn = torch.minimum(h+x, q)
+        hn = h-qn+x
+        return q, hn
+
+
+class SnowBucket(torch.nn.Module):
     def __init__(self, nh, nm=1, *, wR=(0, 1)):
         super().__init__()
         self.nh = nh
@@ -104,13 +123,78 @@ class SnowReservoir(torch.nn.Module):
         self.w.data.uniform_(-1, 2)
 
     def forward(self, s, P, T):
-        sm = F.relu(T[:, None]) * torch.pow(self.w, 10)
+        sm = F.relu(T[:, None]) * (torch.exp(self.w)+1)
         m1 = sm[:, :self.nm]
         m2 = torch.minimum(sm[:, self.nm:], s[:, self.nm:])
         m = torch.cat((m1, m2), dim=1)
         s = s-m+((T < 0)*P)[:, None]
         x = ((T > 0)*P)[:, None] + m
         return x, s
+
+
+class SoilBucket(torch.nn.Module):
+    def __init__(self, nh, *, wR=(0, 1)):
+        super().__init__()
+        self.nh = nh
+        self.wl = P(torch.Tensor(nh))
+        self.we = P(torch.Tensor(nh))
+        self.wk = P(torch.Tensor(nh))
+        self.ws = P(torch.Tensor(nh))
+
+    def reset_parameters(self):
+        self.wl.data.uniform_(-1, 1)
+        self.we.data.uniform_(-1, 1)
+        self.wk.data.uniform_(-1, 1)
+        self.ws.data.uniform_(-1, 1)
+
+    def forward(self, x, h, E):
+        hn = h+x
+        h1 = torch.relu(hn-torch.exp(self.wl*2))
+        q1 = torch.relu(h1-E[:, None]*torch.sigmoid(self.we))
+        h2 = hn-h1
+        q2 = h2 * torch.sigmoid(self.wk)
+        h = h2-q2
+        q2a = q2*torch.sigmoid(self.ws)
+        q2b = q2*(1-torch.sigmoid(self.ws))
+        return q1, q2a, q2b, h
+
+
+class WaterNetModel2(torch.nn.Module):
+    def __init__(self, nh, *, nm=0):
+        super().__init__()
+        self.nh = nh
+        self.w_o = P(torch.Tensor(nh))
+        self.FB = SnowBucket(nh, nm)
+        self.GB = LinearBucket(nh)
+        self.SB = SoilBucket(nh)
+        self.DP = nn.Dropout()
+        a = F.softmax(self.DP(self.w_o), dim=0)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.w_o.data.uniform_(-1, 1)
+
+    def forward(self, P, T, E, Q0=0):
+        # initial states
+        nt, ns = P.shape
+        F = torch.zeros(nt, ns, self.nh).cuda()
+        H = torch.zeros(nt, ns, self.nh).cuda()
+        G = torch.zeros(nt, ns, self.nh).cuda()
+        Q = torch.zeros(nt, ns).cuda()
+        f = torch.zeros(ns, self.nh).cuda()
+        h = torch.zeros(ns, self.nh).cuda()
+        g = torch.zeros(ns, self.nh).cuda()
+        for k in range(nt):
+            x, f = self.FB(f, P[k, :], T[k, :])
+            F[k, :, :] = f
+            q1, q2, q2b, h = self.SB(x, h, E[k, :])
+            q3, g = self.GB(q2b, g)
+            H[k, :, :] = h
+            G[k, :, :] = g
+            a = F.softmax(self.DP(self.w_o), dim=0)
+            # a = F.softmax(self.w_o, dim=0)
+            Q[k, :] = torch.sum((q1+q2+q3)*a, dim=1)
+        return Q, F, H, G
 
 
 class WaterNetModel(torch.nn.Module):
@@ -120,8 +204,10 @@ class WaterNetModel(torch.nn.Module):
         self.w_i = P(torch.Tensor(nh))
         self.w_o = P(torch.Tensor(nh))
         self.w_e = P(torch.Tensor(nh))
-        self.LN = LinearReservoir(nh)
-        self.SN = SnowReservoir(nh, nm)
+        # self.LN = LinearBucket(nh)
+        self.LN = LinearBucket(nh)
+        self.SN = SnowBucket(nh, nm)
+        self.Do = nn.Dropout()
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -141,9 +227,11 @@ class WaterNetModel(torch.nn.Module):
             x, sn = self.SN(s, P[k, :], T[k, :])
             S[k, :, :] = sn
             xin = x*torch.sigmoid(self.w_i)
+            # xin = x
             q, hn = self.LN(xin, h)
             H[k, :, :] = hn
-            Q[k, :] = torch.sum(q*F.softmax(self.w_o, dim=0), dim=1)
+            a = F.softmax(self.Do(self.w_o), dim=0)
+            Q[k, :] = torch.sum(q*a, dim=1)
             s = sn
             h = hn
         return Q, H, S
