@@ -141,8 +141,8 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
 
 
 def calRunoffArea(q, area):
-    # transfer to mm/day
-    unitConv = 0.3048**3*365*24*60*60/1000**2
+    # transfer q[ft^3/s] area [sqkm] to mm/day
+    unitConv = 0.3048**3*24*60*60/1000
     runoff = q/area*unitConv
     return runoff
 
