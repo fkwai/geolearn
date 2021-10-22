@@ -1,33 +1,21 @@
 from hydroDL import utils
 import numpy as np
 import matplotlib.pyplot as plt
-from hydroDL.data import dbBasin
+from hydroDL.data import dbBasin, gridMET
 import torch
 import importlib
 from hydroDL.model import waterNet
 
 # test case
-siteNo = '07241550'
-siteNo = '06752260'
-df = dbBasin.readSiteTS(
-    siteNo,  ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr', 'runoff'])
+siteNo = '06623800'
+varLst = gridMET.varLst + ['runoff']+['00915']
+df = dbBasin.readSiteTS(siteNo, varLst)
 P = df['pr'].values
-Q = df['runoff'].values/365*1000
+Q = df['runoff'].values
 E = df['pet'].values
-# T = (df['tmmn'].values+df['tmmx'].values)/2 - 273.15
-T = df['tmmn'].values - 273.15
+T1 = df['tmmx'].values - 273.15
+T2 = df['tmmn'].values - 273.15
 t = df.index.values.astype('datetime64[D]')
-
-fig, ax = plt.subplots(1, 1)
-ax.plot(df['srad'], 'r')
-ax.twinx().plot(df['pr'])
-fig.show()
-
-
-fig, ax = plt.subplots(1, 1)
-ax.plot(df['pet'], 'r')
-ax.twinx().plot(df['pr'])
-fig.show()
 
 
 importlib.reload(waterNet)
@@ -38,7 +26,7 @@ nt = len(P)
 
 # nt1 = np.where(df.index.values.astype('datetime64[D]'))
 nt1 = 12000
-model = waterNet.WaterNetModel(nh, nm=0)
+model = waterNet.WaterNet1(nh)
 model = model.cuda()
 optim = torch.optim.Adagrad(model.parameters(), lr=1)
 # optim = torch.optim.Adadelta(model.parameters(), lr=1)
@@ -50,39 +38,48 @@ for kk in range(100):
     iT = np.random.randint(0, nt1-rho, [nbatch])
     pTemp = np.full([rho, nbatch], np.nan)
     qTemp = np.full([rho, nbatch], np.nan)
-    tTemp = np.full([rho, nbatch], np.nan)
+    t1Temp = np.full([rho, nbatch], np.nan)
+    t2Temp = np.full([rho, nbatch], np.nan)
     eTemp = np.full([rho, nbatch], np.nan)
     for k in range(nbatch):
         pTemp[:, k] = P[iT[k]+1:iT[k]+rho+1]
         qTemp[:, k] = Q[iT[k]+1:iT[k]+rho+1]
-        tTemp[:, k] = T[iT[k]+1:iT[k]+rho+1]
+        t1Temp[:, k] = T1[iT[k]+1:iT[k]+rho+1]
+        t2Temp[:, k] = T2[iT[k]+1:iT[k]+rho+1]
         eTemp[:, k] = E[iT[k]+1:iT[k]+rho+1]
     pT = torch.from_numpy(pTemp).float().cuda()
     qT = torch.from_numpy(qTemp).float().cuda()
-    tT = torch.from_numpy(tTemp).float().cuda()
+    t1T = torch.from_numpy(t1Temp).float().cuda()
+    t2T = torch.from_numpy(t2Temp).float().cuda()
     eT = torch.from_numpy(eTemp).float().cuda()
     model.zero_grad()
-    qP, hP, sP = model(pT, tT)
+    qP = model(pT, t1T, t2T, eT)
     loss = lossFun(qP, qT)
     optim.zero_grad()
     loss.backward()
     optim.step()
     print(loss)
-    print(model.state_dict()['SN.w'])
+    
+    w = model.w
+    gm = torch.exp(w[:nh])+1
+    ge = torch.sigmoid(w[nh:nh*2])
+    go = torch.sigmoid(w[nh*2:nh*3])
+    ga = torch.softmax(w[nh*3:], dim=0)
+    print(ga.max(), go[ga.argmax()])
+
 
 
 model.eval()
 qT = torch.from_numpy(Q[nt1:, None]).float().cuda()
 pT = torch.from_numpy(P[nt1:, None]).float().cuda()
-tT = torch.from_numpy(T[nt1:, None]).float().cuda()
-eT = torch.from_numpy(T[nt1:, None]).float().cuda()
+t1T = torch.from_numpy(T1[nt1:, None]).float().cuda()
+t2T = torch.from_numpy(T2[nt1:, None]).float().cuda()
+eT = torch.from_numpy(E[nt1:, None]).float().cuda()
 
-qP, hP, sP = model(pT, tT)
+qP = model(pT, t1T, t2T, eT)
 model.zero_grad()
 loss = lossFun(qP, qT)
 yP = qP[:, 0].detach().cpu().numpy()
-hOut = hP[:, 0].detach().cpu().numpy()
-sOut = sP[:, 0].detach().cpu().numpy()
 
 
 tt = df.index.values[nt1:]
@@ -93,31 +90,11 @@ axes[1].plot(tt, Q[nt1:])
 axes[1].plot(tt, yP, '-r')
 fig.show()
 
-fig, axes = plt.subplots(3, 1)
-axes[0].plot(df.index.values, P)
-axes[1].plot(df.index.values, Q)
-axes[2].plot(df.index.values, T)
-axes[2].plot(df.index.values, Q)
-fig.show()
+w = model.w
 
-fig, axes = plt.subplots(2, 1)
-axes[0].plot(tt, hOut)
-axes[1].plot(tt, sOut)
-fig.show()
-
-
-dictPar = model.state_dict()
-dictPar.keys()
-torch.sigmoid(dictPar['w_i'])
-torch.softmax(dictPar['w_o'], dim=0)
-
-torch.sum(torch.softmax(dictPar['w_o'], dim=0))
-
-
-torch.sigmoid(dictPar['LN.w'])
-torch.exp(dictPar['SN.w'])
+gm = torch.exp(w[:nh])+1
+ge = torch.sigmoid(w[nh:nh*2])
+go = torch.sigmoid(w[nh*2:nh*3])
+ga = torch.softmax(w[nh*3:], dim=0)
 
 utils.stat.calNash(yP, Q[nt1:])
-
-torch.pow(torch.tensor([-1, 0, 1, 2]), torch.tensor([-1, 0, 1, 2]))
-torch.exp(torch.tensor([-1, 0, 1, 2]))

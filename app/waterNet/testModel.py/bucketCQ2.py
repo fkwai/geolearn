@@ -1,16 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from hydroDL.data import dbBasin
+from hydroDL.data import dbBasin, gridMET
 import torch
 import importlib
 from hydroDL.model import waterNet, crit
 
 # test case
 siteNo = '07241550'
-df = dbBasin.readSiteTS(siteNo, ['pr', 'runoff', 'etr'])
+# siteNo = '06752260'
+varLst = gridMET.varLst + ['runoff']+['00915']
+df = dbBasin.readSiteTS(siteNo,  varLst)
 P = df['pr'].values
 Q = df['runoff'].values*1000/365
 E = df['etr'].values
+T1 = df['tmmn'].values - 273.15
+T2 = df['tmmx'].values - 273.15
+
 np.mean(P-E)
 
 nt = len(P)

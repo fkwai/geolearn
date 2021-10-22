@@ -83,9 +83,9 @@ axplot.mapPoint(axM[-1], lat, lon, matW[:, -1], s=12)
 figM.show()
 
 
-code = '00955'
+code = '00945'
 indC = codeLst.index(code)
-indS = 0
+indS = DF.siteNoLst.index('10343500')
 figP, axP = plt.subplots(1, 1, figsize=(12, 3))
 dataTS = [y[:, indS, indC] for y in yLst[:3]] + \
     [DF.c[:, indS, indC]]
