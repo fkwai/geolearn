@@ -49,6 +49,7 @@ class DataFrameBasin():
             varF=gridMET.varLst+ntn.varLst+GLASS.varLst,
             varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.newC):
         print('creating data class')
+        siteNoLst.sort()
         io.wrapData(caseName, siteNoLst, nFill=nFill,
                     freq=freq, sdStr=sdStr, edStr=edStr,
                     varF=varF, varQ=varQ, varG=varG, varC=varC)
@@ -250,7 +251,7 @@ class DataModelBasin(DataModel):
         for mtd, var in zip(mtdLst, varLst):
             if mtd is None:
                 # mtd = io.extractVarMtd(var)
-                mtd = None if var is None else ['skip' for x in var]                
+                mtd = None if var is None else ['skip' for x in var]
             statLst.append(dict(mtdLst=mtd))
         self.transIn(statX=statLst[0], statXC=statLst[1],
                      statY=statLst[2], statYC=statLst[3])

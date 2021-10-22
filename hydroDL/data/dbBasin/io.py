@@ -120,6 +120,10 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
         dfD = dfD.join(dfQ)
     if len(varF) > 0:
         dfF = gridMET.readBasin(siteNo, varLst=varF)
+        if 'tmmx' in varF:
+            dfF['tmmx'] = dfF['tmmx'] - 273.15
+        if 'tmmn' in varF:
+            dfF['tmmn'] = dfF['tmmn'] - 273.15
         dfD = dfD.join(dfF)
     if len(varP) > 0:
         dfP = ntn.readBasin(siteNo, varLst=varP, freq='D')
@@ -194,8 +198,6 @@ def label2var(label, norm=False):
     for x in label:
         varLst = varLst + dictVar[x]
     return varLst
-
-
 
 
 def nanPerc(data, p=5):
