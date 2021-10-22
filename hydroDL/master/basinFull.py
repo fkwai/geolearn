@@ -150,7 +150,8 @@ def trainModel(outName):
     pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
 
-def testModel(outName,  DF=None, testSet='all', ep=None, reTest=False, batchSize=20):
+def testModel(outName,  DF=None, testSet='all', ep=None,
+              reTest=False, batchSize=20):
     # load master
     dictP = loadMaster(outName)
     if ep is None:

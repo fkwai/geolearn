@@ -1,6 +1,6 @@
 import numpy as np
 from hydroDL import utils
-# from sklearn.preprocessing import QuantileTransformer, PowerTransformer
+from sklearn.preprocessing import QuantileTransformer, PowerTransformer
 
 # sn = 0.0001
 sn = 1e-5
@@ -110,7 +110,7 @@ def qtIn(dataIn, statIn=None, nq=50):
     temp = dataIn.copy().reshape(-1, dataIn.shape[-1])
     if statIn is None:
         qt = QuantileTransformer(
-            n_quantiles=nq, random_state=0, output_distribution='normal')
+            n_quantiles=nq, random_state=0, output_distribution='uniform')
         qt.fit(temp)
     else:
         qt = statIn

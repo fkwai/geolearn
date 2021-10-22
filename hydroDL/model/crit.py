@@ -139,11 +139,10 @@ class NSELoss(torch.nn.Module):
                 p0 = output[:, ii, k]
                 t0 = target[:, ii, k]
                 mask = t0 == t0
-                if len(mask[mask == True]) > 0:
+                if torch.any(mask):
                     p = p0[mask]
                     t = t0[mask]
-                    tmean = t.mean()
-                    SST = torch.sum((t - tmean) ** 2)
+                    SST = torch.sum((t - t.mean()) ** 2)
                     if SST != 0:
                         SSRes = torch.sum((t - p) ** 2)
                         temp = 1 - SSRes / SST
@@ -151,6 +150,30 @@ class NSELoss(torch.nn.Module):
                         nsample = nsample + 1
             loss = -(losssum/nsample)+loss
         return loss
+
+
+class NSELoss2D(torch.nn.Module):
+    def __init__(self):
+        super(NSELoss2D, self).__init__()
+
+    def forward(self, output, target):
+        Ngage = target.shape[1]
+        losssum = 0
+        nsample = 0
+        for ii in range(Ngage):
+            p0 = output[:, ii]
+            t0 = target[:, ii]
+            mask = t0 == t0
+            if torch.any(mask):
+                p = p0[mask]
+                t = t0[mask]
+                SST = torch.sum((t - t.mean()) ** 2)
+                if SST != 0:
+                    SSRes = torch.sum((t - p) ** 2)
+                    temp = SSRes / SST
+                    losssum = losssum + temp
+                    nsample = nsample + 1
+        return losssum/nsample
 
 
 class NSELosstest(torch.nn.Module):
@@ -176,4 +199,40 @@ class NSELosstest(torch.nn.Module):
                 losssum = losssum + temp
                 nsample = nsample + 1
         loss = losssum/nsample
+        return loss
+
+
+class logLoss2D(torch.nn.Module):
+    def __init__(self):
+        super(logLoss2D, self).__init__()
+
+    def forward(self, pred, targ):
+        ns = targ.shape[1]
+        mse = torch.nansum((pred-targ)**2, dim=0)
+        n = torch.sum(~torch.isnan(targ), dim=0)
+        return torch.exp(torch.sum(torch.log(mse/n))/ns)
+
+
+class LogLoss2D(torch.nn.Module):
+    def __init__(self):
+        super(LogLoss2D, self).__init__()
+
+    def forward(self, pred, targ):
+        ns = targ.shape[1]
+        mse = torch.nansum((pred-targ)**2, dim=0)
+        n = torch.sum(~torch.isnan(targ), dim=0)
+        return torch.exp(torch.sum(torch.log(mse/n))/ns)
+
+
+class LogAll2D(torch.nn.Module):
+    def __init__(self):
+        super(LogAll2D, self).__init__()
+
+    def forward(self, pred, targ):
+        sn = 1e-8
+        ns = targ.shape[1]
+        logD = torch.log(torch.abs(pred-targ)+sn)
+        logLoss = torch.nansum(logD, dim=0) / \
+            torch.sum(~torch.isnan(targ), dim=0)
+        loss = torch.exp(torch.nansum(logLoss)/ns)
         return loss
