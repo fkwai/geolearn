@@ -9,12 +9,12 @@ class RnnCell(torch.nn.Module):
     def __init__(self, *, nh):
         super().__init__()
         self.hiddenSize = nh
-        self.w_i = P(torch.Tensor(nh, 1))
-        self.w_h = P(torch.Tensor(nh, nh))
-        self.w_o = P(torch.Tensor(1, nh))
-        self.b_i = P(torch.Tensor(nh))
-        self.b_h = P(torch.Tensor(nh))
-        self.b_o = P(torch.Tensor(1))
+        self.w_i = Parameter(torch.Tensor(nh, 1))
+        self.w_h = Parameter(torch.Tensor(nh, nh))
+        self.w_o = Parameter(torch.Tensor(1, nh))
+        self.b_i = Parameter(torch.Tensor(nh))
+        self.b_h = Parameter(torch.Tensor(nh))
+        self.b_o = Parameter(torch.Tensor(1))
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -35,7 +35,7 @@ class RnnModel(torch.nn.Module):
         # self.rnn = WaterNetCell(nh=nh)
         self.rnn = RnnCell(nh=nh)
         self.nh = nh
-        self.h0 = P(torch.Tensor(nh, 1))
+        self.h0 = Parameter(torch.Tensor(nh, 1))
 
     def forward(self, x):
         nt, nb = x.shape
@@ -54,10 +54,10 @@ class WaterNetCell(torch.nn.Module):
     def __init__(self, *, nh):
         super().__init__()
         self.hiddenSize = nh
-        self.w_i = P(torch.Tensor(nh, 1))
-        self.w_o = P(torch.Tensor(1, nh))
-        self.b_i = P(torch.Tensor(nh))
-        self.b_o = P(torch.Tensor(1))
+        self.w_i = Parameter(torch.Tensor(nh, 1))
+        self.w_o = Parameter(torch.Tensor(1, nh))
+        self.b_i = Parameter(torch.Tensor(nh))
+        self.b_o = Parameter(torch.Tensor(1))
         self.reset_parameters()
 
     def reset_parameters(self):

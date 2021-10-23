@@ -127,11 +127,11 @@ class WaterNet3(torch.nn.Module):
         # self.fc = nn.Linear(ng, nh*7+1)
         self.fc = nn.Sequential(
             nn.Linear(ng, 256),
-            nn.Linear(256, nh*8+2))
+            nn.Linear(256, nh*7+1))
         # self.fcT = nn.Linear(nf+ng, nh)
         self.fcT = nn.Sequential(
             nn.Linear(nf+ng, 256),
-            nn.Linear(256, nh*8+2))
+            nn.Linear(256, nh*7+1))
         self.DP = nn.Dropout()
         self.reset_parameters()
 

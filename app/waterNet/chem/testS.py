@@ -12,60 +12,49 @@ import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 
-from hydroDL.model import waterNetGlobal
+from hydroDL.model import waterNetCQ
 import importlib
 
-importlib.reload(waterNetGlobal)
+importlib.reload(waterNetCQ)
 importlib.reload(crit)
 
-dataName = 'QN90'
+siteNoLst = ['08057410']
+dataName = 'temp'
+DF = dbBasin.DataFrameBasin.new(
+    dataName, siteNoLst, sdStr='1982-01-01', edStr='2018-12-31')
+# DF = dbBasin.DataFrameBasin.new(dataName, siteNoLst)
+trainSet = 'B10'
+testSet = 'A10'
+DF.saveSubset('B10', ed='2009-10-01')
+DF.saveSubset('A10', sd='2009-10-01')
+
 DF = dbBasin.DataFrameBasin(dataName)
 label = 'test'
-varX = ['pr', 'etr', 'tmmn', 'tmmx', 'LAI']
-mtdX = ['skip' for k in range(4)]+['norm']
+varX = ['pr', 'etr', 'tmmn', 'tmmx']
+mtdX = ['skip' for k in range(4)]
 varY = ['runoff']
 mtdY = ['skip']
-varXC = gageII.varLstEx
-# mtdXC = dbBasin.io.extractVarMtd(varXC)
-# mtdXC = ['QT' for var in varXC]
-mtdXC = ['QT' for var in varXC]
+varXC = gageII.varLst
+mtdXC = dbBasin.io.extractVarMtd(varXC)
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 
-trainSet = 'WYB09'
-testSet = 'WYA09'
-DM1 = dbBasin.DataModelBasin(
+DM = dbBasin.DataModelBasin(
     DF, subset=trainSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC)
-DM1.trans(mtdX=mtdX, mtdXC=mtdXC)
-dataTup1 = DM1.getData()
+DM.trans(mtdX=mtdX, mtdXC=mtdXC)
+dataTup = DM.getData()
 DM2 = dbBasin.DataModelBasin(
     DF, subset=testSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC)
-DM2.borrowStat(DM1)
+DM2.trans(mtdX=mtdX, mtdXC=mtdXC)
 dataTup2 = DM2.getData()
 
-# extract subset
-siteNo = '08057410'
-siteNoLst = DF.getSite(trainSet)
-indS = siteNoLst.index(siteNo)
-dataLst1 = list()
-dataLst2 = list()
-for dataLst, dataTup in zip([dataLst1, dataLst2], [dataTup1, dataTup2]):
-    for data in dataTup:
-        if data is not None:
-            if data.ndim == 3:
-                data = data[:, indS:indS+1, :]
-            else:
-                data = data[indS:indS+1, :]
-        dataLst.append(data)
-dataTup1 = tuple(dataLst1)
-dataTup2 = tuple(dataLst2)
 
 # model
 nh = 16
-model = waterNetGlobal.WaterNet3(nh, 1, len(varXC))
+model = waterNetCQ.WaterNetCQ2(nh, len(varXC))
 model = model.cuda()
-# optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
-optim = torch.optim.Adam(model.parameters(), lr=0.001)
+optim = torch.optim.RMSprop(model.parameters(), lr=0.05)
+# optim = torch.optim.Adam(model.parameters())
 # optim = torch.optim.Rprop(model.parameters())
 # lossFun = torch.nn.MSELoss().cuda()
 lossFun = crit.LogLoss2D().cuda()
@@ -73,16 +62,14 @@ lossFun = crit.LogLoss2D().cuda()
 [x, xc, y, yc] = dataTup
 xcP = torch.from_numpy(xc).float().cuda()
 w = model.fc(xcP)
-print(w[0, :])
-
+print(w)
 
 # random subset
 model.train()
 for kk in range(100):
     batchSize = [1000, 100]
-    sizeLst = trainBasin.getSize(dataTup1)
-    [x, xc, y, yc] = dataTup1
     [rho, nbatch] = batchSize
+    sizeLst = trainBasin.getSize(dataTup)
     [nx, nxc, ny, nyc, nt, ns] = sizeLst
     iS = np.random.randint(0, ns, [nbatch])
     iT = np.random.randint(0, nt-rho, [nbatch])
@@ -111,14 +98,8 @@ for kk in range(100):
     loss.backward()
     optim.step()
     print(loss.item())
-    w = model.fc(xcT)
-    print(w[0, :])
-
 
 model.eval()
-
-t = DF.getT(trainSet)
-[x, xc, y, yc] = dataTup
 
 t = DF.getT(testSet)
 [x, xc, y, yc] = dataTup2
@@ -134,9 +115,6 @@ k = 0
 fig, ax = plt.subplots(1, 1)
 ax.plot(t, yP[:, k], '-r')
 ax.plot(t, y[:, k], '-k')
-# ax.twinx().plot(DF.t, DF.f[:, 0, DF.varF.index('LAI')], '-b')
-
-# ax.plot(t, x[:, k,0])
 fig.show()
 
 nash = utils.stat.calNash(yP, y[:, :, 0])
