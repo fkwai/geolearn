@@ -70,7 +70,7 @@ nIterEp = 1
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
 # torch.autograd.set_detect_anomaly(True)
-for ep in range(20):
+for ep in range(100):
     for iter in range(nIterEp):
         [rho, nbatch] = batchSize
         iS = np.random.randint(0, ns, [nbatch])
@@ -102,7 +102,7 @@ for ep in range(20):
         # torchUtils.ifNan(model)
         print(ep, iter, loss.item())
         lossLst.append(loss.item())
-    if ep % 100 == 0:
+    if ep % 20 == 0:
         modelFile = os.path.join(saveDir, 'model-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
