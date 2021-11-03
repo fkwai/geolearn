@@ -61,7 +61,7 @@ sizeLst = trainBasin.getSize(dataTup1)
 [x, xc, y, yc] = dataTup1
 [nx, nxc, ny, nyc, nt, ns] = sizeLst
 model.train()
-batchSize = [365, 100]
+batchSize = [1000, 100]
 [rho, nbatch] = batchSize
 
 # nIterEp = int(np.ceil(np.log(0.01)/np.log(1 - nbatch*rho/2000/nt)))

@@ -2,8 +2,8 @@
 #SBATCH -p gpu
 #SBATCH -G 1
 #SBATCH --job-name=QN90-wn3
-#SBATCH --output=/scratch/users/kuaifang/jobs/QN90-wn3-wn3.out
-#SBATCH --error=/scratch/users/kuaifang/jobs/QN90-wn3-wn3.err
+#SBATCH --output=/scratch/users/kuaifang/jobs/QN90-wn3.out
+#SBATCH --error=/scratch/users/kuaifang/jobs/QN90-wn3.err
 #SBATCH --time=24:0:0
 #SBATCH --mem=32000
 #SBATCH --qos=normal
