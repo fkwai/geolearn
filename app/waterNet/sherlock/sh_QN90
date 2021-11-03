@@ -11,5 +11,3 @@
 #SBATCH --mail-user=kuaifang@stanford.edu
 source /home/users/kuaifang/envs/pytorch/bin/activate
 python /home/users/kuaifang/GitHUB/geolearn/app/waterNet/sherlock/trainN3-QN90ref.py 
-
-app\waterNet
