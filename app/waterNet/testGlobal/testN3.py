@@ -123,7 +123,6 @@ yL = yL[:, :, 0]
 
 
 outDir = os.path.join(saveDir, 'HBN36', 'wn2-ep2000')
-modelFile = os.path.join(outDir, 'model')
 nash1 = utils.stat.calNash(yP, y[:, :, 0])
 corr1 = utils.stat.calCorr(yP, y[:, :, 0])
 nash2 = utils.stat.calNash(yL, y[:, :, 0])
@@ -153,4 +152,8 @@ for k in range(ns):
     ax.legend()
     fig.show()
     fig.savefig(os.path.join(outDir, DF.siteNoLst[k]))
+modelFile = os.path.join(outDir, 'model')
 torch.save(model.state_dict(), modelFile)
+
+modelFile = os.path.join(outDir, 'modelFull')
+torch.save(model, modelFile)

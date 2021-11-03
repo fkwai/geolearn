@@ -1,4 +1,5 @@
 
+import random
 import os
 from hydroDL.model import trainBasin, crit
 from hydroDL.data import dbBasin, gageII
@@ -7,6 +8,8 @@ import torch
 import pandas as pd
 from hydroDL.model import waterNetGlobal
 import importlib
+from hydroDL.utils import torchUtils
+
 
 importlib.reload(waterNetGlobal)
 importlib.reload(crit)
@@ -54,20 +57,20 @@ lossFun = crit.LogLoss2D().cuda()
 sn = 1e-8
 # random subset
 ns = len(DF.siteNoLst)
-batchSize = [1000, 100]
 sizeLst = trainBasin.getSize(dataTup1)
 [x, xc, y, yc] = dataTup1
 [nx, nxc, ny, nyc, nt, ns] = sizeLst
 model.train()
-batchSize = [1000, 100]
+batchSize = [365, 100]
 [rho, nbatch] = batchSize
 
 # nIterEp = int(np.ceil(np.log(0.01)/np.log(1 - nbatch*rho/2000/nt)))
 nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
+nIterEp = 1
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
-
-for ep in range(1000):
+# torch.autograd.set_detect_anomaly(True)
+for ep in range(20):
     for iter in range(nIterEp):
         [rho, nbatch] = batchSize
         iS = np.random.randint(0, ns, [nbatch])
@@ -96,7 +99,8 @@ for ep in range(1000):
         optim.zero_grad()
         loss.backward()
         optim.step()
-        print(iter, loss.item())
+        # torchUtils.ifNan(model)
+        print(ep, iter, loss.item())
         lossLst.append(loss.item())
     if ep % 100 == 0:
         modelFile = os.path.join(saveDir, 'model-{}-ep{}'.format(dataName, ep))

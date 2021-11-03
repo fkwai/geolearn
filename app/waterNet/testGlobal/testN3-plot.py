@@ -83,28 +83,43 @@ q3P = q3Out.detach().cpu().numpy()
 ga = gaOut.detach().cpu().numpy()
 model.zero_grad()
 
-w = model.fc(xcP)
-gm = torch.exp(w[:, :nh])+1
-ge = torch.sigmoid(w[:, nh:nh*2])*2
-k2 = torch.sigmoid(w[:, nh*2:nh*3])
-k23 = torch.sigmoid(w[:, nh*3:nh*4])
-k3 = torch.sigmoid(w[:, nh*4:nh*5])/10
-gl = torch.exp(w[:, nh*5:nh*6])*2
-ga = torch.softmax(w[:, nh*6:nh*7], dim=1)
-qb = torch.relu(w[:, 7:8])
+# LSTM
+outName = '{}-{}'.format(dataName, trainSet)
+yL, ycL = basinFull.testModel(outName, DF=DF, testSet=testSet, reTest=True)
+yL = yL[:, :, 0]
 
-a = ga.detach().cpu().numpy()
-x = k3.detach().cpu().numpy()
-b = qb.detach().cpu().numpy()
-d = np.sum(x/b*a, axis=1)
-for var in DF.varG:
-    y = DF.g[:, DF.varG.index(var)]
-    print(np.corrcoef(d, y)[0, 1], var)
 
-y = DF.g[:, DF.varG.index('PERMAVE')]
-fig, ax = plt.subplots(1, 1)
-ax.plot(d, y, '*')
+nash1 = utils.stat.calNash(yP, y[:, :, 0])
+corr1 = utils.stat.calCorr(yP, y[:, :, 0])
+nash2 = utils.stat.calNash(yL, y[:, :, 0])
+corr2 = utils.stat.calCorr(yL, y[:, :, 0])
+fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
+                            label1=['nash', 'corr'],
+                            label2=['waternet2', 'LSTM'])
 fig.show()
-np.corrcoef(d, y)
 
-DF.varG
+fig, axes = plt.subplots(2, 1)
+axplot.plot121(axes[0], nash1, nash2)
+axplot.plot121(axes[1], corr1, corr2)
+fig.show()
+
+# saveSubDir = os.path.join(outDir, 'qPlot')
+# if ~os.path.exists(saveSubDir):
+#     os.makedirs(saveSubDir)
+# for k in range(ns):
+#     fig, axes = plt.subplots(4, 1, figsize=(16, 8), sharex=True)
+#     ax = axes[0]
+#     ax.plot(t, y[:, k], '-k', linewidth=2)
+#     ax.plot(t, yP[:, k], '-r', linewidth=1,
+#             label='waternet2 {:.2f} {:.2f}'.format(nash1[k], corr1[k]))
+#     ax.plot(t, yL[:, k], '-b', linewidth=1,
+#             label='LSTM {:.2f} {:.2f}'.format(nash2[k], corr2[k]))
+#     ax.set_title('{}'.format(DF.siteNoLst[k]))
+#     ax.legend()
+#     for ax, qP in zip(axes[1:], [q1P, q2P, q3P]):
+#         ax.plot(t, y[:, k], '-k', linewidth=2)
+#         ax.plot(t, qP[:, k])
+#     fig.subplots_adjust(hspace=0)
+#     fig.show()
+#     fig.savefig(os.path.join(saveSubDir, DF.siteNoLst[k]))
+

@@ -1,5 +1,4 @@
 
-import scipy
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -21,9 +20,7 @@ ep = 500
 dataName = 'G200'
 trainSet = 'rmR20'
 testSet = 'pkR20'
-# label = 'QFPRT2C'
-label = 'FPRT2QC'
-
+label = 'QFPRT2C'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 outFolder = basinFull.nameFolder(outName)
 corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
@@ -52,21 +49,44 @@ matRm = (count1 < 160) & (count2 < 40)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
-# box plot
+# load linear/seasonal
+dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
+for k, code in enumerate(codeLst):
+    filePar = os.path.join(dirPar, code)
+    dfCorr = pd.read_csv(filePar, dtype={'siteNo': str}).set_index('siteNo')
+    matLR[:, k] = dfCorr['rsq'].values
+matLR[matRm] = np.nan
+
+#
 matplotlib.rcParams.update({'font.size': 12})
-matplotlib.rcParams.update({'lines.linewidth': 1})
+matplotlib.rcParams.update({'lines.linewidth': 2})
 matplotlib.rcParams.update({'lines.markersize': 10})
-dataPlot = list()
-codeStrLst = [usgs.codePdf.loc[code]
-              ['shortName'] + '\n'+code for code in codeLst]
-for ic, code in enumerate(codeLst):
-    dataPlot.append([corrL2[:, ic], corrW2[:, ic]])
-    # dataPlot.append([corrL1[:, ic],corrL2[:, ic], corrW1[:, ic],corrW2[:, ic]])
-fig, axes = figplot.boxPlot(
-    dataPlot, widths=0.5, figsize=(12, 4), label1=codeStrLst)
-# fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
-#     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'])
-plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
+a = np.nanmean(matLR, axis=0)
+b = np.nanmean(corrL2**2 - corrW2**2, axis=0)
+fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+for k in range(len(codeLst)):
+    ax.text(a[k], b[k], usgs.codePdf.loc[codeLst[k]]['shortName'], fontsize=16)
+ax.plot(a, b, '*')
+ax.axhline(0, color='r')
+ax.axvline(0.4, color='r')
+ax.set_xlabel('Simplicity of Variable')
+ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
 fig.show()
-# dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
-# plt.savefig(os.path.join(dirPaper, 'box_all'))
+dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
+# plt.savefig(os.path.join(dirPaper, 'fourDim'))
+
+#
+a = np.nanmean(matLR, axis=0)
+b = np.nanmean(corrL2**2, axis=0)
+c = np.nanmean(corrW2**2, axis=0)
+
+fig, ax = plt.subplots(1, 1)
+for k in range(len(codeLst)):
+    ax.text(a[k], (b[k]+c[k])/2, usgs.codePdf.loc[codeLst[k]]['shortName'])
+    ax.plot([a[k], a[k]], [b[k], c[k]], c='0.5')
+ax.plot(a, b, 'r*')
+ax.plot(a, c, 'b*')
+# ax.set_xscale('log')
+
+fig.show()

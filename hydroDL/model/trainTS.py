@@ -42,6 +42,7 @@ def subsetRandom(dataLst, batchSize, sizeLst=None):
     return xTensor, yTensor
 
 
+
 def getSize(dataLst):
     # dataLst: [x,xc,y,yc]
     sizeLst = list()
