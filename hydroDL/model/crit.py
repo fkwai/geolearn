@@ -50,17 +50,22 @@ class RmseLoss(torch.nn.Module):
         super(RmseLoss, self).__init__()
 
     def forward(self, output, target):
-        ny = target.shape[2]
+        nt, ns, ny = target.shape
         loss = 0
         for k in range(ny):
-            p0 = output[:, :, k]
-            t0 = target[:, :, k]
-            mask = t0 == t0
-            p = p0[mask]
-            t = t0[mask]
-            temp = torch.sqrt(((p - t)**2).mean())
-            if temp == temp:
-                loss = loss + temp
+            n = 0
+            lossTemp = 0
+            for j in range(ns):
+                p0 = output[:, j, k]
+                t0 = target[:, j, k]
+                mask = t0 == t0
+                if len(mask[mask == True]) > 0:
+                    p = p0[mask]
+                    t = t0[mask]
+                    temp = torch.sqrt(((p - t)**2).mean())
+                    lossTemp = lossTemp + temp
+                    n = n+1
+            loss = loss + lossTemp/n
         return loss/ny
 
 

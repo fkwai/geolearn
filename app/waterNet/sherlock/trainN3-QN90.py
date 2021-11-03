@@ -54,7 +54,6 @@ lossFun = crit.LogLoss2D().cuda()
 sn = 1e-8
 # random subset
 ns = len(DF.siteNoLst)
-batchSize = [1000, 100]
 sizeLst = trainBasin.getSize(dataTup1)
 [x, xc, y, yc] = dataTup1
 [nx, nxc, ny, nyc, nt, ns] = sizeLst
@@ -98,7 +97,7 @@ for ep in range(1000):
         optim.step()
         print(iter, loss.item())
         lossLst.append(loss.item())
-    if ep % 100 == 0:
+    if ep % 20 == 0:
         modelFile = os.path.join(saveDir, 'model-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
