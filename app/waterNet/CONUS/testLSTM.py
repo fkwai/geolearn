@@ -6,12 +6,8 @@ from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
 import numpy as np
 
-dataName = 'HBN_Q90ref'
+dataName = 'QN90ref'
 DF = dbBasin.DataFrameBasin(dataName)
-
-# dataName = 'QM90ref'
-# DF2 = dbBasin.DataFrameBasin(dataName)
-
 
 trainSet = 'WYB09'
 testSet = 'WYA09'

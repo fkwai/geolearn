@@ -169,16 +169,6 @@ class WaterNet3(torch.nn.Module):
         ga = torch.softmax(self.DP(w[:, nh*6:nh*7]), dim=1)
         qb = torch.relu(w[:, nh*7:nh*8])
         vi = torch.sigmoid(v[:, :, :nh])
-        # DEBUG
-        # gm.register_hook(lambda x: print('gm', torch.sum(torch.isnan(gm))))
-        # ge.register_hook(lambda x: print('ge', torch.sum(torch.isnan(ge))))
-        # k2.register_hook(lambda x: print('k2', torch.sum(torch.isnan(k2))))
-        # k23.register_hook(lambda x: print('k23', torch.sum(torch.isnan(k23))))
-        # k3.register_hook(lambda x: print('k3', torch.sum(torch.isnan(k3))))
-        # gl.register_hook(lambda x: print('gl', torch.sum(torch.isnan(gl))))
-        # ga.register_hook(lambda x: print('ga', torch.sum(torch.isnan(ga))))
-        # qb.register_hook(lambda x: print('qb', torch.sum(torch.isnan(qb))))
-
         if outQ:
             Q1out = torch.zeros(nt, ns, nh).cuda()
             Q2out = torch.zeros(nt, ns, nh).cuda()
@@ -203,12 +193,6 @@ class WaterNet3(torch.nn.Module):
                 Q1out[k, :, :] = Q1
                 Q2out[k, :, :] = Q2
                 Q3out[k, :, :] = Q3
-
-        # w.register_hook(lambda x: print('w', torch.sum(torch.isnan(w))))
-        # Q1.register_hook(lambda x: print('Q1', torch.sum(torch.isnan(Q1))))
-        # Q2.register_hook(lambda x: print('Q2', torch.sum(torch.isnan(Q2))))
-        # Q3.register_hook(lambda x: print('Q3', torch.sum(torch.isnan(Q3))))
-
         if outQ:
             return Yout, (Q1out, Q2out, Q3out)
         else:

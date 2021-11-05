@@ -61,27 +61,28 @@ batchSize = [1000, 100]
 
 # nIterEp = int(np.ceil(np.log(0.01)/np.log(1 - nbatch*rho/2000/nt)))
 nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
-lossLst = list()
-saveDir = r'/scratch/users/kuaifang/temp/'
 
+
+# water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'model-{}-ep{}'.format('QN90ref', 180)
-
+modelFile = 'model-{}-ep{}'.format('QN90ref', 500)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
-
 model.eval()
 [x, xc, y, yc] = dataTup2
 xP = torch.from_numpy(x).float().cuda()
 xcP = torch.from_numpy(xc).float().cuda()
+nt, ns, _ = y.shape
 t = DF.getT(testSet)
-yOut, (q1Out, q2Out, q3Out) = model(xP, xcP, outQ=True)
+testBatch = 100
+iS = np.arange(0, ns, testBatch)
+iE = np.append(iS[1:], ns)
+yP = np.ndarray([nt, ns])
+for k in range(len(iS)):
+    print('batch {}'.format(k))
+    yOut = model(xP[:, iS[k]:iE[k], :], xcP[iS[k]:iE[k]])
+    yP[:, iS[k]:iE[k]] = yOut.detach().cpu().numpy()
 model.zero_grad()
 
-# w = model.fc(xcP)
-yP = yOut.detach().cpu().numpy()
-q1P = q1Out.detach().cpu().numpy()
-q2P = q2Out.detach().cpu().numpy()
-q3P = q3Out.detach().cpu().numpy()
 
 # LSTM
 outName = '{}-{}'.format('QN90ref', trainSet)
@@ -96,7 +97,7 @@ corr2 = utils.stat.calCorr(yL, y[:, :, 0])
 
 np.mean(corr2)
 
-k = 0
+k = 100
 fig, ax = plt.subplots(1, 1)
 ax.plot(yP[:, k], 'r')
 ax.plot(yL[:, k], 'b')

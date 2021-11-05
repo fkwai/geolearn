@@ -1,18 +1,15 @@
 
 import random
 import os
-from hydroDL.model import trainBasin, crit
+from hydroDL.model import trainBasin, crit, waterNetTest
 from hydroDL.data import dbBasin, gageII
 import numpy as np
 import torch
 import pandas as pd
-from hydroDL.model import waterNetGlobal
+from hydroDL.model import waterNetTest
 import importlib
 from hydroDL.utils import torchUtils
 
-
-importlib.reload(waterNetGlobal)
-importlib.reload(crit)
 
 dataName = 'QN90ref'
 # dataName = 'temp'
@@ -46,7 +43,7 @@ nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
 
-model = waterNetGlobal.WaterNet3(nh, 1, ng)
+model = waterNetTest.WaterNet(nh, 1, ng)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -102,8 +99,9 @@ for ep in range(1000):
         # torchUtils.ifNan(model)
         print(ep, iter, loss.item())
         lossLst.append(loss.item())
-    if ep % 20 == 0:
-        modelFile = os.path.join(saveDir, 'model-{}-ep{}'.format(dataName, ep))
+    if ep % 50 == 0:
+        modelFile = os.path.join(
+            saveDir, 'wn1104-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
 lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))
