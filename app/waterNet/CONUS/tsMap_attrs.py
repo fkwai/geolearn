@@ -47,7 +47,7 @@ dataTup2 = DM2.getData()
 nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
-model = waterNetTest.WaterNet1104(nh, 1, ng)
+model = waterNetTest.WaterNet(nh, 1, ng)
 model = model.cuda()
 sn = 1e-8
 
@@ -91,13 +91,10 @@ importlib.reload(axplot)
 
 def funcM():
     figM = plt.figure()
-    gsM = gridspec.GridSpec(1, 3)
+    gsM = gridspec.GridSpec(3, 1)
     axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1)
-    axM0.set_title('waterNet Nash')
-    axM1 = mapplot.mapPoint(figM, gsM[0, 1], lat, lon, nash2)
-    axM1.set_title('LSTM Nash')
-    axM2 = mapplot.mapPoint(figM, gsM[0, 2], lat, lon, nash2-nash1)
-    axM2.set_title('LSTM - waterNet Nash')
+    axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2)
+    axM2 = mapplot.mapPoint(figM, gsM[2, 0], lat, lon, nash2-nash1)
     axM = np.array([axM0, axM1, axM2])
     figP, axP = plt.subplots(1, 1, figsize=(12, 4))
     return figM, axM, figP, axP, lon, lat
@@ -107,10 +104,9 @@ def funcP(iP, axP):
     print(iP)
     siteNo = DF.siteNoLst[iP]
     t = DF.getT(testSet)
-    legLst = ['obs',
-              'waterNet {:.2f} {:.2f}'.format(nash1[iP], corr1[iP]),
-              'LSTM {:.2f} {:.2f}'.format(nash2[iP], corr2[iP])
-              ]
+    legLst = ['waterNet {:.2f} {:.2f}'.format(nash1[iP], corr1[iP]),
+              'LSTM {:.2f} {:.2f}'.format(nash2[iP], corr2[iP]),
+              'obs']
     axplot.plotTS(axP, t, [y[:, iP, 0], yP[:, iP], yL[:, iP]],
                   lineW=[2, 1, 1], cLst='krb', legLst=legLst)
     strTitle = ('{}'.format(DF.siteNoLst[iP]))
@@ -124,3 +120,51 @@ fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
                             label1=['nash', 'corr'],
                             label2=['waternet4', 'LSTM'])
 fig.show()
+
+# attr vs performance
+fig, ax = plt.subplots(1, 1)
+var = 'WD_SITE'
+ax.plot(DF.g[:, DF.varG.index(var)], nash2-nash1, '*')
+ax.set_ylim([-0.5, 0.5])
+ax.set_ylim([-1, 1])
+ax.axhline(0)
+ax.set_title(var)
+fig.show()
+
+gsM = gridspec.GridSpec(2, 1)
+figM = plt.figure()
+axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash2-nash1)
+axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, DF.g[:, DF.varG.index(var)])
+figM.show()
+DF.varG
+
+fig, ax = plt.subplots(1, 1)
+varX = 'WD_SITE'
+varY = 'SLOPE_PCT'
+dataX = DF.g[:, DF.varG.index(varX)]
+dataY = DF.g[:, DF.varG.index(varY)]
+sc = ax.scatter(dataX, dataY, c=nash2-nash1, vmin=-0.2, vmax=0.2)
+fig.colorbar(sc)
+fig.show()
+
+var = 'ECO3_BAS_DOM'
+data = DF.g[:, DF.varG.index(var)]
+ind = np.where(data == 68)[0]
+gsM = gridspec.GridSpec(2, 1)
+figM = plt.figure()
+axM0 = mapplot.mapPoint(
+    figM, gsM[0, 0], lat[ind], lon[ind], nash2[ind]-nash1[ind])
+axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat[ind], lon[ind], data[ind])
+figM.show()
+DF.varG
+
+
+gsM = gridspec.GridSpec(3, 1)
+varLst = ['WD_SITE', 'SLOPE_PCT', 'ROCKDEPAVE']
+figM = plt.figure()
+for k, var in enumerate(varLst):
+    data = DF.g[:, DF.varG.index(var)]
+    ax = mapplot.mapPoint(figM, gsM[k, 0], lat, lon, data)
+    ax.set_title(var)
+figM.show()
+DF.varG

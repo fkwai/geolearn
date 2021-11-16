@@ -1,21 +1,21 @@
 
+import random
 import os
-from hydroDL.model import trainBasin, crit
+from hydroDL.model import trainBasin, crit, waterNetTest
 from hydroDL.data import dbBasin, gageII
 import numpy as np
 import torch
 import pandas as pd
-from hydroDL.model import waterNetGlobal
+from hydroDL.model import waterNetTest
 import importlib
+from hydroDL.utils import torchUtils
 
-importlib.reload(waterNetGlobal)
-importlib.reload(crit)
 
 dataName = 'QN90'
 # dataName = 'temp'
 DF = dbBasin.DataFrameBasin(dataName)
 label = 'test'
-varX = ['pr', 'etr', 'tmmn', 'tmmx', 'LAI']
+varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
 mtdX = ['skip' for k in range(4)]+['norm']
 varY = ['runoff']
 mtdY = ['skip']
@@ -43,7 +43,7 @@ nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
 
-model = waterNetGlobal.WaterNet3(nh, 1, ng)
+model = waterNetTest.WaterNet1115(nh, ng)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -63,9 +63,10 @@ batchSize = [1000, 100]
 
 # nIterEp = int(np.ceil(np.log(0.01)/np.log(1 - nbatch*rho/2000/nt)))
 nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
+# nIterEp = 1
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
-
+# torch.autograd.set_detect_anomaly(True)
 for ep in range(1000):
     for iter in range(nIterEp):
         [rho, nbatch] = batchSize
@@ -95,10 +96,12 @@ for ep in range(1000):
         optim.zero_grad()
         loss.backward()
         optim.step()
-        print(iter, loss.item())
+        # torchUtils.ifNan(model)
+        print(ep, iter, loss.item())
         lossLst.append(loss.item())
-    if ep % 20 == 0:
-        modelFile = os.path.join(saveDir, 'model-{}-ep{}'.format(dataName, ep))
+    if ep % 50 == 0:
+        modelFile = os.path.join(
+            saveDir, 'wn1115-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
 lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))

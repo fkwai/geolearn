@@ -61,7 +61,7 @@ class WaterNetSingle(torch.nn.Module):
             return Yout
 
 
-class WaterNet1104(torch.nn.Module):
+class WaterNet(torch.nn.Module):
     def __init__(self, nh, nf, ng):
         # with a interception bucket
         super().__init__()
@@ -151,8 +151,8 @@ class WaterNet1104(torch.nn.Module):
             return Yout
 
 
-class WaterNet1115(torch.nn.Module):
-    def __init__(self, nh, ng):
+class WaterNet2(torch.nn.Module):
+    def __init__(self, nh, nf, ng):
         # with a interception bucket
         super().__init__()
         self.nh = nh
@@ -163,18 +163,11 @@ class WaterNet1115(torch.nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(ng, 256),
             nn.Tanh(),
-            nn.Dropout(),
             nn.Linear(256, nh*10))
-        self.fcT1 = nn.Sequential(
-            nn.Linear(1+ng, 256),
+        self.fcT = nn.Sequential(
+            nn.Linear(nf+ng, 256),
             nn.Tanh(),
-            nn.Dropout(),
             nn.Linear(256, nh*2))
-        self.fcT2 = nn.Sequential(
-            nn.Linear(3+ng, 256),
-            nn.Tanh(),
-            nn.Dropout(),
-            nn.Linear(256, nh+1))
         self.DP = nn.Dropout()
         self.reset_parameters()
 
@@ -184,13 +177,15 @@ class WaterNet1115(torch.nn.Module):
                 layer.reset_parameters()
 
     def forward(self, x, xc, outQ=False):
-        P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(6)]
+        P, E, T1, T2, LAI = [x[:, :, k] for k in range(5)]
         nt, ns = P.shape
         nh = self.nh
         Ta = (T1+T2)/2
-        vp = 1-torch.arccos((T1+T2)/(T2-T1))/3.1415
-        vp[T1 >= 0] = 1
-        vp[T2 <= 0] = 0
+        rP = 1-torch.arccos((T1+T2)/(T2-T1))/3.1415
+        rP[T1 >= 0] = 1
+        rP[T2 <= 0] = 0
+        Ps = P*(1-rP)
+        Pl = P*rP
         S0 = torch.zeros(ns, nh).cuda()
         S1 = torch.zeros(ns, nh).cuda()
         Sv = torch.zeros(ns, nh).cuda()
@@ -198,11 +193,9 @@ class WaterNet1115(torch.nn.Module):
         S3 = torch.zeros(ns, nh).cuda()
         Yout = torch.zeros(nt, ns).cuda()
         w = self.fc(xc)
-        xcT1 = torch.cat([LAI[:, :, None], torch.tile(xc, [nt, 1, 1])], dim=-1)
-        xcT2 = torch.cat([R[:, :, None], T1[:, :, None], T2[:, :, None],
-                          torch.tile(xc, [nt, 1, 1])], dim=-1)
-        v1 = self.fcT1(xcT1)
-        v2 = self.fcT2(xcT2)
+        xcT = torch.cat([LAI[:, :, None], torch.tile(xc, [nt, 1, 1])], dim=-1)
+        v = self.fcT(xcT)
+        gm = torch.exp(w[:, :nh])+1
         k1 = torch.sigmoid(w[:, nh:nh*2])
         k2 = torch.sigmoid(w[:, nh*2:nh*3])
         k23 = torch.sigmoid(w[:, nh*3:nh*4])
@@ -210,30 +203,23 @@ class WaterNet1115(torch.nn.Module):
         gl = torch.exp(w[:, nh*5:nh*6])*2
         ga = torch.softmax(self.DP(w[:, nh*6:nh*7]), dim=1)
         qb = torch.relu(w[:, nh*7:nh*8])
-        ge1 = torch.relu(w[:, nh*8:nh*9])
-        ge2 = torch.relu(w[:, nh*9:nh*10])
-        vi = F.hardsigmoid(v1[:, :, :nh])
-        vk = F.hardsigmoid(v1[:, :, nh:nh*2])
-        vm = torch.exp(v2[:, :, :nh]*2)
-        # vp = F.hardsigmoid(v2[:, :, -1])
-        Ps = P*(1-vp)
-        Pl = P*vp
-        Pl1 = Pl[:, :, None]*(1-vi)
-        Pl2 = Pl[:, :, None]*vi
-        Ev1 = E[:, :, None]*ge1
-        Ev2 = E[:, :, None]*ge2
-
+        ge = torch.sigmoid(w[:, nh*8:nh*9])*5
+        ve = torch.sigmoid(w[:, nh*9:nh*10])*5
+        vi = torch.relu(v[:, :, :nh])
+        vk = torch.sigmoid(v[:, :, nh:nh*2])
         if outQ:
             Q1out = torch.zeros(nt, ns, nh).cuda()
             Q2out = torch.zeros(nt, ns, nh).cuda()
             Q3out = torch.zeros(nt, ns, nh).cuda()
-
+        Pl1 = torch.minimum(Pl[:, :, None], vi)
+        Pl2 = torch.relu(Pl[:, :, None]-vi)
+        # Ev = E[:, :, None]*ve
         for k in range(nt):
             H0 = S0+Ps[k, :, None]
-            qSm = torch.minimum(H0, vm[k, :, :])
-            Hv = torch.relu(Sv+Pl1[k, :, :] - Ev1[k, :, :])
-            qv = Hv*vk[k, :, :]
-            H2 = torch.relu(S2+qSm+qv-Ev2[k, :, :]+Pl2[k, :, :])
+            qSm = torch.minimum(H0, torch.relu(Ta[k, :, None]*gm))
+            Hv = torch.relu(Sv+Pl1[k, :, :] - E[k, :, None]*ve)
+            qv = Hv**vk[k, :, :]
+            H2 = torch.relu(S2+qSm+qv-E[k, :, None]*ge+Pl2[k, :, :])
             Q1 = torch.relu(H2-gl)**k1
             q2 = torch.minimum(H2, gl)*k2
             Q2 = q2*(1-k23)

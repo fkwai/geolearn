@@ -21,7 +21,7 @@ importlib.reload(crit)
 dataName = 'QN90ref'
 DF = dbBasin.DataFrameBasin(dataName)
 label = 'test'
-varX = ['pr', 'etr', 'tmmn', 'tmmx', 'LAI']
+varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
 mtdX = ['skip' for k in range(4)]+['norm']
 varY = ['runoff']
 mtdY = ['skip']
@@ -44,7 +44,7 @@ DM2.borrowStat(DM1)
 dataTup2 = DM2.getData()
 
 # extract subset
-siteNo = '03144000'
+siteNo = '03187500'
 siteNoLst = DF.getSite(trainSet)
 indS = siteNoLst.index(siteNo)
 dataLst1 = list()
@@ -62,7 +62,8 @@ dataTup2 = tuple(dataLst2)
 
 # model
 nh = 16
-model = waterNetTest.WaterNet(nh, 1, len(varXC))
+# model = waterNetTest.WaterNet1115(nh, len(varXC))
+model = waterNetTest.WaterNet1115(nh, 1, len(varXC))
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -72,9 +73,6 @@ lossFun = crit.LogLoss2D().cuda()
 
 [x, xc, y, yc] = dataTup
 xcP = torch.from_numpy(xc).float().cuda()
-w = model.fc(xcP)
-print(w[0, :])
-
 
 # random subset
 model.train()
@@ -110,7 +108,7 @@ for kk in range(100):
     optim.zero_grad()
     loss.backward()
     optim.step()
-    print(loss.item())
+    print(kk, loss.item())
     w = model.fc(xcT)
     # print(w[0, :])
 
@@ -125,8 +123,12 @@ t = DF.getT(testSet)
 xP = torch.from_numpy(x).float().cuda()
 xcP = torch.from_numpy(xc).float().cuda()
 yT = torch.from_numpy(y).float().cuda()
-yOut = model(xP, xcP)
+yOut, (q1Out, q2Out, q3Out) = model(xP, xcP, outQ=True)
 yP = yOut.detach().cpu().numpy()
+q1P = q1Out.detach().cpu().numpy()
+q2P = q2Out.detach().cpu().numpy()
+q3P = q3Out.detach().cpu().numpy()
+
 lossFun(yOut[:, :, None], yT)
 model.zero_grad()
 
@@ -136,5 +138,89 @@ ax.plot(t, yP[:, k], '-r')
 ax.plot(t, y[:, k], '-k')
 fig.show()
 
-utils.stat.calNash(yP, y[:, :, 0])
-utils.stat.calCorr(yP, y[:, :, 0])
+
+# k = 0
+# fig, ax = plt.subplots(1, 1)
+# ax.plot(t, yP[:, k], '-r')
+# ax.plot(t, y[:, k], '-k')
+# ax.twinx().plot(t, x[:,0,:])
+# fig.show()
+
+x = xP
+xc = xcP
+P, E, T1, T2, LAI = [x[:, :, k] for k in range(5)]
+nt, ns = P.shape
+Ta = (T1+T2)/2
+rP = 1-torch.arccos((T1+T2)/(T2-T1))/3.1415
+rP[T1 >= 0] = 1
+rP[T2 <= 0] = 0
+Ps = P*(1-rP)
+Pl = P*rP
+S0 = torch.zeros(ns, nh).cuda()
+S1 = torch.zeros(ns, nh).cuda()
+Sv = torch.zeros(ns, nh).cuda()
+S2 = torch.zeros(ns, nh).cuda()
+S3 = torch.zeros(ns, nh).cuda()
+Yout = torch.zeros(nt, ns).cuda()
+w = model.fc(xc)
+xcT = torch.cat([LAI[:, :, None], T1[:, :, None],
+                 T2[:, :, None], torch.tile(xc, [nt, 1, 1])], dim=-1)
+v = model.fcT(xcT)
+gm = torch.exp(w[:, :nh])+1
+k1 = torch.sigmoid(w[:, nh:nh*2])
+k2 = torch.sigmoid(w[:, nh*2:nh*3])
+k23 = torch.sigmoid(w[:, nh*3:nh*4])
+k3 = torch.sigmoid(w[:, nh*4:nh*5])/10
+gl = torch.exp(w[:, nh*5:nh*6])*2
+ga = torch.softmax(w[:, nh*6:nh*7], dim=1)
+qb = torch.relu(w[:, nh*7:nh*8])
+vi = F.hardsigmoid(v[:, :, :nh])
+vk = F.hardsigmoid(v[:, :, nh:nh*2])
+ve1 = torch.relu(v[:, :, nh*2:nh*3])
+ve2 = torch.relu(v[:, :, nh*3:nh*4])
+vm = torch.exp(v[:, :, nh*4:nh*5])
+
+Pl1 = Pl[:, :, None]*(1-vi)
+Pl2 = Pl[:, :, None]*vi
+Ev1 = E[:, :, None]*ve1
+Ev2 = E[:, :, None]*ve2
+
+
+# load LSTM
+outName = '{}-{}'.format('QN90ref', trainSet)
+yL, ycL = basinFull.testModel(
+    outName, DF=DF, testSet=testSet, reTest=False, ep=1000)
+yL = yL[:, indS, :]
+yO = y[:, :, 0]
+sd = 0
+utils.stat.calNash(yL[sd:, :], yO[sd:, :])
+utils.stat.calRmse(yL[sd:, :], yO[sd:, :])
+utils.stat.calNash(yP[sd:, :], yO[sd:, :])
+utils.stat.calRmse(yP[sd:, :], yO[sd:, :])
+
+temp = vi.detach().cpu().numpy()[:, 0, :]
+a = ga.detach().cpu().numpy()[0, :]
+x = xP.detach().cpu().numpy()[:, 0, :]
+fig, axes = plt.subplots(3, 1, sharex=True)
+axes[0].plot(t, temp*a)
+# axes[0].plot(t, temp)
+axes[1].plot(t, yP, '-r')
+axes[1].plot(t, yL, '-b')
+# ax = axes[1].twinx()
+# ax.plot(t, np.abs(yP-yO), '-r')
+# ax.plot(t, np.abs(yL-yO), '-b')
+axes[1].plot(t, y[:, k], '-k')
+axes[2].plot(t, q1P[:, 0, :]*a)
+fig.show()
+
+fig, axes = plt.subplots(3, 1, sharex=True)
+axes[0].plot(t, x[:,  [0, 2, 3, 4]])
+axes[1].plot(t, yP, '-r')
+axes[1].plot(t, yL, '-b')
+axes[1].plot(t, y[:, k], '-k')
+ax = axes[1].twinx()
+ax.plot(t, np.abs(yP-yO)-np.abs(yL-yO), '--k')
+
+axes[2].plot(t, np.abs(yP-yO), '-r')
+axes[2].plot(t, np.abs(yL-yO), '-b')
+fig.show()

@@ -15,7 +15,7 @@ dataName = 'QN90ref'
 # dataName = 'temp'
 DF = dbBasin.DataFrameBasin(dataName)
 label = 'test'
-varX = ['pr', 'etr', 'tmmn', 'tmmx', 'LAI']
+varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
 mtdX = ['skip' for k in range(4)]+['norm']
 varY = ['runoff']
 mtdY = ['skip']
@@ -43,7 +43,7 @@ nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
 
-model = waterNetTest.WaterNet(nh, 1, ng)
+model = waterNetTest.WaterNet1115(nh, ng)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -101,7 +101,7 @@ for ep in range(1000):
         lossLst.append(loss.item())
     if ep % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wn1104-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wn1115-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
 lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))

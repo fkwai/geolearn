@@ -128,7 +128,7 @@ def plot121(ax, x, y, specP='b*', specL='k-', vR=None):
         vmax = np.max([xlim[1], ylim[1]])
     else:
         [vmin, vmax] = vR
-    _ = ax.plot([vmin, vmax], [vmin, vmax], specL)
+    _ = ax.plot([vmin, vmax], [vmin, vmax], specL)    
 
 
 def scatter121(ax, x, y, c, specL='k-', vR=None, size=None, cmap='viridis'):

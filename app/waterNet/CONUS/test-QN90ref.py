@@ -3,16 +3,16 @@ from hydroDL.post import axplot, figplot
 import matplotlib.pyplot as plt
 from hydroDL import utils
 import os
-from hydroDL.model import trainBasin, crit
+from hydroDL.model import trainBasin, crit, waterNetTest
 from hydroDL.data import dbBasin, gageII
 import numpy as np
 import torch
 import pandas as pd
-from hydroDL.model import waterNetGlobal
+from hydroDL.model import waterNetTest
 from hydroDL.master import basinFull
 import importlib
 
-importlib.reload(waterNetGlobal)
+importlib.reload(waterNetTest)
 importlib.reload(crit)
 
 dataName = 'QN90ref'
@@ -47,7 +47,7 @@ nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
 
-model = waterNetGlobal.WaterNet3(nh, 1, ng)
+model = waterNetTest.WaterNet(nh, 1, ng)
 model = model.cuda()
 
 sn = 1e-8
@@ -65,7 +65,7 @@ nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'model-{}-ep{}'.format('QN90ref', 500)
+modelFile = 'wn1104-{}-ep{}'.format('QN90ref', 500)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2
@@ -106,5 +106,14 @@ fig.show()
 
 fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
                             label1=['nash', 'corr'],
-                            label2=['waternet2', 'LSTM'])
+                            label2=['waternet4', 'LSTM'])
+fig.show()
+
+fig, axes = plt.subplots(2, 1)
+axplot.plot121(axes[0], nash1, nash2)
+axes[0].set_ylim([-0.5, 1])
+axes[0].set_xlim([-0.5, 1])
+
+axplot.plot121(axes[1], corr1, corr2)
+
 fig.show()
