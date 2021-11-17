@@ -22,7 +22,7 @@ def transIn(dataIn, *, mtdLst=list(), statLn=None, statQT=None):
     indLn, mtdLn = (list(), list())
     for k, mtd in enumerate(mtdLst):
         temp = mtd.split('-')
-        if temp[-1] == 'norm' or temp[-1] == 'stan':
+        if temp[-1] == 'norm' or temp[-1] == 'stan' or temp[-1] == 'scale':
             indLn.append(k)
             mtdLn.append(temp[-1])
     if len(indLn) > 0:
@@ -85,6 +85,8 @@ def linearIn(dataIn, mtdLst, statIn=None):
                 stat = [(v2+v1)/2, (v2-v1)/2]
             if mtd == 'stan':
                 stat = [np.nanmean(data[..., i]), np.nanstd(data[..., i])]
+            if mtd == 'scale':
+                stat = [0, np.nanpercentile(np.abs(data[..., i]), 90)]
             vS[i, :] = stat
     else:
         vS = statIn.copy()

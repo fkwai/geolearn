@@ -20,7 +20,7 @@ dataName = 'QN90ref'
 # dataName = 'temp'
 DF = dbBasin.DataFrameBasin(dataName)
 label = 'test'
-varX = ['pr', 'etr', 'tmmn', 'tmmx', 'LAI']
+varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
 mtdX = ['skip' for k in range(4)]+['norm']
 varY = ['runoff']
 mtdY = ['skip']
@@ -47,13 +47,13 @@ dataTup2 = DM2.getData()
 nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
-model = waterNetTest.WaterNet1104(nh, 1, ng)
+model = waterNetTest.WaterNet1115(nh, ng)
 model = model.cuda()
 sn = 1e-8
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn1104-{}-ep{}'.format('QN90ref', 900)
+modelFile = 'wn1115-{}-ep{}'.format('QN90ref', 500)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2

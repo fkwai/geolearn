@@ -14,9 +14,10 @@ from hydroDL.utils import torchUtils
 dataName = 'QN90'
 # dataName = 'temp'
 DF = dbBasin.DataFrameBasin(dataName)
-label = 'test'
 varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
-mtdX = ['skip' for k in range(4)]+['norm']
+mtdX = ['skip' for k in range(2)] +\
+    ['scale' for k in range(2)] +\
+    ['norm' for k in range(2)]
 varY = ['runoff']
 mtdY = ['skip']
 varXC = gageII.varLstEx
@@ -43,7 +44,8 @@ nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
 
-model = waterNetTest.WaterNet1115(nh, ng)
+nr = 3
+model = waterNetTest.WaterNet1115(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -92,14 +94,14 @@ for ep in range(1000):
         ycT = torch.from_numpy(ycTemp).float().cuda()
         model.zero_grad()
         yP = model(xT, xcT)
-        loss = lossFun(yP[:, :, None], yT)
+        loss = lossFun(yP[:, :, None], yT[nr-1:, :, :])
         optim.zero_grad()
         loss.backward()
         optim.step()
         # torchUtils.ifNan(model)
         print(ep, iter, loss.item())
         lossLst.append(loss.item())
-    if ep % 50 == 0:
+    if (ep+1) % 50 == 0:
         modelFile = os.path.join(
             saveDir, 'wn1115-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)

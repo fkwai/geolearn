@@ -5,6 +5,15 @@ from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 
 
+def convTS(x, w):
+    nt, ns, nh = x.shape
+    nr = int(w.shape[1]/nh)
+    r = torch.softmax(w.view(ns*nh, 1, nr), dim=-1)
+    a = x.permute(1, 2, 0).view(1, ns*nh, nt)
+    y = F.conv1d(a, r, groups=ns*nh).view(ns, nh, nt-nr+1).permute(2, 0, 1)
+    return y
+
+
 class WaterNetSingle(torch.nn.Module):
     def __init__(self, nh):
         # with a interception bucket
@@ -152,11 +161,12 @@ class WaterNet1104(torch.nn.Module):
 
 
 class WaterNet1115(torch.nn.Module):
-    def __init__(self, nh, ng):
+    def __init__(self, nh, ng, nr):
         # with a interception bucket
         super().__init__()
         self.nh = nh
         self.ng = ng
+        self.nr = nr
         # self.fc = nn.Linear(ng, nh*9)
         # self.fcT = nn.Linear(nf+ng, nh*3)
 
@@ -165,6 +175,11 @@ class WaterNet1115(torch.nn.Module):
             nn.Tanh(),
             nn.Dropout(),
             nn.Linear(256, nh*10))
+        self.fcR = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*nr))
         self.fcT1 = nn.Sequential(
             nn.Linear(1+ng, 256),
             nn.Tanh(),
@@ -187,17 +202,18 @@ class WaterNet1115(torch.nn.Module):
         P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(6)]
         nt, ns = P.shape
         nh = self.nh
-        Ta = (T1+T2)/2
+        nr = self.nr
+        # Ta = (T1+T2)/2
         vp = 1-torch.arccos((T1+T2)/(T2-T1))/3.1415
         vp[T1 >= 0] = 1
         vp[T2 <= 0] = 0
-        S0 = torch.zeros(ns, nh).cuda()
-        S1 = torch.zeros(ns, nh).cuda()
         Sv = torch.zeros(ns, nh).cuda()
+        # S1 = torch.zeros(ns, nh).cuda()
+        S0 = torch.zeros(ns, nh).cuda()
         S2 = torch.zeros(ns, nh).cuda()
         S3 = torch.zeros(ns, nh).cuda()
-        Yout = torch.zeros(nt, ns).cuda()
         w = self.fc(xc)
+        wR = self.fcR(xc)
         xcT1 = torch.cat([LAI[:, :, None], torch.tile(xc, [nt, 1, 1])], dim=-1)
         xcT2 = torch.cat([R[:, :, None], T1[:, :, None], T2[:, :, None],
                           torch.tile(xc, [nt, 1, 1])], dim=-1)
@@ -222,17 +238,14 @@ class WaterNet1115(torch.nn.Module):
         Pl2 = Pl[:, :, None]*vi
         Ev1 = E[:, :, None]*ge1
         Ev2 = E[:, :, None]*ge2
-
-        if outQ:
-            Q1out = torch.zeros(nt, ns, nh).cuda()
-            Q2out = torch.zeros(nt, ns, nh).cuda()
-            Q3out = torch.zeros(nt, ns, nh).cuda()
-
+        Q1T = torch.zeros(nt, ns, nh).cuda()
+        Q2T = torch.zeros(nt, ns, nh).cuda()
+        Q3T = torch.zeros(nt, ns, nh).cuda()
         for k in range(nt):
             H0 = S0+Ps[k, :, None]
             qSm = torch.minimum(H0, vm[k, :, :])
             Hv = torch.relu(Sv+Pl1[k, :, :] - Ev1[k, :, :])
-            qv = Hv*vk[k, :, :]
+            qv = Sv*vk[k, :, :]
             H2 = torch.relu(S2+qSm+qv-Ev2[k, :, :]+Pl2[k, :, :])
             Q1 = torch.relu(H2-gl)**k1
             q2 = torch.minimum(H2, gl)*k2
@@ -243,13 +256,16 @@ class WaterNet1115(torch.nn.Module):
             Sv = Hv-qv
             S2 = H2-Q1-q2
             S3 = H3-Q3
-            Y = torch.sum((Q1+Q2+Q3)*ga, dim=1)
-            Yout[k, :] = Y
-            if outQ:
-                Q1out[k, :, :] = Q1
-                Q2out[k, :, :] = Q2
-                Q3out[k, :, :] = Q3
+            Q1T[k, :, :] = Q1
+            Q2T[k, :, :] = Q2
+            Q3T[k, :, :] = Q3
+        r = torch.relu(wR[:, :nh*nr])
+        Q1R = convTS(Q1T, r)
+        Q2R = convTS(Q2T, r)
+        Q3R = convTS(Q3T, r)
+        yOut = torch.sum((Q1R+Q2R+Q3R)*ga, dim=2)
+
         if outQ:
-            return Yout, (Q1out, Q2out, Q3out)
+            return yOut, (Q1R, Q2R, Q3R)
         else:
-            return Yout
+            return yOut
