@@ -4,7 +4,7 @@
 #SBATCH --job-name=QN90-wn
 #SBATCH --output=/scratch/users/kuaifang/jobs/QN90-wn.out
 #SBATCH --error=/scratch/users/kuaifang/jobs/QN90-wn.err
-#SBATCH --time=24:0:0
+#SBATCH --time=12:0:0
 #SBATCH --mem=32000
 #SBATCH --qos=normal
 #SBATCH --mail-type=ALL
