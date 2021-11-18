@@ -69,7 +69,7 @@ nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
 # torch.autograd.set_detect_anomaly(True)
-for ep in range(1000):
+for ep in range(1, 1001):
     for iter in range(nIterEp):
         [rho, nbatch] = batchSize
         iS = np.random.randint(0, ns, [nbatch])
