@@ -45,7 +45,7 @@ ng = len(varXC)
 ns = len(DF.siteNoLst)
 
 nr = 3
-model = waterNetTest.WaterNet1115(nh, len(varXC), nr)
+model = waterNetTest.WaterNet1116(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -69,7 +69,7 @@ nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
 # torch.autograd.set_detect_anomaly(True)
-for ep in range(1000):
+for ep in range(1, 1001):
     for iter in range(nIterEp):
         [rho, nbatch] = batchSize
         iS = np.random.randint(0, ns, [nbatch])
@@ -101,9 +101,9 @@ for ep in range(1000):
         # torchUtils.ifNan(model)
         print(ep, iter, loss.item())
         lossLst.append(loss.item())
-    if (ep+1) % 50 == 0:
+    if ep % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wn1115-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wn1116-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
 lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))

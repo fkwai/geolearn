@@ -160,7 +160,7 @@ class WaterNet1104(torch.nn.Module):
             return Yout
 
 
-class WaterNet1115(torch.nn.Module):
+class WaterNet1116(torch.nn.Module):
     def __init__(self, nh, ng, nr):
         # with a interception bucket
         super().__init__()

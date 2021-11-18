@@ -1,5 +1,4 @@
 
-from scipy.stats import ttest_ind
 import matplotlib.gridspec as gridspec
 from hydroDL.post import axplot, figplot, mapplot
 import matplotlib.pyplot as plt
@@ -17,12 +16,13 @@ import importlib
 importlib.reload(waterNetTest)
 importlib.reload(crit)
 
-dataName = 'QN90ref'
+dataName = 'QN90'
 # dataName = 'temp'
 DF = dbBasin.DataFrameBasin(dataName)
-label = 'test'
-varX = ['pr', 'etr', 'tmmn', 'tmmx', 'LAI']
-mtdX = ['skip' for k in range(4)]+['norm']
+varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
+mtdX = ['skip' for k in range(2)] +\
+    ['scale' for k in range(2)] +\
+    ['norm' for k in range(2)]
 varY = ['runoff']
 mtdY = ['skip']
 varXC = gageII.varLstEx
@@ -48,13 +48,18 @@ dataTup2 = DM2.getData()
 nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
-model = waterNetTest.WaterNet1104(nh, 1, ng)
+
+nr = 3
+model = waterNetTest.WaterNet1115(nh, len(varXC), nr)
 model = model.cuda()
-sn = 1e-8
+# optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
+optim = torch.optim.Adam(model.parameters())
+# lossFun = torch.nn.MSELoss().cuda()
+lossFun = crit.LogLoss2D().cuda()
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn1104-{}-ep{}'.format('QN90ref', 900)
+modelFile = 'wn1115-{}-ep{}'.format('QN90ref', 99)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2
@@ -65,7 +70,7 @@ t = DF.getT(testSet)
 testBatch = 100
 iS = np.arange(0, ns, testBatch)
 iE = np.append(iS[1:], ns)
-yP = np.ndarray([nt, ns])
+yP = np.ndarray([nt-nr+1, ns])
 for k in range(len(iS)):
     print('batch {}'.format(k))
     yOut = model(xP[:, iS[k]:iE[k], :], xcP[iS[k]:iE[k]])
@@ -74,13 +79,13 @@ model.zero_grad()
 
 
 # LSTM
-outName = '{}-{}'.format('QN90ref', trainSet)
+outName = '{}-{}'.format('QN90', trainSet)
 yL, ycL = basinFull.testModel(
-    outName, DF=DF, testSet=testSet, reTest=True, ep=1000)
+    outName, DF=DF, testSet=testSet, reTest=False, ep=1000)
 yL = yL[:, :, 0]
 
-nash1 = utils.stat.calNash(yP, y[:, :, 0])
-corr1 = utils.stat.calCorr(yP, y[:, :, 0])
+nash1 = utils.stat.calNash(yP, y[nr-1:, :, 0])
+corr1 = utils.stat.calCorr(yP, y[nr-1:, :, 0])
 nash2 = utils.stat.calNash(yL, y[:, :, 0])
 corr2 = utils.stat.calCorr(yL, y[:, :, 0])
 
@@ -112,7 +117,7 @@ def funcP(iP, axP):
               'waterNet {:.2f} {:.2f}'.format(nash1[iP], corr1[iP]),
               'LSTM {:.2f} {:.2f}'.format(nash2[iP], corr2[iP])
               ]
-    axplot.plotTS(axP, t, [y[:, iP, 0], yP[:, iP], yL[:, iP]],
+    axplot.plotTS(axP, t[nr-1:], [y[nr-1:, iP, 0], yP[:, iP], yL[nr-1:, iP]],
                   lineW=[2, 1, 1], cLst='krb', legLst=legLst)
     strTitle = ('{}'.format(DF.siteNoLst[iP]))
     axP.set_title(strTitle)
@@ -123,15 +128,13 @@ figM, figP = figplot.clickMap(funcM, funcP)
 
 fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
                             label1=['nash', 'corr'],
-                            label2=['waternet4', 'LSTM'])
+                            label2=['waternet1116', 'LSTM'])
 fig.show()
-ttest_ind(nash1, nash2)
-ttest_ind(corr1, corr2)
 
 figM = plt.figure()
 gsM = gridspec.GridSpec(2, 1)
-axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1])
+axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1],s=10)
 axM0.set_title('waterNet Nash')
-axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2, vRange=[0, 1])
+axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2, vRange=[0, 1],s=10)
 axM1.set_title('LSTM Nash')
 figM.show()
