@@ -16,7 +16,7 @@ import importlib
 importlib.reload(waterNetTest)
 importlib.reload(crit)
 
-dataName = 'QN90'
+dataName = 'QN90ref'
 # dataName = 'temp'
 DF = dbBasin.DataFrameBasin(dataName)
 varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']

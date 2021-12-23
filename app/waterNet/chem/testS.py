@@ -12,64 +12,75 @@ import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 
-from hydroDL.model import waterNetCQ
+from hydroDL.model import waterNetTest
 import importlib
 
-importlib.reload(waterNetCQ)
+importlib.reload(waterNetTest)
 importlib.reload(crit)
 
-siteNoLst = ['08057410']
-dataName = 'temp'
-DF = dbBasin.DataFrameBasin.new(
-    dataName, siteNoLst, sdStr='1982-01-01', edStr='2018-12-31')
-# DF = dbBasin.DataFrameBasin.new(dataName, siteNoLst)
-trainSet = 'B10'
-testSet = 'A10'
-DF.saveSubset('B10', ed='2009-10-01')
-DF.saveSubset('A10', sd='2009-10-01')
-
+dataName = 'QN90ref'
 DF = dbBasin.DataFrameBasin(dataName)
+
 label = 'test'
-varX = ['pr', 'etr', 'tmmn', 'tmmx']
-mtdX = ['skip' for k in range(4)]
+varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
+mtdX = ['skip' for k in range(2)] +\
+    ['scale' for k in range(2)] +\
+    ['norm' for k in range(2)]
 varY = ['runoff']
 mtdY = ['skip']
-varXC = gageII.varLst
-mtdXC = dbBasin.io.extractVarMtd(varXC)
+varXC = gageII.varLstEx
+# mtdXC = dbBasin.io.extractVarMtd(varXC)
+# mtdXC = ['QT' for var in varXC]
+mtdXC = ['QT' for var in varXC]
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 
-DM = dbBasin.DataModelBasin(
+trainSet = 'WYB09'
+testSet = 'WYA09'
+DM1 = dbBasin.DataModelBasin(
     DF, subset=trainSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC)
-DM.trans(mtdX=mtdX, mtdXC=mtdXC)
-dataTup = DM.getData()
+DM1.trans(mtdX=mtdX, mtdXC=mtdXC)
+dataTup1 = DM1.getData()
 DM2 = dbBasin.DataModelBasin(
     DF, subset=testSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC)
-DM2.trans(mtdX=mtdX, mtdXC=mtdXC)
+DM2.borrowStat(DM1)
 dataTup2 = DM2.getData()
 
+# extract subset
+siteNo = '01491000'
+siteNoLst = DF.getSite(trainSet)
+indS = siteNoLst.index(siteNo)
+dataLst1 = list()
+dataLst2 = list()
+for dataLst, dataTup in zip([dataLst1, dataLst2], [dataTup1, dataTup2]):
+    for data in dataTup:
+        if data is not None:
+            if data.ndim == 3:
+                data = data[:, indS:indS+1, :]
+            else:
+                data = data[indS:indS+1, :]
+        dataLst.append(data)
+dataTup1 = tuple(dataLst1)
+dataTup2 = tuple(dataLst2)
 
 # model
 nh = 16
-model = waterNetCQ.WaterNetCQ2(nh, len(varXC))
+nr = 3
+model = waterNetTest.WaterNet1116(nh, len(varXC), nr)
 model = model.cuda()
-optim = torch.optim.RMSprop(model.parameters(), lr=0.05)
-# optim = torch.optim.Adam(model.parameters())
-# optim = torch.optim.Rprop(model.parameters())
-# lossFun = torch.nn.MSELoss().cuda()
+optim = torch.optim.Adam(model.parameters())
 lossFun = crit.LogLoss2D().cuda()
 
 [x, xc, y, yc] = dataTup
 xcP = torch.from_numpy(xc).float().cuda()
-w = model.fc(xcP)
-print(w)
 
 # random subset
 model.train()
 for kk in range(100):
     batchSize = [1000, 100]
+    sizeLst = trainBasin.getSize(dataTup1)
+    [x, xc, y, yc] = dataTup1
     [rho, nbatch] = batchSize
-    sizeLst = trainBasin.getSize(dataTup)
     [nx, nxc, ny, nyc, nt, ns] = sizeLst
     iS = np.random.randint(0, ns, [nbatch])
     iT = np.random.randint(0, nt-rho, [nbatch])
@@ -93,63 +104,68 @@ for kk in range(100):
     ycT = torch.from_numpy(ycTemp).float().cuda()
     model.zero_grad()
     yP = model(xT, xcT)
-    loss = lossFun(yP[:, :, None], yT)
+    loss = lossFun(yP[:, :, None], yT[nr-1:, :, :])
     optim.zero_grad()
     loss.backward()
     optim.step()
-    print(loss.item())
+    print(kk, loss.item())
+    w = model.fc(xcT)
+    # print(w[0, :])
+
 
 model.eval()
+
+t = DF.getT(trainSet)
+[x, xc, y, yc] = dataTup
 
 t = DF.getT(testSet)
 [x, xc, y, yc] = dataTup2
 xP = torch.from_numpy(x).float().cuda()
 xcP = torch.from_numpy(xc).float().cuda()
 yT = torch.from_numpy(y).float().cuda()
-yOut = model(xP, xcP)
+yOut, (q1Out, q2Out, q3Out) = model(xP, xcP, outQ=True)
 yP = yOut.detach().cpu().numpy()
+q1P = q1Out.detach().cpu().numpy()
+q2P = q2Out.detach().cpu().numpy()
+q3P = q3Out.detach().cpu().numpy()
+
 lossFun(yOut[:, :, None], yT)
 model.zero_grad()
 
 k = 0
 fig, ax = plt.subplots(1, 1)
-ax.plot(t, yP[:, k], '-r')
+ax.plot(t[nr-1:], yP[:, k], '-r')
 ax.plot(t, y[:, k], '-k')
 fig.show()
 
-nash = utils.stat.calNash(yP, y[:, :, 0])
-corr = utils.stat.calCorr(yP, y[:, :, 0])
 
-w = model.fc(xcP)
-P, E, T1, T2, LAI = [xP[:, :, k] for k in range(5)]
-nt, ns = P.shape
-xcT = torch.cat([LAI[:, :, None], torch.tile(xcP, [nt, 1, 1])], dim=-1)
-v = model.fcT(xcT)
-gm = torch.exp(w[:, :nh])+1
-ge = torch.sigmoid(w[:, nh:nh*2])*2
-go = torch.sigmoid(w[:, nh*2:nh*3])
-gl = torch.exp(w[:, nh*3:nh*4]*2)
-ga = torch.softmax(w[:, nh*4:nh*5], dim=1)
-gb = torch.sigmoid(w[:, nh*5:nh*6])
-qb = torch.relu(w[:, -1])/nh
-kb = torch.sigmoid(w[:, nh*6:nh*7])/10
-vi = torch.relu(v[:, :, :nh])
+# load LSTM
+outName = '{}-{}'.format('QN90ref', trainSet)
+yL, ycL = basinFull.testModel(
+    outName, DF=DF, testSet=testSet, reTest=False, ep=1000)
+yL = yL[:, indS, :]
+yO = y[:, :, 0]
+sd = 500
+utils.stat.calNash(yL[sd:, :], yO[sd:, :])
+utils.stat.calRmse(yL[sd:, :], yO[sd:, :])
+utils.stat.calNash(yP[sd:, :], yO[sd+nr-1:, :])
+utils.stat.calRmse(yP[sd:, :], yO[sd+nr-1:, :])
 
-# all years
-fig, ax = plt.subplots(1, 1)
-# ax.plot(DF.t, DF.f[:, 0, DF.varF.index('pr')], '-r')
-ax.plot(DF.t, DF.f[:, 0, DF.varF.index('LAI')], '-r')
-ax.twinx().plot(DF.t, DF.q[:, 0, 1])
+x = xP.detach().cpu().numpy()[:, 0, :]
+fig, axes = plt.subplots(3, 1, sharex=True)
+axes[0].plot(t, x[:,  0])
+axes[0].twinx().plot(t, x[:,  [2, 3]], 'r')
+axes[1].plot(t[nr-1:], yP, '-r')
+axes[1].plot(t, yL, '-b')
+axes[1].plot(t, y[:, k], '-k')
+ax = axes[1].twinx()
+ax.plot(t, np.abs(yP-yO)-np.abs(yL-yO), '--k')
+axes[2].plot(t[nr-1:], np.abs(yP-yO[nr-1:]), '-r')
+axes[2].plot(t, np.abs(yL-yO), '-b')
 fig.show()
 
-# test years
-t = DF.getT(testSet)
-[x, xc, y, yc] = dataTup2
-fig, axes = plt.subplots(2, 1)
-ax = axes[0]
-ax.plot(t, x[:, 0, 0], '-b')
-ax.twinx().plot(t, y[:, 0, 0], '-r')
-ax = axes[1]
-ax.plot(t, x[:, 0, 1], '-b')
-ax.twinx().plot(t, x[:, 0, 2], '-r')
+
+fig, axes = plt.subplots(2, 1, sharex=True)
+axes[0].plot(t, x[:, 0,  2], 'r')
+axes[0].plot(t, x[:, 0, 3], 'y')
 fig.show()

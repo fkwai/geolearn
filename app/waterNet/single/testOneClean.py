@@ -68,7 +68,7 @@ dataTup2 = tuple(dataLst2)
 nh = 16
 nr = 3
 # model = waterNetTest.WaterNet1115(nh, len(varXC))
-model = waterNetTest.WaterNet1115(nh, len(varXC), nr)
+model = waterNetTest.WaterNet1116(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -171,6 +171,6 @@ fig.show()
 
 
 fig, axes = plt.subplots(2, 1, sharex=True)
-axes[0].plot(t, x[:, 0,  2],'r')
+axes[0].plot(t, x[:, 0,  2], 'r')
 axes[0].plot(t, x[:, 0, 3], 'y')
 fig.show()
