@@ -22,3 +22,7 @@ fig, ax = plt.subplots(1, 1)
 ax.plot(sLst)
 ax.plot(s1)
 fig.show()
+
+x=100
+y=10
+x*(np.exp(-x)-np.exp(-y))/(x-y)

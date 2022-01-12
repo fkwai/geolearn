@@ -9,7 +9,7 @@ from hydroDL.data import dbBasin, gageII
 import numpy as np
 import torch
 import pandas as pd
-from hydroDL.model import waterNetTest
+from hydroDL.model import waterNetTest, waterNet
 from hydroDL.master import basinFull
 import importlib
 
@@ -50,7 +50,7 @@ ng = len(varXC)
 ns = len(DF.siteNoLst)
 
 nr = 3
-model = waterNetTest.WaterNet1115(nh, len(varXC), nr)
+model = waterNet.WaterNet1116(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -59,7 +59,7 @@ lossFun = crit.LogLoss2D().cuda()
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn1115-{}-ep{}'.format('QN90ref', 99)
+modelFile = 'wn1115-{}-ep{}'.format('QN90ref', 249)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2
@@ -79,7 +79,7 @@ model.zero_grad()
 
 
 # LSTM
-outName = '{}-{}'.format('QN90', trainSet)
+outName = '{}-{}'.format('QN90ref', trainSet)
 yL, ycL = basinFull.testModel(
     outName, DF=DF, testSet=testSet, reTest=False, ep=1000)
 yL = yL[:, :, 0]
@@ -96,7 +96,7 @@ importlib.reload(axplot)
 
 
 def funcM():
-    figM = plt.figure()
+    figM = plt.figure(figsize=(12, 5))
     gsM = gridspec.GridSpec(1, 3)
     axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1)
     axM0.set_title('waterNet Nash')

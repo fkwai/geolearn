@@ -3,15 +3,8 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
+from hydroDL.model.waterNet import convTS
 
-
-def convTS(x, w):
-    nt, ns, nh = x.shape
-    nr = int(w.shape[1]/nh)
-    r = torch.softmax(w.view(ns*nh, 1, nr), dim=-1)
-    a = x.permute(1, 2, 0).view(1, ns*nh, nt)
-    y = F.conv1d(a, r, groups=ns*nh).view(ns, nh, nt-nr+1).permute(2, 0, 1)
-    return y
 
 
 class WaterNetSingle(torch.nn.Module):
@@ -271,7 +264,7 @@ class WaterNet1116(torch.nn.Module):
             return yOut
 
 
-class WaterNet1215(torch.nn.Module):
+class WaterNet0110(torch.nn.Module):
     def __init__(self, nh, ng, nr):
         # with a interception bucket
         super().__init__()
@@ -330,6 +323,7 @@ class WaterNet1215(torch.nn.Module):
                           torch.tile(xc, [nt, 1, 1])], dim=-1)
         v1 = self.fcT1(xcT1)
         v2 = self.fcT2(xcT2)
+        k1 = torch.sigmoid(w[:, nh:nh*2])
         k2 = torch.sigmoid(w[:, nh*2:nh*3])
         k23 = torch.sigmoid(w[:, nh*3:nh*4])
         k3 = torch.sigmoid(w[:, nh*4:nh*5])/10
@@ -357,7 +351,7 @@ class WaterNet1215(torch.nn.Module):
             Hv = torch.relu(Sv+Pl1[k, :, :] - Ev1[k, :, :])
             qv = Sv*vk[k, :, :]
             H2 = torch.relu(S2+qSm+qv-Ev2[k, :, :]+Pl2[k, :, :])
-            Q1 = torch.relu(H2-gl)
+            Q1 = torch.relu(H2-gl)**k1
             q2 = torch.minimum(H2, gl)*k2
             Q2 = q2*(1-k23)
             H3 = S3+q2*k23
@@ -379,4 +373,3 @@ class WaterNet1215(torch.nn.Module):
             return yOut, (Q1R, Q2R, Q3R)
         else:
             return yOut
-
