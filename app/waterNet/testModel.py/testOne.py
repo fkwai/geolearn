@@ -1,4 +1,5 @@
 
+from hydroDL.model.waterNet import convTS, sepPar
 from hydroDL.model import trainBasin, crit
 from hydroDL.data import dbBasin, gageII, gridMET
 from hydroDL.master import basinFull
@@ -66,9 +67,8 @@ dataTup2 = tuple(dataLst2)
 
 # model
 nh = 16
-nr = 3
-# model = waterNetTest.WaterNet1115(nh, len(varXC))
-model = waterNetTest.WaterNet1116(nh, len(varXC), nr)
+nr = 5
+model = waterNetTest.WaterNet0110(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -114,14 +114,10 @@ for kk in range(100):
     loss.backward()
     optim.step()
     print(kk, loss.item())
-    w = model.fc(xcT)
-    # print(w[0, :])
 
 
 model.eval()
 
-t = DF.getT(trainSet)
-[x, xc, y, yc] = dataTup
 
 t = DF.getT(testSet)
 [x, xc, y, yc] = dataTup2
@@ -134,15 +130,8 @@ q1P = q1Out.detach().cpu().numpy()
 q2P = q2Out.detach().cpu().numpy()
 q3P = q3Out.detach().cpu().numpy()
 
-lossFun(yOut[:, :, None], yT)
+loss = lossFun(yOut[:, :, None], yT[nr-1:, :, :])
 model.zero_grad()
-
-k = 0
-fig, ax = plt.subplots(1, 1)
-ax.plot(t[nr-1:], yP[:, k], '-r')
-ax.plot(t, y[:, k], '-k')
-fig.show()
-
 
 # load LSTM
 outName = '{}-{}'.format('QN90ref', trainSet)
@@ -156,21 +145,18 @@ utils.stat.calRmse(yL[sd:, :], yO[sd:, :])
 utils.stat.calNash(yP[sd:, :], yO[sd+nr-1:, :])
 utils.stat.calRmse(yP[sd:, :], yO[sd+nr-1:, :])
 
-x = xP.detach().cpu().numpy()[:, 0, :]
-fig, axes = plt.subplots(3, 1, sharex=True)
-axes[0].plot(t, x[:,  0])
-axes[0].twinx().plot(t, x[:,  [2, 3]], 'r')
-axes[1].plot(t[nr-1:], yP, '-r')
-axes[1].plot(t, yL, '-b')
-axes[1].plot(t, y[:, k], '-k')
-ax = axes[1].twinx()
-ax.plot(t, np.abs(yP-yO)-np.abs(yL-yO), '--k')
-axes[2].plot(t[nr-1:], np.abs(yP-yO[nr-1:]), '-r')
-axes[2].plot(t, np.abs(yL-yO), '-b')
+k = 0
+fig, ax = plt.subplots(1, 1)
+ax.plot(t[nr-1:], yP[:, k], '-r')
+ax.plot(t, yL, '-b')
+ax.plot(t, y[:, k], '-k')
 fig.show()
 
-
-fig, axes = plt.subplots(2, 1, sharex=True)
-axes[0].plot(t, x[:, 0,  2], 'r')
-axes[0].plot(t, x[:, 0, 3], 'y')
-fig.show()
+# # check parameters
+# x = xP
+# xc = xcP
+# P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
+# nt, ns = P.shape
+# xcT1 = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
+# v1 = model.fcT1(xcT1)
+# [vi, ve] = sepPar(v1, nh, model.v1Lst)

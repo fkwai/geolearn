@@ -14,6 +14,22 @@ def convTS(x, w):
     return y
 
 
+def sepPar(p, nh, actLst):
+    outLst = list()
+    for k, act in enumerate(actLst):
+        if act == 'skip':
+            outLst.append(p[..., nh*k:nh*(k+1)])
+        else:
+            if hasattr(torch, act):
+                ff = getattr(torch, act)
+            elif hasattr(F, act):
+                ff = getattr(F, act)
+            else:
+                Exception('can not find activate func')
+            outLst.append(ff(p[..., nh*k:nh*(k+1)]))
+    return outLst
+
+
 def waterForward(x, w, v, nh, outQ=False):
     P, E, T1, T2, LAI = [x[:, :, k] for k in range(5)]
     nt, ns = P.shape
