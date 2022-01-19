@@ -4,8 +4,8 @@ from hydroDL.master import slurm
 from hydroDL.master import basinFull
 
 
-varYLst = [['runoff'], ['runoff', '00955']]
-outLst = ['B5Y09-00955-Q', 'B5Y09-00955-QC']
+varYLst = [['runoff']]
+outLst = ['B5Y09-00955-Q']
 dataName = 'B5Y09-00955'
 for varY, outName in zip(varYLst, outLst):
     varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
