@@ -80,7 +80,7 @@ for ep in range(1, 1001):
         yT = torch.from_numpy(yTemp).float().cuda()
         ycT = torch.from_numpy(ycTemp).float().cuda()
         model.zero_grad()
-        qP, cP = model(xT, xcT)
+        qP = model(xT, xcT)
         lossQ = lossFun(qP, yT[nr-1:, :, 0])
         loss = lossQ
         optim.zero_grad()
@@ -93,5 +93,5 @@ for ep in range(1, 1001):
             saveDir, 'wn0110Q-00955-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
-lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))
+lossFile = os.path.join(saveDir, 'lossQ-{}'.format(dataName))
 pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
