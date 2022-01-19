@@ -39,7 +39,7 @@ dataTup2 = DM2.getData()
 # model
 nh = 16
 nr = 5
-model = waterNetTest.WaterNet0110(nh, len(varXC), nr, nc=nc)
+model = waterNetTest.WaterNet0110(nh, len(varXC), nr)
 model = model.cuda()
 optim = torch.optim.Adam(model.parameters())
 lossFun = crit.LogLoss2D().cuda()
