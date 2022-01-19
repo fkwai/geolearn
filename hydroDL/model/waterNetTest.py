@@ -350,7 +350,4 @@ class WaterNet0110(torch.nn.Module):
         QsR = convTS(QsT, r)
         QgR = convTS(QgT, r)
         yOut = torch.sum((QpR+QsR+QgR)*ga, dim=2)
-        if outQ:
-            return yOut, (Q1R, Q2R, Q3R)
-        else:
-            return yOut
+        return yOut
