@@ -284,20 +284,6 @@ class WaterNet0110(torch.nn.Module):
             nn.Tanh(),
             nn.Dropout(),
             nn.Linear(256, nh*len(self.wLst)))
-        # # [vi,ve]
-        # self.v1Lst = ['skip', 'relu']
-        # self.fcT1 = nn.Sequential(
-        #     nn.Linear(1+ng, 256),
-        #     nn.Tanh(),
-        #     nn.Dropout(),
-        #     nn.Linear(256, nh*len(self.v1Lst)))
-        # # [vm]
-        # self.v2Lst = ['exp']
-        # self.fcT2 = nn.Sequential(
-        #     nn.Linear(3+ng, 256),
-        #     nn.Tanh(),
-        #     nn.Dropout(),
-        #     nn.Linear(256, nh+1))
         # [vi,ve,vm]
         self.vLst = ['skip', 'relu', 'exp']
         self.fcT = nn.Sequential(
@@ -313,7 +299,7 @@ class WaterNet0110(torch.nn.Module):
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
 
-    def forward(self, x, xc, outQ=False):
+    def forward(self, x, xc, outStep=False):
         P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
         nt, ns = P.shape
         nh = self.nh
@@ -322,21 +308,11 @@ class WaterNet0110(torch.nn.Module):
         Ss = torch.zeros(ns, nh).cuda()
         Sg = torch.zeros(ns, nh).cuda()
         xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
-        # xcT1 = torch.cat([LAI[:, :, None], torch.tile(xc, [nt, 1, 1])], dim=-1)
-        # xcT2 = torch.cat([R[:, :, None], T1[:, :, None], T2[:, :, None],
-        #                   torch.tile(xc, [nt, 1, 1])], dim=-1)
         w = self.fcW(xc)
         [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
         gL = gL*2
         kg = kg/10
         ga = torch.softmax(self.DP(ga), dim=1)
-
-        # v1 = self.fcT1(xcT1)
-        # [vi, ve] = sepPar(v1, nh, self.v1Lst)
-        # vi = F.hardsigmoid(v1[:, :, :nh]*2)
-        # ve = ve*2
-        # v2 = self.fcT2(xcT2)
-        # [vm] = sepPar(v2, nh, self.v2Lst)
         v = self.fcT(xcT)
         [vi, ve, vm] = sepPar(v, nh, self.vLst)
         vi = F.hardsigmoid(v[:, :, :nh]*2)
@@ -349,9 +325,13 @@ class WaterNet0110(torch.nn.Module):
         Pla = P*(1-vf)
         Pl = Pla[:, :, None]*vi
         Ev = E[:, :, None]*ve
-        Q1T = torch.zeros(nt, ns, nh).cuda()
-        Q2T = torch.zeros(nt, ns, nh).cuda()
-        Q3T = torch.zeros(nt, ns, nh).cuda()
+        QpT = torch.zeros(nt, ns, nh).cuda()
+        QsT = torch.zeros(nt, ns, nh).cuda()
+        QgT = torch.zeros(nt, ns, nh).cuda()
+        if outStep is True:
+            SfT = torch.zeros(nt, ns, nh).cuda()
+            SsT = torch.zeros(nt, ns, nh).cuda()
+            SgT = torch.zeros(nt, ns, nh).cuda()
         for k in range(nt):
             qf = torch.minimum(Sf+Ps[k, :, None], vm[k, :, :])
             Sf = torch.relu(Sf+Ps[k, :, None]-vm[k, :, :])
@@ -359,18 +339,17 @@ class WaterNet0110(torch.nn.Module):
             qp = torch.relu(kp*(H-gL))
             qs = ks*torch.minimum(H, gL)
             Ss = H-qp-qs
-            qso = qs*(1-gp)
             qsg = qs*gp
             qg = kg*(Sg+qsg)+qb
-            Sg = Sg-qg
-            Q1T[k, :, :] = qp
-            Q2T[k, :, :] = qso
-            Q3T[k, :, :] = qg
+            Sg = (1-kg)*(Sg+qsg)-qb
+            QpT[k, :, :] = qp
+            QsT[k, :, :] = qs*(1-gp)
+            QgT[k, :, :] = qg
         r = torch.relu(wR[:, :nh*nr])
-        Q1R = convTS(Q1T, r)
-        Q2R = convTS(Q2T, r)
-        Q3R = convTS(Q3T, r)
-        yOut = torch.sum((Q1R+Q2R+Q3R)*ga, dim=2)
+        QpR = convTS(QpT, r)
+        QsR = convTS(QsT, r)
+        QgR = convTS(QgT, r)
+        yOut = torch.sum((QpR+QsR+QgR)*ga, dim=2)
         if outQ:
             return yOut, (Q1R, Q2R, Q3R)
         else:

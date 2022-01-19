@@ -18,6 +18,7 @@ dataName = 'QN90ref'
 DF = dbBasin.DataFrameBasin(dataName)
 DF.saveSubset('WYB09', sd='1982-01-01', ed='2009-10-01')
 DF.saveSubset('WYA09', sd='2009-10-01', ed='2018-12-31')
+DF.saveSubset('WYall', sd='1982-01-01', ed='2018-12-31')
 
 fileSiteNo = os.path.join(dirInv, 'siteSel', 'Q90')
 siteNoLst = pd.read_csv(fileSiteNo, header=None, dtype=str)[0].tolist()

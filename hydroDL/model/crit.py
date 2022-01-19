@@ -221,7 +221,10 @@ class LogLoss2D(torch.nn.Module):
                 rmse = torch.mean((pred[iv, k]-targ[iv, k])**2, dim=0)
                 lossTemp = lossTemp+torch.log(rmse+1e-8)
                 n = n+1
-        return torch.exp(lossTemp/n)
+        if n == 0:
+            return 0
+        else:
+            return torch.exp(lossTemp/n)
         # return mse
 
 

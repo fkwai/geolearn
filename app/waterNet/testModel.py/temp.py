@@ -1,23 +1,16 @@
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
-nh = 16
-ns = 5
-p = torch.randn(10, ns, nh*12).cuda()
-
-actLst = ['sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
-          'exp', 'relu', 'relu', 'relu',
-          'hardsigmoid', 'hardsigmoid', 'exp', 'skip']
-outLst = list()
-for k, act in enumerate(actLst):
-    if act == 'skip':
-        outLst.append(p[..., nh*k:nh*(k+1)])
-    else:
-        if hasattr(torch, act):
-            ff = getattr(torch, act)
-        elif hasattr(F, act):
-            ff = getattr(F, act)
-        else:
-            Exception('can not find activate func')
-        outLst.append(ff(p[..., nh*k:nh*(k+1)]))
+nt = 100
+s = np.zeros(nt)
+s0 = 0
+g = 0.01
+b = 2
+p = 1
+for k in range(nt):
+    s[k] = (1-g)*(s0+p)-b
+    s0 = s[k]
+h = s+b/g
+q = g*(s+p)+b

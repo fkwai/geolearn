@@ -13,10 +13,10 @@ import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 
-from hydroDL.model import waterNetTest
+from hydroDL.model import waterNetTestC
 import importlib
 
-importlib.reload(waterNetTest)
+importlib.reload(waterNetTestC)
 importlib.reload(crit)
 
 dataName = 'QN90ref'
@@ -27,11 +27,9 @@ varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
 mtdX = ['skip' for k in range(2)] +\
     ['scale' for k in range(2)] +\
     ['norm' for k in range(2)]
-varY = ['runoff']
-mtdY = ['skip']
+varY = ['runoff', '00955']
+mtdY = ['skip', 'skip']
 varXC = gageII.varLstEx
-# mtdXC = dbBasin.io.extractVarMtd(varXC)
-# mtdXC = ['QT' for var in varXC]
 mtdXC = ['QT' for var in varXC]
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
@@ -48,8 +46,7 @@ DM2.borrowStat(DM1)
 dataTup2 = DM2.getData()
 
 # extract subset
-# siteNo = '09196500'
-siteNo = '04063700'
+siteNo = '09196500'
 # siteNo = '07148400'
 siteNoLst = DF.getSite(trainSet)
 indS = siteNoLst.index(siteNo)
@@ -69,7 +66,7 @@ dataTup2 = tuple(dataLst2)
 # model
 nh = 16
 nr = 5
-model = waterNetTest.WaterNet0110(nh, len(varXC), nr)
+model = waterNetTestC.Wn0110C1(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -109,63 +106,38 @@ for kk in range(100):
     yT = torch.from_numpy(yTemp).float().cuda()
     ycT = torch.from_numpy(ycTemp).float().cuda()
     model.zero_grad()
-    yP = model(xT, xcT)
-    loss = lossFun(yP[:, :, None], yT[nr-1:, :, :])
+    mDict = model.state_dict().copy()
+    qP, cP = model(xT, xcT)
+    lossQ = lossFun(qP, yT[nr-1:, :, 0])
+    lossC = lossFun(cP, yT[nr-1:, :, 1])
+    loss = lossQ+lossC
+    if loss.isnan():
+        modelS = waterNetTestC.Wn0110C1(nh, len(varXC), nr)
+        modelS.load_state_dict(mDict)
+        modelS = modelS.cuda()
+        qP, cP = modelS(xTS, xcTS)
+        lossQ = lossFun(qP, yTS[nr-1:, :, 0])
+        lossC = lossFun(cP, yTS[nr-1:, :, 1])
+        print(kk, 'break1')
+        break
+
     optim.zero_grad()
     loss.backward()
     optim.step()
-    print(kk, loss.item())
+    print(kk, lossQ.item(), lossC.item())
+    aa = yT[:, :, 1].detach().cpu().numpy()
+    bb = np.isnan(aa)
+    np.sum(~bb, axis=0)
+    b = False
+    for name, p in model.named_parameters():
+        if p.isnan().any():
+            print(kk, name)
+            b = True
+    if b:
+        print(kk, 'break2')
+        break
 
-
-model.eval()
-
-
-t = DF.getT(testSet)
-[x, xc, y, yc] = dataTup2
-xP = torch.from_numpy(x).float().cuda()
-xcP = torch.from_numpy(xc).float().cuda()
-yT = torch.from_numpy(y).float().cuda()
-yOut, (q1Out, q2Out, q3Out) = model(xP, xcP, outQ=True)
-yP = yOut.detach().cpu().numpy()
-q1P = q1Out.detach().cpu().numpy()
-q2P = q2Out.detach().cpu().numpy()
-q3P = q3Out.detach().cpu().numpy()
-
-loss = lossFun(yOut[:, :, None], yT[nr-1:, :, :])
-model.zero_grad()
-
-# load LSTM
-outName = '{}-{}'.format('QN90ref', trainSet)
-yL, ycL = basinFull.testModel(
-    outName, DF=DF, testSet=testSet, reTest=False, ep=1000)
-yL = yL[:, indS, :]
-yO = y[:, :, 0]
-sd = 500
-utils.stat.calNash(yL[sd:, :], yO[sd:, :])
-utils.stat.calRmse(yL[sd:, :], yO[sd:, :])
-utils.stat.calNash(yP[sd:, :], yO[sd+nr-1:, :])
-utils.stat.calRmse(yP[sd:, :], yO[sd+nr-1:, :])
-
-k = 0
-fig, ax = plt.subplots(1, 1)
-ax.plot(t[nr-1:], yP[:, k], '-r')
-ax.plot(t, yL, '-b')
-ax.plot(t, y[:, k], '-k')
-fig.show()
-
-# check parameters
-x = xP
-xc = xcP
-xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
-P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
-nt, ns = P.shape
-xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
-v = model.fcT(xcT)
-[vi, ve, vm] = sepPar(v, nh, model.vLst)
-
-p = x.detach().cpu().numpy()
-fig, axes = plt.subplots(2, 1, sharex=True)
-axes[0].plot(t[nr-1:], yP[:, k], '-r')
-axes[0].plot(t, y[:, k], '-k')
-axes[1].plot(t, p[:, 0, [2,3]])
-fig.show()
+    xTS = torch.clone(xT)
+    xcTS = torch.clone(xcT)
+    yTS = torch.clone(yT)
+    ycTS = torch.clone(ycT)

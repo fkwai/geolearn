@@ -97,10 +97,10 @@ if xc is not None:
     xcTemp = xc[iS, :]
 if yc is not None:
     ycTemp = yc[iS, :]
-xT = torch.from_numpy(xTemp).float().cuda()
-xcT = torch.from_numpy(xcTemp).float().cuda()
-yT = torch.from_numpy(yTemp).float().cuda()
-ycT = torch.from_numpy(ycTemp).float().cuda()
+xTrain = torch.from_numpy(xTemp).float().cuda()
+xcTrain = torch.from_numpy(xcTemp).float().cuda()
+yTrain = torch.from_numpy(yTemp).float().cuda()
+ycTrain = torch.from_numpy(ycTemp).float().cuda()
 
 nh = nh
 ng = 55
@@ -109,52 +109,57 @@ fcR = nn.Sequential(
     nn.Linear(ng, 256),
     nn.Tanh(),
     nn.Dropout(),
-    nn.Linear(256, nh*nr)).cuda()
-# [kp, ks, kg, gp, gl, qb, ge, ga]
+    nn.Linear(256, nh*nr))
+# [kp, ks, kg, gp, gl, qb, ga]
 wLst = [
     'sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
-    'exp', 'relu', 'relu', 'skip']
+    'exp', 'relu', 'skip']
 fcW = nn.Sequential(
     nn.Linear(ng, 256),
     nn.Tanh(),
     nn.Dropout(),
-    nn.Linear(256, nh*len(wLst))).cuda()
-# [vi]
-v1Lst = ['hardsigmoid']
-fcT1 = nn.Sequential(
-    nn.Linear(1+ng, 256),
+    nn.Linear(256, nh*len(wLst)))
+# [vi,ve,vm]
+vLst = ['skip', 'relu', 'exp']
+fcT = nn.Sequential(
+    nn.Linear(6+ng, 256),
     nn.Tanh(),
     nn.Dropout(),
-    nn.Linear(256, nh*len(v1Lst))).cuda()
-# [vm]
-v2Lst = ['exp']
-fcT2 = nn.Sequential(
+    nn.Linear(256, nh*len(vLst)))
+# [cs,cg,cb]
+cLst = ['exp', 'exp', 'exp']
+fcTC = nn.Sequential(
     nn.Linear(3+ng, 256),
     nn.Tanh(),
     nn.Dropout(),
-    nn.Linear(256, nh+1)).cuda()
+    nn.Linear(256, nh*len(cLst)))
 DP = nn.Dropout()
+fcR = fcR.cuda()
+fcW = fcW.cuda()
+fcT = fcT.cuda()
+fcTC = fcTC.cuda()
 
-x = xT
-xc = xcT
+
+# forward
+x = xTrain
+xc = xcTrain
 P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
 nt, ns = P.shape
+nh = nh
+nr = nr
 Sf = torch.zeros(ns, nh).cuda()
-Sv = torch.zeros(ns, nh).cuda()
 Ss = torch.zeros(ns, nh).cuda()
 Sg = torch.zeros(ns, nh).cuda()
-xcT1 = torch.cat([LAI[:, :, None], torch.tile(xc, [nt, 1, 1])], dim=-1)
-xcT2 = torch.cat([R[:, :, None], T1[:, :, None], T2[:, :, None],
-                  torch.tile(xc, [nt, 1, 1])], dim=-1)
+xT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
 w = fcW(xc)
-[kp, ks, kg, gp, gL, qb, ge, ga] = sepPar(w, nh, wLst)
+[kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, wLst)
 gL = gL*2
 kg = kg/10
 ga = torch.softmax(DP(ga), dim=1)
-v1 = fcT1(xcT1)
-[vi] = sepPar(v1, nh, v1Lst)
-v2 = fcT2(xcT2)
-[vm] = sepPar(v2, nh, v2Lst)
+v = fcT(xT)
+[vi, ve, vm] = sepPar(v, nh, vLst)
+vi = F.hardsigmoid(v[:, :, :nh]*2)
+ve = ve*2
 wR = fcR(xc)
 vf = torch.arccos((T1+T2)/(T2-T1))/3.1415
 vf[T1 >= 0] = 0
@@ -162,19 +167,37 @@ vf[T2 <= 0] = 1
 Ps = P*vf
 Pla = P*(1-vf)
 Pl = Pla[:, :, None]*vi
-Ev = E[:, :, None]*ge
+Ev = E[:, :, None]*ve
 Q1T = torch.zeros(nt, ns, nh).cuda()
 Q2T = torch.zeros(nt, ns, nh).cuda()
 Q3T = torch.zeros(nt, ns, nh).cuda()
+for k in range(nt):
+    qf = torch.minimum(Sf+Ps[k, :, None], vm[k, :, :])
+    Sf = torch.relu(Sf+Ps[k, :, None]-vm[k, :, :])
+    H = torch.relu(Ss+Pl[k, :, :]+qf-Ev[k, :, :])
+    qp = torch.relu(kp*(H-gL))
+    qs = ks*torch.minimum(H, gL)
+    Ss = H-qp-qs
+    qso = qs*(1-gp)
+    qsg = qs*gp
+    qg = kg*(Sg+qsg)+qb
+    Sg = Sg-qg
+    Q1T[k, :, :] = qp
+    Q2T[k, :, :] = qso
+    Q3T[k, :, :] = qg
+r = torch.relu(wR[:, :nh*nr])
+Q1R = convTS(Q1T, r)
+Q2R = convTS(Q2T, r)
+Q3R = convTS(Q3T, r)
+outQ = torch.sum((Q1R+Q2R+Q3R)*ga, dim=2)
 
-k = 0
-qf = torch.minimum(Sf+Ps[k, :, None], vm[k, :, :])
-Sf = torch.relu(Sf+Ps[k, :, None]-vm[k, :, :])
-H = torch.relu(Ss+Pl[k, :, :]+qf-Ev[k, :, :])
-qp = torch.relu(kp*(H-gL))
-qs = ks*torch.minimum(H, gL)
-Ss = H-qp-qs
-qso = qs*(1-gp)
-qsg = qs*gp
-qg = kg*(Sg+qsg)+qb
-Sg = Sg-qg
+# concentrations
+xTc = torch.cat([LAI[:, :, None], T1[:, :, None],
+                T2[:, :, None], torch.tile(xc, [nt, 1, 1])], dim=-1)
+wC = fcTC(xTc)
+[cs, cg, cb] = sepPar(wC, nh, cLst)
+C2T = Q2T*cs
+C3T = Q2T*cg
+C2R = convTS(C2T, r)
+C3R = convTS(C3T, r)
+outC = torch.sum((C2R+C3R)*ga, dim=2)/outQ

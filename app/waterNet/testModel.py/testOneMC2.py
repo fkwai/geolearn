@@ -1,4 +1,7 @@
 
+import copy
+import collections
+from gc import collect
 from hydroDL.model.waterNet import convTS, sepPar
 from hydroDL.model import trainBasin, crit
 from hydroDL.data import dbBasin, gageII, gridMET
@@ -13,25 +16,24 @@ import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 
-from hydroDL.model import waterNetTest
+from hydroDL.model import waterNetTestC
 import importlib
 
-importlib.reload(waterNetTest)
+importlib.reload(waterNetTestC)
 importlib.reload(crit)
 
-dataName = 'QN90ref'
+dataName = 'B5Y09a'
 DF = dbBasin.DataFrameBasin(dataName)
-
+codeLst = ['00915']
+nc = len(codeLst)
 label = 'test'
 varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
 mtdX = ['skip' for k in range(2)] +\
     ['scale' for k in range(2)] +\
     ['norm' for k in range(2)]
-varY = ['runoff']
-mtdY = ['skip']
+varY = ['runoff']+codeLst
+mtdY = ['skip' for k in range(nc+1)]
 varXC = gageII.varLstEx
-# mtdXC = dbBasin.io.extractVarMtd(varXC)
-# mtdXC = ['QT' for var in varXC]
 mtdXC = ['QT' for var in varXC]
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
@@ -47,15 +49,16 @@ DM2 = dbBasin.DataModelBasin(
 DM2.borrowStat(DM1)
 dataTup2 = DM2.getData()
 
+
 # extract subset
-# siteNo = '09196500'
-siteNo = '04063700'
-# siteNo = '07148400'
+# siteNo = '04063700'
+siteNo = '06317000'
 siteNoLst = DF.getSite(trainSet)
 indS = siteNoLst.index(siteNo)
 dataLst1 = list()
 dataLst2 = list()
-for dataLst, dataTup in zip([dataLst1, dataLst2], [dataTup1, dataTup2]):
+for dataLst, dataTup in zip([dataLst1, dataLst2],
+                            [dataTup1, dataTup2]):
     for data in dataTup:
         if data is not None:
             if data.ndim == 3:
@@ -66,10 +69,11 @@ for dataLst, dataTup in zip([dataLst1, dataLst2], [dataTup1, dataTup2]):
 dataTup1 = tuple(dataLst1)
 dataTup2 = tuple(dataLst2)
 
+
 # model
 nh = 16
 nr = 5
-model = waterNetTest.WaterNet0110(nh, len(varXC), nr)
+model = waterNetTestC.Wn0110C2(nh, len(varXC), nr, nc=nc)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -109,15 +113,35 @@ for kk in range(100):
     yT = torch.from_numpy(yTemp).float().cuda()
     ycT = torch.from_numpy(ycTemp).float().cuda()
     model.zero_grad()
-    yP = model(xT, xcT)
-    loss = lossFun(yP[:, :, None], yT[nr-1:, :, :])
+    mDict = copy.deepcopy(dict(model.state_dict()))
+
+    qP, cP = model(xT, xcT)
+    lossQ = lossFun(qP, yT[nr-1:, :, 0])
+    loss = lossQ
+    lossCLst = list()
+    for k in range(nc):
+        lossC = lossFun(cP[:, :, k], yT[nr-1:, :, k+1])
+        lossCLst.append(lossC)
+        loss = loss+lossC
+    # with torch.autograd.detect_anomaly():
     optim.zero_grad()
     loss.backward()
     optim.step()
-    print(kk, loss.item())
-
-
-model.eval()
+    # mDict['fcR.0.weight'].sum()
+    # model.state_dict()['fcR.0.weight'].sum()
+    strP = '{} {:.3f}'.format(kk, lossQ.item())
+    for lossC in lossCLst:
+        strP = strP + ' {:.3f}'.format(lossC.item())
+    print(strP)
+    b = False
+    for name, p in model.named_parameters():
+        if p.isnan().any():
+            print(kk, name)
+            b = True
+    if b:
+        print(kk, 'break2')
+        model.load_state_dict(mDict)
+        break
 
 
 t = DF.getT(testSet)
@@ -125,14 +149,13 @@ t = DF.getT(testSet)
 xP = torch.from_numpy(x).float().cuda()
 xcP = torch.from_numpy(xc).float().cuda()
 yT = torch.from_numpy(y).float().cuda()
-yOut, (q1Out, q2Out, q3Out) = model(xP, xcP, outQ=True)
-yP = yOut.detach().cpu().numpy()
-q1P = q1Out.detach().cpu().numpy()
-q2P = q2Out.detach().cpu().numpy()
-q3P = q3Out.detach().cpu().numpy()
+qOut, cOut = model(xP, xcP)
+qP = qOut.detach().cpu().numpy()
+cP = cOut.detach().cpu().numpy()
+lossQ = lossFun(qOut, yT[nr-1:, :, 0])
+lossC = lossFun(cOut, yT[nr-1:, :, 1])
+print(lossQ.item(), lossC.item())
 
-loss = lossFun(yOut[:, :, None], yT[nr-1:, :, :])
-model.zero_grad()
 
 # load LSTM
 outName = '{}-{}'.format('QN90ref', trainSet)
@@ -143,29 +166,19 @@ yO = y[:, :, 0]
 sd = 500
 utils.stat.calNash(yL[sd:, :], yO[sd:, :])
 utils.stat.calRmse(yL[sd:, :], yO[sd:, :])
-utils.stat.calNash(yP[sd:, :], yO[sd+nr-1:, :])
-utils.stat.calRmse(yP[sd:, :], yO[sd+nr-1:, :])
+utils.stat.calNash(qP[sd:, :], yO[sd+nr-1:, :])
+utils.stat.calRmse(qP[sd:, :], yO[sd+nr-1:, :])
+
+utils.stat.calNash(cP[sd:, :, 0], y[sd+nr-1:, :, 1])
+utils.stat.calCorr(cP[sd:, :, 0], y[sd+nr-1:, :, 1])
+utils.stat.calRmse(cP[sd:, :, 0], y[sd+nr-1:, :, 1])
 
 k = 0
-fig, ax = plt.subplots(1, 1)
-ax.plot(t[nr-1:], yP[:, k], '-r')
-ax.plot(t, yL, '-b')
-ax.plot(t, y[:, k], '-k')
-fig.show()
-
-# check parameters
-x = xP
-xc = xcP
-xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
-P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
-nt, ns = P.shape
-xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
-v = model.fcT(xcT)
-[vi, ve, vm] = sepPar(v, nh, model.vLst)
-
-p = x.detach().cpu().numpy()
-fig, axes = plt.subplots(2, 1, sharex=True)
-axes[0].plot(t[nr-1:], yP[:, k], '-r')
-axes[0].plot(t, y[:, k], '-k')
-axes[1].plot(t, p[:, 0, [2,3]])
+fig, axes = plt.subplots(1+nc, 1, sharex=True)
+axes[0].plot(t[nr-1:], qP[:, k], '-r')
+axes[0].plot(t, y[:, k, 0], '-k')
+for k in range(nc):
+    print(k)
+    axes[k+1].plot(t[nr-1:], cP[:, 0, k], '-r')
+    axes[k+1].plot(t, y[:, 0, k+1], '*k')
 fig.show()
