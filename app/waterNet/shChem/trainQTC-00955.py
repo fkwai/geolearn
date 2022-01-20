@@ -39,11 +39,13 @@ dataTup2 = DM2.getData()
 # model
 nh = 16
 nr = 5
-model = waterNetTestC.Wn0110C2(nh, len(varXC), nr, nc=nc)
+saveDir = r'/scratch/users/kuaifang/temp/'
+modelFile = 'wn0110Q-00955-{}-ep{}'.format(dataName, 1000)
+dictQ = torch.load(os.path.join(saveDir, modelFile))
+model = waterNetTestC.Trans0110C2(nh, len(varXC), nr, nc, dictQ=dictQ)
 model = model.cuda()
 optim = torch.optim.Adam(model.parameters())
 lossFun = crit.LogLoss2D().cuda()
-
 sizeLst = trainBasin.getSize(dataTup1)
 [x, xc, y, yc] = dataTup1
 [nx, nxc, ny, nyc, nt, ns] = sizeLst
@@ -51,7 +53,6 @@ batchSize = [1000, 100]
 sizeLst = trainBasin.getSize(dataTup1)
 [rho, nbatch] = batchSize
 nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
-saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
 lossLst = list()
 
 # random subset
@@ -87,7 +88,7 @@ for ep in range(1, 1001):
         for k in range(nc):
             lossC = lossFun(cP[:, :, k], yT[nr-1:, :, k+1])
             lossCLst.append(lossC)
-            loss = loss+lossC
+            loss = loss*lossC
         optim.zero_grad()
         loss.backward()
         optim.step()
@@ -97,8 +98,8 @@ for ep in range(1, 1001):
         print(strP)
     if (ep) % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wn0110C-00955-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wn0110QTC-00955-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
-lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))
+lossFile = os.path.join(saveDir, 'loss-{}'.format('wn0110QTC'))
 pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)

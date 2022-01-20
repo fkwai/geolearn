@@ -87,7 +87,7 @@ for ep in range(1, 1001):
         for k in range(nc):
             lossC = lossFun(cP[:, :, k], yT[nr-1:, :, k+1])
             lossCLst.append(lossC)
-            loss = loss+lossC
+            loss = loss*lossC
         optim.zero_grad()
         loss.backward()
         optim.step()
@@ -97,8 +97,8 @@ for ep in range(1, 1001):
         print(strP)
     if (ep) % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wn0110C-00955-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wn0110C2-00955-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
-lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))
+lossFile = os.path.join(saveDir, 'loss-{}'.format('wn0110C2'))
 pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
