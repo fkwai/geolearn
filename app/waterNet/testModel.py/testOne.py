@@ -69,7 +69,7 @@ dataTup2 = tuple(dataLst2)
 # model
 nh = 16
 nr = 5
-model = waterNetTest.WaterNet0110(nh, len(varXC), nr)
+model = waterNetTest.WaterNet0119(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -125,11 +125,8 @@ t = DF.getT(testSet)
 xP = torch.from_numpy(x).float().cuda()
 xcP = torch.from_numpy(xc).float().cuda()
 yT = torch.from_numpy(y).float().cuda()
-yOut, (q1Out, q2Out, q3Out) = model(xP, xcP, outQ=True)
+yOut = model(xP, xcP)
 yP = yOut.detach().cpu().numpy()
-q1P = q1Out.detach().cpu().numpy()
-q2P = q2Out.detach().cpu().numpy()
-q3P = q3Out.detach().cpu().numpy()
 
 loss = lossFun(yOut[:, :, None], yT[nr-1:, :, :])
 model.zero_grad()

@@ -351,3 +351,93 @@ class WaterNet0110(torch.nn.Module):
         QgR = convTS(QgT, r)
         yOut = torch.sum((QpR+QsR+QgR)*ga, dim=2)
         return yOut
+
+
+class WaterNet0119(torch.nn.Module):
+    def __init__(self, nh, ng, nr):
+        # with a interception bucket
+        super().__init__()
+        self.nh = nh
+        self.ng = ng
+        self.nr = nr
+        self.fcR = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*nr))
+        # [kp, ks, kg, gp, gl, qb, ga]
+        self.wLst = [
+            'sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
+            'exp', 'relu', 'skip']
+        self.fcW = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*len(self.wLst)))
+        # [vi,ve,vm]
+        self.vLst = ['skip', 'relu', 'exp']
+        self.fcT = nn.Sequential(
+            nn.Linear(6+ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*len(self.vLst)))
+        self.DP = nn.Dropout()
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for layer in self.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+
+    def forward(self, x, xc, outStep=False):
+        P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
+        nt, ns = P.shape
+        nh = self.nh
+        nr = self.nr
+        Sf = torch.zeros(ns, nh).cuda()
+        Ss = torch.zeros(ns, nh).cuda()
+        Sg = torch.zeros(ns, nh).cuda()
+        xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
+        w = self.fcW(xc)
+        [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
+        gL = gL**2
+        kg = kg/10
+        ga = torch.softmax(self.DP(ga), dim=1)
+        v = self.fcT(xcT)
+        [vi, ve, vm] = sepPar(v, nh, self.vLst)
+        vi = F.hardsigmoid(v[:, :, :nh]*2)
+        ve = ve*2
+        wR = self.fcR(xc)
+        vf = torch.arccos((T1+T2)/(T2-T1))/3.1415
+        vf[T1 >= 0] = 0
+        vf[T2 <= 0] = 1
+        Ps = P*vf
+        Pla = P*(1-vf)
+        Pl = Pla[:, :, None]*vi
+        Ev = E[:, :, None]*ve
+        QpT = torch.zeros(nt, ns, nh).cuda()
+        QsT = torch.zeros(nt, ns, nh).cuda()
+        QgT = torch.zeros(nt, ns, nh).cuda()
+        if outStep is True:
+            SfT = torch.zeros(nt, ns, nh).cuda()
+            SsT = torch.zeros(nt, ns, nh).cuda()
+            SgT = torch.zeros(nt, ns, nh).cuda()
+        for k in range(nt):
+            qf = torch.minimum(Sf+Ps[k, :, None], vm[k, :, :])
+            Sf = torch.relu(Sf+Ps[k, :, None]-vm[k, :, :])
+            H = torch.relu(Ss+Pl[k, :, :]+qf-Ev[k, :, :])
+            qp = torch.relu(kp*(H-gL))
+            qs = ks*torch.minimum(H, gL)
+            Ss = H-qp-qs
+            qsg = qs*gp
+            qg = kg*(Sg+qsg)+qb
+            Sg = (1-kg)*(Sg+qsg)-qb
+            QpT[k, :, :] = qp
+            QsT[k, :, :] = qs*(1-gp)
+            QgT[k, :, :] = qg
+        r = torch.relu(wR[:, :nh*nr])
+        QpR = convTS(QpT, r)
+        QsR = convTS(QsT, r)
+        QgR = convTS(QgT, r)
+        yOut = torch.sum((QpR+QsR+QgR)*ga, dim=2)
+        return yOut
