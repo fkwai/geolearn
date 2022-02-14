@@ -116,12 +116,12 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
     d2 = dbBasin.DataModelBasin(DF, subset=testSet, varX=varX, varY=varY)
     tt1 = pd.to_datetime(d1.t)
     yr1 = tt1.year.values
-    t1= yr1+tt1.dayofyear.values/365
+    t1 = yr1+tt1.dayofyear.values/365
     sinT1 = np.sin(2*np.pi*t1)
     cosT1 = np.cos(2*np.pi*t1)
     tt2 = pd.to_datetime(d2.t)
     yr2 = tt2.year.values
-    t2= yr2+tt2.dayofyear.values/365
+    t2 = yr2+tt2.dayofyear.values/365
     sinT2 = np.sin(2*np.pi*t2)
     cosT2 = np.cos(2*np.pi*t2)
     ###

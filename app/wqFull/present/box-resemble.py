@@ -78,17 +78,20 @@ for corr in corrLst2:
     corr[matRm] = np.nan
 
 
-# box plot
+# box plot - all cases
 dataPlot = list()
-codePlot = [codeLst[k] for k in np.argsort(np.nanmean(matLR, axis=0))]
+# codePlot = [codeLst[k] for k in np.argsort(np.nanmean(matLR, axis=0))]
+codePlot = ['00935', '00955', '00940', '00945',
+            '00930', '00095', '00915', '00925']
 codeStrLst = [usgs.codePdf.loc[code]
               ['shortName'] + '\n'+code for code in codePlot]
 for code in codePlot:
     ic = codeLst.index(code)
-    dataPlot.append([corr[:, ic] for corr in corrLst1]+[corrW[:, ic]])
+    # dataPlot.append([corr[:, ic] for corr in corrLst1]+[corrW[:, ic]])
+    dataPlot.append([corr[:, ic] for corr in corrLst1])
 fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(12, 4),
                             label1=codeStrLst, cLst='rgbk',
-                            label2=['FPRT2QC', 'QT2C', 'QFPRT2C', 'WRTDS'])
+                            label2=['F-QC', 'Q-C', 'FQ-C'])
 fig.show()
 
 # box plot

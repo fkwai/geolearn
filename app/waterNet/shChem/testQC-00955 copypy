@@ -1,5 +1,4 @@
 
-import random
 import matplotlib.pyplot as plt
 from hydroDL.post import axplot, figplot, mapplot
 from hydroDL.master import basinFull
@@ -87,7 +86,6 @@ corrQ1 = utils.stat.calCorr(qP, y[nr-1:, :, 0])
 nashC1 = utils.stat.calNash(cP, y[nr-1:, :, 1])
 corrC1 = utils.stat.calCorr(cP, y[nr-1:, :, 1])
 
-
 # LSTM
 outName = 'B5Y09-00955-QC'
 yL, ycL = basinFull.testModel(
@@ -99,8 +97,10 @@ nashQ2 = utils.stat.calNash(qL, y[:, :, 0])
 corrQ2 = utils.stat.calCorr(qL, y[:, :, 0])
 nashC2 = utils.stat.calNash(cL, y[:, :, 1])
 corrC2 = utils.stat.calCorr(cL, y[:, :, 1])
+# nashC2 = utils.stat.calNash(cL*qL/y[:, :, 0], y[:, :, 1])
+# corrC2 = utils.stat.calCorr(cL*qL/y[:, :, 0], y[:, :, 1])
 
-fig, axes = figplot.boxPlot([[corrQ1, corrQ2], [corrC1, corrC2]],
+fig, axes = figplot.boxPlot([[corrQ1, corrQ2], [corrC1t, corrC2]],
                             label1=['Q', 'SiO2'],
                             label2=['WN0110', 'LSTM'])
 fig.show()
@@ -108,11 +108,15 @@ fig.show()
 
 siteNo = '02041650'
 indS = DF.siteNoLst.index(siteNo)
-indS = random.randint(0, len(DF.siteNoLst))
 fig, axes = plt.subplots(1+nc, 1, sharex=True)
 axes[0].plot(t[nr-1:], qP[:, indS], '-r')
-axes[0].plot(t, y[:, indS, 0], '-k')
+axes[0].plot(t[nr-1:], y[nr-1:, indS, 0], '-k')
 axes[1].plot(t[nr-1:], cP[:, indS], '-r')
+axes[1].plot(t[nr-1:], cP[:, indS]*qP[:, indS]/y[nr-1:, indS, 0], '-g')
 axes[1].plot(t, y[:, indS, 1], '*k')
-axes[0].set_title(DF.siteNoLst[indS])
+fig.show()
+
+fig, ax = plt.subplots(nc, 1, sharex=True)
+
+ax.plot(t[nr-1:], qP[:, indS]/y[nr-1:, indS, 0])
 fig.show()

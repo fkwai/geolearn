@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
 from hydroDL.model.waterNet import convTS, sepPar
-from hydroDL.model import waterNetTest
+from hydroDL.model import waterNetTest, waterNet
 
 
 class Wn0110C1(torch.nn.Module):
@@ -334,3 +334,24 @@ class Trans0110C2(waterNetTest.WaterNet0110):
             outCLst.append(temp)
         outC = torch.stack(outCLst, dim=-1)
         return outQ, outC
+
+
+class Wn0119C2(waterNet.WaterNet0119):
+    def __init__(self, nh, ng, nr, nc, dictQ=None, freeze=False):
+        super().__init__(nh, ng, nr)
+        if dictQ is not None:
+            super().load_state_dict(dictQ)
+            if freeze:
+                for layer in self.children():
+                    for param in layer.parameters():
+                        param.requires_grad = False
+        self.nc = nc
+        # [eqs,eqg]
+        self.cLst = ['exp', 'exp']
+        self.fcC = nn.Sequential(
+            nn.Linear(self.ng, 256),
+            nn.Dropout(),
+            nn.Linear(256, nc*nh*len(self.cLst)))
+        # [rs,rg]
+        self.ctLst = ['sigmoid', 'sigmoid']
+        self.fcCT = nn.Linear(2+self.ng, nc*nh*len(self.cLst))

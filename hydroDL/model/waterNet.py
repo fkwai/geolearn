@@ -278,3 +278,118 @@ class WaterNet1116(torch.nn.Module):
             return yOut, (Q1R, Q2R, Q3R)
         else:
             return yOut
+
+
+
+class WaterNet0119(torch.nn.Module):
+    def __init__(self, nh, ng, nr):
+        # with a interception bucket
+        super().__init__()
+        self.nh = nh
+        self.ng = ng
+        self.nr = nr
+        self.fcR = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*nr))
+        # [kp, ks, kg, gp, gl, qb, ga]
+        self.wLst = [
+            'sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
+            'exp', 'relu', 'skip']
+        self.fcW = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*len(self.wLst)))
+        # [vi,ve,vm]
+        self.vLst = ['skip', 'relu', 'exp']
+        self.fcT = nn.Sequential(
+            nn.Linear(6+ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*len(self.vLst)))
+        self.DP = nn.Dropout()
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for layer in self.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+
+    def forwardStepQ(self, Sf, Ss, Sg, fs, fl, fev, fm,
+                     kp, ks, kg, gL, gp, qb):
+        qf = torch.minimum(Sf+fs, fm)
+        Sf = torch.relu(Sf+fs-fm)
+        H = torch.relu(Ss+fl+qf-fev)
+        qp = torch.relu(kp*(H-gL))
+        qsa = ks*torch.minimum(H, gL)
+        Ss = H-qp-qsa
+        qsg = qsa*gp
+        qs = qsa*(1-gp)
+        qg = kg*(Sg+qsg)+qb
+        Sg = (1-kg)*(Sg+qsg)-qb
+        return qp, qs, qg, Sf, Ss, Sg
+
+    def getParams(self, x, xc, nt, nh, nr):
+        xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
+        w = self.fcW(xc)
+        [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
+        gL = gL**2
+        kg = kg/10
+        ga = torch.softmax(self.DP(ga), dim=1)
+        v = self.fcT(xcT)
+        [vi, ve, vm] = sepPar(v, nh, self.vLst)
+        vi = F.hardsigmoid(v[:, :, :nh]*2)
+        ve = ve*2
+        wR = self.fcR(xc)
+        rf = torch.relu(wR[:, :nh*nr])
+        return [kp, ks, kg, gp, gL, qb, ga], [vi, ve, vm], rf
+
+    def forwardPreQ(self, P, E, T1, T2, vi, ve):
+        vf = torch.arccos((T1+T2)/(T2-T1))/3.1415
+        vf[T1 >= 0] = 0
+        vf[T2 <= 0] = 1
+        Ps = P*vf
+        Pla = P*(1-vf)
+        Pl = Pla[:, :, None]*vi
+        Ev = E[:, :, None]*ve
+        return Ps, Pl, Ev
+
+    def forward(self, x, xc, outStep=False):
+        P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
+        nt, ns = P.shape
+        nh = self.nh
+        nr = self.nr
+        Sf = torch.zeros(ns, nh).cuda()
+        Ss = torch.zeros(ns, nh).cuda()
+        Sg = torch.zeros(ns, nh).cuda()
+        [kp, ks, kg, gp, gL, qb, ga], [vi, ve, vm], rf = \
+            self.getParams(x, xc, nt, nh, nr)
+        Ps, Pl, Ev = self.forwardPreQ(P, E, T1, T2, vi, ve)
+        QpT = torch.zeros(nt, ns, nh).cuda()
+        QsT = torch.zeros(nt, ns, nh).cuda()
+        QgT = torch.zeros(nt, ns, nh).cuda()
+        if outStep is True:
+            SfT = torch.zeros(nt, ns, nh).cuda()
+            SsT = torch.zeros(nt, ns, nh).cuda()
+            SgT = torch.zeros(nt, ns, nh).cuda()
+        for k in range(nt):
+            qp, qs, qg, Sf, Ss, Sg = self.forwardStepQ(
+                Sf, Ss, Sg, Ps[k, :, None], Pl[k, :, :],
+                Ev[k, :, :], vm[k, :, :], kp, ks, kg, gL, gp, qb)
+            QpT[k, :, :] = qp
+            QsT[k, :, :] = qs
+            QgT[k, :, :] = qg
+            if outStep is True:
+                SfT[k, :, :] = Sf
+                SsT[k, :, :] = Ss
+                SgT[k, :, :] = Sg+qb/kg
+        QpR = convTS(QpT, rf)
+        QsR = convTS(QsT, rf)
+        QgR = convTS(QgT, rf)
+        yOut = torch.sum((QpR+QsR+QgR)*ga, dim=2)
+        if outStep:
+            return yOut, (QpR, QsR, QgR), (SfT, SsT, SgT)
+        else:
+            return yOut

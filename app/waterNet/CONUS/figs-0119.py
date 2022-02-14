@@ -49,8 +49,8 @@ nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
 
-nr = 3
-model = waterNet.WaterNet1116(nh, len(varXC), nr)
+nr = 5
+model = waterNetTest.WaterNet0119(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -59,7 +59,7 @@ lossFun = crit.LogLoss2D().cuda()
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn1115-{}-ep{}'.format('QN90ref', 249)
+modelFile = 'wn0119-{}-ep{}'.format('QN90ref', 100)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2
@@ -94,48 +94,29 @@ lat, lon = DF.getGeo()
 importlib.reload(mapplot)
 importlib.reload(axplot)
 
-
-def funcM():
-    figM = plt.figure(figsize=(12, 5))
-    gsM = gridspec.GridSpec(1, 3)
-    axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1)
-    axM0.set_title('waterNet Nash')
-    axM1 = mapplot.mapPoint(figM, gsM[0, 1], lat, lon, nash2)
-    axM1.set_title('LSTM Nash')
-    axM2 = mapplot.mapPoint(figM, gsM[0, 2], lat, lon, nash2-nash1)
-    axM2.set_title('LSTM - waterNet Nash')
-    axM = np.array([axM0, axM1, axM2])
-    figP, axP = plt.subplots(1, 1, figsize=(12, 4))
-    return figM, axM, figP, axP, lon, lat
-
-
-def funcP(iP, axP):
-    print(iP)
-    siteNo = DF.siteNoLst[iP]
-    t = DF.getT(testSet)
-    legLst = ['obs',
-              'waterNet {:.2f} {:.2f}'.format(nash1[iP], corr1[iP]),
-              'LSTM {:.2f} {:.2f}'.format(nash2[iP], corr2[iP])
-              ]
-    axplot.plotTS(axP, t[nr-1:], [y[nr-1:, iP, 0], yP[:, iP], yL[nr-1:, iP]],
-                  lineW=[2, 1, 1], cLst='krb', legLst=legLst)
-    strTitle = ('{}'.format(DF.siteNoLst[iP]))
-    axP.set_title(strTitle)
-
-
-figM, figP = figplot.clickMap(funcM, funcP)
-
-
+# box
 fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
                             label1=['nash', 'corr'],
-                            label2=['waternet1116', 'LSTM'],
+                            label2=['waterNet', 'LSTM'],
                             yRange=[0, 1])
 fig.show()
 
+# ts
+siteNoSel = ['03173000', '13235000', '08377900', '06885500']
+indSLst = [DF.siteNoLst.index(s) for s in siteNoSel]
+dataPlot = list()
+dataPlot = [y[nr-1:, indSLst, 0], yP[:, indSLst], yL[nr-1:, indSLst]]
+fig, axes = figplot.multiTS(
+    t[nr-1:], dataPlot, labelLst=siteNoSel)
+fig.show()
+# map
+# circle = plt.Circle([xLoc[iP], yLoc[iP]], 1,
+#                     color='black', fill=False)
+# ax.add_patch(circle)
 figM = plt.figure()
 gsM = gridspec.GridSpec(2, 1)
-axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1])
+axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1],s=10)
 axM0.set_title('waterNet Nash')
-axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2, vRange=[0, 1])
+axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2, vRange=[0, 1],s=10)
 axM1.set_title('LSTM Nash')
 figM.show()

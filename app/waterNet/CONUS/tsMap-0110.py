@@ -59,7 +59,7 @@ lossFun = crit.LogLoss2D().cuda()
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn1115-{}-ep{}'.format('QN90ref', 249)
+modelFile = 'wn0110-{}-ep{}'.format('QN90ref', 500)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2
@@ -128,7 +128,8 @@ figM, figP = figplot.clickMap(funcM, funcP)
 
 fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
                             label1=['nash', 'corr'],
-                            label2=['waternet1116', 'LSTM'])
+                            label2=['waternet0110', 'LSTM'],
+                            yRange=[0, 1])
 fig.show()
 
 figM = plt.figure()

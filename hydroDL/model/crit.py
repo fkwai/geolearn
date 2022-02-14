@@ -228,6 +228,25 @@ class LogLoss2D(torch.nn.Module):
         # return mse
 
 
+class NashLoss2D(torch.nn.Module):
+    def __init__(self):
+        super(LogLoss2D, self).__init__()
+
+    def forward(self, pred, targ, nv=10):
+        ns = targ.shape[1]
+        lossTemp = 0
+        n = 0
+        for k in range(ns):
+            iv = ~torch.isnan(targ[:, k])
+            if len(iv[iv == True]) > nv:
+                rmse = torch.mean((pred[iv, k]-targ[iv, k])**2, dim=0)
+                lossTemp = lossTemp+torch.log(rmse+1e-8)
+                n = n+1
+        if n == 0:
+            return 0
+        else:
+            return torch.exp(lossTemp/n)
+
 # class LogLoss2D(torch.nn.Module):
 #     def __init__(self):
 #         super(LogLoss2D, self).__init__()

@@ -49,8 +49,8 @@ nh = 16
 ng = len(varXC)
 ns = len(DF.siteNoLst)
 
-nr = 3
-model = waterNet.WaterNet1116(nh, len(varXC), nr)
+nr = 5
+model = waterNetTest.WaterNet0119(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -59,7 +59,7 @@ lossFun = crit.LogLoss2D().cuda()
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn1115-{}-ep{}'.format('QN90ref', 249)
+modelFile = 'wn0119-{}-ep{}'.format('QN90ref', 100)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2
@@ -128,7 +128,7 @@ figM, figP = figplot.clickMap(funcM, funcP)
 
 fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
                             label1=['nash', 'corr'],
-                            label2=['waternet1116', 'LSTM'],
+                            label2=['waternet0119', 'LSTM'],
                             yRange=[0, 1])
 fig.show()
 
@@ -138,4 +138,12 @@ axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1])
 axM0.set_title('waterNet Nash')
 axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2, vRange=[0, 1])
 axM1.set_title('LSTM Nash')
+figM.show()
+
+
+figM = plt.figure()
+gsM = gridspec.GridSpec(1, 1)
+axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat,
+                        lon, nash2-nash1, vRange=[-0.2, 0.2])
+axM0.set_title('LSTM Nash - waterNet Nash')
 figM.show()

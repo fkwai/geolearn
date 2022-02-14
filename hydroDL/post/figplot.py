@@ -201,7 +201,8 @@ def scatter121Batch(xMat, yMat, cMat, labelLst, nXY,
     return figM, axM
 
 
-def multiTS(t, dataPlot, labelLst=None, styLst=None, cLst='krbgcmy', tBar=None):
+def multiTS(t, dataPlot, labelLst=None, styLst=None, cLst='krbgcmy',
+            tBar=None, lineW=None):
     # dataPlot - list [ndarray1[nt,ny], ndarray2[nt,ny], ...]
     # or just ndarray1[nt,ny]
     if type(dataPlot) is list:
@@ -213,6 +214,6 @@ def multiTS(t, dataPlot, labelLst=None, styLst=None, cLst='krbgcmy', tBar=None):
         axplot.multiTS(axes, t, dataPlot, labelLst=labelLst,
                        cLst=cLst, tBar=tBar, styLst=styLst)
     else:
-        axplot.plotTS(axes, t, dataPlot, cLst=cLst, tBar=tBar)
+        axplot.plotTS(axes, t, dataPlot, cLst=cLst, tBar=tBar, lineW=lineW)
     fig.subplots_adjust(hspace=0)
     return fig, axes
