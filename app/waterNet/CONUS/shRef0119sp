@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -p gpu
 #SBATCH -G 1
-#SBATCH --job-name=wn0119
+#SBATCH --job-name=wn0119sp
 #SBATCH --output=/scratch/users/kuaifang/jobs/wn0119sp.out
 #SBATCH --error=/scratch/users/kuaifang/jobs/wn0119sp.err
 #SBATCH --time=12:0:0
