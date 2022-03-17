@@ -2,13 +2,29 @@ import os
 import pandas as pd
 import numpy as np
 from hydroDL import kPath
+""" issues to fix
+- line 235: 
+    PerformanceWarning: DataFrame is highly fragmented. 
+    This is usually the result of calling `frame.insert` many times, 
+    which has poor performance.  
+    Consider joining all columns at once using pd.concat(axis=1) instead. 
+    To get a de-fragmented frame, use `newframe = frame.copy()`
+  pdf['date'] = pd.to_datetime(pdf['sample_dt'], format='%Y-%m-%d')
+- drop all nan rows/cols when read
+- csv folders contains different code 
+"""
 
-# fileName = r'C:\Users\geofk\work\waterQuality\USGS\dailyTS\08075400'
 
 __all__ = ['readSample', 'readStreamflow', 'readUsgsText', 'removeFlag']
 
+codeLstWQ = ['00010', '00095', '00300', '00400', '00405', '00410',
+             '00440', '00600', '00605', '00618', '00660', '00665',
+             '00681', '00915', '00925', '00930', '00935', '00940',
+             '00945', '00950', '00955', '70303', '71846', '80154']
+codeLstIso = ['82085', '82745', '82082']
 
-def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
+
+def readSample(siteNo, codeLst=None, startDate=None, csv=False, flag=0):
     """read USGS sample data, did:
     1. extract data of interested code and date
     2. average repeated daily observation
@@ -21,13 +37,18 @@ def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
     Returns:
         pandas.DataFrame -- [description]
     """
+    if codeLst is None:
+        csv = False
     if csv is False:
         fileC = os.path.join(kPath.dirData, 'USGS', 'sample', siteNo)
         dfC = readUsgsText(fileC, dataType='sample')
         if startDate is not None:
             dfC = dfC[dfC['date'] >= startDate]
         dfC = dfC.set_index('date')
-        codeSel = list(set(codeLst) & set(dfC.columns.tolist()))
+        if codeLst is None:
+            codeSel = [x for x in dfC.columns.tolist() if x.isdigit()]
+        else:
+            codeSel = list(set(codeLst) & set(dfC.columns.tolist()))
         codeSel_cd = [code + '_cd' for code in codeSel]
         dfC = dfC[codeSel+codeSel_cd].dropna(how='all')
         if len(dfC) == 0:
@@ -35,7 +56,7 @@ def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
         dfC1 = dfC[codeSel]
         dfC2 = dfC[codeSel_cd]
         bx = dfC1.notna().values & dfC2.isna().values
-        dfC2[bx] = 'x'
+        dfC2.values[bx] = 'x'
         dfC2 = dfC2.fillna('')
         bDup = dfC.index.duplicated(keep=False)
         indUni = dfC.index[~bDup]
@@ -60,7 +81,7 @@ def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
                     dfO1.loc[ind][code] = temp1[code].mean()
                     dfO2.loc[ind][code+'_cd'] = ''.join(temp2[code+'_cd'])
     else:
-        dirC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csv')
+        dirC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csvIso')
         fileC1 = os.path.join(dirC, siteNo)
         if not os.path.exists(fileC1):
             return None if flag == 0 else (None, None)
@@ -76,6 +97,8 @@ def readSample(siteNo, codeLst, startDate=None, csv=True, flag=0):
             dfO1 = dfO1[dfO1.index >= startDate]
             if flag > 0:
                 dfO2 = dfO2[dfO2.index >= startDate]
+    if codeLst is None:
+        codeLst = dfO1.columns.tolist()
     if flag > 0:
         if flag == 2:
             dfO3 = pd.DataFrame(

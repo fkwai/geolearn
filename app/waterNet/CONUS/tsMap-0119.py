@@ -50,7 +50,7 @@ ng = len(varXC)
 ns = len(DF.siteNoLst)
 
 nr = 5
-model = waterNetTest.WaterNet0119(nh, len(varXC), nr)
+model = waterNet.WaterNet0119(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
