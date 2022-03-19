@@ -18,11 +18,10 @@ for dataName in ['QN90ref', 'QN90']:
     rho = 365
     outName = '{}-{}'.format(dataName, trainSet)
     dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
-                                trainSet=trainSet,
-                                varX=varX, varY=varY, varXC=varXC, varYC=varYC,
-                                nEpoch=1000, batchSize=[rho, 100], nIterEp=10,
-                                mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
+                                 trainSet=trainSet,
+                                 varX=varX, varY=varY, varXC=varXC, varYC=varYC,
+                                 nEpoch=1000, batchSize=[rho, 100], nIterEp=10,
+                                 mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
     # basinFull.trainModel(outName)
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
     slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
-
