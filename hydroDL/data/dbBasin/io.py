@@ -22,7 +22,7 @@ def caseFolder(caseName):
 def wrapData(caseName, siteNoLst, nFill=5, freq='D',
              sdStr='1979-01-01', edStr='2019-12-31',
              varF=gridMET.varLst+ntn.varLst+GLASS.varLst,
-             varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.newC):
+             varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.varC):
     # gageII
     tabG = gageII.readData(varLst=varG, siteNoLst=siteNoLst)
     tabG = gageII.updateCode(tabG)
@@ -92,7 +92,7 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
                rmFlag=True):
     # read data
     td = pd.date_range(sd, ed)
-    varC = list(set(varLst).intersection(usgs.varC))
+    varC = list(set(varLst).intersection(usgs.sampleFull))
     varQ = list(set(varLst).intersection(usgs.varQ))
     varF = list(set(varLst).intersection(gridMET.varLst))
     varP = list(set(varLst).intersection(ntn.varLst))
@@ -103,10 +103,10 @@ def readSiteTS(siteNo, varLst, freq='D', area=None,
     if len(varC) > 0:
         if rmFlag:
             dfC, dfCF = usgs.readSample(
-                siteNo, codeLst=varC, startDate=sd, flag=2)
+                siteNo, codeLst=varC, startDate=sd, flag=2, csv=True)
             dfC = usgs.removeFlag(dfC, dfCF)
         else:
-            dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd)
+            dfC = usgs.readSample(siteNo, codeLst=varC, startDate=sd, csv=True)
         dfD = dfD.join(dfC)
     if len(varQ) > 0:
         dfQ = usgs.readStreamflow(siteNo, startDate=sd)
@@ -191,7 +191,7 @@ def label2var(label, norm=False):
         P=ntn.varLst,
         T=['datenum', 'sinT', 'cosT'],
         R=GLASS.varLst,
-        C=usgs.newC)
+        C=usgs.varC)
     if norm is True:
         dictVar['C'] = [c+'-N' for c in usgs.newC]
     varLst = list()

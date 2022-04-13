@@ -11,7 +11,7 @@ import os
 import pandas as pd
 import json
 import scipy
-from astropy.timeseries import LombScargle
+# from astropy.timeseries import LombScargle
 import matplotlib.gridspec as gridspec
 
 dataNameLst = ['brWN5', 'brDN5']

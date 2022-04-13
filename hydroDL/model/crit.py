@@ -1,6 +1,14 @@
 import torch
 
 
+def nanmean(x, *args, **kwargs):
+    # could be replaced in newer torch version
+    v = x.clone()
+    is_nan = torch.isnan(v)
+    v[is_nan] = 0
+    return v.sum(*args, **kwargs) / (~is_nan).float().sum(*args, **kwargs)
+
+
 class SigmaLoss(torch.nn.Module):
     def __init__(self, prior='gauss'):
         super(SigmaLoss, self).__init__()
@@ -226,6 +234,35 @@ class LogLoss2D(torch.nn.Module):
         else:
             return torch.exp(lossTemp/n)
         # return mse
+
+
+class LogLoss3D(torch.nn.Module):
+    def __init__(self):
+        super(LogLoss3D, self).__init__()
+
+    def forward(self, pred, targ):
+        nt, ns, ny = targ.shape
+        se = (pred-targ)**2
+        nv = torch.sum(~torch.isnan(se), dim=0)
+        loss2 = 0
+        n2 = 0
+        for i in range(ny):
+            loss1 = 0
+            n1 = 0
+            for j in range(ns):
+                if nv[j, i] > 5:
+                    iv = ~torch.isnan(targ[:, j, i])
+                    mse = torch.mean(
+                        (pred[iv, j, i]-targ[iv, j, i])**2, dim=0)
+                    loss1 = loss1+torch.log(mse+1e-8)
+                    n1 = n1+1
+            if n1 > 0:
+                loss2 = loss2+loss1/n1
+                n2 = n2+1
+        if n2 == 0:
+            return 0
+        else:
+            return torch.exp(loss2/n2)
 
 
 class NashLoss2D(torch.nn.Module):

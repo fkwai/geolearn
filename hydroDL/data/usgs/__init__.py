@@ -7,12 +7,19 @@ import pandas as pd
 fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
 codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
 codeLst = list(codePdf.index)
-varC = sorted(codeLst)
 
-newC = ['00010', '00095', '00300', '00400', '00405',
+fileSampleFull = os.path.join(kPath.dirData, 'USGS',
+                              'inventory', 'usgsSampleCodeFull.csv')
+samplePdfFull = pd.read_csv(fileSampleFull, dtype=str).set_index('parm_cd')
+sampleFull = list(samplePdfFull.index)
+sampleFull.remove('00060')
+
+varC = ['00010', '00095', '00300', '00400', '00405',
         '00600', '00605', '00618', '00660', '00665',
         '00681', '00915', '00925', '00930', '00935',
         '00940', '00945', '00955', '71846', '80154']
+
+codeIso = ['82085', '82082']
 
 varQ = ['00060', 'runoff']
 chemLst = ['00300', '00405', '00410', '00440', '00600',
@@ -64,7 +71,7 @@ dictStat = {
 
 # update stat mtd for mean, std and norm
 dictStatApp = dict()
-for code in newC:
+for code in varC:
     dictStatApp[code+'-N'] = 'skip'
     if code in ['00010', '00300', '00400']:
         dictStatApp[code+'-M'] = 'norm'

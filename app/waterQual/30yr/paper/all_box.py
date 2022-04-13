@@ -11,7 +11,6 @@ import os
 import pandas as pd
 import json
 import scipy
-from astropy.timeseries import LombScargle
 import matplotlib.gridspec as gridspec
 
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')

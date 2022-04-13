@@ -7,7 +7,9 @@ import torch.nn.functional as F
 
 def convTS(x, w):
     nt, ns, nh = x.shape
-    nr = int(w.shape[1]/nh)
+    if w.dim() == 1:
+        w = w.repeat([ns, 1])
+    nr = int(w.shape[-1]/nh)
     r = torch.softmax(w.view(ns*nh, 1, nr), dim=-1)
     a = x.permute(1, 2, 0).view(1, ns*nh, nt)
     y = F.conv1d(a, r, groups=ns*nh).view(ns, nh, nt-nr+1).permute(2, 0, 1)
@@ -280,7 +282,6 @@ class WaterNet1116(torch.nn.Module):
             return yOut
 
 
-
 class WaterNet0119(torch.nn.Module):
     def __init__(self, nh, ng, nr):
         # with a interception bucket
@@ -317,7 +318,7 @@ class WaterNet0119(torch.nn.Module):
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
 
-    def forwardStepQ(self, Sf, Ss, Sg, fs, fl, fev, fm,
+    def forwardStepQ(Sf, Ss, Sg, fs, fl, fev, fm,
                      kp, ks, kg, gL, gp, qb):
         qf = torch.minimum(Sf+fs, fm)
         Sf = torch.relu(Sf+fs-fm)
@@ -337,16 +338,16 @@ class WaterNet0119(torch.nn.Module):
         [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
         gL = gL**2
         kg = kg/10
-        ga = torch.softmax(self.DP(ga), dim=1)
+        ga = torch.softmax(self.DP(ga), dim=-1)
         v = self.fcT(xcT)
         [vi, ve, vm] = sepPar(v, nh, self.vLst)
-        vi = F.hardsigmoid(v[:, :, :nh]*2)
+        vi = F.hardsigmoid(vi*2)
         ve = ve*2
         wR = self.fcR(xc)
-        rf = torch.relu(wR[:, :nh*nr])
+        rf = torch.relu(wR)
         return [kp, ks, kg, gp, gL, qb, ga], [vi, ve, vm], rf
 
-    def forwardPreQ(self, P, E, T1, T2, vi, ve):
+    def forwardPreQ(P, E, T1, T2, vi, ve):
         vf = torch.arccos((T1+T2)/(T2-T1))/3.1415
         vf[T1 >= 0] = 0
         vf[T2 <= 0] = 1

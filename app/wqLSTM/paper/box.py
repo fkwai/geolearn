@@ -20,7 +20,7 @@ outName = '{}-{}-{}'.format(dataName, label, trainSet)
 
 DF = dbBasin.DataFrameBasin(dataName)
 yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=500)
-codeLst = usgs.newC
+codeLst = usgs.varC
 
 # WRTDS
 dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
@@ -45,7 +45,7 @@ matB1 = DF.extractSubset(matB, trainSet)
 matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
 count2 = np.nansum(matB2, axis=0)
-matRm = (count1 < 160) & (count2 < 40)
+matRm = (count1 < 80) & (count2 < 20)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
@@ -53,12 +53,16 @@ for corr in [corrL1, corrL2, corrW1, corrW2]:
 matplotlib.rcParams.update({'font.size': 12})
 matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 10})
+
+# re-order
+indPlot = np.argsort(np.nanmean(corrL2, axis=0))
+codeStrLst = list()
 dataPlot = list()
-codeStrLst = [usgs.codePdf.loc[code]
-              ['shortName'] + '\n'+code for code in codeLst]
-for ic, code in enumerate(codeLst):
-    dataPlot.append([corrL2[:, ic], corrW2[:, ic]])
-    # dataPlot.append([corrL1[:, ic],corrL2[:, ic], corrW1[:, ic],corrW2[:, ic]])
+for k in indPlot:
+    code = codeLst[k]
+    codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
+    dataPlot.append([corrL2[:, k], corrW2[:, k]])
+
 fig, axes = figplot.boxPlot(
     dataPlot, widths=0.5, figsize=(12, 4), label1=codeStrLst)
 # fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(

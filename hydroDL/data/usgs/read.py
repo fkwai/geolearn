@@ -81,7 +81,7 @@ def readSample(siteNo, codeLst=None, startDate=None, csv=False, flag=0):
                     dfO1.loc[ind][code] = temp1[code].mean()
                     dfO2.loc[ind][code+'_cd'] = ''.join(temp2[code+'_cd'])
     else:
-        dirC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csvIso')
+        dirC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csv')
         fileC1 = os.path.join(dirC, siteNo)
         if not os.path.exists(fileC1):
             return None if flag == 0 else (None, None)

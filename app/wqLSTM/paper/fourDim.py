@@ -11,8 +11,8 @@ import importlib
 from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 import matplotlib
-# DF = dbBasin.DataFrameBasin('G200')
-codeLst = usgs.newC
+DF = dbBasin.DataFrameBasin('G200')
+codeLst = usgs.varC
 
 
 # LSTM
@@ -45,7 +45,7 @@ matB1 = DF.extractSubset(matB, trainSet)
 matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
 count2 = np.nansum(matB2, axis=0)
-matRm = (count1 < 160) & (count2 < 40)
+matRm = (count1 < 80) & (count2 < 20)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 

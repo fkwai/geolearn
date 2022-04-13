@@ -47,7 +47,7 @@ class DataFrameBasin():
     def new(cls, caseName, siteNoLst, nFill=5, freq='D',
             sdStr='1979-01-01', edStr='2019-12-31',
             varF=gridMET.varLst+ntn.varLst+GLASS.varLst,
-            varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.newC):
+            varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.varC):
         print('creating data class')
         siteNoLst.sort()
         io.wrapData(caseName, siteNoLst, nFill=nFill,

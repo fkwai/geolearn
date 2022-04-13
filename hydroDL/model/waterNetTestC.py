@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
-from hydroDL.model.waterNet import convTS, sepPar
+from hydroDL.model.waterNet import convTS, sepPar, WaterNet0119
 from hydroDL.model import waterNetTest, waterNet
 
 
@@ -355,3 +355,78 @@ class Wn0119C2(waterNet.WaterNet0119):
         # [rs,rg]
         self.ctLst = ['sigmoid', 'sigmoid']
         self.fcCT = nn.Linear(2+self.ng, nc*nh*len(self.cLst))
+
+
+class Wn0119EMsolo(torch.nn.Module):
+    def __init__(self, nh, nr, nc, nm):
+        super().__init__()
+        self.nh = nh
+        self.nr = nr
+        self.nc = nc
+        self.DP = nn.Dropout()
+        self.wR = Parameter(torch.randn(nh*nr).cuda())
+        self.wLst = ['sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
+                     'exp', 'relu', 'skip']
+        self.w = Parameter(torch.randn(nh*len(self.wLst)).cuda())
+        self.vLst = ['skip', 'relu', 'exp']
+        self.fcT = nn.Sequential(
+            nn.Linear(6, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*len(self.vLst))).cuda()
+        # self.cp = Parameter(torch.rand(nh, nc).cuda())
+        # self.cs = Parameter(torch.rand(nh, nc).cuda())
+        # self.cg = Parameter(torch.rand(nh, nc).cuda())
+        self.cp = Parameter(torch.rand(nm, nc).cuda())
+        self.cs = Parameter(torch.rand(nm, nc).cuda())
+        self.cg = Parameter(torch.rand(nm, nc).cuda())
+        self.nm = nm
+
+    def forward(self, x, outQ=False):
+        nh = self.nh
+        [kp, ks, kg, gp, gL, qb, ga] = sepPar(self.w, self.nh, self.wLst)
+        gL = gL**2
+        kg = kg/10
+        # ga = torch.softmax(self.DP(ga), dim=-1)
+        ga = torch.softmax(ga, dim=-1)
+        v = self.fcT(x)
+        [vi, ve, vm] = sepPar(v, self.nh, self.vLst)
+        vi = F.hardsigmoid(vi*2)
+        ve = ve*2
+        rf = torch.relu(self.wR)
+        P, E, T1, T2, R, LAI = [x[:, :, k] for k in range(x.shape[-1])]
+        nt, ns = P.shape
+        Sf = torch.zeros(ns, nh).cuda()
+        Ss = torch.zeros(ns, nh).cuda()
+        Sg = torch.zeros(ns, nh).cuda()
+        Ps, Pl, Ev = WaterNet0119.forwardPreQ(P, E, T1, T2, vi, ve)
+        QpT = torch.zeros(nt, ns, nh).cuda()
+        QsT = torch.zeros(nt, ns, nh).cuda()
+        QgT = torch.zeros(nt, ns, nh).cuda()
+        for k in range(nt):
+            qp, qs, qg, Sf, Ss, Sg = WaterNet0119.forwardStepQ(
+                Sf, Ss, Sg, Ps[k, :, None], Pl[k, :, :],
+                Ev[k, :, :], vm[k, :, :], kp, ks, kg, gL, gp, qb)
+            QpT[k, :, :] = qp
+            QsT[k, :, :] = qs
+            QgT[k, :, :] = qg
+        QpR = convTS(QpT, rf)*ga
+        QsR = convTS(QsT, rf)*ga
+        QgR = convTS(QgT, rf)*ga
+        Qout = torch.sum(QpR+QsR+QgR, dim=-1)
+        cp = torch.relu(torch.exp(self.cp)-1)
+        cs = torch.relu(torch.exp(self.cs)-1)
+        cg = torch.relu(torch.exp(self.cg)-1)
+        cp = cp.repeat(int(nh/self.nm), 1)
+        cs = cs.repeat(int(nh/self.nm), 1)
+        cg = cg.repeat(int(nh/self.nm), 1)
+        CpR = torch.matmul(QpR/Qout[:, :, None], cp)
+        CsR = torch.matmul(QsR/Qout[:, :, None], cs)
+        CgR = torch.matmul(QgR/Qout[:, :, None], cg)
+        Cout = CpR+CsR+CgR
+        # Cout = torch.sum((QpR*self.cp+QsR*self.cs+QgR*self.cg)*ga, dim=-1)
+        yOut = torch.cat([Qout[..., None], Cout], dim=-1)
+        if outQ is True:
+            return yOut, (QpR, QsR, QgR)
+        else:
+            return yOut

@@ -42,7 +42,6 @@ dataTup2 = DM2.getData()
 # model
 nh = 16
 ng = len(varXC)
-ns = len(DF.siteNoLst)
 
 nr = 5
 model = waterNetTest.WaterNet0119(nh, len(varXC), nr)
@@ -55,7 +54,6 @@ lossFun = crit.LogLoss2D().cuda()
 
 sn = 1e-8
 # random subset
-ns = len(DF.siteNoLst)
 sizeLst = trainBasin.getSize(dataTup1)
 [x, xc, y, yc] = dataTup1
 [nx, nxc, ny, nyc, nt, ns] = sizeLst

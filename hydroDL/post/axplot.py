@@ -38,7 +38,8 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='krbgcmy', legLst=None,
     return ax
 
 
-def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', styLst=None, tBar=None):
+def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', styLst=None,
+            tBar=None):
     # dataPlot - list [ndarray1[nt,ny], ndarray2[nt,ny], ...]
     # or just ndarray1[nt,ny]
     if type(dataPlot) is list:
@@ -93,18 +94,19 @@ def plotBox(ax, x, labLst=None, c='r'):
     return ax
 
 
-def plotHeatMap(ax, mat, labLst, fmt='{:.0f}', vRange=None):
+def plotHeatMap(ax, mat, labLst=None, fmt='{:.0f}', vRange=None):
     ny, nx = mat.shape
     ax.set_xticks(np.arange(nx))
     ax.set_yticks(np.arange(ny))
-    if type(labLst[0]) is list:
-        labX = labLst[1]
-        labY = labLst[0]
-    else:
-        labX = labLst
-        labY = labLst
-    ax.set_xticklabels(labX)
-    ax.set_yticklabels(labY)
+    if labLst is not None:
+        if type(labLst[0]) is list:
+            labX = labLst[1]
+            labY = labLst[0]
+        else:
+            labX = labLst
+            labY = labLst
+        ax.set_xticklabels(labX)
+        ax.set_yticklabels(labY)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
     if vRange is None:
