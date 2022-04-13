@@ -4,7 +4,8 @@ from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
 
 dataNameLst = ['Y28N5', 'Y28N5rmTK']
-labelLst = ['FPRT2QC', 'QFPRT2C', 'QT2C']
+# labelLst = ['FPRT2QC', 'QFPRT2C', 'QT2C']
+labelLst = ['F2C', 'FQ2C']
 trainSet = 'B10'
 testSet = 'A10'
 # DF = dbBasin.DataFrameBasin(dataName)
@@ -26,5 +27,5 @@ for dataName in dataNameLst:
                                      mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
         slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-#        basinFull.trainModel(outName)
+#       basinFull.trainModel(outName)
 #
