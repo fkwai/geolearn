@@ -18,8 +18,8 @@ codeLst = usgs.varC
 # LSTM
 ep = 500
 dataName = 'G200'
-trainSet = 'rmR20'
-testSet = 'pkR20'
+trainSet = 'rmYr5'
+testSet = 'pkYr5'
 label = 'QFPRT2C'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 outFolder = basinFull.nameFolder(outName)
@@ -45,7 +45,7 @@ matB1 = DF.extractSubset(matB, trainSet)
 matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
 count2 = np.nansum(matB2, axis=0)
-matRm = (count1 < 80) & (count2 < 20)
+matRm = (count1 < 80) | (count2 < 20)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
@@ -58,35 +58,52 @@ for k, code in enumerate(codeLst):
     matLR[:, k] = dfCorr['rsq'].values
 matLR[matRm] = np.nan
 
+codeGroup = [
+    ['00010', '00300'],
+    ['00915', '00925', '00930', '00955'],
+    ['00600', '00605', '00618', '00660', '00665', '00681', '71846'],
+    ['00095', '00400', '00405', '00935', '00940', '00945', '80154']
+]
+colorGroup = 'rmgb'
+labGroup = ['stream', 'weathering', 'nutrient', 'mix']
 #
-matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'font.size': 16})
 matplotlib.rcParams.update({'lines.linewidth': 2})
 matplotlib.rcParams.update({'lines.markersize': 10})
 a = np.nanmean(matLR, axis=0)
 b = np.nanmean(corrL2**2 - corrW2**2, axis=0)
-fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+c = np.nanmean(corrL2**2, axis=0)
+c = np.power(c*10, 3)*2
+
+fig, ax = plt.subplots(1, 1, figsize=(10, 8))
 for k in range(len(codeLst)):
-    ax.text(a[k], b[k], usgs.codePdf.loc[codeLst[k]]['shortName'], fontsize=16)
-ax.plot(a, b, '*')
-ax.axhline(0, color='r')
-ax.axvline(0.4, color='r')
-ax.set_xlabel('Simplicity of Variable')
+    codeStr = usgs.codePdf.loc[codeLst[k]]['shortName']
+    if codeStr in usgs.dictLabel.keys():
+        ax.text(a[k], b[k], usgs.dictLabel[codeStr], fontsize=16)
+    else:
+        ax.text(a[k], b[k], codeStr, fontsize=16)
+for codeG, colorG, labG in zip(codeGroup, colorGroup, labGroup):
+    ind = [codeLst.index(code) for code in codeG]
+    ax.scatter(a[ind], b[ind], s=c[ind], color=colorG, label=labG)
+ax.axhline(0, color='k')
+ax.axvline(0.4, color='k')
+ax.set_xlabel('simplicity')
 ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
 fig.show()
 dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
-# plt.savefig(os.path.join(dirPaper, 'fourDim'))
+plt.savefig(os.path.join(dirPaper, 'fourDim'))
+plt.savefig(os.path.join(dirPaper, 'fourDim.svg'))
 
-#
-a = np.nanmean(matLR, axis=0)
-b = np.nanmean(corrL2**2, axis=0)
-c = np.nanmean(corrW2**2, axis=0)
+# plot legend
 
-fig, ax = plt.subplots(1, 1)
-for k in range(len(codeLst)):
-    ax.text(a[k], (b[k]+c[k])/2, usgs.codePdf.loc[codeLst[k]]['shortName'])
-    ax.plot([a[k], a[k]], [b[k], c[k]], c='0.5')
-ax.plot(a, b, 'r*')
-ax.plot(a, c, 'b*')
-# ax.set_xscale('log')
 
+fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+for colorG, labG in zip(colorGroup, labGroup):
+    ind = [codeLst.index(code) for code in codeG]
+    ax.scatter(0, 0, s=100, color=colorG, label=labG)
+ax.legend()
+ax.set_xlabel('simplicity')
+ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
 fig.show()
+plt.savefig(os.path.join(dirPaper, 'fourDim_leg'))
+plt.savefig(os.path.join(dirPaper, 'fourDim_leg.svg'))

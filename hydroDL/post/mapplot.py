@@ -34,7 +34,7 @@ def mapPoint(fig, gs, lat, lon, data,
     cs = ax.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
                     s=s, marker=marker, vmin=vmin, vmax=vmax)
     if cb is True:
-        plt.colorbar(cs, orientation="horizontal")
+        plt.colorbar(cs, orientation='vertical')
     return ax
 
 

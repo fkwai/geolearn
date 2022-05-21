@@ -59,7 +59,7 @@ lossFun = crit.LogLoss2D().cuda()
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn0119-{}-ep{}'.format('QN90ref', 100)
+modelFile = 'wn0119-{}-ep{}'.format('QN90ref', 550)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2

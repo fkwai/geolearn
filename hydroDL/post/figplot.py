@@ -55,6 +55,7 @@ def clickMulti(funcM, funcP, funcT=None, circleSize=None):
         xClick = event.xdata
         yClick = event.ydata
         label = event.inaxes.get_label()
+        print(label)
         iM = labelLst.index(label)
         xx = xMat[:, iM]
         yy = yMat[:, iM]
@@ -67,8 +68,11 @@ def clickMulti(funcM, funcP, funcT=None, circleSize=None):
             circle = plt.Circle([xc, yc], circleSize[k],
                                 color=color, fill=False)
             ax.add_patch(circle)
-        for ax in axP:
-            ax.clear()
+        if type(axP) is np.ndarray:
+            for ax in axP:
+                ax.clear()
+        else:
+            axP.clear()
         funcP(axP, iP, iM)
         if funcT is not None:
             title = funcT(iP, iM)

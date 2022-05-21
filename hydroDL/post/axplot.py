@@ -1,4 +1,5 @@
 # from mpl_toolkits import basemap
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 from hydroDL import utils
@@ -38,6 +39,32 @@ def plotTS(ax, t, y, *, styLst=None, tBar=None, cLst='krbgcmy', legLst=None,
     return ax
 
 
+def multiYrTS(axes, yrLst, t, dataPlot, cLst='rbk', styLst='--*', legLst=None):
+    ty = t.astype('M8[Y]').astype(str).astype(int)
+    indLst = list()
+    ny = len(yrLst)
+    for yr in yrLst:
+        bp = np.in1d(ty, yr)
+        ind = np.where(bp)[0]
+        indLst.append([ind])
+    for k in range(ny):
+        print(k)
+        ind = indLst[k]
+        for kk, x in enumerate(dataPlot):
+            legStr = None if legLst is None else legLst[kk]
+            axes[k].plot(t[ind], x[ind], styLst[kk],
+                         color=cLst[kk], label=legStr)
+        axes[k].xaxis.set_major_formatter(mdates.DateFormatter('%b'))
+        axes[k].xaxis.set_major_locator(mdates.MonthLocator([4, 8, 12]))
+        axes[k].set_xlabel(yrLst[k])
+        if k > 0:            
+            # axes[k].set_yticklabels([])
+            axes[k].yaxis.set_visible(False)
+        if legLst is not None:
+            axes[-1].legend(loc='upper right')
+    return axes
+
+
 def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', styLst=None,
             tBar=None):
     # dataPlot - list [ndarray1[nt,ny], ndarray2[nt,ny], ...]
@@ -55,7 +82,10 @@ def multiTS(axes, t, dataPlot, labelLst=None, cLst='krbgcmy', styLst=None,
         plotTS(axes[k], t, temp, cLst=cLst, styLst=styLst, tBar=tBar)
         axes[k].set_xlim(t[0], t[-1])
         if labelLst is not None:
-            titleInner(axes[k], labelLst[k])
+            # titleInner(axes[k], labelLst[k])
+            ax = axes[k].twinx()
+            ax.set_ylabel(labelLst[k])
+            ax.set_yticks([])
         if k != nd-1:
             axes[k].set_xticklabels([])
     return axes
@@ -156,10 +186,10 @@ def sortData(x):
     return xSort
 
 
-def titleInner(ax, titleStr, top=True):
+def titleInner(ax, titleStr, offset=0.1, top=True):
     if top:
-        _ = ax.text(.5, .9, titleStr, horizontalalignment='center',
+        _ = ax.text(.5, 1-offset, titleStr, horizontalalignment='center',
                     transform=ax.transAxes)
     else:
-        _ = ax.text(.5, .1, titleStr, horizontalalignment='center',
+        _ = ax.text(.5, offset, titleStr, horizontalalignment='center',
                     transform=ax.transAxes)

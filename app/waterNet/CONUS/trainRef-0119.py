@@ -6,7 +6,7 @@ from hydroDL.data import dbBasin, gageII
 import numpy as np
 import torch
 import pandas as pd
-from hydroDL.model import waterNetTest
+from hydroDL.model import waterNetTest, waterNet
 import importlib
 from hydroDL.utils import torchUtils
 
@@ -44,7 +44,7 @@ nh = 16
 ng = len(varXC)
 
 nr = 5
-model = waterNetTest.WaterNet0119(nh, len(varXC), nr)
+model = waterNet.WaterNet0119(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())
@@ -66,6 +66,7 @@ nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
 # nIterEp = 1
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
+# saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
 # torch.autograd.set_detect_anomaly(True)
 for ep in range(1, 1001):
     for iter in range(nIterEp):

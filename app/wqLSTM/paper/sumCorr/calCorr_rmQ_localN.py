@@ -11,7 +11,8 @@ import importlib
 from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 
-dataNameLst = ['G200N', 'G200']
+# dataNameLst = ['G200N', 'G200']
+dataNameLst = ['G200']
 labelLst = ['FPRT2QC', 'QFPRT2C', 'QFRT2C', 'QFPT2C', 'QT2C']
 trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
 testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
@@ -31,8 +32,8 @@ DFN = dbBasin.DataFrameBasin('G200N')
 DF = dbBasin.DataFrameBasin('G200')
 matObs = DF.c
 bQ = np.isnan(DF.q[:, :, 0])
-codeLst = usgs.newC
-ep = 500
+codeLst = usgs.varC
+ep = 1000
 dictLst = list()
 for trainSet, testSet in zip(trainLst, testLst):
     obs1 = DF.extractSubset(matObs, trainSet)
@@ -47,7 +48,7 @@ for trainSet, testSet in zip(trainLst, testLst):
             corrFile1 = os.path.join(outFolder, corrName1)
             corrFile2 = os.path.join(outFolder, corrName2)
             yP, ycP = basinFull.testModel(
-                outName, DF=DFN, testSet='all', ep=ep)
+                outName, DF=DF, testSet='all', ep=ep)
             varY = basinFull.loadMaster(outName)['varY']
             yOut = np.ndarray(yP.shape)
             for k, var in enumerate(varY):

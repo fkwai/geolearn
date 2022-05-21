@@ -13,8 +13,8 @@ from hydroDL.app.waterQuality import WRTDS
 import matplotlib
 
 dataName = 'G200'
-trainSet = 'rmR20'
-testSet = 'pkR20'
+trainSet = 'rmYr5'
+testSet = 'pkYr5'
 label = 'QFPRT2C'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 
@@ -39,8 +39,10 @@ corrL2 = utils.stat.calCorr(DF.extractSubset(yP, testSet), obs2)
 corrW1 = utils.stat.calCorr(DF.extractSubset(yW, trainSet), obs1)
 corrW2 = utils.stat.calCorr(DF.extractSubset(yW, testSet), obs2)
 
+
 # count
-matB = (~np.isnan(DF.c)).astype(int).astype(float)
+matB = (~np.isnan(DF.c)*~np.isnan(DF.q[:, :, 0:1])
+        ).astype(int).astype(float)
 matB1 = DF.extractSubset(matB, trainSet)
 matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
@@ -50,7 +52,7 @@ for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
 # box plot
-matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'font.size': 16})
 matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 10})
 
@@ -63,11 +65,18 @@ for k in indPlot:
     codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
     dataPlot.append([corrL2[:, k], corrW2[:, k]])
 
+dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
+importlib.reload(usgs)
+strLst = usgs.codeStrPlot(codeStrLst)
 fig, axes = figplot.boxPlot(
-    dataPlot, widths=0.5, figsize=(12, 4), label1=codeStrLst)
+    dataPlot, widths=0.5, figsize=(12, 4), label1=strLst)
 # fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
 #     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'])
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
-dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
-plt.savefig(os.path.join(dirPaper, 'box_all'))
+fig.savefig(os.path.join(dirPaper, 'box_all'))
+fig.savefig(os.path.join(dirPaper, 'box_all.svg'))
+
+figLeg, axes = figplot.boxPlot(
+    dataPlot, figsize=(4, 4), label2=['LSTM', 'WRTDS'], legOnly=True)
+figLeg.savefig(os.path.join(dirPaper, 'box_legend.svg'))

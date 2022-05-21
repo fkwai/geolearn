@@ -318,20 +318,6 @@ class WaterNet0119(torch.nn.Module):
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
 
-    def forwardStepQ(Sf, Ss, Sg, fs, fl, fev, fm,
-                     kp, ks, kg, gL, gp, qb):
-        qf = torch.minimum(Sf+fs, fm)
-        Sf = torch.relu(Sf+fs-fm)
-        H = torch.relu(Ss+fl+qf-fev)
-        qp = torch.relu(kp*(H-gL))
-        qsa = ks*torch.minimum(H, gL)
-        Ss = H-qp-qsa
-        qsg = qsa*gp
-        qs = qsa*(1-gp)
-        qg = kg*(Sg+qsg)+qb
-        Sg = (1-kg)*(Sg+qsg)-qb
-        return qp, qs, qg, Sf, Ss, Sg
-
     def getParams(self, x, xc, nt, nh, nr):
         xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
         w = self.fcW(xc)
@@ -347,6 +333,22 @@ class WaterNet0119(torch.nn.Module):
         rf = torch.relu(wR)
         return [kp, ks, kg, gp, gL, qb, ga], [vi, ve, vm], rf
 
+    @staticmethod
+    def forwardStepQ(Sf, Ss, Sg, fs, fl, fev, fm,
+                     kp, ks, kg, gL, gp, qb):
+        qf = torch.minimum(Sf+fs, fm)
+        Sf = torch.relu(Sf+fs-fm)
+        H = torch.relu(Ss+fl+qf-fev)
+        qp = torch.relu(kp*(H-gL))
+        qsa = ks*torch.minimum(H, gL)
+        Ss = H-qp-qsa
+        qsg = qsa*gp
+        qs = qsa*(1-gp)
+        qg = kg*(Sg+qsg)+qb
+        Sg = (1-kg)*(Sg+qsg)-qb
+        return qp, qs, qg, Sf, Ss, Sg
+
+    @staticmethod
     def forwardPreQ(P, E, T1, T2, vi, ve):
         vf = torch.arccos((T1+T2)/(T2-T1))/3.1415
         vf[T1 >= 0] = 0

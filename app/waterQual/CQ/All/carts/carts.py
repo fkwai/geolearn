@@ -106,8 +106,6 @@ ind5, ind6, feat3, th = divide(ind2, colLst=colLst)
 colLst = dfG.columns.tolist()
 colLst.remove('NO200AVE')
 colLst.remove('KFACT_UP')
-
-
 for yr in range(1950, 2010):
     colLst.remove('PPT{}_AVG'.format(yr))
     colLst.remove('TMP{}_AVG'.format(yr))

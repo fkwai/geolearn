@@ -23,8 +23,8 @@ from hydroDL.model.waterNet import WaterNet0119, sepPar, convTS
 importlib.reload(waterNetTest)
 # extract data
 codeLst = ['00600', '00660', '00915', '00925', '00930', '00935', '00945']
-siteNo = '04193500'
-# siteNo = '09163500'
+# siteNo = '04193500'
+siteNo = '09163500'
 dataName = siteNo
 DF = dbBasin.DataFrameBasin(dataName)
 

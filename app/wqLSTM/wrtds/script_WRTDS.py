@@ -7,7 +7,7 @@ import os
 from hydroDL import kPath, utils
 import numpy as np
 
-dataName = 'G200N'
+dataName = 'G200'
 trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
 testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 # testSet = 'all'
@@ -17,9 +17,8 @@ testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 DF = dbBasin.DataFrameBasin(dataName)
 
 for trainSet, testSet in zip(trainLst, testLst):
-    testSet = 'all'
-    code = usgs.newC
-    yW = WRTDS.testWRTDS(dataName, trainSet, testSet, usgs.newC)
+    # testSet = 'all'
+    yW = WRTDS.testWRTDS(dataName, trainSet, testSet, usgs.varC)
     dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
     fileName = '{}-{}-{}'.format(dataName, trainSet, testSet)
     np.savez_compressed(os.path.join(dirRoot, fileName), yW)

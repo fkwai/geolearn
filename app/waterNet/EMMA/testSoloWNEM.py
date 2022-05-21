@@ -20,10 +20,10 @@ from hydroDL import utils
 importlib.reload(waterNetTestC)
 # extract data
 codeLst = ['00600', '00660', '00915', '00925', '00930', '00935', '00945']
-# siteNo = '04193500'
 
+# siteNo = '04193500'
 siteNo = '09163500'
-nm = 4
+nm = 16
 
 dataName = siteNo
 DF = dbBasin.DataFrameBasin(dataName)
@@ -161,16 +161,34 @@ for k in range(2):
     axes[k].scatter(cgout[:, 0], cgout[:, 1], s=Qcg*s,
                     facecolors='none', edgecolors='b', label='deep EM')
     axes[k].set_xlabel('{:.1f}%'.format(r[0]*100))
-    axes[k].set_xlabel('{:.1f}%'.format(r[1]*100))
+    axes[k].set_ylabel('{:.1f}%'.format(r[1]*100))
     axes[k].legend()
 plt.tight_layout()
 fig.show()
 fig.savefig(os.path.join(figDir, 'pca_nm{}'.format(nm)))
 
+# PCA unit
+xu = np.eye(nc)
+x0 = np.zeros([1, nc])
+yu = pca.transform(xu)
+y0 = pca.transform(x0)
+fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+for k, code in enumerate(codeLst):
+    ax.plot([y0[0, 0], yu[k, 0]], [y0[0, 1], yu[k, 1]], '-k')
+    ax.text(yu[k, 0], yu[k, 1], usgs.codePdf.loc[code]['shortName'])
+fig.show()
+
+
 # # heat map of each EM
 fig, axes = plt.subplots(nc+2, 1, figsize=(6, 10))
+if nm < nh:
+    n = int(nh/nm)
+    ind = np.concatenate([np.arange(k, nh, n) for k in range(n)], axis=0)
+else:
+    ind = np.arange(nh)
+
 for k, code in enumerate(codeLst):
-    em = np.stack([cp[:, k], cs[:, k], cg[:, k]])
+    em = np.stack([cp[ind, k], cs[ind, k], cg[ind, k]])
     axplot.plotHeatMap(axes[k], em, fmt='{:.1f}')
     _ = axes[k].set_xticklabels([])
     _ = axes[k].set_yticklabels([])
@@ -180,7 +198,7 @@ for k, Q in enumerate(QLst):
     Qcp = np.mean(Qp/Qa[:, None], axis=0)*100
     Qcs = np.mean(Qs/Qa[:, None], axis=0)*100
     Qcg = np.mean(Qg/Qa[:, None], axis=0)*100
-    em = np.stack([Qcp, Qcs, Qcg])
+    em = np.stack([Qcp[ind], Qcs[ind], Qcg[ind]])
     axplot.plotHeatMap(axes[k+nc], em)
     _ = axes[k+nc].set_xticklabels([])
     _ = axes[k+nc].set_yticklabels([])
@@ -201,3 +219,5 @@ axes[1].plot(t[nr-1:], Qp)
 axes[2].plot(t[nr-1:], Qs)
 axes[3].plot(t[nr-1:], Qg)
 fig.show()
+
+# PCA of units

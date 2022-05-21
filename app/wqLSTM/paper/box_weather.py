@@ -19,8 +19,10 @@ codeLst = usgs.newC
 # LSTM
 ep = 500
 dataName = 'G200N'
-trainSet = 'rmR20'
-testSet = 'pkR20'
+trainSet = 'rmYr5'
+testSet = 'pkYr5'
+# trainSet = 'rmRT20'
+# testSet = 'pkRT20'
 label = 'QFPRT2C'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 outFolder = basinFull.nameFolder(outName)
@@ -46,7 +48,7 @@ matB1 = DF.extractSubset(matB, trainSet)
 matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
 count2 = np.nansum(matB2, axis=0)
-matRm = (count1 < 160) & (count2 < 40)
+matRm = (count1 < 80) & (count2 < 20)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
@@ -65,11 +67,12 @@ codePlot = ['00095', '00915', '00925', '00930',
             '00935', '00940', '00945', '00955']
 codeStrLst = [usgs.codePdf.loc[code]
               ['shortName'] + '\n'+code for code in codePlot]
-thR = 0.5
-labLst2 = ['LSTM Rsq=<{}'.format(thR), 'WRTDS Rsq=<{}'.format(thR),
-           'LSTM Rsq>{}'.format(thR), 'WRTDS Rsq>{}'.format(thR)]
+labLst2 = ['LSTM complex', 'WRTDS complex',
+           'LSTM simple', 'WRTDS simple']
 for code in codePlot:
     ic = codeLst.index(code)
+    thR = np.nanmedian(matLR[:, ic])
+    print(code, thR)
     ind1 = np.where(matLR[:, ic] <= thR)[0]
     ind2 = np.where(matLR[:, ic] > thR)[0]
     dataPlot.append([corrL2[ind1, ic], corrW2[ind1, ic],
@@ -83,23 +86,24 @@ plt.savefig(os.path.join(dirPaper, 'box_weathering'))
 
 
 # significance test
-dfS = pd.DataFrame(index=codePlot, columns=['all', 'static', 'dilution'])
+dfS = pd.DataFrame(index=codePlot, columns=['all', 'static', 'diluting'])
 for code in codePlot:
     indC = codeLst.index(code)
+    thR = np.nanmedian(matLR[:, indC])
     ind1 = np.where(matLR[:, indC] <= thR)[0]
     ind2 = np.where(matLR[:, indC] > thR)[0]
     aa, bb = utils.rmNan(
         [corrL2[ind1, indC], corrW2[ind1, indC]], returnInd=False)
-    s, p = scipy.stats.ttest_ind(aa, bb)
-    # s, p = scipy.stats.wilcoxon(aa, bb)
+    # s, p = scipy.stats.ttest_ind(aa, bb)
+    s, p = scipy.stats.wilcoxon(aa, bb)
     dfS.at[code, 'static'] = p
     aa, bb = utils.rmNan(
         [corrL2[ind2, indC], corrW2[ind2, indC]], returnInd=False)
-    s, p = scipy.stats.ttest_ind(aa, bb)
-    # s, p = scipy.stats.wilcoxon(aa, bb)
+    # s, p = scipy.stats.ttest_ind(aa, bb)
+    s, p = scipy.stats.wilcoxon(aa, bb)
     dfS.at[code, 'dilution'] = p
     aa, bb = utils.rmNan(
         [corrL2[:, indC], corrW2[:, indC]], returnInd=False)
-    s, p = scipy.stats.ttest_ind(aa, bb)
-    # s, p = scipy.stats.wilcoxon(aa, bb)
+    # s, p = scipy.stats.ttest_ind(aa, bb)
+    s, p = scipy.stats.wilcoxon(aa, bb)
     dfS.at[code, 'all'] = p

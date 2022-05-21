@@ -14,6 +14,26 @@ samplePdfFull = pd.read_csv(fileSampleFull, dtype=str).set_index('parm_cd')
 sampleFull = list(samplePdfFull.index)
 sampleFull.remove('00060')
 
+dictLabel = {
+    'CO2': r'$\mathrm{CO_2}$',
+    'CO3': r'$\mathrm{CO_3}$',
+    'NO3': r'$\mathrm{NO_3}$',
+    'PO4': r'$\mathrm{PO_4}$',
+    'SO4': r'$\mathrm{SO_4}$',
+    'SiO2': r'$\mathrm{SiO_2}$',
+    'NHx': r'$\mathrm{NH_x}$',
+    'N-org': r'$\mathrm{N_{org}}$',
+}
+
+
+def codeStrPlot(strLst):
+    temp = strLst.copy()
+    for k, s in enumerate(strLst):
+        if s in dictLabel.keys():
+            strLst[k] = dictLabel[s]
+    return(strLst)
+
+
 varC = ['00010', '00095', '00300', '00400', '00405',
         '00600', '00605', '00618', '00660', '00665',
         '00681', '00915', '00925', '00930', '00935',
