@@ -388,10 +388,10 @@ class WaterNet0119(torch.nn.Module):
                 SfT[k, :, :] = Sf
                 SsT[k, :, :] = Ss
                 SgT[k, :, :] = Sg+qb/kg
-        QpR = convTS(QpT, rf)
-        QsR = convTS(QsT, rf)
-        QgR = convTS(QgT, rf)
-        yOut = torch.sum((QpR+QsR+QgR)*ga, dim=2)
+        QpR = convTS(QpT, rf)*ga
+        QsR = convTS(QsT, rf)*ga
+        QgR = convTS(QgT, rf)*ga
+        yOut = torch.sum(QpR+QsR+QgR, dim=2)
         if outStep:
             return yOut, (QpR, QsR, QgR), (SfT, SsT, SgT)
         else:
