@@ -7,7 +7,7 @@ import torch
 import pandas as pd
 
 # extract data
-dataName = 'weaG200all'
+dataName = 'weaG200All'
 # def train(dataName, nm, codeLst):
 DF = dbBasin.DataFrameBasin(dataName)
 varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
