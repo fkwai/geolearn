@@ -57,7 +57,7 @@ def multiYrTS(axes, yrLst, t, dataPlot, cLst='rbk', styLst='--*', legLst=None):
         axes[k].xaxis.set_major_formatter(mdates.DateFormatter('%b'))
         axes[k].xaxis.set_major_locator(mdates.MonthLocator([4, 8, 12]))
         axes[k].set_xlabel(yrLst[k])
-        if k > 0:            
+        if k > 0:
             # axes[k].set_yticklabels([])
             axes[k].yaxis.set_visible(False)
         if legLst is not None:

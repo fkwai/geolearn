@@ -67,7 +67,7 @@ for code in codeLst:
     dfGC = dfG.loc[siteNoCode][colLst]
 
     # plant tree
-    varLst = dfG.columns.tolist()
+    varLst = dfGC.columns.tolist()
     # x = dfG.astype(np.float32).values
     x = dfGC.values
     y = mat

@@ -59,7 +59,7 @@ lossFun = crit.LogLoss2D().cuda()
 
 # water net
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTemp'
-modelFile = 'wn0119-{}-ep{}'.format('QN90ref', 550)
+modelFile = 'wn0119-{}-ep{}'.format('QN90ref', 300)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
 model.eval()
 [x, xc, y, yc] = dataTup2
@@ -97,12 +97,12 @@ importlib.reload(axplot)
 
 def funcM():
     figM = plt.figure(figsize=(12, 5))
-    gsM = gridspec.GridSpec(1, 3)
+    gsM = gridspec.GridSpec(3, 1)
     axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1)
     axM0.set_title('waterNet Nash')
-    axM1 = mapplot.mapPoint(figM, gsM[0, 1], lat, lon, nash2)
+    axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2)
     axM1.set_title('LSTM Nash')
-    axM2 = mapplot.mapPoint(figM, gsM[0, 2], lat, lon, nash2-nash1)
+    axM2 = mapplot.mapPoint(figM, gsM[2, 0], lat, lon, nash2-nash1)
     axM2.set_title('LSTM - waterNet Nash')
     axM = np.array([axM0, axM1, axM2])
     figP, axP = plt.subplots(1, 1, figsize=(12, 4))
@@ -142,8 +142,11 @@ figM.show()
 
 
 figM = plt.figure()
-gsM = gridspec.GridSpec(1, 1)
+gsM = gridspec.GridSpec(2, 1)
 axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat,
                         lon, nash2-nash1, vRange=[-0.2, 0.2])
 axM0.set_title('LSTM Nash - waterNet Nash')
+axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat,
+                        lon, corr2**2-corr1**2, vRange=[-0.2, 0.2])
+axM1.set_title('LSTM Rsq - waterNet Rsq')
 figM.show()

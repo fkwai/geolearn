@@ -430,3 +430,49 @@ class Wn0119EMsolo(torch.nn.Module):
             return yOut, (QpR, QsR, QgR)
         else:
             return yOut
+
+
+class Wn0119EM(waterNet.WaterNet0119):
+    def __init__(self, nh, ng, nr, nc, nm):
+        super().__init__(nh, ng, nr)
+        self.cp = Parameter(torch.rand(nm, nc).cuda())
+        self.cs = Parameter(torch.rand(nm, nc).cuda())
+        self.cg = Parameter(torch.rand(nm, nc).cuda())
+        self.nc = nc
+        self.nm = nm
+        self.fcC = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nm*nc*3)).cuda()
+        self.cLst = ['skip', 'skip', 'skip']
+        self.reset_parameters()
+
+    def forward(self, x, xc, outStep=False):
+        Qout, (QpR, QsR, QgR), (SfT, SsT, SgT) = super().forward(
+            x, xc, outStep=True)
+        c = self.fcC(xc)
+        nh = self.nh
+        nm = self.nm
+        nc = self.nc
+        [cpT, csT, cgT] = sepPar(c, self.nm*self.nc, self.cLst)
+        cp = cpT.view(-1, nm, nc)
+        cs = csT.view(-1, nm, nc)
+        cg = cgT.view(-1, nm, nc)
+        cp = torch.relu(torch.exp(cp))
+        cs = torch.relu(torch.exp(cs))
+        cg = torch.relu(torch.exp(cg))
+        cp = cp.repeat(1, int(nh/self.nm), 1)
+        cs = cs.repeat(1, int(nh/self.nm), 1)
+        cg = cg.repeat(1, int(nh/self.nm), 1)
+        nt = Qout.shape[0]
+        CpR = (QpR/Qout[:, :, None])[:, :, :, None] * cp.repeat(nt, 1, 1, 1)
+        CsR = (QsR/Qout[:, :, None])[:, :, :, None] * cs.repeat(nt, 1, 1, 1)
+        CgR = (QgR/Qout[:, :, None])[:, :, :, None] * cg.repeat(nt, 1, 1, 1)
+        Cout = torch.sum(CpR+CsR+CgR, dim=2)
+        # Cout = torch.sum((QpR*self.cp+QsR*self.cs+QgR*self.cg)*ga, dim=-1)
+        yOut = torch.cat([Qout[..., None], Cout], dim=-1)
+        if outStep is True:
+            return yOut, (QpR, QsR, QgR), (SfT, SsT, SgT), (cp, cs, cg)
+        else:
+            return yOut

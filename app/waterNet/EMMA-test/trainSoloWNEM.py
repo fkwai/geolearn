@@ -17,7 +17,9 @@ import matplotlib.pyplot as plt
 from torch.nn.parameter import Parameter
 from hydroDL.model.waterNet import WaterNet0119, sepPar, convTS
 from hydroDL import utils
+import time
 importlib.reload(waterNetTestC)
+
 # extract data
 codeLst = ['00600', '00660', '00915', '00925', '00930', '00935', '00945']
 
@@ -62,6 +64,7 @@ def train(dataName, nm, codeLst):
     lossFun = crit.LogLoss3D().cuda()
     # train
     for ep in range(1, 101):
+        t0 = time.time()
         [rho, nbatch] = batchSize
         iS = np.random.randint(0, ns, [nbatch])
         iT = np.random.randint(0, nt-rho, [nbatch])
@@ -85,7 +88,8 @@ def train(dataName, nm, codeLst):
         loss.backward()
         optim.step()
         # torchUtils.ifNan(model)
-        print(ep, lossQ.item(), lossC.item())
+        print('{} {:.2f} {:.2f} {:.2f}'.format(
+            ep, lossQ.item(), lossC.item(), time.time()-t0))
     # save model
     saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTempEM'
     modelFile = os.path.join(
@@ -93,9 +97,9 @@ def train(dataName, nm, codeLst):
     torch.save(model.state_dict(), modelFile)
 
 
-# train('09163500', 16, codeLst)
-train('09163500', 8, codeLst)
-train('09163500', 4, codeLst)
-train('09163500', 1, codeLst)
-train('04193500', 16, codeLst)
-train('04193500', 1, codeLst)
+train('09163500', 16, codeLst)
+# train('09163500', 8, codeLst)
+# train('09163500', 4, codeLst)
+# train('09163500', 1, codeLst)
+# train('04193500', 16, codeLst)
+# train('04193500', 1, codeLst)

@@ -13,7 +13,8 @@ import matplotlib.gridspec as gridspec
 DF = dbBasin.DataFrameBasin('G200')
 
 siteNo = '09163500'
-codeLst = ['00600', '00660', '00915', '00925', '00930', '00935', '00945']
+# codeLst = ['00600', '00660', '00915', '00925', '00930', '00935', '00945']
+codeLst = ['00618', '00915', '00945']
 varF = ['pr', 'etr', 'tmmn', 'srad', 'LAI']
 indS = DF.siteNoLst.index(siteNo)
 indC = [DF.varC.index(code) for code in codeLst]

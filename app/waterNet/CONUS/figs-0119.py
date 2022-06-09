@@ -1,4 +1,5 @@
 
+import matplotlib
 import matplotlib.gridspec as gridspec
 from hydroDL.post import axplot, figplot, mapplot
 import matplotlib.pyplot as plt
@@ -70,12 +71,20 @@ t = DF.getT(testSet)
 testBatch = 100
 iS = np.arange(0, ns, testBatch)
 iE = np.append(iS[1:], ns)
-yP = np.ndarray([nt-nr+1, ns])
-for k in range(len(iS)):
-    print('batch {}'.format(k))
-    yOut = model(xP[:, iS[k]:iE[k], :], xcP[iS[k]:iE[k]])
-    yP[:, iS[k]:iE[k]] = yOut.detach().cpu().numpy()
+# yP = np.ndarray([nt-nr+1, ns])
+# for k in range(len(iS)):
+#     print('batch {}'.format(k))
+#     yOut = model(xP[:, iS[k]:iE[k], :], xcP[iS[k]:iE[k]],)
+#     yP[:, iS[k]:iE[k]] = yOut.detach().cpu().numpy()
+yOut, (QpR, QsR, QgR), (SfT, SsT, SgT) = model(xP, xcP, outStep=True)
 model.zero_grad()
+yP = yOut.detach().cpu().numpy()
+Qp = QpR.detach().cpu().numpy()
+Qs = QsR.detach().cpu().numpy()
+Qg = QgR.detach().cpu().numpy()
+Sf = SfT.detach().cpu().numpy()
+Ss = SsT.detach().cpu().numpy()
+Sg = SgT.detach().cpu().numpy()
 
 
 # LSTM
@@ -93,6 +102,9 @@ lat, lon = DF.getGeo()
 
 importlib.reload(mapplot)
 importlib.reload(axplot)
+matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
 
 # box
 fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
@@ -115,8 +127,32 @@ fig.show()
 # ax.add_patch(circle)
 figM = plt.figure()
 gsM = gridspec.GridSpec(2, 1)
-axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1],s=10)
+axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1], s=10)
 axM0.set_title('waterNet Nash')
-axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2, vRange=[0, 1],s=10)
+axM1 = mapplot.mapPoint(figM, gsM[1, 0], lat, lon, nash2, vRange=[0, 1], s=10)
 axM1.set_title('LSTM Nash')
 figM.show()
+
+# site 09163500
+siteNo = '06885500'
+indS = DF.siteNoLst.index(siteNo)
+fig, ax = plt.subplots(1, 1, figsize=(12, 3))
+dataPlot = [y[nr-1:, indS, 0], yP[:, indS], yL[nr-1:, indS]]
+legLst = ['obs', 'waterNet {:.2f}'.format(nash1[indS]),
+          'LSTM {:.2f}'.format(nash2[indS])]
+axplot.plotTS(ax, t[nr-1:], dataPlot, legLst=legLst)
+fig.show()
+# Q
+fig, axes = plt.subplots(3, 1, figsize=(12, 9))
+axes[0].plot(t[nr-1:], Qp[:, indS, :])
+axes[1].plot(t[nr-1:], Qs[:, indS, :])
+axes[2].plot(t[nr-1:], Qg[:, indS, :])
+fig.subplots_adjust(hspace=0)
+fig.show()
+
+fig, axes = plt.subplots(3, 1, figsize=(12, 9))
+axes[0].plot(t, Sf[:, indS, :])
+axes[1].plot(t, Ss[:, indS, :])
+axes[2].plot(t, Sg[:, indS, :])
+fig.subplots_adjust(hspace=0)
+fig.show()

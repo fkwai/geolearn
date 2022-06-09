@@ -244,7 +244,7 @@ class LogLoss3D(torch.nn.Module):
         nt, ns, ny = targ.shape
         se = (pred-targ)**2
         nv = torch.sum(~torch.isnan(se), dim=0)
-        loss2 = 0
+        loss2 = 0.0
         n2 = 0
         for i in range(ny):
             loss1 = 0
@@ -260,29 +260,60 @@ class LogLoss3D(torch.nn.Module):
                 loss2 = loss2+loss1/n1
                 n2 = n2+1
         if n2 == 0:
-            return 0
+            return torch.tensor([0.], requires_grad=True)
         else:
             return torch.exp(loss2/n2)
 
 
 class NashLoss2D(torch.nn.Module):
     def __init__(self):
-        super(LogLoss2D, self).__init__()
+        super(NashLoss2D, self).__init__()
 
-    def forward(self, pred, targ, nv=10):
-        ns = targ.shape[1]
-        lossTemp = 0
+    def forward(self, pred, targ):
+        loss = 0
+        nt, ns = pred.shape
         n = 0
-        for k in range(ns):
-            iv = ~torch.isnan(targ[:, k])
-            if len(iv[iv == True]) > nv:
-                rmse = torch.mean((pred[iv, k]-targ[iv, k])**2, dim=0)
-                lossTemp = lossTemp+torch.log(rmse+1e-8)
-                n = n+1
-        if n == 0:
-            return 0
-        else:
-            return torch.exp(lossTemp/n)
+        for iS in range(ns):
+            p = pred[:, iS]
+            t = targ[:, iS]
+            mask = ~torch.isnan(t)
+            if mask.sum() > 10:
+                pp = p[mask]
+                tt = t[mask]
+                sst = torch.sum((tt-tt.mean())**2)
+                res = torch.sum((tt-pp)**2)
+                if sst != 0:
+                    loss = loss + res/(torch.sqrt(sst)+0.1)**2
+                    n = n+1
+        return loss/n
+
+
+class NashLoss3D(torch.nn.Module):
+    def __init__(self):
+        super(NashLoss3D, self).__init__()
+
+    def forward(self, pred, targ):
+        loss = 0
+        nt, ns, ny = pred.shape
+        for iY in range(ny):
+            lossY = 0
+            n = 0
+            for iS in range(ns):
+                p = pred[:, iS, iY]
+                t = targ[:, iS, iY]
+                mask = ~torch.isnan(t)
+                if mask.sum() > 10:
+                    pp = p[mask]
+                    tt = t[mask]
+                    sst = torch.sum((tt-tt.mean())**2)
+                    res = torch.sum((tt-pp)**2)
+                    if sst != 0:
+                        lossY = lossY + res/(torch.sqrt(sst)+0.1)**2
+                        n = n+1
+            if n > 0:
+                loss = loss+lossY/n
+        return loss/ny
+
 
 # class LogLoss2D(torch.nn.Module):
 #     def __init__(self):
