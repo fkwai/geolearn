@@ -1,24 +1,10 @@
 
-from sklearn.decomposition import PCA
-import sklearn
-import torch.nn.functional as F
-import torch.nn as nn
-import random
 import os
 from hydroDL.model import trainBasin, crit, waterNetTestC, waterNetTest
 from hydroDL.data import dbBasin, gageII, usgs
 import numpy as np
 import torch
 import pandas as pd
-import importlib
-from hydroDL.utils import torchUtils
-from hydroDL.post import axplot, figplot, mapplot
-import matplotlib.pyplot as plt
-from torch.nn.parameter import Parameter
-from hydroDL.model.waterNet import WaterNet0119, sepPar, convTS
-from hydroDL import utils
-import time
-importlib.reload(waterNetTestC)
 
 # extract data
 dataName = 'weaG200all'
