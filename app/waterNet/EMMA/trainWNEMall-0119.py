@@ -5,7 +5,7 @@ from hydroDL.data import dbBasin, gageII, usgs
 import numpy as np
 import torch
 import pandas as pd
-
+import time()
 # extract data
 dataName = 'weaG200All'
 # def train(dataName, nm, codeLst):
@@ -48,11 +48,12 @@ nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
 # nIterEp = 1
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
-# torch.autograd.set_detect_anomaly(True)
+torch.autograd.set_detect_anomaly(True)
 model.train()
-
+isBroken = False
 for ep in range(1, 1001):
     for iter in range(nIterEp):
+        t0 = time.time()
         [rho, nbatch] = batchSize
         iS = np.random.randint(0, ns, [nbatch])
         iT = np.random.randint(0, nt-rho, [nbatch])
@@ -77,19 +78,68 @@ for ep in range(1, 1001):
 
         model.zero_grad()
         yP = model(xT, xcT)
+        # if torch.isnan(yP).sum() > 0:
+        #     isBroken = True
+        #     print('break1')
+        #     break
         # loss = lossFun(yP[:, :, :], yT[nr-1:, :, :])
+        # print('loss')
         lossQ = lossFun(yP[:, :, 0:1], yT[nr-1:, :, 0:1])
         lossC = lossFun(yP[:, :, 1:], yT[nr-1:, :, 1:])
+
         loss = lossQ*lossC
         optim.zero_grad()
+        # print('backward')
         loss.backward()
         optim.step()
-        print(ep, iter, loss.item())
+        printStr = '{} {} {:.3f} {:.3f} {:.2f}'.format(
+            ep, iter, lossQ.item(), lossC .item(), time.time()-t0)
+        print(printStr, flush=True)
         lossLst.append(loss.item())
     if ep % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wn0119-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wnem0119-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
+
 lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))
-pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
+# pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
+
+
+# yOut, (QpR, QsR, QgR), (SfT, SsT, SgT), (cp,
+#                                          cs, cg) = model(xT, xcT, outStep=True)
+# torch.isnan(yOut).sum()
+# torch.isnan(cp).sum()
+# torch.isnan(cs).sum()
+# torch.isnan(cg).sum()
+
+# torch.isnan(yP).sum()
+
+
+# # for j in range(yP.shape[1]):
+# #     for i in range(yP.shape[2]):
+# #         temp = torch.isnan(yP[:, j, i]).sum()
+# #         if temp > 0:
+# #             print(j, i, temp)
+
+
+# # torch.isnan(xT[:, 76, :]).sum()
+# # torch.isnan(xcT[76, :]).sum()
+# # from hydroDL.model.waterNet import convTS, sepPar, WaterNet0119
+
+# # aa = xcT[76:77, :]
+# # c = model.fcC(xcT[76:77, :])
+# # [cpT, csT, cgT] = sepPar(c, model.nm*model.nc, model.cLst)
+# # cp = cpT.view(-1, nm, nc)
+# # cs = csT.view(-1, nm, nc)
+# # cg = cgT.view(-1, nm, nc)
+# # cp = torch.relu(torch.exp(cp))
+# # cs = torch.relu(torch.exp(cs))
+# # cg = torch.relu(torch.exp(cg))
+# # cp = cp.repeat(1, int(nh/nm), 1)
+# # cs = cs.repeat(1, int(nh/nm), 1)
+# # cg = cg.repeat(1, int(nh/nm), 1)
+
+
+# # yOut, (QpR, QsR, QgR), (SfT, SsT, SgT), (cp, cs, cg)=model(xT,xcT,outStep=True)
+# # torch.isnan(yOut).sum()

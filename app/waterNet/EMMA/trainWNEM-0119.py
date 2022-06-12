@@ -5,6 +5,7 @@ from hydroDL.data import dbBasin, gageII, usgs
 import numpy as np
 import torch
 import pandas as pd
+import time
 
 # extract data
 dataName = 'weaG200'
@@ -53,6 +54,7 @@ model.train()
 
 for ep in range(1, 1001):
     for iter in range(nIterEp):
+        t0 = time.time()
         [rho, nbatch] = batchSize
         iS = np.random.randint(0, ns, [nbatch])
         iT = np.random.randint(0, nt-rho, [nbatch])
@@ -84,11 +86,13 @@ for ep in range(1, 1001):
         optim.zero_grad()
         loss.backward()
         optim.step()
-        print(ep, iter, loss.item())
+        printStr = '{} {} {:.3f} {:.3f} {:.2f}'.format(
+            ep, iter, lossQ.item(), lossC .item(), time.time()-t0)
+        print(printStr, flush=True)
         lossLst.append(loss.item())
     if ep % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wn0119-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wnem0119-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
 lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))

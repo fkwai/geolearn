@@ -443,7 +443,7 @@ class Wn0119EM(waterNet.WaterNet0119):
         self.fcC = nn.Sequential(
             nn.Linear(ng, 256),
             nn.Tanh(),
-            nn.Dropout(),
+            # nn.Dropout(),
             nn.Linear(256, nm*nc*3)).cuda()
         self.cLst = ['skip', 'skip', 'skip']
         self.reset_parameters()

@@ -242,16 +242,14 @@ class LogLoss3D(torch.nn.Module):
 
     def forward(self, pred, targ):
         nt, ns, ny = targ.shape
-        se = (pred-targ)**2
-        nv = torch.sum(~torch.isnan(se), dim=0)
         loss2 = 0.0
         n2 = 0
         for i in range(ny):
             loss1 = 0
             n1 = 0
             for j in range(ns):
-                if nv[j, i] > 5:
-                    iv = ~torch.isnan(targ[:, j, i])
+                iv = ~torch.isnan(targ[:, j, i])
+                if iv.sum() > 5:                    
                     mse = torch.mean(
                         (pred[iv, j, i]-targ[iv, j, i])**2, dim=0)
                     loss1 = loss1+torch.log(mse+1e-8)
