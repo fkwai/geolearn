@@ -5,7 +5,8 @@ from hydroDL.data import dbBasin, gageII, usgs
 import numpy as np
 import torch
 import pandas as pd
-import time()
+import time
+
 # extract data
 dataName = 'weaG200All'
 # def train(dataName, nm, codeLst):
