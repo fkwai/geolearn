@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
-from hydroDL.model.waterNet import convTS, sepPar, WaterNet0119
+from hydroDL.model.waterNet import convTS, sepPar
 from hydroDL.model import waterNetTest, waterNet
 
 
@@ -432,7 +432,7 @@ class Wn0119EMsolo(torch.nn.Module):
             return yOut
 
 
-class Wn0119EM(waterNet.WaterNet0119):
+class Wn0119EM(waterNetTest.WaterNet0119):
     def __init__(self, nh, ng, nr, nc, nm):
         super().__init__(nh, ng, nr)
         self.cp = Parameter(torch.rand(nm, nc).cuda())
@@ -443,7 +443,7 @@ class Wn0119EM(waterNet.WaterNet0119):
         self.fcC = nn.Sequential(
             nn.Linear(ng, 256),
             nn.Tanh(),
-            nn.Dropout(),
+            # nn.Dropout(),
             nn.Linear(256, nm*nc*3)).cuda()
         self.cLst = ['skip', 'skip', 'skip']
         self.reset_parameters()
@@ -466,15 +466,20 @@ class Wn0119EM(waterNet.WaterNet0119):
         cs = cs.repeat(1, int(nh/self.nm), 1)
         cg = cg.repeat(1, int(nh/self.nm), 1)
         nt = Qout.shape[0]
-        QpP = torch.nan_to_num(QpR/Qout[:, :, None])
-        QsP = torch.nan_to_num(QsR/Qout[:, :, None])
-        QgP = torch.nan_to_num(QgR/Qout[:, :, None])
+        # QpP = torch.nan_to_num(QpR/Qout[:, :, None])
+        # QsP = torch.nan_to_num(QsR/Qout[:, :, None])
+        # QgP = torch.nan_to_num(QgR/Qout[:, :, None])        
+        QpP = QpR/Qout[:, :, None]
+        QsP = QsR/Qout[:, :, None]
+        QgP = QgR/Qout[:, :, None]
         CpR = QpP[:, :, :, None] * cp.repeat(nt, 1, 1, 1)
         CsR = QsP[:, :, :, None] * cs.repeat(nt, 1, 1, 1)
         CgR = QgP[:, :, :, None] * cg.repeat(nt, 1, 1, 1)
         Cout = torch.sum(CpR+CsR+CgR, dim=2)
         if torch.isnan(Cout).sum() > 0:
             print('nan in c')
+        if torch.isnan(Qout).sum() > 0:
+            print('nan in q')
         # Cout = torch.sum((QpR*self.cp+QsR*self.cs+QgR*self.cg)*ga, dim=-1)
         yOut = torch.cat([Qout[..., None], Cout], dim=-1)
         if outStep is True:
