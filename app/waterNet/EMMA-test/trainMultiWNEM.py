@@ -41,7 +41,7 @@ mtdX = ['skip' for k in range(2)] +\
 varY = ['runoff']+codeLst
 mtdY = ['skip'] + ['scale' for code in codeLst]
 varXC = gageII.varLstEx
-mtdXC = ['scale' for var in varXC]
+mtdXC = ['QT' for var in varXC]
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 
@@ -68,6 +68,8 @@ lossFun = crit.LogLoss3D().cuda()
 
 
 # train
+torch.autograd.set_detect_anomaly(True)
+
 for ep in range(1, 101):
     t0 = time.time()
     [rho, nbatch] = batchSize
@@ -97,10 +99,7 @@ for ep in range(1, 101):
     # loss = lossFun(yP[:, :, :], yT[nr-1:, :, :])
     lossQ = lossFun(yP[:, :, 0:1], yT[nr-1:, :, 0:1])
     lossC = lossFun(yP[:, :, 1:], yT[nr-1:, :, 1:])
-    if ep < 10:
-        loss = lossQ
-    else:
-        loss = lossQ*lossC
+    loss = lossQ*lossC
     optim.zero_grad()
     loss.backward()
     optim.step()

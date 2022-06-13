@@ -443,7 +443,7 @@ class Wn0119EM(waterNet.WaterNet0119):
         self.fcC = nn.Sequential(
             nn.Linear(ng, 256),
             nn.Tanh(),
-            # nn.Dropout(),
+            nn.Dropout(),
             nn.Linear(256, nm*nc*3)).cuda()
         self.cLst = ['skip', 'skip', 'skip']
         self.reset_parameters()
@@ -466,10 +466,15 @@ class Wn0119EM(waterNet.WaterNet0119):
         cs = cs.repeat(1, int(nh/self.nm), 1)
         cg = cg.repeat(1, int(nh/self.nm), 1)
         nt = Qout.shape[0]
-        CpR = (QpR/Qout[:, :, None])[:, :, :, None] * cp.repeat(nt, 1, 1, 1)
-        CsR = (QsR/Qout[:, :, None])[:, :, :, None] * cs.repeat(nt, 1, 1, 1)
-        CgR = (QgR/Qout[:, :, None])[:, :, :, None] * cg.repeat(nt, 1, 1, 1)
+        QpP = torch.nan_to_num(QpR/Qout[:, :, None])
+        QsP = torch.nan_to_num(QsR/Qout[:, :, None])
+        QgP = torch.nan_to_num(QgR/Qout[:, :, None])
+        CpR = QpP[:, :, :, None] * cp.repeat(nt, 1, 1, 1)
+        CsR = QsP[:, :, :, None] * cs.repeat(nt, 1, 1, 1)
+        CgR = QgP[:, :, :, None] * cg.repeat(nt, 1, 1, 1)
         Cout = torch.sum(CpR+CsR+CgR, dim=2)
+        if torch.isnan(Cout).sum() > 0:
+            print('nan in c')
         # Cout = torch.sum((QpR*self.cp+QsR*self.cs+QgR*self.cg)*ga, dim=-1)
         yOut = torch.cat([Qout[..., None], Cout], dim=-1)
         if outStep is True:

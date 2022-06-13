@@ -83,7 +83,7 @@ fig.show()
 
 
 # good corr appears in C
-iC = codeLst.index('00935')
+iC = codeLst.index('00955')
 [v], indV = utils.rmNan([corrQS[:, iC]])
 indSel = indV[np.argsort(-abs(v))[:10]]
 dictTop = dict()
