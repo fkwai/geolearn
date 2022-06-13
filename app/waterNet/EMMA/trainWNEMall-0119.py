@@ -79,12 +79,12 @@ for ep in range(1, 1001):
 
         model.zero_grad()        
         yP = model(xT, xcT)
-        if torch.isnan(yP).sum() > 0:
-            isBroken = True
-            print('break1')
-            break
+        # if torch.isnan(yP).sum() > 0:
+        #     isBroken = True
+        #     print('break1')
+        #     break
         loss = lossFun(yP[:, :, :], yT[nr-1:, :, :])
-        print('loss')
+        # print('loss')
         lossQ = lossFun(yP[:, :, 0:1], yT[nr-1:, :, 0:1])
         lossC = lossFun(yP[:, :, 1:], yT[nr-1:, :, 1:])
 
@@ -97,9 +97,9 @@ for ep in range(1, 1001):
             ep, iter, lossQ.item(), lossC .item(), time.time()-t0)
         print(printStr, flush=True)
         lossLst.append(loss.item())
-    if isBroken is True:
-        print('break2')
-        break
+    # if isBroken is True:
+    #     print('break2')
+    #     break
     if ep % 50 == 0:
         modelFile = os.path.join(
             saveDir, 'wnem0119-{}-ep{}'.format(dataName, ep))
@@ -110,17 +110,17 @@ lossFile = os.path.join(saveDir, 'loss-{}'.format(dataName))
 # pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
 
-yOut, (QpR, QsR, QgR), (SfT, SsT, SgT), (cp,
-                                         cs, cg) = model(xT, xcT, outStep=True)
-torch.isnan(yOut).sum()
-torch.isnan(cp).sum()
-torch.isnan(cs).sum()
-torch.isnan(cg).sum()
+# yOut, (QpR, QsR, QgR), (SfT, SsT, SgT), (cp,
+#                                          cs, cg) = model(xT, xcT, outStep=True)
+# torch.isnan(yOut).sum()
+# torch.isnan(cp).sum()
+# torch.isnan(cs).sum()
+# torch.isnan(cg).sum()
 
-yP = model(xT, xcT)
-torch.isnan(yP).sum()
-
+# yP = model(xT, xcT)
 # torch.isnan(yP).sum()
+
+# # torch.isnan(yP).sum()
 
 
 # # for j in range(yP.shape[1]):
