@@ -49,7 +49,7 @@ nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))
 # nIterEp = 1
 lossLst = list()
 saveDir = r'/scratch/users/kuaifang/temp/'
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 model.train()
 
 for ep in range(1, 1001):
