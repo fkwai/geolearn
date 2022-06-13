@@ -18,20 +18,18 @@ from torch.nn.parameter import Parameter
 from hydroDL.model.waterNet import WaterNet0119, sepPar, convTS
 from hydroDL import utils
 importlib.reload(waterNetTestC)
+
+
 # extract data
-codeLst = ['00600', '00660', '00915', '00925', '00930', '00935', '00945']
-
-# siteNo = '04193500'
-
 dataName = 'weaG200'
-
+# def train(dataName, nm, codeLst):
 DF = dbBasin.DataFrameBasin(dataName)
 varX = ['pr', 'etr', 'tmmn', 'tmmx', 'srad', 'LAI']
 mtdX = ['skip' for k in range(2)] +\
     ['scale' for k in range(2)] +\
     ['norm' for k in range(2)]
-varY = ['runoff']+codeLst
-mtdY = ['skip'] + ['scale' for code in codeLst]
+varY = ['runoff']+DF.varC
+mtdY = ['skip'] + ['scale' for code in DF.varC]
 varXC = gageII.varLstEx
 mtdXC = ['QT' for var in varXC]
 varYC = None
@@ -54,29 +52,21 @@ DM0.borrowStat(DM1)
 dataTup0 = DM0.getData()
 
 # check data plot
-labelLst = ['Q and P'] +\
-    [usgs.codePdf.loc[code]['shortName'] for code in codeLst]
-fig, axes = figplot.multiTS(DM0.t, DM0.y[:, 0, :], labelLst=labelLst)
-ax = axes[0].twinx()
-ax.plot(DM0.t, DM0.x[:, 0, 0], 'b')
-ax.invert_yaxis()
-fig.show()
-# number of complete data
-matNan = np.isnan(DM0.y[:, 0, 1:])
-ind = np.where(np.sum(matNan, axis=-1) == 0)[0]
-len(ind)
-
-
-ng = len(varXC)
-nm = 16
+sizeLst = trainBasin.getSize(dataTup1)
+[x, xc, y, yc] = dataTup1
+[nx, nxc, ny, nyc, nt, ns] = sizeLst
+batchSize = [1000, 100]
+ng = xc.shape[-1]
 nh = 16
 nr = 5
-nc = len(codeLst)
+nc = len(DF.varC)
+nm = nh
+[rho, nbatch] = batchSize
+
 model = waterNetTestC.Wn0119EM(nh, ng, nr, nc, nm).cuda()
 saveDir = r'C:\Users\geofk\work\waterQuality\waterNet\modelTempEM'
-modelFile = 'wn0119Multi-{}-ep{}-nm{}'.format(dataName, 100, nm)
+modelFile = 'wnem0119-{}-ep{}'.format(dataName, 100)
 model.load_state_dict(torch.load(os.path.join(saveDir, modelFile)))
-
 
 # test
 model.eval()
@@ -86,13 +76,43 @@ if not os.path.exists(figDir):
     os.mkdir(figDir)
 QLst = list()
 # for kk, (dataTup, t) in enumerate(zip([dataTup1, dataTup2], [DM1.t, DM2.t])):
-    
-    
-[x, xc, y, yc] = dataTup1
+
+
+[x, xc, y, yc] = dataTup2
+t = DF.getT(testSet)
+nt, ns, _ = y.shape
+
 xP = torch.from_numpy(x).float().cuda()
 xcP = torch.from_numpy(xc).float().cuda()
+
+testBatch = 20
+iS = np.arange(0, ns, testBatch)
+iE = np.append(iS[1:], ns)
+yP = np.ndarray([nt-nr+1, ns, nc+1])
+for k in range(len(iS)):
+    print('batch {}'.format(k))
+    yOut = model(xP[:, iS[k]:iE[k], :], xcP[iS[k]:iE[k]])
+    yP[:, iS[k]:iE[k], :] = yOut.detach().cpu().numpy()
+model.zero_grad()
+qP = yP[:, :, 0]
+cP = yP[:, :, 1:]
+
+utils.stat.calCorr(qP, y[nr-1:, :, 0])
+for k in range(nc):
+    a = utils.stat.calCorr(cP[:, :, k], y[nr-1:, :, k+1])
+    np.nanmean(a)
+
+iP = 5
+ic = 0
+fig, axes = plt.subplots(nc, 1)
+for ic in range(nc):
+    axplot.plotTS(axes[ic], t[nr-1:], [y[nr-1:, iP, ic+1],
+              yP[:, iP, ic+1]], cLst='kr')
+fig.show()
+
+
 nt, ns, _ = y.shape
-yOut, qOut = model(xP, xcP, outQ=True)
+yOut = model(xP, xcP)
 yP = yOut.detach().cpu().numpy()
 QpO, QsO, QgO = qOut
 Qa = yOut[:, 0, 0].detach().cpu().numpy()
@@ -108,8 +128,8 @@ lossFun = crit.LogLoss3D().cuda()
 lossQ = lossFun(yOut[:, :, 0:1], yT[nr-1:, :, 0:1])
 lossC = lossFun(yOut[:, :, 1:], yT[nr-1:, :, 1:])
 
-    labelLst = list()
-    for k in range(nc+1):
+  labelLst = list()
+   for k in range(nc+1):
         if k == 0:
             labelLst.append('Q {:.2f}'.format(corr[k]))
         else:
