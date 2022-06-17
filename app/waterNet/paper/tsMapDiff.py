@@ -1,4 +1,6 @@
 
+import matplotlib.dates as mdates
+from builtins import anext
 from tkinter import X
 import matplotlib
 import matplotlib.gridspec as gridspec
@@ -123,42 +125,77 @@ figM, figP = figplot.clickMap(funcM, funcP)
 matplotlib.rcParams.update({'font.size': 14})
 matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 5})
+dirPaper = r'C:\Users\geofk\work\waterQuality\paper\waterNet'
 
 
-# 08101000
-# 10172800
-# 02053200
-# 03180500
+siteNoPlot = ['08101000',
+              '10172800',
+              '02053200',
+              '03180500']
+tRLst = [[20120501, 20130501],
+         [20110101, 20120101],
+         [20140101, 20140601],
+         [20180601, 20181201]]
 
-P = DF.f[:, :, 0]
-Q = DF.q[:, :, 1]
-E = DF.q[:, :, 6]
+for siteNo, tR in zip(siteNoPlot, tRLst):
+    fig = plt.figure(figsize=(16, 3))
+    gs = gridspec.GridSpec(1, 5)
+    ngs = 3
+    iP = DF.siteNoLst.index(siteNo)
+    legLst = ['obs',
+              'waterNet {:.2f} {:.2f}'.format(nash1[iP], corr1[iP]),
+              'LSTM {:.2f} {:.2f}'.format(nash2[iP], corr2[iP])]
+    t = DF.getT(testSet)
+    ax = fig.add_subplot(gs[0, :ngs])
+    axplot.plotTS(ax, t[nr-1:], [y[nr-1:, iP, 0], yP[:, iP], yL[nr-1:, iP]],
+                  lineW=[2, 1, 1], cLst='krb', legLst=legLst)
+
+    sd = utils.time.t2dt(tR[0])
+    ed = utils.time.t2dt(tR[1])
+    indT1 = np.where(t == utils.time.t2dt(tR[0]))[0][0]
+    indT2 = np.where(t == utils.time.t2dt(tR[1]))[0][0]
+    axT = fig.add_subplot(gs[0, ngs:])
+    dataT = [y[indT1:indT2, iP, 0],
+             yP[indT1-nr+1:indT2-nr+1, iP], yL[indT1:indT2, iP]]
+    axplot.plotTS(axT, t[indT1:indT2], dataT,
+                  lineW=[2, 1, 1], cLst='krb')
+    axP = axT.twinx()
+    axplot.plotTS(axP, t[indT1:indT2], [x[indT1:indT2, iP, 0]],
+                  lineW=[1], cLst='c', legLst=['prcp'])
+    axP.invert_yaxis()
+    axT.set_xticks([sd, ed])
+    fig.show()
+    fig.savefig(os.path.join(dirPaper, 'ts_{}'.format(siteNo)))
 
 
-Pm = np.nanmean(P, axis=0)
-Qm = np.nanmean(Q, axis=0)
-figM = plt.figure(figsize=(12, 5))
-gsM = gridspec.GridSpec(1, 1)
-axM = mapplot.mapPoint(
-    figM, gsM[0, 0], lat, lon, (Pm-Qm)/Em)
-figM.show()
-
-figM = plt.figure(figsize=(12, 5))
-gsM = gridspec.GridSpec(1, 1)
-axM = mapplot.mapPoint(
-    figM, gsM[0, 0], lat, lon, np.nanstd(Q,axis=0)/np.nanmean(Q,axis=0))
-figM.show()
-
-figM = plt.figure(figsize=(12, 5))
-gsM = gridspec.GridSpec(1, 1)
+siteNoPlot = ['08101000',
+              '10172800',
+              '02053200',
+              '03180500']
+fig = plt.figure(figsize=(16, 5))
+gs = gridspec.GridSpec(1, 7)
 # axM2 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash2-nash1)
 axM = mapplot.mapPoint(
-    figM, gsM[0, 0], lat, lon, corr2**2-corr1**2, centerZero=True)
-axM.set_title('LSTM - waterNet Nash')
-figM.show()
+    fig, gs[0, :5], lat, lon, nash1-nash2, centerZero=True)
+axM.set_title('waterNet NSE - LSTM NSE')
+for siteNo in siteNoPlot:
+    xLoc = lon[DF.siteNoLst.index(siteNo)]
+    yLoc = lat[DF.siteNoLst.index(siteNo)]
+    circle = plt.Circle([xLoc, yLoc], 1,
+                        color='black', fill=False)
+    axM.add_patch(circle)
+ax = fig.add_subplot(gs[0, 5:])
+ax.plot(nash1, nash2, 'o')
+ax.plot([-0.25, 1], [-0.25, 1], '-k')
+ax.set_ylim(-0.25, 1)
+ax.set_xlim(-0.25, 1)
+ax.set_xlabel('waterNet NSE')
+ax.set_ylabel('LSTM NSE')
+ax.set_aspect(1)
+for siteNo in siteNoPlot:
+    xLoc = nash1[DF.siteNoLst.index(siteNo)]
+    yLoc = nash2[DF.siteNoLst.index(siteNo)]
+    ax.plot(xLoc, yLoc, 'ro')
 
-
-fig, ax = plt.subplots(1, 1)
-ax.plot(Qm/Pm, corr1, '*')
-ax.set_ylim(0,1)
 fig.show()
+fig.savefig(os.path.join(dirPaper, 'mapDiff'))

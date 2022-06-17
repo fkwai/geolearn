@@ -85,12 +85,12 @@ corr2 = utils.stat.calCorr(yL, y[:, :, 0])
 
 lat, lon = DF.getGeo()
 
-matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'font.size': 14})
 matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 5})
 
 # map
-figM = plt.figure(figsize=(10, 10))
+figM = plt.figure(figsize=(8, 6))
 gsM = gridspec.GridSpec(2, 1)
 axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash1, vRange=[0, 1])
 axM0.set_title('waterNet NSE')
@@ -104,7 +104,35 @@ figM.savefig(os.path.join(dirPaper, 'mapNash'))
 fig, axes = figplot.boxPlot([[nash1, nash2], [corr1, corr2]],
                             label1=['NSE', 'corr'],
                             label2=['waterNet', 'LSTM'],
-                            yRange=[0, 1], figsize=(6, 4))
+                            yRange=[0, 1], figsize=(6, 6))
 fig.show()
 fig.savefig(os.path.join(dirPaper, 'box'))
 
+# additional maps
+P = DF.f[:, :, 0]
+Q = DF.q[:, :, 1]
+E = DF.f[:, :, 6]
+
+
+Pm = np.nanmean(P, axis=0)
+Qm = np.nanmean(Q, axis=0)
+Em = np.nanmean(E, axis=0)
+
+figM = plt.figure(figsize=(12, 5))
+gsM = gridspec.GridSpec(1, 1)
+axM = mapplot.mapPoint(
+    figM, gsM[0, 0], lat, lon, (Pm-Qm)/Em)
+figM.show()
+
+figM = plt.figure(figsize=(12, 5))
+gsM = gridspec.GridSpec(1, 1)
+axM = mapplot.mapPoint(
+    figM, gsM[0, 0], lat, lon, Pm)
+figM.show()
+
+
+figM = plt.figure(figsize=(12, 5))
+gsM = gridspec.GridSpec(1, 1)
+axM = mapplot.mapPoint(
+    figM, gsM[0, 0], lat, lon, np.nanstd(Q, axis=0)/np.nanmean(Q, axis=0))
+figM.show()

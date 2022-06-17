@@ -1,19 +1,38 @@
-
+import matplotlib
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
 import matplotlib.pyplot as plt
-from hydroDL.post import axplot, figplot
+from hydroDL.post import axplot, figplot, mapplot
 from hydroDL import kPath, utils
-import json
 import os
-import importlib
+import sklearn.tree
+import matplotlib.gridspec as gridspec
 from hydroDL.master import basinFull
-from hydroDL.app.waterQuality import WRTDS
-import matplotlib
-DF = dbBasin.DataFrameBasin('G200')
+
+
+# investigate CV(C) / CV(Q) as an indicator of model performance
+
 codeLst = usgs.varC
 
+DF = dbBasin.DataFrameBasin('G200')
+# count
+trainSet = 'rmYr5'
+testSet = 'pkYr5'
+matB = (~np.isnan(DF.c)*~np.isnan(DF.q[:, :, 0:1])).astype(int).astype(float)
+matB1 = DF.extractSubset(matB, trainSet)
+matB2 = DF.extractSubset(matB, testSet)
+count1 = np.nansum(matB1, axis=0)
+count2 = np.nansum(matB2, axis=0)
+matRm = (count1 < 80) | (count2 < 20)
+
+matCV = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
+q = DF.q[:, :, 1]
+cvQ = np.nanstd(q, axis=0)/np.nanmean(q, axis=0)
+for k, code in enumerate(codeLst):
+    c = DF.c[:, :, k]
+    cvC = np.nanstd(c, axis=0)/np.nanmean(c, axis=0)
+    matCV[:, k] = cvC/cvQ
 
 # LSTM
 ep = 500
@@ -39,6 +58,25 @@ corrFile2 = os.path.join(dirWRTDS, corrName2)
 corrW1 = np.load(corrFile1)
 corrW2 = np.load(corrFile2)
 
+
+# load linear/seasonal
+
+dirParLst = [r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param',
+             r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\Q\param',
+             r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\S\param']
+saveNameLst = ['QS', 'Q', 'S']
+dictLR = dict()
+for dirPar, saveName in zip(dirParLst, saveNameLst):
+    matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
+    for k, code in enumerate(codeLst):
+        filePar = os.path.join(dirPar, code)
+        dfCorr = pd.read_csv(
+            filePar, dtype={'siteNo': str}).set_index('siteNo')
+        matLR[:, k] = dfCorr['rsq'].values
+    matLR[matRm] = np.nan
+    dictLR[saveName] = matLR
+
+
 # count
 matB = (~np.isnan(DF.c)).astype(int).astype(float)
 matB1 = DF.extractSubset(matB, trainSet)
@@ -46,17 +84,37 @@ matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
 count2 = np.nansum(matB2, axis=0)
 matRm = (count1 < 80) | (count2 < 20)
-for corr in [corrL1, corrL2, corrW1, corrW2]:
-    corr[matRm] = np.nan
+for data in [corrL1, corrL2, corrW1, corrW2, matCV]:
+    data[matRm] = np.nan
 
-# load linear/seasonal
-dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
-matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
+
+# plot map
+lat, lon = DF.getGeo()
+fig = plt.figure(figsize=(16, 12))
+gs = gridspec.GridSpec(5, 4)
 for k, code in enumerate(codeLst):
-    filePar = os.path.join(dirPar, code)
-    dfCorr = pd.read_csv(filePar, dtype={'siteNo': str}).set_index('siteNo')
-    matLR[:, k] = dfCorr['rsq'].values
-matLR[matRm] = np.nan
+    j, i = utils.index2d(k, 5, 4)
+    ax = mapplot.mapPoint(fig, gs[j:j+1, i:i+1], lat, lon,
+                          matCV[:, k], cb=True)
+    codeStr = usgs.codePdf.loc[code]['shortName']
+    ax.set_title('{} {}'.format(code, codeStr))
+plt.tight_layout()
+fig.show()
+
+# LSTM vs CV
+fig = plt.figure(figsize=(16, 12))
+gs = gridspec.GridSpec(5, 4)
+for k, code in enumerate(codeLst):
+    j, i = utils.index2d(k, 5, 4)
+    ax = fig.add_subplot(gs[j:j+1, i:i+1])
+    data = corrW2[:, k]**2-corrL2[:, k]**2
+    data = dictLR['QS'][:,k]
+    ax.plot(data, matCV[:, k], '*')
+    codeStr = usgs.codePdf.loc[code]['shortName']
+    ax.set_title('{} {}'.format(code, codeStr))
+plt.tight_layout()
+fig.show()
+
 
 codeGroup = [
     ['00010', '00300'],
@@ -66,13 +124,9 @@ codeGroup = [
 ]
 colorGroup = 'rmgb'
 labGroup = ['stream', 'weathering', 'nutrient', 'mix']
-#
-matplotlib.rcParams.update({'font.size': 16})
-matplotlib.rcParams.update({'lines.linewidth': 2})
-matplotlib.rcParams.update({'lines.markersize': 10})
-a0 = matLR
+a0 = matCV
 b0 = corrL2**2 - corrW2**2
-a = np.nanmean(matLR, axis=0)
+a = np.nanmean(matCV, axis=0)
 b = np.nanmean(corrL2**2 - corrW2**2, axis=0)
 c = np.nanmean(corrL2**2, axis=0)
 c = np.power(c*10, 3)*2
@@ -94,26 +148,8 @@ for codeG, colorG, labG in zip(codeGroup, colorGroup, labGroup):
                 linestyle='dashed', linewidth=0.5)
         ax.plot(aa, [b[k], b[k]], color=colorG,
                 linestyle='dashed', linewidth=0.5)
-
 ax.axhline(0, color='k')
 ax.axvline(0.4, color='k')
-ax.set_xlabel('simplicity')
+ax.set_xlabel('CVc / CVq')
 ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
 fig.show()
-dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
-plt.savefig(os.path.join(dirPaper, 'fourDim'))
-plt.savefig(os.path.join(dirPaper, 'fourDim.svg'))
-
-# plot legend
-
-
-fig, ax = plt.subplots(1, 1, figsize=(4, 4))
-for colorG, labG in zip(colorGroup, labGroup):
-    ind = [codeLst.index(code) for code in codeG]
-    ax.scatter(0, 0, s=100, color=colorG, label=labG)
-ax.legend()
-ax.set_xlabel('simplicity')
-ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
-fig.show()
-plt.savefig(os.path.join(dirPaper, 'fourDim_leg'))
-plt.savefig(os.path.join(dirPaper, 'fourDim_leg.svg'))
