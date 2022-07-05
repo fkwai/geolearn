@@ -30,5 +30,5 @@ for code in codeLst:
         mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
         hiddenSize=hs, batchSize=[rho, nbatch])
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-    # slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-    basinFull.trainModel(outName)
+    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+    # basinFull.trainModel(outName)
