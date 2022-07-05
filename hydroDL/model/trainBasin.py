@@ -41,7 +41,7 @@ def subsetRandom(dataLst, batchSize, sizeLst,
             xTemp[:, k, :] = x[iT[k]:iT[k]+rho, iS[k], :]
     if y is not None:
         for k in range(nbatch):
-            yTemp[:, k, :] = y[iT[k]+1:iT[k]+rho+1, iS[k], :]
+            yTemp[:, k, :] = y[iT[k]:iT[k]+rho, iS[k], :]
     if xc is not None:
         xcTemp = np.tile(xc[iS, :], [rho, 1, 1])
     if yc is not None:
