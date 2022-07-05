@@ -179,11 +179,11 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optim.step()
             # test for nans
-            for name, par in model.named_parameters():
-                if par.requires_grad:
-                    if torch.any(torch.isnan(par)):
-                        print('nan par in {} epoch {}'.format(
-                            name, iEp+cEp), flush=True)
+            # for name, par in model.named_parameters():
+            #     if par.requires_grad:
+            #         if torch.any(torch.isnan(par)):
+            #             print('nan par in {} epoch {}'.format(
+            #                 name, iEp+cEp), flush=True)
             # model.zero_grad()
             lossEp = lossEp + loss.item()
             # except:
