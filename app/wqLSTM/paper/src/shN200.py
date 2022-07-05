@@ -5,7 +5,7 @@ from hydroDL.master import basinFull
 
 dataName = 'N200'
 label = 'QFPRT2C'
-DF = dbBasin.DataFrameBasin(dataName)
+# DF = dbBasin.DataFrameBasin(dataName)
 rho = 365
 nbatch = 500
 trainSet = 'rmYr5'
