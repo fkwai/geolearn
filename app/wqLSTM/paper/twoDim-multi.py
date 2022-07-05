@@ -70,14 +70,17 @@ var1 = ['00010', '00095', '00300', '00915', '00925', '00930', '00935',
 
 var2 = ['00405', '00600', '00605', '00618', '00660', '00665',
         '00681', '71846', '80154']
-dataLst = [corrW2, corrLst2[0]]
+dataLst = [corrW2, corrLst2[0], corrLst2[1]]
 data = dataLst[1]
+import matplotlib
+
+matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 5})
+
 fig, ax = plt.subplots(1, 1)
-
 x = np.nanmean(matLR, axis=0)
-y = np.nanmean(data**2, axis=0)
-
-
+y = np.nanmean(corrW2**2, axis=0)
 txtLst = list()
 for code in var1:
     ic = codeLst.index(code)
@@ -93,8 +96,10 @@ ic2 = np.array([codeLst.index(code) for code in var2])
 
 ind1 = np.argsort(x[ic1])
 ind2 = np.argsort(x[ic2])
-ax.plot(x[ic1[ind1]], y[ic1[ind1]], 'b*-')
-ax.plot(x[ic2[ind2]], y[ic2[ind2]], 'b*-')
+for data, color in zip(dataLst, 'kbr'):
+    y = np.nanmean(data**2, axis=0)
+    ax.plot(x[ic1[ind1]], y[ic1[ind1]], ls='-', marker='*', color=color)
+    ax.plot(x[ic2[ind2]], y[ic2[ind2]],  ls='-', marker='*', color=color)
 ax.plot([0, 1], [0, 1], 'k-')
 
 fig.show()

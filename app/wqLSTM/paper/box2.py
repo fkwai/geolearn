@@ -63,10 +63,9 @@ for k, code in enumerate(codeLst):
 matLR[matRm] = np.nan
 
 # box plot
-matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'font.size': 14})
 matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 10})
-
 
 # re-order
 indPlot = np.argsort(np.nanmedian(matLR, axis=0))
@@ -79,9 +78,14 @@ for k in indPlot:
 
 fig, axes = figplot.boxPlot(
     dataPlot, widths=0.5, figsize=(12, 4), label1=codeStrLst)
-# fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
-#     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'])
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
-# dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
-# plt.savefig(os.path.join(dirPaper, 'box_all'))
+dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
+plt.savefig(os.path.join(dirPaper, 'box_all'))
+plt.savefig(os.path.join(dirPaper, 'box_all.svg'))
+
+fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
+    12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'],legOnly=True)
+fig.show()
+dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
+plt.savefig(os.path.join(dirPaper, 'box_legend.svg'))

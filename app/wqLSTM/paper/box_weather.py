@@ -17,7 +17,7 @@ codeLst = usgs.newC
 
 
 # LSTM
-ep = 500
+ep = 1000
 dataName = 'G200N'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
@@ -52,6 +52,11 @@ matRm = (count1 < 80) & (count2 < 20)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
+# ts map
+matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'lines.linewidth': 1})
+matplotlib.rcParams.update({'lines.markersize': 5})
+
 # load linear/seasonal
 dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\Q\param'
 matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
@@ -65,11 +70,11 @@ matLR[matRm] = np.nan
 dataPlot = list()
 codePlot = ['00095', '00915', '00925', '00930',
             '00935', '00940', '00945', '00955']
-codeStrLst = [usgs.codePdf.loc[code]
-              ['shortName'] + '\n'+code for code in codePlot]
-labLst2 = ['LSTM complex', 'WRTDS complex',
-           'LSTM simple', 'WRTDS simple']
-for code in codePlot:
+codeStrLst = [usgs.codePdf.loc[code]['shortName'] for code in codePlot]
+labLst2 = ['LSTM non-linear', 'WRTDS non-linear',
+           'LSTM linear', 'WRTDS linear']
+codeStrLst = list()
+for k, code in enumerate(codePlot):
     ic = codeLst.index(code)
     thR = np.nanmedian(matLR[:, ic])
     print(code, thR)
@@ -77,12 +82,19 @@ for code in codePlot:
     ind2 = np.where(matLR[:, ic] > thR)[0]
     dataPlot.append([corrL2[ind1, ic], corrW2[ind1, ic],
                      corrL2[ind2, ic], corrW2[ind2, ic]])
-    # dataPlot.append([corrL1[:, ic],corrL2[:, ic], corrW1[:, ic],corrW2[:, ic]])
-fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(12, 4), yRange=[0.4, 1],
+    codeStrLst.append('{}\n{:.2f}'.format(
+        usgs.codePdf.loc[code]['shortName'], thR))
+fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(12, 4), yRange=[0, 1],
                             label1=codeStrLst, label2=labLst2, cLst='rbmc')
 fig.show()
 dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
 plt.savefig(os.path.join(dirPaper, 'box_weathering'))
+plt.savefig(os.path.join(dirPaper, 'box_weathering.svg'))
+
+fig, axes = figplot.boxPlot(dataPlot, widths=0.5, legOnly=True,
+                            label1=codeStrLst, label2=labLst2, cLst='rbmc')
+fig.show()
+plt.savefig(os.path.join(dirPaper, 'box_weathering_legendsvg'))
 
 
 # significance test

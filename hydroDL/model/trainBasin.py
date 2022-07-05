@@ -109,7 +109,7 @@ def dealNaN(dataTup, optNaN):
 
 
 def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
-               nEp=100, cEp=0, logFile=None, optBatch='Weight', nIterEp=None):
+               nEp=100, cEp=0, logFile=None, optBatch='Random', nIterEp=None):
     """[summary]    
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -146,7 +146,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
             pr = nbatch*rho/ns/nt
         elif optBatch == 'Weight':
             pr = nD/ns/nt*nbatch*rho/ns/nt  # careful number may go above limit
-        # nIterEp = 1 if pr > 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
+        nIterEp = 1 if pr > 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
         nIterEp = int(np.ceil((ns*nt)/(nbatch*rho)))        
     print('iter per epoch {}'.format(nIterEp), flush=True)
     lossEp = 0

@@ -46,8 +46,8 @@ matQS = dictS['QS']
 td = pd.to_datetime(DF.t).dayofyear
 lat, lon = DF.getGeo()
 
-# seasonal
-code = '00300'
+# linearity
+code = '00915'
 indC = codeLst.index(code)
 indS = np.where(~matRm[:, indC])[0]
 
@@ -56,7 +56,7 @@ def funcM():
     figM = plt.figure(figsize=(8, 6))
     gsM = gridspec.GridSpec(1, 1)
     axM = mapplot.mapPoint(
-        figM, gsM[0, 0], lat[indS], lon[indS], matS[indS, indC])
+        figM, gsM[0, 0], lat[indS], lon[indS], matQ[indS, indC])
     axM.set_title('{} {}'.format(usgs.codePdf.loc[code]['shortName'], code))
     figP = plt.figure(figsize=(15, 3))
     gsP = gridspec.GridSpec(1, 3)
@@ -72,12 +72,9 @@ def funcP(iP, axP):
     print(iP)
     iS = indS[iP]
     [ax, axT, axS] = axP
-    x = (DF.f[:, iS, DF.varF.index('tmmn')] +
-         DF.f[:, iS, DF.varF.index('tmmx')])/2-273.15
     q = DF.q[:, iS, 1]
     c = DF.c[:, iS, indC]
-    axT.invert_yaxis()
-    axplot.plotTS(axT, DF.t, x, cLst='b', lineW=[0.1])
+    axplot.plotTS(axT, DF.t, q, cLst='b', lineW=[0.1])
     axplot.plotTS(ax, DF.t, c, cLst='r')
     codeStr = usgs.codePdf.loc[DF.varC[indC]]['shortName']
     ax.set_title('{} {} linearity = {:.2f}, seasonality = {:.2f}'.format(

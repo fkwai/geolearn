@@ -22,15 +22,15 @@ codeLst = usgs.varC
 
 
 # LSTM corr
-ep = 1000
+ep = 500
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
 label = 'QFPRT2C'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 outFolder = basinFull.nameFolder(outName)
-corrName1 = 'corr-{}-Ep{}.npy'.format(trainSet, ep)
-corrName2 = 'corr-{}-Ep{}.npy'.format(testSet, ep)
+corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
+corrName2 = 'corrQ-{}-Ep{}.npy'.format(testSet, ep)
 corrFile1 = os.path.join(outFolder, corrName1)
 corrFile2 = os.path.join(outFolder, corrName2)
 corrL1 = np.load(corrFile1)
@@ -76,8 +76,7 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 
 dictPlot = dict()
 
-dictPlot['00915'] = ['12323800', '08057200', '06461500']
-
+dictPlot['00915'] = ['12323800', '08057200', '02175000']
 
 code = '00915'
 siteLst = dictPlot[code]
@@ -102,44 +101,50 @@ yrLst = np.arange(1985, 2020, 5).tolist()
 ny = len(yrLst)
 
 # plot map and scatter
-figM = plt.figure(figsize=(14, 3))
+figM = plt.figure(figsize=(16, 3))
 gsM = gridspec.GridSpec(1, 5)
 axS = figM.add_subplot(gsM[0, :1])
-axS.set_title('LSTM vs WRTDS')
+axS.set_title('A) LSTM vs WRTDS')
 cs = axplot.scatter121(axS, corrL2[indS, indC],
                        corrW2[indS, indC], matLR[indS, indC])
-plt.colorbar(cs, orientation='vertical')
+axS.set_xlabel(r'LSTM $\rho$')
+axS.set_ylabel(r'WRTDS $\rho$')
+plt.colorbar(cs, orientation='vertical', label='linearity')
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([corrL2[ind, indC], corrW2[ind, indC]],
                         0.05, color='k', fill=False)
     axS.add_patch(circle)
 axM1 = mapplot.mapPoint(
     figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24)
-axM1.set_title('LSTM correlation of {}'.format(codeStr))
+axM1.set_title(r'B) LSTM $\rho$ of {}'.format(codeStr))
 axM2 = mapplot.mapPoint(
-    figM, gsM[0, 3:], lat[indS], lon[indS], corrW2[indS, indC], s=24)
-axM2.set_title('Rsq LSTM - Rsq WRTDS of {}'.format(codeStr))
+    figM, gsM[0, 3:], lat[indS], lon[indS], corrL2[indS, indC]**2-corrW2[indS, indC]**2, s=24,
+    vRange=[-0.1, 0.1])
+axM2.set_title(r'C) LSTM $R^2$ minus WRTDS $R^2$ of {}'.format(codeStr))
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([lon[ind], lat[ind]],
-                        1, color='k', fill=False)
+                        2, color='k', fill=False)
     axM1.add_patch(circle)
     circle = plt.Circle([lon[ind], lat[ind]],
-                        1, color='k', fill=False)
+                        2, color='k', fill=False)
     axM2.add_patch(circle)
 figM.tight_layout()
 figM.show()
 figM.savefig(os.path.join(saveFolder, 'map_{}'.format(code)))
+figM.savefig(os.path.join(saveFolder, 'map_{}.svg'.format(code)))
 
 
 # plot TS
-for siteNo in siteLst:
+for siteNo, figN in zip(siteLst, 'DEF'):
     importlib.reload(axplot)
     ind = DF.siteNoLst.index(siteNo)
     dataPlot = [yW[:, ind, indC], yP[:, ind, indC],
                 DF.c[:, ind, DF.varC.index(code)]]
     cLst = 'kbr'
-    legLst = ['WRTDS{:.2f}'.format(corrW2[ind, indC]),
-            'LSTM {:.2f}'.format(corrL2[ind, indC]), 'Obs']
+    # legLst = [r'WRTDS $\rho$={:.2f}'.format(corrW2[ind, indC]),
+    #           r'LSTM $\rho$={:.2f}'.format(corrL2[ind, indC]),
+    #           '{} obs'.format(codeStr)]
+    legLst = ['WRTDS', 'LSTM', 'Obs.']
     figP = plt.figure(figsize=(15, 3))
     gsP = gridspec.GridSpec(1, ny, wspace=0)
     axP0 = figP.add_subplot(gsP[0, 0])
@@ -148,11 +153,15 @@ for siteNo in siteLst:
         axP = figP.add_subplot(gsP[0, k], sharey=axP0)
         axPLst.append(axP)
     axP = np.array(axPLst)
-    axplot.multiYrTS(axP,  yrLst, DF.t, dataPlot, cLst=cLst, legLst=legLst)
-    titleStr = '{} {:.2f} {:.2f}'.format(
-        DF.siteNoLst[k], corrL2[k, indC], corrW2[k, indC])
-    # figP.suptitle('{} of site {}'.format(codeStr, siteNo))
+    axplot.multiYrTS(axP,  yrLst, DF.t, dataPlot, cLst=cLst)
+    for ax in axP:
+        ax.set_xlabel('')
+        ax.set_xticklabels('')
+    titleStr = r'{}) {} of site {} LSTM $\rho$={:.2f}; WRTDS $\rho$={:.2f}'.format(
+        figN, codeStr, DF.siteNoLst[ind], corrL2[ind, indC], corrW2[ind, indC])
+    figP.suptitle(titleStr)
     figP.tight_layout()
     figP.show()
     figP.savefig(os.path.join(saveFolder, 'tsYr5_{}_{}'.format(code, siteNo)))
-
+    figP.savefig(os.path.join(
+        saveFolder, 'tsYr5_{}_{}.svg'.format(code, siteNo)))

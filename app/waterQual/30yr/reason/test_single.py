@@ -127,7 +127,7 @@ if False:
 # matplotlib.rcParams.update({'lines.markersize': 12})
 
 # ts map
-code = '00915'
+code = '00945'
 siteNoCode = dictSite[code]
 indS = [siteNoLst.index(siteNo) for siteNo in siteNoCode]
 ic = codeLst.index(code)

@@ -105,8 +105,6 @@ plt.savefig(os.path.join(dirPaper, 'fourDim'))
 plt.savefig(os.path.join(dirPaper, 'fourDim.svg'))
 
 # plot legend
-
-
 fig, ax = plt.subplots(1, 1, figsize=(4, 4))
 for colorG, labG in zip(colorGroup, labGroup):
     ind = [codeLst.index(code) for code in codeG]
@@ -117,3 +115,11 @@ ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
 fig.show()
 plt.savefig(os.path.join(dirPaper, 'fourDim_leg'))
 plt.savefig(os.path.join(dirPaper, 'fourDim_leg.svg'))
+
+# calculate a coefficient
+codeCal = [
+    '00915', '00925', '00930', '00955', '00600',
+    '00605', '00618', '00660', '00665', '00681', '71846',
+    '00095', '00935', '00940', '00945', '80154']
+ind = [codeLst.index(code) for code in codeCal]
+np.corrcoef(a[ind], b[ind])

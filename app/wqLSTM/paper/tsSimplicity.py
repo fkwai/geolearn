@@ -1,3 +1,4 @@
+import matplotlib
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -40,9 +41,11 @@ matQ = dictS['Q']
 matS = dictS['S']
 matQS = dictS['QS']
 
-# show 121 scatters
 
 td = pd.to_datetime(DF.t).dayofyear
+matplotlib.rcParams.update({'font.size': 10})
+matplotlib.rcParams.update({'lines.linewidth': 1})
+matplotlib.rcParams.update({'lines.markersize': 5})
 
 fig = plt.figure(figsize=[12, 10])
 gs = gridspec.GridSpec(3, 3)
@@ -60,8 +63,10 @@ x = (DF.f[:, indS, DF.varF.index('tmmn')] +
 q = DF.q[:, indS, 1]
 c = DF.c[:, indS, indC]
 axT1.invert_yaxis()
-axT1.plot(DF.t, q, 'r-', label='Temperature', linewidth=0.1)
+axT1.plot(DF.t, x, 'r-', label='Temperature', linewidth=0.1)
 ax1.plot(DF.t, c, 'k*', label=codeStr)
+axT1.tick_params(axis='y', colors='r')
+
 codeStr = usgs.codePdf.loc[DF.varC[indC]]['shortName']
 ax1.set_title('{} at {}; simplicity = {:.2f}; linearity = {:.2f}, seasonality = {:.2f}'.format(
     codeStr, siteNo, matQS[indS, indC], matQ[indS, indC], matS[indS, indC]))
@@ -80,6 +85,8 @@ c = DF.c[:, indS, indC]
 axT2.invert_yaxis()
 axT2.plot(DF.t, q, 'b-', label='Streamflow', linewidth=0.1)
 ax2.plot(DF.t, c, 'k*', label=codeStr)
+axT2.tick_params(axis='y', colors='b')
+
 codeStr = usgs.codePdf.loc[DF.varC[indC]]['shortName']
 ax2.set_title('{} at {}; simplicity = {:.2f}; linearity = {:.2f}, seasonality = {:.2f}'.format(
     codeStr, siteNo, matQS[indS, indC], matQ[indS, indC], matS[indS, indC]))
@@ -103,9 +110,13 @@ axT4.invert_yaxis()
 axT3.plot(DF.t, q, 'b-', label='Streamflow', linewidth=0.1)
 axT4.plot(DF.t, x, 'r-', label='Temperature', linewidth=0.1)
 ax3.plot(DF.t, c, 'k*', label=codeStr)
-
+axT3.tick_params(axis='y', colors='b')
+axT4.tick_params(axis='y', colors='r')
 sc = axS3.scatter(np.log(q), c, c=td, cmap='hsv', vmin=0, vmax=365)
 codeStr = usgs.codePdf.loc[DF.varC[indC]]['shortName']
 ax3.set_title('{} at {}; simplicity = {:.2f}; linearity = {:.2f}, seasonality = {:.2f}'.format(
     codeStr, siteNo, matQS[indS, indC], matQ[indS, indC], matS[indS, indC]))
 fig.show()
+
+outFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
+fig.savefig(os.path.join(outFolder, 'tsSimplicity'))

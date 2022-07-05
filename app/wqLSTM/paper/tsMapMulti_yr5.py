@@ -80,7 +80,7 @@ matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 5})
 
 lat, lon = DF.getGeo()
-code = '00618'
+code = '00665'
 indC = codeLst.index(code)
 indS = np.where(~matRm[:, indC])[0]
 importlib.reload(figplot)
@@ -111,7 +111,8 @@ def funcM():
         figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC])
     axM1.set_label(labelLst[1])
     axM2 = mapplot.mapPoint(
-        figM, gsM[0, 3:], lat[indS], lon[indS], corrW2[indS, indC]**2)
+        figM, gsM[0, 3:], lat[indS], lon[indS],
+        corrL2[indS, indC]**2-corrW2[indS, indC]**2)
     axM2.set_label(labelLst[2])
     axM = np.array([axS, axM1, axM2])
     figP = plt.figure(figsize=(15, 3))
@@ -140,6 +141,7 @@ def funcP(axP, iP, iM):
 
 figM, figP = figplot.clickMulti(funcM, funcP)
 
+# overall stats
 a = matLR[indS, indC]
 b = corrW2[indS, indC]
 c = corrL2[indS, indC]
@@ -163,3 +165,34 @@ np.median(b)
 np.median(c)
 np.mean(b)
 np.mean(c)
+
+# for a specfic site
+# code = '00665'
+# siteNo = '01631000'
+# indS = DF.siteNoLst.index(siteNo)
+# # extract 5 yr
+# indLst = list()
+# ny = len(yrLst)
+# ty = DF.t.astype('M8[Y]').astype(str).astype(int)
+# for yr in yrLst:
+#     bp = np.in1d(ty, yr)
+#     ind = np.where(bp)[0]
+#     indLst.append(ind)
+# indAry = np.concatenate(indLst)
+# a = yW[:, indS, indC]
+# b = yP[:, indS, indC]
+# c = DF.c[:, indS, indC]
+# aY = a[indAry]
+# bY = b[indAry]
+# cY = c[indAry]
+# [aa, bb, cc], indT = utils.rmNan([aY, bY, cY])
+# np.corrcoef(aa, cc)
+# np.corrcoef(bb, cc)
+# fig, ax = plt.subplots(1, 1)
+# ax.plot(cc, aa, 'b*')
+# ax.plot(cc, bb, 'r*')
+# fig.show()
+# fig, ax = plt.subplots(1, 1)
+# ax.plot(cc, aa, 'b*')
+# ax.plot(cc, bb, 'r*')
+# fig.show()

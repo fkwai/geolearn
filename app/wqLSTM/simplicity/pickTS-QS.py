@@ -1,4 +1,5 @@
 import calendar
+from matplotlib import style
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -46,46 +47,65 @@ matQS = dictS['QS']
 td = pd.to_datetime(DF.t).dayofyear
 lat, lon = DF.getGeo()
 
-# seasonal
-code = '00300'
+# linearity
+code = '00915'
 indC = codeLst.index(code)
 indS = np.where(~matRm[:, indC])[0]
 
+xMat = np.ndarray([len(indS), 3])
+yMat = np.ndarray([len(indS), 3])
+xMat[:, 0] = matQ[indS, indC]
+yMat[:, 0] = matS[indS, indC]
+xMat[:, 1] = lon[indS]
+yMat[:, 1] = lat[indS]
+xMat[:, 2] = lon[indS]
+yMat[:, 2] = lat[indS]
+
 
 def funcM():
-    figM = plt.figure(figsize=(8, 6))
-    gsM = gridspec.GridSpec(1, 1)
-    axM = mapplot.mapPoint(
-        figM, gsM[0, 0], lat[indS], lon[indS], matS[indS, indC])
-    axM.set_title('{} {}'.format(usgs.codePdf.loc[code]['shortName'], code))
+    figM = plt.figure(figsize=(16, 4))
+    gsM = gridspec.GridSpec(1, 5)
+    labelLst = ['scatter', 'mapL', 'mapS']
+    axS = figM.add_subplot(gsM[0, :1])
+    axS.set_label(labelLst[0])
+    cs = axplot.scatter121(axS, xMat[:, 0], yMat[:, 0],  matQS[indS, indC])
+    axS.set_xlabel('linearity')
+    axS.set_ylabel('seasonality')
+    plt.colorbar(cs, orientation='vertical',label='simplicity')
+    axM1 = mapplot.mapPoint(
+        figM, gsM[0, 1:3], lat[indS], lon[indS], matQ[indS, indC])
+    axM1.set_label(labelLst[1])
+    axM1.set_title('linearity')
+    axM2 = mapplot.mapPoint(
+        figM, gsM[0, 3:], lat[indS], lon[indS], matS[indS, indC])
+    axM2.set_title('seasonality')
+    axM2.set_label(labelLst[2])
+    axM = np.array([axS, axM1, axM2])
     figP = plt.figure(figsize=(15, 3))
     gsP = gridspec.GridSpec(1, 3)
     ax = figP.add_subplot(gsP[0, 0:2])
     axS = figP.add_subplot(gsP[0, 2])
-    axT = ax.twinx()    
+    axT = ax.twinx()
     axPLst = [ax, axT, axS]
     axP = np.array(axPLst)
-    return figM, axM, figP, axP, lon[indS], lat[indS]
+    return figM, axM, figP, axP, xMat, yMat, labelLst
 
 
-def funcP(iP, axP):
+def funcP(axP, iP, iM):
     print(iP)
     iS = indS[iP]
     [ax, axT, axS] = axP
-    x = (DF.f[:, iS, DF.varF.index('tmmn')] +
-         DF.f[:, iS, DF.varF.index('tmmx')])/2-273.15
     q = DF.q[:, iS, 1]
     c = DF.c[:, iS, indC]
-    axT.invert_yaxis()
-    axplot.plotTS(axT, DF.t, x, cLst='b', lineW=[0.1])
+    axplot.plotTS(axT, DF.t, q, cLst='b', styLst=['-'], lineW=[0.1])
     axplot.plotTS(ax, DF.t, c, cLst='r')
     codeStr = usgs.codePdf.loc[DF.varC[indC]]['shortName']
-    ax.set_title('{} {} linearity = {:.2f}, seasonality = {:.2f}'.format(
-        DF.siteNoLst[iS], codeStr, matQ[iS, indC], matS[iS, indC]))
+    ax.set_title('{} {} sim={:.2f}; lin = {:.2f}; sea = {:.2f}'.format(
+        DF.siteNoLst[iS], codeStr, matQS[iS, indC], matQ[iS, indC], matS[iS, indC]))
     sc = axS.scatter(np.log(q), c, c=td, cmap='hsv_r', vmin=0, vmax=365)
 
 
-figplot.clickMap(funcM, funcP)
+figM, figP = figplot.clickMulti(funcM, funcP)
 
 
 # list of month first day

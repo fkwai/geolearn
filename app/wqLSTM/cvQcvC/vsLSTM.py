@@ -153,3 +153,9 @@ ax.axvline(0.4, color='k')
 ax.set_xlabel('CVc / CVq')
 ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
 fig.show()
+
+# calculate a coefficient
+codeCal = codeLst
+codeCal.remove('80154')
+ind = [codeLst.index(code) for code in codeCal]
+np.corrcoef(a[ind], b[ind])

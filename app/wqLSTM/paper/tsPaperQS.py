@@ -22,7 +22,7 @@ codeLst = usgs.varC
 
 
 # LSTM corr
-ep = 500
+ep = 1000
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
@@ -65,7 +65,6 @@ for k, code in enumerate(codeLst):
 matLR[matRm] = np.nan
 
 # load TS
-DF = dbBasin.DataFrameBasin(dataName)
 yP, ycP = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=500)
 codeLst = usgs.varC
 # WRTDS
@@ -75,11 +74,9 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 
 
 dictPlot = dict()
+dictPlot['00618'] = ['01594440', '06905500', '12510500']
 
-dictPlot['00010'] = ['02035000', '14203500', '11118500']
-dictPlot['00300'] = ['01193500', '07288650', '07050500']
-
-code = '00300'
+code = '00618'
 siteLst = dictPlot[code]
 codeStr = usgs.codePdf.loc[code]['shortName']
 outFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
@@ -167,18 +164,13 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     figP.savefig(os.path.join(
         saveFolder, 'tsYr5_{}_{}.svg'.format(code, siteNo)))
 
+np.nanmean(corrL2[indS, indC])
+np.nanmean(corrW2[indS, indC])
 
-# legLst = ['WRTDS', 'LSTM', 'Obs.']
-# figP = plt.figure(figsize=(15, 3))
-# gsP = gridspec.GridSpec(1, ny, wspace=0)
-# axP0 = figP.add_subplot(gsP[0, 0])
-# axPLst = [axP0]
-# for k in range(1, ny):
-#     axP = figP.add_subplot(gsP[0, k], sharey=axP0)
-#     axPLst.append(axP)
-# axP = np.array(axPLst)
-# axplot.multiYrTS(axP,  yrLst, DF.t, dataPlot, cLst=cLst,legLst=legLst)
-# figP.tight_layout()
-# figP.show()
-# figP.savefig(os.path.join(
-#     saveFolder, 'tsYr5_leg.svg'.format(code, siteNo)))
+np.nanmedian(corrL2[indS, indC])
+np.nanmedian(corrW2[indS, indC])
+scipy.stats.wilcoxon(corrL2[indS, indC],corrW2[indS, indC])
+scipy.stats.ttest_rel(corrL2[indS, indC],corrW2[indS, indC])
+
+for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
+    print(lon[ind], lat[ind])
