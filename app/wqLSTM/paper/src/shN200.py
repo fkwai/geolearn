@@ -8,6 +8,7 @@ label = 'QFPRT2C'
 # DF = dbBasin.DataFrameBasin(dataName)
 rho = 365
 nbatch = 500
+hs = 256
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
 
@@ -21,9 +22,10 @@ varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 dictP = basinFull.wrapMaster(outName=outName, dataName=dataName, trainSet=trainSet,
-                             nEpoch=500, saveEpoch=50, batchSize=[rho, nbatch],
+                             nEpoch=500, saveEpoch=50,
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
-                             mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
+                             mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
+                             hiddenSize=hs, batchSize=[rho, nbatch])
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-# basinFull.trainModel(outName)
+# slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+basinFull.trainModel(outName)
