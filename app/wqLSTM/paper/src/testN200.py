@@ -1,4 +1,4 @@
-from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS
+from hydroDL.data import  gageII
 from hydroDL.master import slurm
 from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
