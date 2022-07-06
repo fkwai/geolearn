@@ -21,9 +21,9 @@ varXC = gageII.varLst
 mtdXC = dbBasin.io.extractVarMtd(varXC)
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
-outName = '{}R-{}-{}'.format(dataName, label, trainSet)
+outName = '{}-{}-{}'.format(dataName, label, trainSet)
 dictP = basinFull.wrapMaster(outName=outName, dataName=dataName, trainSet=trainSet,
-                             nEpoch=500, saveEpoch=50, optBatch='Random',
+                             nEpoch=500, saveEpoch=50, optBatch='Weight',
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                              mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
                              hiddenSize=hs, batchSize=[rho, nbatch])
