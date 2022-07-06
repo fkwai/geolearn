@@ -30,3 +30,7 @@ dataTup = DM.getData()
 # dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
 model = basinFull.defineModel(dataTup, dictP)
 model = basinFull.loadModelState(outName, 500, model)
+
+# test
+DF = dbBasin.DataFrameBasin(dataName)
+yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=550)
