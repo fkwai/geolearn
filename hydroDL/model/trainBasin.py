@@ -144,13 +144,13 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
     batchSize = [rho, nbatch]
 
     # training
+    if optBatch == 'Random':
+        pr = nbatch*rho/ns/nt
+        wS = None
+        wT = None
+    elif optBatch == 'Weight':
+        pr, wS, wT = batchWeight(dataLst[2], rho, nbatch)
     if nIterEp is None:
-        if optBatch == 'Random':
-            pr = nbatch*rho/ns/nt
-            wS = None
-            wT = None
-        elif optBatch == 'Weight':
-            pr, wS, wT = batchWeight(dataLst[2], rho, nbatch)
         nIterEp = 1 if pr > 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
     print('iter per epoch {}'.format(nIterEp), flush=True)
     lossEp = 0

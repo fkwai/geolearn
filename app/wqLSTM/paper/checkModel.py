@@ -33,4 +33,6 @@ model = basinFull.loadModelState(outName, 500, model)
 
 # test
 DF = dbBasin.DataFrameBasin(dataName)
-yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=550)
+yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=600)
+
+dictP['crit']

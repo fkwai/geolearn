@@ -19,7 +19,7 @@ label = 'QFPRT2C'
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 
 DF = dbBasin.DataFrameBasin(dataName)
-yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=500)
+yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=600)
 codeLst = usgs.varC
 
 # WRTDS
@@ -74,9 +74,9 @@ fig, axes = figplot.boxPlot(
 #     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'])
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
-fig.savefig(os.path.join(dirPaper, 'box_all'))
-fig.savefig(os.path.join(dirPaper, 'box_all.svg'))
+# fig.savefig(os.path.join(dirPaper, 'box_all'))
+# fig.savefig(os.path.join(dirPaper, 'box_all.svg'))
 
-figLeg, axes = figplot.boxPlot(
-    dataPlot, figsize=(4, 4), label2=['LSTM', 'WRTDS'], legOnly=True)
-figLeg.savefig(os.path.join(dirPaper, 'box_legend.svg'))
+# figLeg, axes = figplot.boxPlot(
+#     dataPlot, figsize=(4, 4), label2=['LSTM', 'WRTDS'], legOnly=True)
+# figLeg.savefig(os.path.join(dirPaper, 'box_legend.svg'))
