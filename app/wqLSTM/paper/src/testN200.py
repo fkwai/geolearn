@@ -26,7 +26,7 @@ dictP = basinFull.wrapMaster(outName=outName, dataName=dataName, trainSet=trainS
                              nEpoch=500, saveEpoch=50, optBatch='Weight',
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                              mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
-                             hiddenSize=hs, batchSize=[rho, nbatch]
+                             hiddenSize=hs, batchSize=[rho, nbatch],
                              nIterEp=10, crit='RmseLoss3D')
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
 # slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
