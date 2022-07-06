@@ -1,4 +1,4 @@
-from hydroDL.data import  gageII
+from hydroDL.data import gageII
 from hydroDL.master import slurm
 from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
@@ -6,7 +6,7 @@ from hydroDL.master import basinFull
 dataName = 'N200'
 label = 'QFPRT2C'
 # DF = dbBasin.DataFrameBasin(dataName)
-rho = 1000
+rho = 365
 nbatch = 500
 hs = 256
 trainSet = 'rmYr5'
@@ -21,13 +21,13 @@ varXC = gageII.varLst
 mtdXC = dbBasin.io.extractVarMtd(varXC)
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
-outName = '{}-{}-{}'.format(dataName, label, trainSet)
+outName = 'test-{}-{}-{}'.format(dataName, label, trainSet)
 dictP = basinFull.wrapMaster(outName=outName, dataName=dataName, trainSet=trainSet,
                              nEpoch=500, saveEpoch=50, optBatch='Weight',
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                              mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
                              hiddenSize=hs, batchSize=[rho, nbatch],
-                             nIterEp=10, crit='RmseLoss3D')
+                             nIterEp=50, crit='RmseLoss3D')
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-# slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-basinFull.trainModel(outName)
+slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+# basinFull.trainModel(outName)
