@@ -119,6 +119,25 @@ class RmseLoss2D(torch.nn.Module):
         return loss/ny
 
 
+class RmseLoss3D(torch.nn.Module):
+    def __init__(self):
+        super(RmseLoss3D, self).__init__()
+
+    def forward(self, output, target):
+        ny = target.shape[2]
+        loss = 0
+        for k in range(ny):
+            p0 = output[:, :, k]
+            t0 = target[:, :, k]
+            mask = t0 == t0
+            p = p0[mask]
+            t = t0[mask]
+            temp = torch.sqrt(((p - t)**2).mean())
+            if temp == temp:
+                loss = loss + temp
+        return loss/ny
+
+
 class MSELoss(torch.nn.Module):
     def __init__(self):
         super(MSELoss, self).__init__()
@@ -249,7 +268,7 @@ class LogLoss3D(torch.nn.Module):
             n1 = 0
             for j in range(ns):
                 iv = ~torch.isnan(targ[:, j, i])
-                if iv.sum() > 5:                    
+                if iv.sum() > 5:
                     mse = torch.mean(
                         (pred[iv, j, i]-targ[iv, j, i])**2, dim=0)
                     loss1 = loss1+torch.log(mse+1e-8)
