@@ -19,7 +19,8 @@ varXC = gageII.varLst
 mtdXC = dbBasin.io.extractVarMtd(varXC)
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
-for code in codeLst:
+# for code in codeLst:
+for code in ['80154']:
     varY = [code]
     mtdY = dbBasin.io.extractVarMtd(varY)
     outName = '{}-{}-{}-{}'.format(dataName, label, trainSet, code)
@@ -30,5 +31,5 @@ for code in codeLst:
         mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
         hiddenSize=hs, batchSize=[rho, nbatch])
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-    # basinFull.trainModel(outName)
+    # slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+    basinFull.trainModel(outName)

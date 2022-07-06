@@ -105,8 +105,10 @@ def batchWeight(matY, rho, nbatch, opt='obsDay'):
         filt = np.ones(rho, dtype=int)
         countT = np.apply_along_axis(lambda m: np.convolve(
             m, filt, mode='valid'), axis=0, arr=matD)
-        wS = np.sum(countT, axis=0)/np.sum(countT)
-        wT = countT/np.sum(countT, axis=0)
+        nT = np.sum(countT, axis=0)
+        wS = nT/np.sum(countT)
+        wT = countT/nT
+        wT[np.isnan(nT)] = 0
         pr = np.mean(countT)*nbatch/np.sum(matD)
     return pr, wS, wT
 
