@@ -11,7 +11,7 @@ import os
 import pandas as pd
 import json
 import scipy
-from astropy.timeseries import LombScargle
+# from astropy.timeseries import LombScargle
 import matplotlib.gridspec as gridspec
 
 dirSel = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteSel')
@@ -26,7 +26,7 @@ siteNoLst = dictSite['comb']
 nSite = len(siteNoLst)
 
 # load all sequence
-if False:
+if True:
     dictLSTMLst = list()
     # LSTM
     labelLst = ['QTFP_C']
@@ -112,8 +112,8 @@ cR = [np.nanmin(cMat), np.nanmax(cMat)]
 cR = [np.nanpercentile(cMat, 10), np.nanpercentile(cMat, 90)]
 
 code = '00660'
-cVar = 'DEVOPENNLCD06'
-th = 4.755000114
+cVar = 'PHOS_APP_KG_SQKM'
+th = 1200
 cMat = dfG[cVar].values
 
 # attr vs diff

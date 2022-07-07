@@ -25,7 +25,7 @@ for rho in rhoLst:
     outName = '{}-{}-{}-rho{}'.format(dataName, label, trainSet, rho)
     dictP = basinFull.wrapMaster(
         outName=outName, dataName=dataName, trainSet=trainSet,
-        nEpoch=500, saveEpoch=50,
+        nEpoch=500, saveEpoch=50, crit='RmseLoss3D',
         varX=varX, varY=varY, varXC=varXC, varYC=varYC,
         mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
         hiddenSize=hs, batchSize=[rho, nbatch])

@@ -17,6 +17,9 @@ labelLst = ['FPRT2QC', 'QFPRT2C', 'QFRT2C', 'QFPT2C', 'QT2C']
 trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
 testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 
+labelLst = ['QFPRT2C']
+trainLst = ['rmYr5']
+testLst = ['pkYr5']
 
 # quick scan
 dirModel = r'C:\Users\geofk\work\waterQuality\modelFull'
@@ -29,8 +32,10 @@ for dataName in dataNameLst:
                 print(outName)
 
 # calculate and save corr for all cases
+DFobs = dbBasin.DataFrameBasin('N200')
+matObs = DFobs.c
+
 DF = dbBasin.DataFrameBasin('G200')
-matObs = DF.c
 bQ = np.isnan(DF.q[:, :, 0])
 codeLst = usgs.varC
 ep = 1000
@@ -38,8 +43,8 @@ dictLst = list()
 for trainSet, testSet in zip(trainLst, testLst):
     obs1 = DF.extractSubset(matObs, trainSet)
     obs2 = DF.extractSubset(matObs, testSet)
-    corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
-    corrName2 = 'corrQ-{}-Ep{}.npy'.format(testSet, ep)
+    corrName1 = 'corrQF-{}-Ep{}.npy'.format(trainSet, ep)
+    corrName2 = 'corrQF-{}-Ep{}.npy'.format(testSet, ep)
     for dataName in dataNameLst:
         for label in labelLst:
             print(outName)

@@ -14,12 +14,12 @@ from hydroDL.master import basinFull
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 
 
-DF = dbBasin.DataFrameBasin('G200')
+# DF = dbBasin.DataFrameBasin('G200')
 codeLst = DF.varC
 siteNoLst = DF.siteNoLst
 
 # LSTM
-ep = 1000
+ep = 500
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
@@ -77,9 +77,13 @@ for code in codeLst:
     def subTree(indInput, varLst):
         x = dfGC.iloc[indInput][varLst].values.astype(float)
         y = mat[indInput]
+        tt = 0.1
+        y[y <= -tt] = 0
+        y[y >= tt] = 2
+        y[(y < tt) & (y > -tt)] = 1
         x[np.isnan(x)] = -99
-        clf = sklearn.tree.DecisionTreeRegressor(
-            max_depth=1, min_samples_leaf=0.2,criterion='friedman_mse')
+        clf = sklearn.tree.DecisionTreeClassifier(
+            max_depth=1, min_samples_leaf=0.2)
         clf = clf.fit(x, y)
         tree = clf.tree_
         feat = varLst[tree.feature[0]]

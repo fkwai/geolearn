@@ -20,7 +20,7 @@ DF = dbBasin.DataFrameBasin('G200')
 matB = (~np.isnan(DF.c)*~np.isnan(DF.q[:, :, 0:1])).astype(int).astype(float)
 count = np.nansum(matB, axis=0)
 
-matRm = count < 100
+matRm = count < 200
 
 # load linear/seasonal
 dirP = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\{}\param'
@@ -62,5 +62,5 @@ for k, code in enumerate(codePlot):
     axes[k].set_xlim(0, 1)
     axes[k].set_ylim(0, 2.5)
     axes[k].set_yticks([0, 1, 2])
-    axes[k].set_yticklables([0, 0.1, 0.2])
+    axes[k].set_yticklabels([0, 0.1, 0.2])
     fig.show()
