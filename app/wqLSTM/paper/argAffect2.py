@@ -15,7 +15,7 @@ from hydroDL.app.waterQuality import WRTDS
 import matplotlib
 
 DF = dbBasin.DataFrameBasin('G200')
-codeLst = usgs.newC
+codeLst = usgs.varC
 
 
 # LSTM corr
@@ -48,7 +48,7 @@ matB1 = DF.extractSubset(matB, trainSet)
 matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
 count2 = np.nansum(matB2, axis=0)
-matRm = (count1 < 160) & (count2 < 40)
+matRm = (count1 < 80) & (count2 < 20)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
@@ -60,23 +60,6 @@ for k, code in enumerate(codeLst):
     dfCorr = pd.read_csv(filePar, dtype={'siteNo': str}).set_index('siteNo')
     matLR[:, k] = dfCorr['rsq'].values
 matLR[matRm] = np.nan
-
-# load TS
-DFN = dbBasin.DataFrameBasin(dataName)
-yP, ycP = basinFull.testModel(outName, DF=DFN, testSet=testSet, ep=500)
-# deal with mean and std
-codeLst = usgs.newC
-yOut = np.ndarray(yP.shape)
-for k, code in enumerate(codeLst):
-    m = DFN.g[:, DFN.varG.index(code+'-M')]
-    s = DFN.g[:, DFN.varG.index(code+'-S')]
-    data = yP[:, :, k]
-    yOut[:, :, k] = data*s+m
-# WRTDS
-dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
-fileName = '{}-{}-{}'.format(dataName, trainSet, 'all')
-yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
-
 
 # load basin attributes
 regionLst = ['ECO2_BAS_DOM', 'NUTR_BAS_DOM',
@@ -91,10 +74,11 @@ dfG = gageII.updateCode(dfG)
 dfG = gageII.removeField(dfG)
 
 # box plot
-thR = 5
+thR = 4
 matLR = dfG['CDL_CORN'].values
 dataPlot = list()
-codePlot = codeLst
+codePlot = ['00600','71846','00660','00665']
+# codePlot = codeLst
 codeStrLst = [usgs.codePdf.loc[code]
               ['shortName'] + '\n'+code for code in codePlot]
 labLst2 = ['LSTM CDL_CORN=<{}'.format(thR), 'WRTDS CDL_CORN=<{}'.format(thR),
@@ -109,3 +93,4 @@ for code in codePlot:
 fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(12, 4),
                             label1=codeStrLst, label2=labLst2, cLst='rbmc')
 fig.show()
+

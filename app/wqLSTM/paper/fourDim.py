@@ -16,7 +16,7 @@ codeLst = usgs.varC
 
 
 # LSTM
-ep = 500
+ep = 1000
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'

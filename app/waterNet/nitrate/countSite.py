@@ -29,13 +29,13 @@ t = DF.t
 C = DF.c[:, indS, indC]
 Q = DF.q[:, indS, 1]/365*1000
 matR = utils.stat.calCorr(C, Q)**2
-
+matCount=countC[indS]
 
 def funcM():
     figM = plt.figure()
     gsM = gridspec.GridSpec(1, 1)
-    axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, matR, s=16, cb=True)
-    # axM.set_title('Count of {} {} since 1980'.format(code, codeStr))
+    axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, countC, s=16, cb=True)
+    axM.set_title('Count of {} {} since 1980'.format(code, codeStr))
     gsP = gridspec.GridSpec(1, 3)
     figP = plt.figure(figsize=[12, 4])
     gsP = gridspec.GridSpec(1, 3)
@@ -57,7 +57,7 @@ def funcP(iP, axP):
     axP[1].plot(t, c, '*r')
     axP[0].xaxis_date()
     axP[2].plot(np.log(q), c, 'k*')
-    titleStr = '{} {} {} {:.2f}'.format(code, siteNo, ref, matR[iP])
+    titleStr = '{} {} {} {:.2f}'.format(code, siteNo, ref, matCount[iP])
     axP[0].set_title(titleStr)
     print(titleStr)
 
