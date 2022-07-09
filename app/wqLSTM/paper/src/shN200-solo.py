@@ -3,7 +3,7 @@ from hydroDL.master import slurm
 from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
 
-dataName = 'N200'
+dataName = 'G200'
 label = 'QFPRT2C'
 # DF = dbBasin.DataFrameBasin(dataName)
 rho = 1000
@@ -19,8 +19,8 @@ varXC = gageII.varLst
 mtdXC = dbBasin.io.extractVarMtd(varXC)
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
-# for code in codeLst:
-for code in ['80154']:
+for code in codeLst:
+# for code in ['80154']:
     varY = [code]
     mtdY = dbBasin.io.extractVarMtd(varY)
     outName = '{}-{}-{}-{}'.format(dataName, label, trainSet, code)
