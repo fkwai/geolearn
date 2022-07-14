@@ -73,8 +73,10 @@ iR = np.argsort(np.nanmedian(matLR[:, iC], axis=0))
 ind = iC[iR]
 varP = [DF.varC[k] for k in ind]
 x = np.nanmedian(matLR[:, ind], axis=0)
-y1 = np.nanmedian(corrW2[:, ind], axis=0)
-y2 = np.nanmedian(corrLst2[0][:, ind], axis=0)
+y1 = np.nanmedian(corrW2[:, ind]**2, axis=0)
+y2 = np.nanmedian(corrLst2[0][:, ind]**2, axis=0)
+y3 = np.nanmedian(corrLst2[1][:, ind]**2, axis=0)
+
 
 matplotlib.rcParams.update({'font.size': 16})
 matplotlib.rcParams.update({'lines.linewidth': 2})
@@ -83,20 +85,27 @@ matplotlib.rcParams.update({'lines.markersize': 10})
 fig, ax = plt.subplots(1, 1, figsize=(12, 4))
 ax.plot(x, y1, 'b-*', label='WRTDS')
 ax.plot(x, y2, 'r-*', label='LSTM')
-
-ax.fill_between(
-    x, y1, y2, where=y2 >= y1, facecolor='red', alpha=0.5,
-    interpolate=True, label='LSTM > WRTDS')
 ax.fill_between(
     x, y1, y2, where=y1 > y2, facecolor='blue', alpha=0.5,
     interpolate=True, label='LSTM < WRTDS')
+ax.fill_between(
+    x, y1, y2, where=y2 >= y1, facecolor='red', alpha=0.5,
+    interpolate=True, label='LSTM > WRTDS')
+ax.plot(x, y3, 'g--', label='LSTM local-norm')
+
 txtLst = list()
 for k, code in enumerate(varP):
-    txt = ax.text(x[k], y1[k], usgs.codePdf.loc[code]['shortName'])
+    codeStr = usgs.codePdf.loc[code]['shortName']
+    if codeStr in usgs.dictLabel.keys():
+        txt = ax.text(x[k], y1[k], usgs.dictLabel[codeStr], ha='center')
+    else:
+        txt = ax.text(x[k], y1[k], codeStr, ha='center')
     txtLst.append(txt)
 # adjustText.adjust_text(txtLst)
 ax.legend()
+# ax.set_xlabel('simplicity')
+# ax.set_ylabel('testing Rsq')
 fig.show()
 figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
-fig.savefig(os.path.join(figFolder, 'twoDim_{}_{}'.format(label, trainSet)))
-fig.savefig(os.path.join(figFolder, 'twoDim_{}_{}.svg'.format(label, trainSet)))
+fig.savefig(os.path.join(figFolder, 'twoDim'.format(label, trainSet)))
+fig.savefig(os.path.join(figFolder, 'twoDim.svg'.format(label, trainSet)))

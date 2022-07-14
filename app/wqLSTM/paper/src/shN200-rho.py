@@ -3,7 +3,7 @@ from hydroDL.master import slurm
 from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
 
-dataName = 'N200'
+dataName = 'G200'
 label = 'QFPRT2C'
 # DF = dbBasin.DataFrameBasin(dataName)
 rho = 1000

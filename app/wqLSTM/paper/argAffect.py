@@ -122,7 +122,3 @@ fig.show()
 fig.savefig(os.path.join(saveFolder, 'NHx2'))
 fig.savefig(os.path.join(saveFolder, 'NHx2.svg'))
 
-ind = np.where((x > 2000) & (y < -0.1))[0]
-fig, ax = plt.subplots(1, 1)
-ax.plot(DF.t, DF.c[:, ind[0], indC], '*')
-fig.show()

@@ -86,9 +86,9 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 indF = DF.varF.index('SO4')
 matP = np.nanmean(DF.f[:, :, indF], axis=0)
 # ts map
-matplotlib.rcParams.update({'font.size': 12})
-matplotlib.rcParams.update({'lines.linewidth': 1})
-matplotlib.rcParams.update({'lines.markersize': 5})
+matplotlib.rcParams.update({'font.size': 14})
+matplotlib.rcParams.update({'lines.linewidth': 1.5})
+matplotlib.rcParams.update({'lines.markersize': 6})
 
 lat, lon = DF.getGeo()
 code = '00945'
@@ -97,56 +97,60 @@ siteNo = '01349150'
 indS = np.where(~matRm[:, indC])[0]
 importlib.reload(figplot)
 importlib.reload(axplot)
-yrLst = np.arange(1985, 2020, 5).tolist()
-ny = len(yrLst)
+# yrLst = np.arange(1985, 2020, 5).tolist()
+
 
 figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200\00945'
-
-
 corr1 = corrLst2[0][indS, indC]
 corr2 = corrLst2[1][indS, indC]
 ind = DF.siteNoLst[indS].index(siteNo)
 xx = corrLst2[0][ind, indC]
 yy = corrLst2[1][ind, indC]
-figS, axS = plt.subplots(1, 1, figsize=(6, 4))
-cs = axplot.scatter121(axS, corr1, corr2, matP[indS])
+figS, axS = plt.subplots(1, 1, figsize=(5, 4))
+cs = axplot.scatter121(axS, corr1, corr2, matP[indS], size=6)
 cbar = plt.colorbar(cs, orientation='vertical')
-circle = plt.Circle([xx, yy], 0.05, color='r', fill=False)
-axS.add_patch(circle)
-axS.set_xlabel('LSTM w/ prcp chemistry')
-axS.set_ylabel('LSTM w/o prcp chemistry')
-cbar.ax.set_xlabel('prcp SO4')
+# circle = plt.Circle([xx, yy], 0.05, color='r', fill=False)
+# axS.add_patch(circle)
+axS.set_xlabel(r'$\rho$(LSTM) w/ rainfall chemistry')
+axS.set_ylabel(r'$\rho$(LSTM) w/o rainfall chemistry')
+# cbar.ax.set_xlabel('prcp SO4')
 figS.show()
-figS.savefig(os.path.join(figFolder, 'scatter_inputs'))
+figS.savefig(os.path.join(figFolder, 'scatter'))
+figS.savefig(os.path.join(figFolder, 'scatter.svg'))
 
-figP = plt.figure(figsize=(15, 3))
+yrLst = [1995, 2000, 2005, 2015]
+ny = len(yrLst)
+figP = plt.figure(figsize=(12, 4))
 gsP = gridspec.GridSpec(1, ny, wspace=0)
 axP0 = figP.add_subplot(gsP[0, 0])
 axPLst = [axP0]
-# axC0 = axP0.twinx()
-# axCLst = [axC0.invert_yaxis()]
+axC0 = axP0.twinx()
+axCLst = [axC0]
 for k in range(1, ny):
     axP = figP.add_subplot(gsP[0, k])
-    # axC = axP.twinx()
+    axC = axP.twinx()
     axP.sharey(axP0)
-    # axC.sharey(axC0)
+    axC.sharey(axC0)
     axPLst.append(axP)
-    # axCLst.append(axC.invert_yaxis())
-
+    axCLst.append(axC)
 axP = np.array(axPLst)
-# axC = np.array(axCLst)
-
+axC = np.array(axCLst)
 siteNo = '01349150'
 k = DF.siteNoLst.index(siteNo)
 dataPlot = [yP1[:, k, indC], yP2[:, k, indC],
             DF.c[:, k, DF.varC.index(code)]]
 dataPlot2 = [DF.f[:, k, indF]]
 legLst = ['LSTM w/ P', 'LSTM w/o P', 'Obs']
-
+axC[0].invert_yaxis()
+# ax.invert_yaxis()
+axplot.multiYrTS(axC,  yrLst, DF.t, dataPlot2, cLst=['g'],
+                 legLst=['rainfall ' + r'$\mathrm{SO_4}$'], styLst=['--'])
 axplot.multiYrTS(axP,  yrLst, DF.t, dataPlot, cLst='kbr',
                  legLst=legLst, styLst='--*')
+axC[-1].yaxis.set_visible(True)
+# setting up X-axis tick color to red
+axC[-1].tick_params(axis='y', colors='g')
 
-# axplot.multiYrTS(axC,  yrLst, DF.t, dataPlot2, cLst='kbr',
-#                  legLst=legLst, styLst='--*')
 figP.show()
 figP.savefig(os.path.join(figFolder, siteNo))
+figP.savefig(os.path.join(figFolder, siteNo+'.svg'))

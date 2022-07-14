@@ -38,7 +38,9 @@ for k, code in enumerate(codeLst):
     matLR[:, k] = dfCorr['rsq'].values
 matLR[matRm] = np.nan
 
-
+matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
 codeGroup = [
     ['00010', '00300'],
     ['00915', '00925', '00930', '00955'],
@@ -74,6 +76,10 @@ for codeG, colorG, labG in zip(codeGroup, colorGroup, labGroup):
 ax.set_xlabel('CVc / CVq')
 ax.set_ylabel('simplicity')
 fig.show()
+
+saveFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
+fig.savefig(os.path.join(saveFolder, 'cv2simp'))
+fig.savefig(os.path.join(saveFolder, 'cv2simp.svg'))
 
 # calculate a coefficient
 codeCal = [

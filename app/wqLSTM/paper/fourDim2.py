@@ -15,7 +15,7 @@ DF = dbBasin.DataFrameBasin('G200')
 codeLst = usgs.newC
 
 # LSTM
-ep = 500
+ep = 1000
 trainSet = 'rmR20'
 testSet = 'pkR20'
 label = 'QFPRT2C'
@@ -25,8 +25,8 @@ corrLst2 = list()
 for dataName in dataNameLst:
     outName = '{}-{}-{}'.format(dataName, label, trainSet)
     outFolder = basinFull.nameFolder(outName)
-    corrName1 = 'corr-{}-Ep{}.npy'.format(trainSet, ep)
-    corrName2 = 'corr-{}-Ep{}.npy'.format(testSet, ep)
+    corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
+    corrName2 = 'corrQ-{}-Ep{}.npy'.format(testSet, ep)
     corrFile1 = os.path.join(outFolder, corrName1)
     corrFile2 = os.path.join(outFolder, corrName2)
     corrL1 = np.load(corrFile1)

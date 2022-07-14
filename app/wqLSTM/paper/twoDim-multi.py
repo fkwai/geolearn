@@ -1,4 +1,6 @@
 
+import matplotlib.gridspec as gridspec
+import matplotlib
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -15,7 +17,7 @@ DF = dbBasin.DataFrameBasin('G200')
 codeLst = usgs.varC
 
 # LSTM
-ep = 1000
+ep = 500
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
 label = 'QFPRT2C'
@@ -65,32 +67,48 @@ matLR[matRm] = np.nan
 
 
 ##
-var1 = ['00010', '00095', '00300', '00915', '00925', '00930', '00935',
-        '00940', '00945', '00955']
-
-var2 = ['00405', '00600', '00605', '00618', '00660', '00665',
-        '00681', '71846', '80154']
-dataLst = [corrW2, corrLst2[0], corrLst2[1]]
-data = dataLst[1]
-import matplotlib
+codeGroup = [['00400','00405', '00600', '00605', '00618', '00660',
+             '00665', '00681', '71846', '80154'],
+             ['00095', '00915', '00925', '00930',
+             '00935', '00940', '00945', '00955'],
+             ['00010', '00300']]
+xLmLst = [[0, 0.3], [0.28, 0.58], [0.6, 0.9]]
+yLmLst = [[0, 0.5], [0.28, 0.78], [0.6, 1]]
 
 matplotlib.rcParams.update({'font.size': 16})
 matplotlib.rcParams.update({'lines.linewidth': 2})
 matplotlib.rcParams.update({'lines.markersize': 5})
 
-fig, ax = plt.subplots(1, 1)
-x = np.nanmean(matLR, axis=0)
-y = np.nanmean(corrW2**2, axis=0)
+fig = plt.figure(figsize=(14, 3))
+gsM = gridspec.GridSpec(1, 5)
+ax1 = fig.add_subplot(gsM[0, :2])
+ax2 = fig.add_subplot(gsM[0, 2:4])
+ax3 = fig.add_subplot(gsM[0, 4])
+axes = [ax1, ax2, ax3]
+
+x = np.nanmedian(matLR, axis=0)
 txtLst = list()
-for code in var1:
-    ic = codeLst.index(code)
-    txt = ax.text(x[ic], y[ic], usgs.codePdf.loc[code]['shortName'])
-    txtLst.append(txt)
-for code in var2:
-    ic = codeLst.index(code)
-    txt = ax.text(x[ic], y[ic], usgs.codePdf.loc[code]['shortName'])
-    txtLst.append(txt)
-adjustText.adjust_text(txtLst)
+for k, group in enumerate(codeGroup):
+    for code in group:
+        ic = codeLst.index(code)
+        txt = axes[k].text(x[ic], y[ic], usgs.codePdf.loc[code]['shortName'])
+        txtLst.append(txt)
+    ic = np.array([codeLst.index(code) for code in group])
+    ind = np.argsort(x[ic])
+    xx = x[ic[ind]]
+    y1 = np.nanmedian(corrW2[:, ic]**2, axis=0)[ind]
+    y2 = np.nanmedian(corrLst2[0][:, ic]**2, axis=0)[ind]
+    y3 = np.nanmedian(corrLst2[1][:, ic]**2, axis=0)[ind]
+    axes[k].plot(xx, y2, 'r*-')
+    axes[k].plot(xx, y3, 'm*-')
+    axes[k].plot(xx, y1, 'b*-')
+    axes[k].plot([xx[0], xx[-1]], [xx[0], xx[-1]], 'k-')
+    axes[k].set_xlim(xLmLst[k])
+    axes[k].set_ylim(yLmLst[k])
+    xx
+fig.show()
+
+# adjustText.adjust_text(txtLst)
 ic1 = np.array([codeLst.index(code) for code in var1])
 ic2 = np.array([codeLst.index(code) for code in var2])
 

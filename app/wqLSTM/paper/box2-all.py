@@ -28,7 +28,6 @@ trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
 testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']
 
 for trainSet, testSet in zip(trainLst, testLst):
-
     outName = '{}-{}-{}'.format(dataName, label, trainSet)
     outFolder = basinFull.nameFolder(outName)
     corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
@@ -80,3 +79,4 @@ for trainSet, testSet in zip(trainLst, testLst):
     fig.show()
     figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
     fig.savefig(os.path.join(figFolder, 'box_{}_{}'.format(label, trainSet)))
+    fig.savefig(os.path.join(figFolder, 'box_{}_{}.svg'.format(label, trainSet)))

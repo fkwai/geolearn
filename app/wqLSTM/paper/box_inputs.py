@@ -92,8 +92,10 @@ for k in indPlot:
         tempLst.append(corrLst2[kk][:, k])
     dataPlot.append(tempLst)
 label2 = ['QFPV-C', 'QFV-C', 'QFP-C', 'Q-C', 'FPV-QC']
+strLst = usgs.codeStrPlot(codeStrLst)
+
 fig, axes = figplot.boxPlot(
-    dataPlot, widths=0.5, figsize=(12, 4), label1=codeStrLst, label2=label2,
+    dataPlot, widths=0.5, figsize=(12, 4), label1=strLst, label2=label2,
     cLst='kbgrc')
 # fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
 #     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'])

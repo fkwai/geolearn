@@ -102,6 +102,6 @@ ax = mapplot.mapPoint(fig, gs[0, 0], lat[indS], lon[indS], a, s=20)
 code = codeLst[iC]
 usgs.codePdf.loc[code]['shortName']
 ax.set_title('simplicity of {}'.format(labX[iC]))
-ax=mapplot.mapPoint(fig, gs[1, 0], lat[indS], lon[indS], b, s=20)
+ax = mapplot.mapPoint(fig, gs[1, 0], lat[indS], lon[indS], b, s=20)
 ax.set_title('simplicity of {}'.format(colLst[ind]))
 fig.show()

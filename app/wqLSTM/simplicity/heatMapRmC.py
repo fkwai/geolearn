@@ -1,3 +1,4 @@
+import matplotlib
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -76,10 +77,19 @@ for j in range(len(colLst)):
         corrQS[j, i] = utils.stat.calCorr(data[:, j], matQS[:, i])
 
 indF = np.unique(np.where(np.abs(corrQS) > 0.4)[0])
-fig, ax = plt.subplots(1, 1)
+matplotlib.rcParams.update({'font.size': 14})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
+fig, ax = plt.subplots(1, 1,figsize=(18,10))
 labLst = [labX, [colLst[ind] for ind in indF]]
 axplot.plotHeatMap(ax, corrQS[indF, :].T*100, labLst=labLst)
+plt.tight_layout()
 fig.show()
+dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
+plt.savefig(os.path.join(dirPaper, 'heatMapG2Simp'))
+plt.savefig(os.path.join(dirPaper, 'heatMapG2Simp.svg'))
+
+gageII.getVariableDict( [colLst[ind] for ind in indF])
 
 
 # good corr appears in C
@@ -102,7 +112,7 @@ usgs.codePdf.loc[code]['shortName']
 ax.set_title('simplicity of {}'.format(labX[iC]))
 ax = mapplot.mapPoint(fig, gs[1, 0], lat[indS], lon[indS], b, s=20)
 ax.set_title('{}'.format(colLst[ind]))
-ax=fig.add_subplot(gs[:, 1])
+ax = fig.add_subplot(gs[:, 1])
 ax.plot(b, a, '*')
 ax.set_xlabel(colLst[ind])
 ax.set_ylabel(labX[iC])

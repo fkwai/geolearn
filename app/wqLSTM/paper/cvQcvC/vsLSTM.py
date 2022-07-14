@@ -35,7 +35,7 @@ for k, code in enumerate(codeLst):
     matCV[:, k] = cvC/cvQ
 
 # LSTM
-ep = 500
+ep = 1000
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
@@ -108,14 +108,17 @@ for k, code in enumerate(codeLst):
     j, i = utils.index2d(k, 5, 4)
     ax = fig.add_subplot(gs[j:j+1, i:i+1])
     data = corrW2[:, k]**2-corrL2[:, k]**2
-    data = dictLR['QS'][:,k]
+    data = dictLR['QS'][:, k]
     ax.plot(data, matCV[:, k], '*')
     codeStr = usgs.codePdf.loc[code]['shortName']
     ax.set_title('{} {}'.format(code, codeStr))
 plt.tight_layout()
 fig.show()
 
-
+# paper figure
+matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+matplotlib.rcParams.update({'lines.markersize': 10})
 codeGroup = [
     ['00010', '00300'],
     ['00915', '00925', '00930', '00955'],
@@ -149,13 +152,17 @@ for codeG, colorG, labG in zip(codeGroup, colorGroup, labGroup):
         ax.plot(aa, [b[k], b[k]], color=colorG,
                 linestyle='dashed', linewidth=0.5)
 ax.axhline(0, color='k')
-ax.axvline(0.4, color='k')
+# ax.axvline(0.4, color='k')
 ax.set_xlabel('CVc / CVq')
 ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
 fig.show()
 
+saveFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
+fig.savefig(os.path.join(saveFolder, 'cv2LSTM'))
+fig.savefig(os.path.join(saveFolder, 'cv2LSTM.svg'))
+
 # calculate a coefficient
-codeCal = codeLst
+codeCal = codeLst.copy()
 codeCal.remove('80154')
 ind = [codeLst.index(code) for code in codeCal]
 np.corrcoef(a[ind], b[ind])
