@@ -12,7 +12,7 @@ hs = 256
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
 
-hsLst = [16, 32, 64, 128, 512]
+hsLst = [16, 32, 64, 128, 256, 512]
 for hs in hsLst:
     varX = dbBasin.label2var(label.split('2')[0])
     mtdX = dbBasin.io.extractVarMtd(varX)
