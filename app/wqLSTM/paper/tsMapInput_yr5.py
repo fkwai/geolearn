@@ -92,7 +92,8 @@ indC = codeLst.index(code)
 indS = np.where(~matRm[:, indC])[0]
 x = corrLst2[0][indS, indC]**2 - corrLst2[1][indS, indC]**2
 fig, ax = plt.subplots(1, 1)
-ax.scatter(x, matP[indS], c=matP2[indS])
+# ax.scatter(x, matP[indS], c=matP2[indS])
+ax.plot(matP[indS],x,'*')
 fig.show()
 
 # ts map

@@ -36,6 +36,24 @@ for dataName in dataNameLst:
     corrLst2.append(corrL2)
 
 
+# solo models
+nt, ns, nc = DF.c.shape
+corrS1 = np.full([ns, nc], np.nan)
+corrS2 = np.full([ns, nc], np.nan)
+bQ = np.isnan(DF.q[:, :, 0])
+matObs = DF.c
+obs1 = DF.extractSubset(matObs, trainSet)
+obs2 = DF.extractSubset(matObs, testSet)
+for k, code in enumerate(DF.varC):
+    outName = '{}-{}-{}-{}'.format('G200', label, trainSet, code)
+    yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=500)
+    yP[bQ] = np.nan
+    pred1 = DF.extractSubset(yP, trainSet)
+    pred2 = DF.extractSubset(yP, testSet)
+    corrS1[:, k] = utils.stat.calCorr(pred1[:, :, 0], obs1[:, :, k])
+    corrS2[:, k] = utils.stat.calCorr(pred2[:, :, 0], obs2[:, :, k])
+
+
 # WRTDS
 dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
 corrName1 = 'corr-{}-{}-{}.npy'.format('G200N', trainSet, testSet)
@@ -54,6 +72,9 @@ count2 = np.nansum(matB2, axis=0)
 matRm = (count1 < 80) & (count2 < 20)
 for corr in [corrW1, corrW2]+corrLst1+corrLst2:
     corr[matRm] = np.nan
+for corr in [corrS1, corrS2]:
+    corr[matRm] = np.nan
+
 
 # load linear/seasonal
 dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
@@ -76,6 +97,7 @@ x = np.nanmedian(matLR[:, ind], axis=0)
 y1 = np.nanmedian(corrW2[:, ind]**2, axis=0)
 y2 = np.nanmedian(corrLst2[0][:, ind]**2, axis=0)
 y3 = np.nanmedian(corrLst2[1][:, ind]**2, axis=0)
+y4 = np.nanmedian(corrS2[:, ind]**2, axis=0)
 
 
 matplotlib.rcParams.update({'font.size': 16})
@@ -92,6 +114,8 @@ ax.fill_between(
     x, y1, y2, where=y2 >= y1, facecolor='red', alpha=0.5,
     interpolate=True, label='LSTM > WRTDS')
 ax.plot(x, y3, 'g--', label='LSTM local-norm')
+ax.plot(x, y4, 'm--', label='LSTM solo')
+
 
 txtLst = list()
 for k, code in enumerate(varP):

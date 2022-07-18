@@ -32,11 +32,10 @@ for dataName in dataNameLst:
                 print(outName)
 
 # calculate and save corr for all cases
-DFobs = dbBasin.DataFrameBasin('N200')
-matObs = DFobs.c
-
 DF = dbBasin.DataFrameBasin('G200')
 bQ = np.isnan(DF.q[:, :, 0])
+matObs = DF.c
+
 codeLst = usgs.varC
 ep = 1000
 dictLst = list()

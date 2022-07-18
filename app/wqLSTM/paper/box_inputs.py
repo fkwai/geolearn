@@ -103,3 +103,12 @@ plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
 figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
 fig.savefig(os.path.join(figFolder, 'box_input_{}'.format(trainSet)))
+fig.savefig(os.path.join(figFolder, 'box_input_{}.svg'.format(trainSet)))
+
+indC = DF.varC.index('00945')
+a=corrLst2[1][:,indC]
+b=corrLst2[2][:,indC]
+np.nanmean(a)
+np.nanmean(b)
+np.nanmedian(a)
+np.nanmedian(b)

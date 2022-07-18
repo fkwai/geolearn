@@ -18,7 +18,7 @@ codeLst = usgs.varC
 # LSTM
 DF = dbBasin.DataFrameBasin('G200')
 
-ep = 500
+ep = 1000
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
@@ -68,7 +68,7 @@ matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 10})
 
 # re-order
-indPlot = np.argsort(np.nanmedian(matLR, axis=0))
+indPlot = np.argsort(np.nanmedian(corrL2, axis=0))
 codeStrLst = list()
 dataPlot = list()
 for k in indPlot:

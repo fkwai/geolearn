@@ -61,11 +61,11 @@ dfG = gageII.readData(siteNoLst=DF.siteNoLst)
 
 code = '00660'
 cVar = 'PHOS_APP_KG_SQKM'
-th = 1200
+th = 1.2
 
-code = '71846'
-cVar = 'NITR_APP_KG_SQKM'
-th = 5
+# code = '71846'
+# cVar = 'NITR_APP_KG_SQKM'
+# th = 5
 
 indC = DF.varC.index(code)
 x = dfG[cVar].values/1000
@@ -107,8 +107,9 @@ pLst = list()
 for ind in [ind1, ind2]:
     a = corrL2[ind, indC].flatten()
     b = corrW2[ind, indC].flatten()
-    aa, bb = utils.rmNan([a, b], returnInd=False)
+    aa, bb = utils.rmNan([a, b], returnInd=False)    
     s, p = scipy.stats.wilcoxon(aa, bb)
+    print(np.median(aa),np.median(bb),s,p)
     dataBox.append([a, b])
     pLst.append(p)
 label1 = ['{}<={}\np-value={:.0e}'.format(cVarStr2, th, pLst[0]),
