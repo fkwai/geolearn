@@ -15,7 +15,12 @@ from hydroDL import kPath
 """
 
 
-__all__ = ['readSample', 'readStreamflow', 'readUsgsText', 'removeFlag']
+__all__ = ['readSample', 'readStreamflow',
+           'readUsgsText', 'removeFlag', 'codePdf']
+
+fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
+codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
+
 
 codeLstWQ = ['00010', '00095', '00300', '00400', '00405', '00410',
              '00440', '00600', '00605', '00618', '00660', '00665',
