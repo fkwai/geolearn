@@ -19,7 +19,10 @@ __all__ = ['readSample', 'readStreamflow',
            'readUsgsText', 'removeFlag', 'codePdf']
 
 fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
-codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
+if os.path.exists(fileCode):
+    codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
+else:
+    codePdf = None
 
 
 codeLstWQ = ['00010', '00095', '00300', '00400', '00405', '00410',
