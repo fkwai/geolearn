@@ -4,10 +4,6 @@ from hydroDL import kPath
 import os
 import pandas as pd
 
-fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
-codePdf = pd.read_csv(fileCode, dtype=str).set_index('code')
-codeLst = list(codePdf.index)
-
 fileSampleFull = os.path.join(kPath.dirData, 'USGS',
                               'inventory', 'usgsSampleCodeFull.csv')
 samplePdfFull = pd.read_csv(fileSampleFull, dtype=str).set_index('parm_cd')
