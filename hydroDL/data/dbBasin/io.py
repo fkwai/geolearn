@@ -60,7 +60,7 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
                   freq=freq, siteNoLst=siteNoLst)
 
 
-def wrapDataCamels(caseName, siteNoLst=camels.siteNoLst(), nFill=5, freq='D',
+def wrapDataCamels(caseName, siteNoLst, nFill=5, freq='D',
                    sdStr='1980-01-01', edStr='2014-12-31', optF='nldas',
                    varF=camels.varF, varQ=camels.varQ, varG=camels.varG):
     tR = pd.date_range(np.datetime64(sdStr), np.datetime64(edStr))
