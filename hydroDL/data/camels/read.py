@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from hydroDL import kPath
 import json
-__all__ = ['readStreamflow', 'readForcing', 'readAttr', 'dfInfo', 'siteNoLst']
+__all__ = ['readStreamflow', 'readForcing', 'readAttr']
 
 # hard code time length
 dirDB = os.path.join(kPath.dirData, 'camels')
@@ -27,11 +27,9 @@ def readInfo():
     return dfInfo.set_index('usgsId')
 
 
-dfInfo = readInfo()
-siteNoLst = dfInfo.index.tolist()
-
-
-def readStreamflow(siteNo):
+def readStreamflow(siteNo, *, dfInfo=None):
+    if dfInfo is None:
+        dfInfo = readInfo()
     huc = dfInfo.loc[siteNo]['huc02']
     area = dfInfo.loc[siteNo]['area']
     siteFile = os.path.join(dirQ, huc, '{}_streamflow_qc.txt'.format(siteNo))
@@ -46,7 +44,9 @@ def readStreamflow(siteNo):
     return out
 
 
-def readForcing(siteNo, opt='nldas'):
+def readForcing(siteNo, opt='nldas', *, dfInfo=None):
+    if dfInfo is None:
+        dfInfo = readInfo()
     huc = dfInfo.loc[siteNo]['huc02']
     dataFolder = os.path.join(
         dirDB,
@@ -70,7 +70,7 @@ def readForcing(siteNo, opt='nldas'):
                   'srad', 'swe', 'tmax', 'tmin', 'vp']
         df = pd.read_csv(dataFile, sep=r'\s+', header=None, skiprows=4,
                          names=colLst, parse_dates=[['Y', 'M', 'D']])
-        df.rename(columns={'Y_M_D': 'date'}, inplace=True)        
+        df.rename(columns={'Y_M_D': 'date'}, inplace=True)
     df.columns = df.columns.str.lower()
     dictCol = {
         'year_mnth_day': 'date',
