@@ -80,7 +80,7 @@ matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 5})
 
 lat, lon = DF.getGeo()
-code = '00665'
+code = '00915'
 indC = codeLst.index(code)
 indS = np.where(~matRm[:, indC])[0]
 importlib.reload(figplot)
@@ -140,6 +140,25 @@ def funcP(axP, iP, iM):
 
 
 figM, figP = figplot.clickMulti(funcM, funcP)
+
+# HUCs
+siteNoTemp = [DF.siteNoLst[ind] for ind in indS]
+dfG = gageII.readData(varLst=['HUC02'], siteNoLst=siteNoTemp)
+
+len(dfG['HUC02'].unique())
+hucLst = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10L', '10U',
+          '11', '12', '13', '14', '15', '16', '17', '18']
+
+fig, axes = plt.subplots(4, 5)
+for k, huc in enumerate(hucLst):
+    j,i=utils.index2d(k,4,5)
+    ind = np.where(dfG['HUC02'] == huc)[0]
+    cs = axplot.scatter121(axes[j,i], xMat[ind, 0],
+                           yMat[ind, 0], matLR[indS[ind], indC])
+    axplot.titleInner(axes[j,i],huc)    
+    axes[j,i].set_xlim([0,1])
+    axes[j,i].set_ylim([0,1])
+fig.show()
 
 # overall stats
 a = matLR[indS, indC]

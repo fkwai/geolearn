@@ -112,17 +112,37 @@ fig.savefig(os.path.join(dirPaper, 'box'))
 P = DF.f[:, :, 0]
 Q = DF.q[:, :, 1]
 E = DF.f[:, :, 6]
+T = (DF.f[:, :, 3]+DF.f[:, :, 4])/2
 
 
 Pm = np.nanmean(P, axis=0)
 Qm = np.nanmean(Q, axis=0)
 Em = np.nanmean(E, axis=0)
+Tm = np.nanmean(T, axis=0)
 
 figM = plt.figure(figsize=(12, 5))
 gsM = gridspec.GridSpec(1, 1)
 axM = mapplot.mapPoint(
     figM, gsM[0, 0], lat, lon, (Pm-Qm)/Em)
 figM.show()
+
+figM = plt.figure(figsize=(12, 5))
+gsM = gridspec.GridSpec(1, 1)
+axM = mapplot.mapPoint(
+    figM, gsM[0, 0], lat, lon, Pm-Qm-Em)
+figM.show()
+
+fig, ax = plt.subplots(figsize=(8, 5))
+sc = ax.scatter((Pm-Qm)/Em, corr1**2-corr2**2, c=Tm, cmap='jet')
+ax.axhline(0, color='k')
+fig.colorbar(sc, ax=ax)
+fig.show()
+
+fig, ax = plt.subplots(figsize=(8, 5))
+sc = ax.scatter(Pm-Qm-Em, corr1**2-corr2**2, c=Tm, cmap='jet')
+ax.axhline(0, color='k')
+fig.colorbar(sc, ax=ax)
+fig.show()
 
 figM = plt.figure(figsize=(12, 5))
 gsM = gridspec.GridSpec(1, 1)

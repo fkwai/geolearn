@@ -83,9 +83,11 @@ fig.savefig(os.path.join(saveFolder, 'cv2simp.svg'))
 
 # calculate a coefficient
 codeCal = [
-    '00915', '00925', '00930', '00955', '00600','00030'
+    '00915', '00925', '00930', '00955', '00600', '00030'
     '00605', '00618', '00660', '00665', '00681', '71846',
     '00095',  '00935', '00940', '00945'
 ]
 ind = [codeLst.index(code) for code in codeCal]
 np.corrcoef(a[ind], b[ind])
+
+

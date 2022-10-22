@@ -12,7 +12,7 @@ from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 
 DF = dbBasin.DataFrameBasin('G200')
-codeLst = usgs.newC
+codeLst = usgs.varC
 
 # LSTM
 ep = 1000
@@ -78,7 +78,7 @@ ax.plot(a, c, 'r*')
 # ax.set_ylim([-1.5, 3])
 # plt.xscale('symlog')
 ax.axhline(0, color='k')
-ax.axvline(0.4, color='k')
+ax.axvline(0.33, color='k')
 
 fig.show()
 

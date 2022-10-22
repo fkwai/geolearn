@@ -137,19 +137,22 @@ tRLst = [[20120501, 20130501],
          [20140101, 20140601],
          [20180601, 20181201]]
 
-for siteNo, tR in zip(siteNoPlot, tRLst):
+for siteNo, tR, s in zip(siteNoPlot, tRLst, 'CDEF'):
     fig = plt.figure(figsize=(16, 3))
     gs = gridspec.GridSpec(1, 5)
     ngs = 3
     iP = DF.siteNoLst.index(siteNo)
-    legLst = ['obs',
-              'waterNet {:.2f} {:.2f}'.format(nash1[iP], corr1[iP]),
-              'LSTM {:.2f} {:.2f}'.format(nash2[iP], corr2[iP])]
+    # legLst = ['obs',
+    #           'waterNet {:.2f} {:.2f}'.format(nash1[iP], corr1[iP]),
+    #           'LSTM {:.2f} {:.2f}'.format(nash2[iP], corr2[iP])]
+    legLst = ['obs', 'waterNet', 'LSTM']
     t = DF.getT(testSet)
     ax = fig.add_subplot(gs[0, :ngs])
     axplot.plotTS(ax, t[nr-1:], [y[nr-1:, iP, 0], yP[:, iP], yL[nr-1:, iP]],
                   lineW=[2, 1, 1], cLst='krb', legLst=legLst)
-
+    titleStr = '{}) site {}; LSTM NSE = {:.2f}; waterNet NSE = {:.2f}'.format(
+        s, siteNo, nash1[iP], nash2[iP])
+    ax.set_title(titleStr)
     sd = utils.time.t2dt(tR[0])
     ed = utils.time.t2dt(tR[1])
     indT1 = np.where(t == utils.time.t2dt(tR[0]))[0][0]
@@ -166,24 +169,23 @@ for siteNo, tR in zip(siteNoPlot, tRLst):
     axT.set_xticks([sd, ed])
     fig.show()
     fig.savefig(os.path.join(dirPaper, 'ts_{}'.format(siteNo)))
+    fig.savefig(os.path.join(dirPaper, 'ts_{}.svg'.format(siteNo)))
 
 
-siteNoPlot = ['08101000',
-              '10172800',
-              '02053200',
-              '03180500']
+# difference map
 fig = plt.figure(figsize=(16, 5))
 gs = gridspec.GridSpec(1, 7)
 # axM2 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, nash2-nash1)
 axM = mapplot.mapPoint(
     fig, gs[0, :5], lat, lon, nash1-nash2, centerZero=True)
 axM.set_title('waterNet NSE - LSTM NSE')
-for siteNo in siteNoPlot:
+for s, siteNo in zip('CDEF', siteNoPlot):
     xLoc = lon[DF.siteNoLst.index(siteNo)]
     yLoc = lat[DF.siteNoLst.index(siteNo)]
     circle = plt.Circle([xLoc, yLoc], 1,
                         color='black', fill=False)
     axM.add_patch(circle)
+    # axM.text(xLoc, yLoc, s)
 ax = fig.add_subplot(gs[0, 5:])
 ax.plot(nash1, nash2, 'o')
 ax.plot([-0.25, 1], [-0.25, 1], '-k')
@@ -192,10 +194,12 @@ ax.set_xlim(-0.25, 1)
 ax.set_xlabel('waterNet NSE')
 ax.set_ylabel('LSTM NSE')
 ax.set_aspect(1)
-for siteNo in siteNoPlot:
+for s, siteNo in zip('CDEF', siteNoPlot):
     xLoc = nash1[DF.siteNoLst.index(siteNo)]
     yLoc = nash2[DF.siteNoLst.index(siteNo)]
     ax.plot(xLoc, yLoc, 'ro')
+    # ax.text(xLoc, yLoc, s)
 
 fig.show()
 fig.savefig(os.path.join(dirPaper, 'mapDiff'))
+fig.savefig(os.path.join(dirPaper, 'mapDiff.svg'))

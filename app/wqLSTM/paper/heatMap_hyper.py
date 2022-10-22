@@ -1,4 +1,5 @@
 
+import matplotlib
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -28,10 +29,6 @@ corrFile2 = os.path.join(outFolder, corrName2)
 corrL1 = np.load(corrFile1)
 corrL2 = np.load(corrFile2)
 
-hsLst = [16, 64, 128]
-
-rhoLst = [180, 365, 750, 1000]
-# count matrix
 
 # count
 matB = (~np.isnan(DF.c)*~np.isnan(DF.q[:, :, 0:1])
@@ -41,52 +38,80 @@ matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
 count2 = np.nansum(matB2, axis=0)
 matRm = (count1 < 80) & (count2 < 20)
+corrL1[matRm] = np.nan
+corrL2[matRm] = np.nan
+
 
 corrLst1 = [corrL1]
 corrLst2 = [corrL2]
-caseLst = ['hs256-rho1000']
-for hs in hsLst:
+caseLst = ['reference']
+
+epLst = list()
+outLst = list()
+for hs in [16, 32, 64, 128, 512]:
     outName = '{}-{}-{}-hs{}'.format(dataName, label, trainSet, hs)
-    outFolder = basinFull.nameFolder(outName)
-    corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
-    corrName2 = 'corrQ-{}-Ep{}.npy'.format(testSet, ep)
-    corrFile1 = os.path.join(outFolder, corrName1)
-    corrFile2 = os.path.join(outFolder, corrName2)
-    corr1 = np.load(corrFile1)
-    corr1[matRm] = np.nan
-    corrLst1.append(corr1)
-    corr2 = np.load(corrFile2)
-    corr2[matRm] = np.nan
-    corrLst2.append(corr2)
-    caseLst.append('hs{}'.format(hs))
-for rho in rhoLst:
+    if hs <= 64:
+        epLst.append(100)
+    else:
+        epLst.append(500)
+    caseLst.append('hs-{}'.format(hs))
+    outLst.append(outName)
+
+for rho in [180, 750, 1000]:
     outName = '{}-{}-{}-rho{}'.format(dataName, label, trainSet, rho)
-    outFolder = basinFull.nameFolder(outName)
+    if rho <= 365:
+        epLst.append(50)
+    else:
+        epLst.append(500)
+    caseLst.append('rho-{}'.format(rho))
+    outLst.append(outName)
+
+for ep in [100, 200, 300, 400]:
+    outName = '{}-{}-{}-rho1000'.format(dataName, label, trainSet)
+    epLst.append(ep)
+    caseLst.append('ep-{}'.format(ep))
+    outLst.append(outName)
+
+matObs = DF.c
+bQ = np.isnan(DF.q[:, :, 0])
+for k, outName in enumerate(outLst):
+    obs1 = DF.extractSubset(matObs, trainSet)
+    obs2 = DF.extractSubset(matObs, testSet)
     corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
     corrName2 = 'corrQ-{}-Ep{}.npy'.format(testSet, ep)
+    print(outName)
+    outFolder = basinFull.nameFolder(outName)
     corrFile1 = os.path.join(outFolder, corrName1)
     corrFile2 = os.path.join(outFolder, corrName2)
-    corr1 = np.load(corrFile1)
-    corr1[matRm] = np.nan
-    corrLst1.append(corr1)
-    corr2 = np.load(corrFile2)
-    corr2[matRm] = np.nan
+    yP, ycP = basinFull.testModel(
+        outName, DF=DF, testSet='all', ep=epLst[k], reTest=False)
+    varY = basinFull.loadMaster(outName)['varY']
+    yOut = np.ndarray(yP.shape)
+    for k, var in enumerate(varY):
+        temp = yP[:, :, k]
+        temp[bQ] = np.nan
+        yOut[:, :, k] = temp
+    pred2 = DF.extractSubset(yOut, testSet)
+    corr2 = utils.stat.calCorr(pred2, obs2)
     corrLst2.append(corr2)
-    caseLst.append('rho{}'.format(rho))
 
 
 # plot
+matplotlib.rcParams.update({'font.size': 14})
+matplotlib.rcParams.update({'lines.linewidth': 1})
+matplotlib.rcParams.update({'lines.markersize': 10})
+
 figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
 codeStrLst = [usgs.codePdf.loc[code]['shortName'] for code in codeLst]
 
 matPlot = np.full([len(corrLst2), len(codeLst)], np.nan)
 for k, corr in enumerate(corrLst2):
-    matPlot[k, :] = np.nanmean(corr, axis=0)
-fig, ax = plt.subplots(1, 1)
+    matPlot[k, :] = np.nanmedian(corr, axis=0)
+fig, ax = plt.subplots(1, 1, figsize=(16, 8))
 axplot.plotHeatMap(ax, matPlot*100, labLst=[caseLst, codeStrLst])
-title = 'Median Testing Correlation'
+title = 'Median Testing Correlation [%]'
 ax.set_title(title)
-# plt.tight_layout()
-# fig.show()
-# plt.savefig(os.path.join(
-#     figFolder, 'heatmap_AllModel_{}'.format(trainSet)))
+plt.tight_layout()
+fig.show()
+plt.savefig(os.path.join(figFolder, 'heatmap_hyper'))
+plt.savefig(os.path.join(figFolder, 'heatmap_hyper.svg'))

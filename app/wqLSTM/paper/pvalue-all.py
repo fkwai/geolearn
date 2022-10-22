@@ -29,6 +29,7 @@ label = 'QFPRT2C'
 trainLst = ['rmR20', 'rmL20', 'rmYr5']
 testLst = ['pkR20', 'pkL20', 'pkYr5']
 
+pdfP = pd.DataFrame(index=codeLst, columns=trainLst)
 for trainSet, testSet in zip(trainLst, testLst):
     outName = '{}-{}-{}'.format(dataName, label, trainSet)
     outFolder = basinFull.nameFolder(outName)
@@ -59,27 +60,21 @@ for trainSet, testSet in zip(trainLst, testLst):
     for corr in [corrL1, corrL2, corrW1, corrW2]:
         corr[matRm] = np.nan
 
-    # box plot
-    matplotlib.rcParams.update({'font.size': 12})
-    matplotlib.rcParams.update({'lines.linewidth': 1})
-    matplotlib.rcParams.update({'lines.markersize': 10})
-
+    # load linear/seasonal
+    dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+    matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
+    for k, code in enumerate(codeLst):
+        filePar = os.path.join(dirPar, code)
+        dfCorr = pd.read_csv(
+            filePar, dtype={'siteNo': str}).set_index('siteNo')
+        matLR[:, k] = dfCorr['rsq'].values
+    matLR[matRm] = np.nan
     # re-order
-    indPlot = np.argsort(np.nanmean(corrL2, axis=0))
-    codeStrLst = list()
-    dataPlot = list()
-    for k in indPlot:
-        code = codeLst[k]
-        codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
-        dataPlot.append([corrL2[:, k], corrW2[:, k]])
 
-    fig, axes = figplot.boxPlot(
-        dataPlot, widths=0.5, figsize=(12, 4), label1=codeStrLst)
-    # fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
-    #     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'])
-    plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
-    fig.show()
-    figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
-    fig.savefig(os.path.join(figFolder, 'box_{}_{}'.format(label, trainSet)))
-    fig.savefig(os.path.join(
-        figFolder, 'box_{}_{}.svg'.format(label, trainSet)))
+    codeStrLst = list()
+    pLst = list()
+    for k, code in enumerate(codeLst):
+        [a, b], _ = utils.rmNan([corrL2[:, k], corrW2[:, k]])
+        s, p = scipy.stats.wilcoxon(a, b)
+        pdfP.at[code, trainSet] = p
+pdfP.to_csv('temp.csv', sep=',', float_format='{:.2e}'.format())

@@ -1,4 +1,4 @@
-from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform
+from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, camels
 from hydroDL import kPath, utils
 import os
 import time
@@ -54,11 +54,39 @@ def wrapData(caseName, siteNoLst, nFill=5, freq='D',
     q = np.stack(qLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     c = np.stack(cLst, axis=-1).swapaxes(1, 2).astype(np.float32)
     g = np.stack(gLst, axis=-1).swapaxes(0, 1).astype(np.float32)
-
     # save
     saveDataFrame(caseName, c=c, q=q, f=f, g=g, varC=varC, varQ=varQ,
                   varF=varF, varG=varG, sdStr=sdStr, edStr=edStr,
                   freq=freq, siteNoLst=siteNoLst)
+
+
+def wrapDataCamels(caseName, siteNoLst=camels.siteNoLst, nFill=5, freq='D',
+                   sdStr='1980-01-01', edStr='2014-12-31', optF='nldas',
+                   varF=camels.varF, varQ=camels.varQ, varG=camels.varG):
+    tR = pd.date_range(np.datetime64(sdStr), np.datetime64(edStr))
+    dfG = camels.readAttr(siteNoLst=siteNoLst, varLst=camels.varG)
+    fLst, qLst = [list() for x in range(2)]
+    siteNo = siteNoLst[0]
+    for i, siteNo in enumerate(siteNoLst):
+        dfQ = camels.readStreamflow(siteNo)
+        dfF = camels.readForcing(siteNo, opt=optF)
+        tempQ = pd.DataFrame({'date': tR}).set_index('date').join(dfQ[varQ])
+        qLst.append(tempQ.values)
+        tempF = pd.DataFrame({'date': tR}).set_index('date').join(dfF[varF])
+        tempF = tempF.interpolate(
+            limit=nFill, limit_direction='both', limit_area='inside')
+        fLst.append(tempF.values)
+        print('{} on site {}'.format(i, siteNo))
+    f = np.stack(fLst, axis=-1).swapaxes(1, 2).astype(np.float32)
+    q = np.stack(qLst, axis=-1).swapaxes(1, 2).astype(np.float32)
+    g = dfG.values.astype(np.float32)
+    c = np.ndarray([len(tR), len(siteNoLst), 0])  # adhoc
+    varC = []  # adhoc
+    # save
+    saveDataFrame(caseName, c=c, q=q, f=f, g=g, varC=varC, varQ=varQ,
+                  varF=varF, varG=varG, sdStr=sdStr, edStr=edStr,
+                  freq=freq, siteNoLst=siteNoLst)
+    initSubset(caseName)
 
 
 def saveDataFrame(caseName, *, c, q, f, g, varC, varQ, varF, varG,

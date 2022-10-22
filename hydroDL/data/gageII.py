@@ -209,6 +209,7 @@ def updateCode(pdf):
             codeLst = list(range(len(strLst)))
             dictCode[var] = dict(zip(strLst, codeLst))
             print('added {} - {} unique values'.format(var, len(strLst)))
+        # potential issue - new string keys that are not coded
     with open(fileCode, 'w') as fp:
         json.dump(dictCode, fp, indent=4)
     return pdf.replace(dictCode)

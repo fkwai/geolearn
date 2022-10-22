@@ -1,5 +1,4 @@
 
-import re
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -12,46 +11,31 @@ import importlib
 from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 
-# dataNameLst = ['G200N', 'G200']
 dataName = 'G200'
-
+label = 'QFPRT2C'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
 
-label = 'QFPRT2C'
-
 # calculate and save corr for all cases
-DF = dbBasin.DataFrameBasin(dataName)
-bQ = np.isnan(DF.q[:, :, 0])
+DF = dbBasin.DataFrameBasin('G200')
 matObs = DF.c
-
-codeLst = usgs.varC
-ep = 500
+codeLst = usgs.newC
+epLst = [500,  1500, 2000]
 dictLst = list()
-rhoLst = [180, 365, 750, 1000]
-for rho in rhoLst:
-    outName = '{}-{}-{}-rho{}'.format(dataName, label, trainSet, rho)
-
-# hsLst = [16, 64, 128, 512]
-# for hs in hsLst:
-#     outName = '{}-{}-{}-hs{}'.format(dataName, label, trainSet, hs)
+for ep in epLst:
     obs1 = DF.extractSubset(matObs, trainSet)
     obs2 = DF.extractSubset(matObs, testSet)
-    corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
-    corrName2 = 'corrQ-{}-Ep{}.npy'.format(testSet, ep)
-    print(outName)
+    corrName1 = 'corr-{}-Ep{}.npy'.format(trainSet, ep)
+    corrName2 = 'corr-{}-Ep{}.npy'.format(testSet, ep)
+    outName = '{}-{}-{}'.format(dataName, label, trainSet)
     outFolder = basinFull.nameFolder(outName)
     corrFile1 = os.path.join(outFolder, corrName1)
     corrFile2 = os.path.join(outFolder, corrName2)
+    print(outName)
     yP, ycP = basinFull.testModel(
-        outName, DF=DF, testSet='all', ep=ep, reTest=True)
-    varY = basinFull.loadMaster(outName)['varY']
-    yOut = np.ndarray(yP.shape)
-    for k, var in enumerate(varY):
-        temp = yP[:, :, k]
-        temp[bQ] = np.nan
-        yOut[:, :, k] = temp
-    if varY[0] == '00060':
+        outName, DF=DF, testSet='all', ep=ep)
+    yOut = yP
+    if label[0] is not 'Q':
         yOut = yOut[:, :, 1:]
     pred1 = DF.extractSubset(yOut, trainSet)
     pred2 = DF.extractSubset(yOut, testSet)

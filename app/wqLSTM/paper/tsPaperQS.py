@@ -78,7 +78,8 @@ dictPlot['00618'] = ['01594440', '06905500', '12510500']
 
 code = '00618'
 siteLst = dictPlot[code]
-codeStr = usgs.codePdf.loc[code]['shortName']
+codeStrO = usgs.codePdf.loc[code]['shortName']
+codeStr = usgs.dictLabel[codeStrO]
 outFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
 saveFolder = os.path.join(outFolder, code)
 if ~os.path.exists(saveFolder):
@@ -105,8 +106,8 @@ axS = figM.add_subplot(gsM[0, :1])
 axS.set_title('A) LSTM vs WRTDS')
 cs = axplot.scatter121(axS, corrL2[indS, indC],
                        corrW2[indS, indC], matLR[indS, indC])
-axS.set_xlabel(r'LSTM $\rho$')
-axS.set_ylabel(r'WRTDS $\rho$')
+axS.set_xlabel(r'$R_{LSTM}$')
+axS.set_ylabel(r'$R_{WRTDS}$')
 plt.colorbar(cs, orientation='vertical', label='seasonality')
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([corrL2[ind, indC], corrW2[ind, indC]],
@@ -114,11 +115,11 @@ for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     axS.add_patch(circle)
 axM1 = mapplot.mapPoint(
     figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24)
-axM1.set_title(r'B) LSTM $\rho$ of {}'.format(codeStr))
+axM1.set_title(r'B) $R_{LSTM}$'+' of {}'.format(codeStr))
 axM2 = mapplot.mapPoint(
     figM, gsM[0, 3:], lat[indS], lon[indS], corrL2[indS, indC]**2-corrW2[indS, indC]**2, s=24,
     vRange=[-0.1, 0.1])
-axM2.set_title(r'C) LSTM $R^2$ minus WRTDS $R^2$ of {}'.format(codeStr))
+axM2.set_title(r'C) $\Delta R^2_{LSTM-WRTDS}$'+' of {}'.format(codeStr))
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([lon[ind], lat[ind]],
                         2, color='k', fill=False)
@@ -155,8 +156,8 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     for ax in axP:
         ax.set_xlabel('')
         ax.set_xticklabels('')
-    titleStr = r'{}) {} of site {} LSTM $\rho$={:.2f}; WRTDS $\rho$={:.2f}'.format(
-        figN, codeStr, DF.siteNoLst[ind], corrL2[ind, indC], corrW2[ind, indC])
+    titleStr = r'{}) {} of site {} {}={:.2f}; {}={:.2f}'.format(
+        figN, codeStr, DF.siteNoLst[ind], '$R_{LSTM}$', corrL2[ind, indC], '$R_{WRTDS}$', corrW2[ind, indC])
     figP.suptitle(titleStr)
     figP.tight_layout()
     figP.show()
@@ -169,8 +170,8 @@ np.nanmean(corrW2[indS, indC])
 
 np.nanmedian(corrL2[indS, indC])
 np.nanmedian(corrW2[indS, indC])
-scipy.stats.wilcoxon(corrL2[indS, indC],corrW2[indS, indC])
-scipy.stats.ttest_rel(corrL2[indS, indC],corrW2[indS, indC])
+scipy.stats.wilcoxon(corrL2[indS, indC], corrW2[indS, indC])
+scipy.stats.ttest_rel(corrL2[indS, indC], corrW2[indS, indC])
 
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     print(lon[ind], lat[ind])

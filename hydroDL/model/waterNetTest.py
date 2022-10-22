@@ -405,7 +405,7 @@ class Wn0119solo(torch.nn.Module):
             return Qout
 
 
-class WaterNet0119(torch.nn.Module):
+class WaterNet0630(torch.nn.Module):
     def __init__(self, nh, ng, nr):
         # with a interception bucket
         super().__init__()
@@ -420,7 +420,7 @@ class WaterNet0119(torch.nn.Module):
         # [kp, ks, kg, gp, gl, qb, ga]
         self.wLst = [
             'sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
-            'exp', 'relu', 'skip']
+            'exp', 'exp', 'skip']
         self.fcW = nn.Sequential(
             nn.Linear(ng, 256),
             nn.Tanh(),
@@ -446,7 +446,6 @@ class WaterNet0119(torch.nn.Module):
         w = self.fcW(xc)
         [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
         gL = gL**2
-        kg = kg/10
         ga = torch.softmax(self.DP(ga), dim=-1)
         qb = qb + sn
         v = self.fcT(xcT)
@@ -461,7 +460,7 @@ class WaterNet0119(torch.nn.Module):
     def forwardStepQ(Sf, Ss, Sg, fs, fl, fev, fm,
                      kp, ks, kg, gL, gp, qb):
         qf = torch.minimum(Sf+fs, fm)
-        Sf = torch.relu(Sf+fs-fm)
+        Sf = Sf+fs-qf
         H = torch.relu(Ss+fl+qf-fev)
         qp = torch.relu(kp*(H-gL))
         qsa = ks*torch.minimum(H, gL)

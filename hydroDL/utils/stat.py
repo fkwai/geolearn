@@ -59,6 +59,28 @@ def calCorr(pred, obs):
     return p1/p2
 
 
+def calSMAPE(pred, obs):
+    mask = np.isnan(obs) | np.isnan(pred)
+    A = pred.copy()
+    B = obs.copy()
+    A[mask] = np.nan
+    B[mask] = np.nan
+    e = 2*np.abs(A-B)/(np.abs(A)+np.abs(B))
+    mape = np.nanmean(e, axis=0)
+    return mape
+
+
+def calMAPE(pred, obs):
+    mask = np.isnan(obs) | np.isnan(pred) | (obs == 0)
+    A = pred.copy()
+    B = obs.copy()
+    A[mask] = np.nan
+    B[mask] = np.nan
+    e = np.abs(A-B)/np.abs(A)
+    mape = np.nanmean(e, axis=0)
+    return mape
+
+
 def calCorrOld(pred, obs):
     # data in [nT,nS]
     bV = pred.ndim == 1
@@ -83,9 +105,8 @@ def calCorrOld(pred, obs):
 
 
 def calBias(pred, obs):
-    # data in [nT,nS]
-    indV = np.where(~np.isnan(pred) & ~np.isnan(obs))
-    bias = np.nanmean(pred[indV], axis=0)-np.nanmean(obs[indV], axis=0)
+    # data in [nT,nS,nC]
+    bias = np.nanmean(np.abs(pred-obs), axis=0)
     return bias
 
 

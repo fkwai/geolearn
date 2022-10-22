@@ -127,24 +127,23 @@ fig, axes = figplot.boxPlot(
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
 figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
-fig.savefig(os.path.join(figFolder, 'box_mape'.format(label, trainSet)))
-fig.savefig(os.path.join(figFolder, 'box_mape.svg'.format(label, trainSet)))
+fig.savefig(os.path.join(figFolder, 'box_smape'.format(label, trainSet)))
+fig.savefig(os.path.join(figFolder, 'box_smape.svg'.format(label, trainSet)))
 
 
-# Bias
+# re-order
 codeGroup = [
     ['00405', '00400', '71846', '00660', '00605',
      '00665', '80154', '00600', '00618', '00681'],
     ['00935', '00955', '00945', '00940', '00095',
      '00925', '00915', '00930', '00300', '00010']]
-matplotlib.rcParams.update({'font.size': 12})
+matplotlib.rcParams.update({'font.size': 14})
 matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 10})
 for rmse in [rmseL1, rmseL2, rmseW1, rmseW2]:
     rmse[matRm] = np.nan
-for rmse in [biasL1, biasL2, biasW1, biasW2]:
-    bias[matRm] = np.nan
-for kk, codeG in enumerate(codeGroup):
+indPlot = np.argsort(np.nanmean(biasL2, axis=0))
+for codeG in codeGroup:
     codeStrLst = list()
     dataPlot = list()
     for code in codeG:
@@ -155,31 +154,20 @@ for kk, codeG in enumerate(codeGroup):
     importlib.reload(usgs)
     strLst = usgs.codeStrPlot(codeStrLst)
     fig, axes = figplot.boxPlot(
-        dataPlot, widths=0.5, figsize=(10, 2), label1=strLst, sharey=False)
+        dataPlot, widths=0.5, figsize=(12, 4), label1=strLst, sharey=False)
     for ax in axes:
         ax.axhline(0, color='k')
-    plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1, wspace=1)
-    # fig.tight_layout()
+    plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
+    fig.tight_layout()
     fig.show()
-    fig.savefig(os.path.join(figFolder, 'box_bias{}.svg'.format(kk)))
 
 
+x = DF.g[:, 0]
+fig, ax = plt.subplots(1, 1)
+ax.hist(x, normed=True,bins=100, cumulative=True, label='CDF',
+        histtype='step', alpha=0.8, color='k')
+ax.set_xlabel('area [sqkm]')
+ax.set_ylabel('# basins')
+fig.show()
 
-# RMSE
-for kk, codeG in enumerate(codeGroup):
-    codeStrLst = list()
-    dataPlot = list()
-    for code in codeG:
-        codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
-        k = DF.varC.index(code)
-        dataPlot.append([rmseL2[:, k], rmseW2[:, k]])
-    dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
-    importlib.reload(usgs)
-    strLst = usgs.codeStrPlot(codeStrLst)
-    fig, axes = figplot.boxPlot(
-        dataPlot, widths=0.5, figsize=(10, 2), label1=strLst, sharey=False)
-    plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1, wspace=1)
-    # fig.tight_layout()
-    fig.show()
-    fig.savefig(os.path.join(figFolder, 'box_rmse{}.svg'.format(kk)))
-
+len(np.where(x<2000)[0])

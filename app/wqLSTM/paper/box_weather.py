@@ -80,8 +80,10 @@ for k, code in enumerate(codePlot):
     print(code, thR)
     ind1 = np.where(matLR[:, ic] <= thR)[0]
     ind2 = np.where(matLR[:, ic] > thR)[0]
-    dataPlot.append([corrL2[ind1, ic], corrW2[ind1, ic],
-                     corrL2[ind2, ic], corrW2[ind2, ic]])
+    # dataPlot.append([corrL2[ind1, ic], corrW2[ind1, ic],
+    #                  corrL2[ind2, ic], corrW2[ind2, ic]])
+    dataPlot.append([corrL1[ind1, ic], corrW1[ind1, ic],
+                     corrL1[ind2, ic], corrW1[ind2, ic]])
     codeStrLst.append('{}\n{:.2f}'.format(
         usgs.codePdf.loc[code]['shortName'], thR))
 fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(12, 4), yRange=[0, 1],

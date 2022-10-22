@@ -63,7 +63,7 @@ for k, code in enumerate(codeLst):
 matLR[matRm] = np.nan
 
 # box plot
-matplotlib.rcParams.update({'font.size': 14})
+matplotlib.rcParams.update({'font.size': 12})
 matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 10})
 
@@ -74,7 +74,7 @@ dataPlot = list()
 pLst = list()
 for k in indPlot:
     code = codeLst[k]
-    dataPlot.append([corrL2[:, k], corrW2[:, k]])
+    dataPlot.append([corrL1[:, k], corrL2[:, k], corrW1[:, k], corrW2[:, k]])
     [a, b], _ = utils.rmNan([corrL2[:, k], corrW2[:, k]])
     s, p = scipy.stats.wilcoxon(a, b)
     codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
@@ -82,19 +82,19 @@ for k in indPlot:
 
 strLst = usgs.codeStrPlot(codeStrLst)
 strPlotLst = strLst
-# strPlotLst = list()
-# for k, s in enumerate(strLst):
-#     ss = '{} \n {:.1e}'.format(s, pLst[k])
-#     strPlotLst.append(ss)
+strPlotLst = list()
+for k, s in enumerate(strLst):
+    ss = '{} \n {:.1E}'.format(s, pLst[k])
+    strPlotLst.append(ss)
 
 
 fig, axes = figplot.boxPlot(
-    dataPlot, widths=0.5, figsize=(12, 4), label1=strPlotLst)
+    dataPlot, widths=0.5, figsize=(16, 6), label1=strPlotLst, cLst='mrgb')
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
 dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
-plt.savefig(os.path.join(dirPaper, 'box_all'))
-plt.savefig(os.path.join(dirPaper, 'box_all.svg'))
+plt.savefig(os.path.join(dirPaper, 'box_train'))
+plt.savefig(os.path.join(dirPaper, 'box_train.svg'))
 
 fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'], legOnly=True)

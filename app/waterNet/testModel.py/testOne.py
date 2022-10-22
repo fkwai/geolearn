@@ -49,7 +49,7 @@ dataTup2 = DM2.getData()
 
 # extract subset
 # siteNo = '09196500'
-siteNo = '04063700'
+siteNo = '08101000'
 # siteNo = '07148400'
 siteNoLst = DF.getSite(trainSet)
 indS = siteNoLst.index(siteNo)
@@ -69,7 +69,7 @@ dataTup2 = tuple(dataLst2)
 # model
 nh = 16
 nr = 5
-model = waterNetTest.WaterNet0119(nh, len(varXC), nr)
+model = waterNetTest.WaterNet0630(nh, len(varXC), nr)
 model = model.cuda()
 # optim = torch.optim.RMSprop(model.parameters(), lr=0.1)
 optim = torch.optim.Adam(model.parameters())

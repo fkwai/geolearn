@@ -23,6 +23,7 @@ dictLabel = {
     'SiO2': r'$\mathrm{SiO_2}$',
     'NHx': r'$\mathrm{NH_x}$',
     'N-org': r'$\mathrm{N_{org}}$',
+    'C': 'NPOC'
 }
 
 

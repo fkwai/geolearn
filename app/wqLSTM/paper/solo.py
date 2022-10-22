@@ -1,5 +1,4 @@
 
-import scipy
 import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
@@ -14,7 +13,7 @@ from hydroDL.app.waterQuality import WRTDS
 import matplotlib
 
 
-ep = 300
+ep = 500
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
@@ -38,11 +37,14 @@ corrL2 = np.load(corrFile2)
 
 # solo models
 nt, ns, nc = DF.c.shape
+reTest = False
+ep = 250
 corrS1 = np.full([ns, nc], np.nan)
 corrS2 = np.full([ns, nc], np.nan)
 for k, code in enumerate(DF.varC):
     outName = '{}-{}-{}-{}'.format(dataName, label, trainSet, code)
-    yP, ycP = basinFull.testModel(outName, DF=DF, testSet='all', ep=300)
+    yP, ycP = basinFull.testModel(
+        outName, DF=DF, testSet='all', ep=ep, reTest=reTest, batchSize=50)
     yP[bQ] = np.nan
     pred1 = DF.extractSubset(yP, trainSet)
     pred2 = DF.extractSubset(yP, testSet)
@@ -71,6 +73,11 @@ for corr in [corrL1, corrL2, corrS1, corrS2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
 
+# box plot
+matplotlib.rcParams.update({'font.size': 14})
+matplotlib.rcParams.update({'lines.linewidth': 1})
+matplotlib.rcParams.update({'lines.markersize': 10})
+
 # re-order
 indPlot = np.argsort(np.nanmean(corrL2, axis=0))
 codeStrLst = list()
@@ -78,8 +85,17 @@ dataPlot = list()
 for k in indPlot:
     code = DF.varC[k]
     codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
-    dataPlot.append([corrL2[:, k], corrS2[:, k], corrW2[:, k]])
+    dataPlot.append([corrL2[:, k], corrS2[:, k]])
 strLst = usgs.codeStrPlot(codeStrLst)
 fig, axes = figplot.boxPlot(
     dataPlot, widths=0.5, figsize=(12, 4), label1=strLst)
 fig.show()
+dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
+plt.savefig(os.path.join(dirPaper, 'box_solo'))
+plt.savefig(os.path.join(dirPaper, 'box_solo.svg'))
+
+
+fig, axes = figplot.boxPlot(
+    dataPlot, widths=0.5, label2=['LSTM-pool', 'LSTM-solo'],legOnly=True)
+fig.show()
+plt.savefig(os.path.join(dirPaper, 'boxSolo_legend.svg'))

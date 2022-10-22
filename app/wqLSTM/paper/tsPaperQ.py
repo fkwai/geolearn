@@ -76,8 +76,8 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 
 dictPlot = dict()
 
-dictPlot['00915'] = ['12323800', '08057200', '02175000']
-
+# dictPlot['00915'] = ['12323800', '08057200', '02175000']
+dictPlot['00915'] = ['12323800', '07241550', '07241000']
 code = '00915'
 siteLst = dictPlot[code]
 codeStr = usgs.codePdf.loc[code]['shortName']
@@ -107,8 +107,8 @@ axS = figM.add_subplot(gsM[0, :1])
 axS.set_title('A) LSTM vs WRTDS')
 cs = axplot.scatter121(axS, corrL2[indS, indC],
                        corrW2[indS, indC], matLR[indS, indC])
-axS.set_xlabel(r'LSTM $\rho$')
-axS.set_ylabel(r'WRTDS $\rho$')
+axS.set_xlabel(r'$R_{LSTM}$')
+axS.set_ylabel(r'$R_{WRTDS}$')
 plt.colorbar(cs, orientation='vertical', label='linearity')
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([corrL2[ind, indC], corrW2[ind, indC]],
@@ -116,11 +116,11 @@ for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     axS.add_patch(circle)
 axM1 = mapplot.mapPoint(
     figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24)
-axM1.set_title(r'B) LSTM $\rho$ of {}'.format(codeStr))
+axM1.set_title(r'B) $R_{LSTM}$'+' of {}'.format(codeStr))
 axM2 = mapplot.mapPoint(
     figM, gsM[0, 3:], lat[indS], lon[indS], corrL2[indS, indC]**2-corrW2[indS, indC]**2, s=24,
     vRange=[-0.1, 0.1])
-axM2.set_title(r'C) LSTM $R^2$ minus WRTDS $R^2$ of {}'.format(codeStr))
+axM2.set_title(r'C) $\Delta R^2_{LSTM-WRTDS}$'+' of {}'.format(codeStr))
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([lon[ind], lat[ind]],
                         2, color='k', fill=False)
@@ -132,7 +132,6 @@ figM.tight_layout()
 figM.show()
 figM.savefig(os.path.join(saveFolder, 'map_{}'.format(code)))
 figM.savefig(os.path.join(saveFolder, 'map_{}.svg'.format(code)))
-
 
 # plot TS
 for siteNo, figN in zip(siteLst, 'DEF'):
@@ -157,8 +156,8 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     for ax in axP:
         ax.set_xlabel('')
         ax.set_xticklabels('')
-    titleStr = r'{}) {} of site {} LSTM $\rho$={:.2f}; WRTDS $\rho$={:.2f}'.format(
-        figN, codeStr, DF.siteNoLst[ind], corrL2[ind, indC], corrW2[ind, indC])
+    titleStr = r'{}) {} of site {} {}={:.2f}; {}={:.2f}'.format(
+        figN, codeStr, DF.siteNoLst[ind], '$R_{LSTM}$', corrL2[ind, indC], '$R_{LSTM}$', corrW2[ind, indC])
     figP.suptitle(titleStr)
     figP.tight_layout()
     figP.show()

@@ -71,9 +71,12 @@ matplotlib.rcParams.update({'font.size': 16})
 matplotlib.rcParams.update({'lines.linewidth': 2})
 matplotlib.rcParams.update({'lines.markersize': 10})
 a0 = matLR
-b0 = corrL2**2 - corrW2**2
+b0 = corrL2**2 / corrW2**2
 a = np.nanmean(matLR, axis=0)
 b = np.nanmean(corrL2**2 - corrW2**2, axis=0)
+# b = np.nanmean(corrL2**2, axis=0) / np.nanmean(corrW2**2, axis=0)
+b = np.nanmedian(corrL2**2 / corrW2**2, axis=0)
+
 c = np.nanmean(corrL2**2, axis=0)
 d = np.nanmean(corrW2**2, axis=0)
 
@@ -97,10 +100,11 @@ for codeG, colorG, labG in zip(codeGroup, colorGroup, labGroup):
         ax.plot(aa, [b[k], b[k]], color=colorG,
                 linestyle='dashed', linewidth=0.5)
 
-ax.axhline(0, color='k')
+ax.axhline(1, color='k')
+ax.set_yscale('log')
 ax.axvline(0.33, color='k')
 ax.set_xlabel('simplicity')
-ax.set_ylabel('LSTM Rsq minus WRTDS Rsq')
+ax.set_ylabel('LSTM Rsq over WRTDS Rsq')
 fig.show()
 dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
 plt.savefig(os.path.join(dirPaper, 'fourDim'))
