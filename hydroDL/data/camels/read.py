@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from hydroDL import kPath
 import json
-__all__ = ['readStreamflow', 'readForcing', 'readAttr']
+__all__ = ['readStreamflow', 'readForcing', 'readAttr', 'siteNoLst']
 
 # hard code time length
 dirDB = os.path.join(kPath.dirData, 'camels')
@@ -25,6 +25,11 @@ def readInfo():
     dfInfo = pd.read_csv(gageFile, sep='\t', header=None, names=dictHead.keys(),
                          skiprows=1, dtype=dictHead)
     return dfInfo.set_index('usgsId')
+
+
+def siteNoLst():
+    dfInfo = readInfo()
+    return dfInfo.index.tolist()
 
 
 def readStreamflow(siteNo, *, dfInfo=None):
