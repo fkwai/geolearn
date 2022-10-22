@@ -4,11 +4,6 @@ from hydroDL import kPath
 import os
 import pandas as pd
 
-fileSampleFull = os.path.join(kPath.dirData, 'USGS',
-                              'inventory', 'usgsSampleCodeFull.csv')
-samplePdfFull = pd.read_csv(fileSampleFull, dtype=str).set_index('parm_cd')
-sampleFull = list(samplePdfFull.index)
-sampleFull.remove('00060')
 
 dictLabel = {
     'CO2': r'$\mathrm{CO_2}$',

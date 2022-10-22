@@ -25,6 +25,16 @@ else:
     codePdf = None
 
 
+fileSampleFull = os.path.join(kPath.dirData, 'USGS',
+                              'inventory', 'usgsSampleCodeFull.csv')
+if os.path.exists(fileSampleFull):
+    samplePdfFull = pd.read_csv(fileSampleFull, dtype=str).set_index('parm_cd')
+    sampleFull = list(samplePdfFull.index)
+    sampleFull.remove('00060')
+else:
+    sampleFull = None
+
+
 codeLstWQ = ['00010', '00095', '00300', '00400', '00405', '00410',
              '00440', '00600', '00605', '00618', '00660', '00665',
              '00681', '00915', '00925', '00930', '00935', '00940',
