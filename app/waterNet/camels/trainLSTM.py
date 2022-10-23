@@ -12,8 +12,8 @@ mtdXC = camels.extractVarMtd(varXC)
 varYC = None
 mtdYC = None
 
-# trainLst = ['B05', 'WY8095']
-trainLst = ['WY8095']
+trainLst = ['B05', 'WY8095']
+# trainLst = ['WY8095']
 dataLst = ['camelsN', 'camelsD', 'camelsM']
 rho = 365
 for dataName in dataLst:
@@ -26,4 +26,4 @@ for dataName in dataLst:
                                      mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
         # basinFull.trainModel(outName)
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-        slurm.submitJobGPU(outName, cmdP.format(outName), nH=24)
+        slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
