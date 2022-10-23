@@ -17,12 +17,12 @@ testSet = 'A05'
 dataLst = ['camelsN', 'camelsD', 'camelsM']
 rho = 365
 # for dataName in dataLst:
-dataName = 'camelsN'
+dataName = 'camelsD'
 outName = '{}-{}'.format(dataName, trainSet)
 dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
-                             trainSet=trainSet,nIterEp=20,
+                             trainSet=trainSet,
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
-                             nEpoch=1000, batchSize=[rho, 100],
+                             nEpoch=100, saveEpoch=10, batchSize=[rho, 100],
                              mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
 basinFull.trainModel(outName)
 # cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
