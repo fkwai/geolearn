@@ -157,17 +157,16 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
     lossEpLst = list()
     t0 = time.time()
     model.train()
-    model.zero_grad()
     if logFile is not None:
         log = open(logFile, 'a')
     for iEp in range(1, nEp + 1):
         lossEp = 0
         t0 = time.time()
-        # somehow the first iteration always failed
         for iIter in range(nIterEp):
             xT, yT = subsetRandom(
                 dataLst, batchSize, sizeLst,
                 opt=optBatch, wS=wS, wT=wT)
+            model.zero_grad()
             yP = model(xT)
             if type(lossFun) is crit.RmseLoss2D:
                 loss = lossFun(yP, yT[-1, :, :])
@@ -179,8 +178,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
             lossEp = lossEp + loss.item()
             # except:
             #     print('iteration Failed: iter {} ep {}'.format(iIter, iEp+cEp))
-        lossEp = lossEp / nIterEp
-        model.zero_grad()
+        lossEp = lossEp / nIterEp        
         ct = time.time() - t0
         logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp+cEp, lossEp, ct)
         print(logStr, flush=True)

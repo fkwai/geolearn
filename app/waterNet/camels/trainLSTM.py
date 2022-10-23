@@ -20,7 +20,7 @@ for dataName in dataLst:
     dataName = 'camelsN'
     outName = '{}-{}'.format(dataName, trainSet)
     dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
-                                 trainSet=trainSet, nIterEp=100,
+                                 trainSet=trainSet, nIterEp=100,optBatch='Random',
                                  varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                                  nEpoch=2000, batchSize=[rho, 100],
                                  mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)

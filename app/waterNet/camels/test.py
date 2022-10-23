@@ -20,7 +20,7 @@ rho = 365
 dataName = 'camelsD'
 outName = '{}-{}'.format(dataName, trainSet)
 dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
-                             trainSet=trainSet,
+                             trainSet=trainSet, optBatch='Random',
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                              nEpoch=100, saveEpoch=10, batchSize=[rho, 100],
                              mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
