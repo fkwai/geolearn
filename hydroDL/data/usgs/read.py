@@ -16,7 +16,7 @@ from hydroDL import kPath
 
 
 __all__ = ['readSample', 'readStreamflow',
-           'readUsgsText', 'removeFlag', 'codePdf']
+           'readUsgsText', 'removeFlag', 'codePdf', 'sampleFull']
 
 fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
 if os.path.exists(fileCode):

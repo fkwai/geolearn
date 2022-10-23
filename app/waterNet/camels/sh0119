@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -p gpu
+#SBATCH -G 1
+#SBATCH --job-name=wnRef0110
+#SBATCH --output=/scratch/users/kuaifang/jobs/wnRef0110.out
+#SBATCH --error=/scratch/users/kuaifang/jobs/wnRef0110.err
+#SBATCH --time=12:0:0
+#SBATCH --mem=32000
+#SBATCH --qos=normal
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=kuaifang@stanford.edu
+source /home/users/kuaifang/envs/pytorch/bin/activate
+python /home/users/kuaifang/GitHUB/geolearn/app/waterNet/camels/train-0110.py 

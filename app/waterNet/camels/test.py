@@ -18,7 +18,7 @@ dataLst = ['camelsN', 'camelsD', 'camelsM']
 rho = 365
 # for dataName in dataLst:
 dataName = 'camelsD'
-outName = '{}-{}'.format(dataName, trainSet)
+outName = '{}-{}'.format(dataName, 'WY8095')
 dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
                              trainSet=trainSet, optBatch='Random',
                              varX=varX, varY=varY, varXC=varXC, varYC=varYC,
