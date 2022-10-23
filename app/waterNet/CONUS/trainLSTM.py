@@ -1,7 +1,7 @@
 from hydroDL import kPath
 from hydroDL.data import gageII, gridMET, dbBasin
 from hydroDL.master import slurm
-from hydroDL.master import basinFull,slurm
+from hydroDL.master import basinFull, slurm
 
 for dataName in ['QN90ref', 'QN90']:
     varX = gridMET.varLst
@@ -22,6 +22,6 @@ for dataName in ['QN90ref', 'QN90']:
                                  varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                                  nEpoch=1000, batchSize=[rho, 100], nIterEp=10,
                                  mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
-    basinFull.trainModel(outName)
+    # basinFull.trainModel(outName)
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
     slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
