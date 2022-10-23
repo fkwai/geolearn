@@ -17,13 +17,6 @@ testSet = 'A05'
 dataLst = ['camelsN', 'camelsD', 'camelsM']
 rho = 365
 # for dataName in dataLst:
-dataName = 'camelsD'
-outName = '{}-{}'.format(dataName, 'WY8095')
-dictP = basinFull.wrapMaster(outName=outName, dataName=dataName,
-                             trainSet=trainSet, optBatch='Random',
-                             varX=varX, varY=varY, varXC=varXC, varYC=varYC,
-                             nEpoch=100, saveEpoch=10, batchSize=[rho, 100],
-                             mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
-basinFull.trainModel(outName)
-# cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-# slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
+dataName = 'camelsN'
+DF = dbBasin.DataFrameBasin(dataName)
+DF.readSubset('WY8095')

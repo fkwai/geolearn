@@ -28,6 +28,6 @@ for opt, dataName in zip(optLst, dataLst):
 
 for dataName in dataLst:
     DF = dbBasin.DataFrameBasin(dataName)
-    DF.saveSubset('WY8095', sd='1980-10-01', ed='1995-09-31')
-    DF.saveSubset('WY9510', sd='1995-10-01', ed='2010-09-31')
+    DF.saveSubset('WY8095', sd='1980-10-01', ed='1995-09-30')
+    DF.saveSubset('WY9510', sd='1995-10-01', ed='2010-09-30')
 

@@ -12,7 +12,8 @@ mtdXC = camels.extractVarMtd(varXC)
 varYC = None
 mtdYC = None
 
-trainLst = ['B05', 'WY8095']
+# trainLst = ['B05', 'WY8095']
+trainLst = ['WY8095']
 dataLst = ['camelsN', 'camelsD', 'camelsM']
 rho = 365
 for dataName in dataLst:

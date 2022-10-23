@@ -9,7 +9,7 @@ from hydroDL.master import basinFull
 from hydroDL.model import trainBasin
 import numpy as np
 
-dataName = 'camelsM'
+dataName = 'camelsN'
 trainSet = 'B05'
 testSet = 'A05'
 dataLst = ['camelsN', 'camelsD', 'camelsM']
@@ -18,7 +18,7 @@ dataLst = ['camelsN', 'camelsD', 'camelsM']
 DF = dbBasin.DataFrameBasin(dataName)
 outName = '{}-{}'.format(dataName, trainSet)
 yL, ycL = basinFull.testModel(
-    outName, DF=DF, testSet=testSet, reTest=True, ep=100)
+    outName, DF=DF, testSet=testSet, reTest=True, ep=300)
 
 Q = DF.extractSubset(DF.q, subsetName=testSet)
 y = Q[:, :, 1]
