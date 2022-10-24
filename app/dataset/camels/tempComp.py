@@ -39,7 +39,8 @@ ax.plot(dfF1.index, dfF1['prcp'], '--*r', label='nldas')
 ax.plot(dfF2.index, dfF2['prcp'], '--*g', label='maurer')
 ax.plot(dfF3.index, dfF3['prcp'], '--*b', label='daymet')
 ax.legend()
-# ax.set_xlim([t2dt(20000101), t2dt(20040101)])
+ax.set_xlim([t2dt(20000101), t2dt(20040101)])
+ax.set_yscale('log')
 fig.show()
 
 

@@ -28,8 +28,8 @@ varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 
 # train
-trainSet = 'WYB09'
-testSet = 'WYA09'
+trainSet = 'WY8095'
+testSet = 'WY9510'
 DM1 = dbBasin.DataModelBasin(
     DF, subset=trainSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC)
 DM1.trans(mtdX=mtdX, mtdXC=mtdXC)

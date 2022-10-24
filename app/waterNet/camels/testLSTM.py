@@ -11,19 +11,31 @@ import numpy as np
 from hydroDL import utils
 
 # LSTM
-dataName = 'camelsD'
+dataLst = ['camelsN', 'camelsD', 'camelsM']
+labLst = ['NLDAS', 'dayMet', 'Maurer']
 trainSet = 'WY8095'
 testSet = 'WY9510'
-DF = dbBasin.DataFrameBasin(dataName)
-outName = '{}-{}'.format(dataName, trainSet)
-yL, ycL = basinFull.testModel(
-    outName, DF=DF, testSet=testSet, reTest=True, ep=500, batchSize=100)
+yLst = list()
+for dataName in dataLst:
+    DF = dbBasin.DataFrameBasin(dataName)
+    outName = '{}-{}'.format(dataName, trainSet)
+    yL, ycL = basinFull.testModel(
+        outName, DF=DF, testSet=testSet, reTest=True, ep=500, batchSize=100)
+    yLst.append(yL)
 
 Q = DF.extractSubset(DF.q, subsetName=testSet)
 y = Q[:, :, 1]
 
-nash2 = utils.stat.calNash(yL[:, :, 0], y)
-corr2 = utils.stat.calCorr(yL[:, :, 0], y)
+nashLst = list()
+corrLst = list()
+for yL in yLst:
+    nash = utils.stat.calNash(yL[:, :, 0], y)
+    corr = utils.stat.calCorr(yL[:, :, 0], y)
+    nashLst.append(nashLst)
+    corrLst.append(corrLst)
 
-np.median(nash2)
-np.median(corr2)
+
+fig, axes = figplot.boxPlot(
+    [nashLst, corrLst], label1=['nash', 'corr'], 
+    label2=['NLDAS', 'dayMet', 'Maurer'])
+fig.show()

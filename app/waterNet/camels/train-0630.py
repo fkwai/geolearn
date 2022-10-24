@@ -28,8 +28,8 @@ varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 
 # train
-trainSet = 'WYB09'
-testSet = 'WYA09'
+trainSet = 'WY8095'
+testSet = 'WY9510'
 DM1 = dbBasin.DataModelBasin(
     DF, subset=trainSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC)
 DM1.trans(mtdX=mtdX, mtdXC=mtdXC)
@@ -102,7 +102,7 @@ for ep in range(1, 1001):
         lossLst.append(loss.item())
     if ep % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wn0119-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wn0630-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
 lossFile = os.path.join(saveDir, 'loss-{}'.format('wn0119'))

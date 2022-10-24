@@ -3,11 +3,6 @@ import os
 import pandas as pd
 from hydroDL import kPath, utils
 
-"""
-instead of saving time series by rho, save the full time series here.
-f and q will be saved in full matirx
-c will saved in sparse matrix
-"""
 
 # all site
 fileSiteAll = os.path.join(kPath.dirData, 'USGS', 'inventory', 'siteNoLst')
