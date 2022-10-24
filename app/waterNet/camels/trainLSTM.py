@@ -1,7 +1,7 @@
 from hydroDL import kPath
 from hydroDL.data import dbBasin, camels
 from hydroDL.master import basinFull, slurm
-
+import os
 
 varX = camels.varF
 mtdX = camels.extractVarMtd(varX)
@@ -25,5 +25,8 @@ for dataName in dataLst:
                                      nEpoch=1000, batchSize=[rho, 100],
                                      mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
         # basinFull.trainModel(outName)
-        cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-        slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
+        fileTemp = os.path.join(
+            basinFull.nameFolder(outName), 'modelState_ep100')
+        if not os.path.exists(fileTemp):
+            cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
+            slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)

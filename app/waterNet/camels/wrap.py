@@ -19,11 +19,11 @@ dfInfo = camels.dfInfo
 optLst = ['nldas', 'daymet', 'maurer']
 dataLst = ['camelsN', 'camelsD', 'camelsM']
 
-for opt, dataName in zip(optLst, dataLst):
-    dbBasin.io.wrapDataCamels(dataName, optF=opt)
-    DF = dbBasin.DataFrameBasin(dataName)
-    DF.saveSubset('B05', sd='1980-01-01', ed='2004-12-31')
-    DF.saveSubset('A05', sd='2005-01-01', ed='2014-12-31')
+# for opt, dataName in zip(optLst, dataLst):
+#     dbBasin.io.wrapDataCamels(dataName, optF=opt)
+#     DF = dbBasin.DataFrameBasin(dataName)
+#     DF.saveSubset('B05', sd='1980-01-01', ed='2004-12-31')
+#     DF.saveSubset('A05', sd='2005-01-01', ed='2014-12-31')
 
 
 for dataName in dataLst:
