@@ -1,3 +1,4 @@
+from hydroDL.data.cmip import download
 import os
 from hydroDL import kPath
 from hydroDL.data import cmip
@@ -10,10 +11,9 @@ for m in mLst:
         fileName = '{}-{}'.format(m, lab)
         urlFile = os.path.join(
             kPath.dirCode, 'app', 'data', 'cmip', 'urlFile', fileName)
-        codePath = os.path.join(kPath.dirCode, 'data', 'cmip', 'download.py')
+        codePath = os.path.join(kPath.dirCode, 'hydroDL',
+                                'data', 'cmip', 'download.py')
+        outFolder = os.path.join(kPath.dirRaw, 'CMIP6')
+        # cmip.download.byUrlFile(urlFile, outFolder)
         cmdLine = 'python {} -F {}'.format(codePath, urlFile)
         slurm.submitJob(fileName, cmdLine, nH=2, nM=16)
-# urlFile = os.path.join(
-#     kPath.dirCode, 'app', 'data', 'cmip', 'urlFile', 'temp')
-# outFolder = os.path.join(kPath.dirRaw, 'CMIP6')
-# cmip.download.byUrlFile(urlFile, outFolder)
