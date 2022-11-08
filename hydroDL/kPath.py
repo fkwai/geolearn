@@ -27,6 +27,7 @@ if hostName == 'AW-m17':
     os.environ[
         'PROJ_LIB'] = r'C:\Users\geofk\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
     dirData = r'C:\Users\geofk\work\database'
+    dirRaw = r'C:\Users\geofk\work\dataRaw'
     dirWQ = r'C:\Users\geofk\work\waterQuality'
     dirCode = r'C:\Users\geofk\work\GitHUB\geolearn'
     # dirWQ = r'C:\Users\geofk\work\example\waterQuality'
@@ -40,6 +41,7 @@ elif hostName[:4] == 'icme':
 elif hostName[:2] == 'sh':
     host = 'sherlock'
     dirData = r'/scratch/users/kuaifang/Data/'
+    dirRaw = r'/scratch/users/kuaifang/DataRaw/'
     dirWQ = r'/scratch/users/kuaifang/waterQuality/'
     dirJob = r'/scratch/users/kuaifang/jobs/'
     dirCode = r'/home/users/kuaifang/GitHUB/geolearn'

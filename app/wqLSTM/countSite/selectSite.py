@@ -1,7 +1,8 @@
 import importlib
+from hydroDL.data.gridMet import gridMET
 from hydroDL.post import axplot, figplot
 from hydroDL import kPath, utils
-from hydroDL.data import gageII, usgs, gridMET, dbBasin
+from hydroDL.data import gageII, usgs, dbBasin
 import pandas as pd
 import numpy as np
 import os
