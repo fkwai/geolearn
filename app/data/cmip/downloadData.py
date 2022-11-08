@@ -12,4 +12,8 @@ for m in mLst:
             kPath.dirCode, 'app', 'data', 'cmip', 'urlFile', fileName)
         codePath = os.path.join(kPath.dirCode, 'data', 'cmip', 'download.py')
         cmdLine = 'python {} -F {}'.format(codePath, urlFile)
-        slurm.submitJob(fileName, cmdLine)
+        slurm.submitJob(fileName, cmdLine, nH=2, nM=16)
+# urlFile = os.path.join(
+#     kPath.dirCode, 'app', 'data', 'cmip', 'urlFile', 'temp')
+# outFolder = os.path.join(kPath.dirRaw, 'CMIP6')
+# cmip.download.byUrlFile(urlFile, outFolder)

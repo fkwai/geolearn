@@ -5,7 +5,7 @@ import os
 import argparse
 
 
-def byUrlFile(urlFile, outFolder):
+def byUrlFile(urlFile, outFolder=os.path.join(kPath.dirRaw, 'CMIP6')):
     print('downloading {}'.format(urlFile), flush=True)
     with open(urlFile) as f:
         urlLst = f.read().splitlines()

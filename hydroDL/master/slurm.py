@@ -11,8 +11,9 @@ def submitJob(jobName, cmdLine, nH=8, nM=16):
         fh.writelines('#SBATCH --error={}.err\n'.format(jobFile))
         fh.writelines('#SBATCH --time={}:0:0\n'.format(nH))
         fh.writelines('#SBATCH --mem={}000\n'.format(nM))
-        fh.writelines('#SBATCH --qos=normal\n')
-        fh.writelines('#SBATCH --mail-type=ALL\n')
+        # fh.writelines('#SBATCH --qos=normal\n')
+        fh.writelines('#SBATCH --qos=owners\n')
+        fh.writelines('#SBATCH --mail-type=ALL\n')        
         fh.writelines('#SBATCH --mail-user=kuaifang@stanford.edu\n')
         if kPath.host == 'icme':
             fh.writelines('source activate pytorch\n')
