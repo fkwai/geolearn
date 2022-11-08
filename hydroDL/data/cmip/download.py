@@ -1,11 +1,12 @@
 import urllib
+import urllib.request
 import time
 from hydroDL import kPath
 import os
 import argparse
 
 
-def byUrlFile(urlFile, outFolder=os.path.join(kPath.dirRaw, 'CMIP6')):
+def byUrlFile(urlFile, outFolder):
     print('downloading {}'.format(urlFile), flush=True)
     with open(urlFile) as f:
         urlLst = f.read().splitlines()
