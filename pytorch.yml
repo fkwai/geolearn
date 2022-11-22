@@ -1,0 +1,15 @@
+name: pytorch
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - numpy
+  - scipy 
+  - matplotlib
+  - scikit-learn 
+  - statsmodels
+  - cartopy
+  - pytorch==1.8.0 
+  - torchvision==0.9.0 
+  - torchaudio==0.8.0 
+  - cudatoolkit=11.1

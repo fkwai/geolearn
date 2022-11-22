@@ -14,6 +14,6 @@ for m in mLst:
         codePath = os.path.join(kPath.dirCode, 'hydroDL',
                                 'data', 'cmip', 'download.py')
         outFolder = os.path.join(kPath.dirRaw, 'CMIP6')
-        # cmip.download.byUrlFile(urlFile, outFolder)
-        cmdLine = 'python {} -F {}'.format(codePath, urlFile)
-        slurm.submitJob(fileName, cmdLine, nH=2, nM=16)
+        cmip.download.byUrlFile(urlFile, outFolder)
+        # cmdLine = 'python {} -F {}'.format(codePath, urlFile)
+        # slurm.submitJob(fileName, cmdLine, nH=2, nM=16)

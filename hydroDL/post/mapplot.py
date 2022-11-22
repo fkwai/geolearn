@@ -14,11 +14,12 @@ gsM = gridspec.GridSpec(1, 1)
 mapplot.mapPoint(fig, gs, lat, lon, data)
 
 '''
+extentCONUS = [-125, -65, 25, 50]
 
 
 def mapPoint(fig, gs, lat, lon, data,
              vRange=None, cmap='jet', s=30, marker='o',
-             cb=True, centerZero=False):
+             cb=True, centerZero=False, extent=extentCONUS):
     if np.isnan(data).all():
         print('all nan in data')
         return
@@ -28,13 +29,36 @@ def mapPoint(fig, gs, lat, lon, data,
         vmin, vmax = vRange
 
     ax = fig.add_subplot(gs, projection=ccrs.PlateCarree())
-    ax.set_extent([-125, -65, 25, 50], crs=ccrs.PlateCarree())
+    ax.set_extent(extent, crs=ccrs.PlateCarree())
     ax.coastlines(resolution='auto', color='k')
     ind = np.where(~np.isnan(data))[0]
     cs = ax.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
                     s=s, marker=marker, vmin=vmin, vmax=vmax)
     if cb is True:
         plt.colorbar(cs, orientation='vertical')
+    return ax
+
+
+def mapGrid(fig, gs, lat, lon, data,
+            vRange=None, cmap='jet', s=30, marker='o',
+            cb=True, centerZero=False, extent=extentCONUS,
+            cbOri='vertical'):
+    if np.isnan(data).all():
+        print('all nan in data')
+        return
+    if vRange is None:
+        vmin, vmax = utils.vRange(data, centerZero=centerZero)
+    else:
+        vmin, vmax = vRange
+
+    ax = fig.add_subplot(gs, projection=ccrs.PlateCarree())
+    if extent is not None:
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+    ax.coastlines(resolution='auto', color='k')
+    cm = ax.pcolormesh(lon, lat, data,  vmin=vmin, vmax=vmax,
+                       transform=ccrs.PlateCarree())
+    if cb is True:
+        plt.colorbar(cm, orientation=cbOri)
     return ax
 
 
@@ -67,25 +91,4 @@ def mapPointClass(ax, lat, lon, data,
     ax.legend()
     return mm
 
-
-def mapGrid(ax, lat, lon, data, vRange=None, cmap='jet'):
-    if np.isnan(data).all():
-        print('all nan in data')
-        return
-    if vRange is None:
-        vmin = np.percentile(data[~np.isnan(data)], 10)
-        vmax = np.percentile(data[~np.isnan(data)], 90)
-    else:
-        vmin, vmax = vRange
-    mm = basemap.Basemap(llcrnrlat=25, urcrnrlat=50,
-                         llcrnrlon=-125, urcrnrlon=-65,
-                         projection='cyl', resolution='c', ax=ax)
-    mm.drawcoastlines()
-    mm.drawcountries(linestyle='dashed')
-    mm.drawstates(linestyle='dashed', linewidth=0.5)
-    x, y = mm(lon, lat)
-    xx, yy = np.meshgrid(x, y)
-    cs = mm.pcolormesh(xx, yy, data, cmap=cmap, vmin=vmin, vmax=vmax)
-    mm.colorbar(cs, location='bottom', pad='5%')
-    return mm
 '''

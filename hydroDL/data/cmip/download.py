@@ -6,16 +6,17 @@ import os
 import argparse
 
 
-def byUrlFile(urlFile, outFolder):
+def byUrlFile(urlFile, outFolder, re=False):
     print('downloading {}'.format(urlFile), flush=True)
     with open(urlFile) as f:
         urlLst = f.read().splitlines()
     for url in urlLst:
-        t0 = time.time()
         fileName = url.split('/')[-1]
         outFile = os.path.join(outFolder, fileName)
-        urllib.request.urlretrieve(url, outFile)
-        print('{} {}'.format(fileName, t0-time.time()), flush=True)
+        if re is True or not os.path.exists(outFile):
+            t0 = time.time()
+            urllib.request.urlretrieve(url, outFile)
+            print('{} {}'.format(fileName, t0-time.time()), flush=True)
 
 
 if __name__ == '__main__':

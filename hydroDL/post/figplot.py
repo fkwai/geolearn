@@ -7,7 +7,18 @@ from hydroDL import utils
 import matplotlib.gridspec as gridspec
 
 
-def clickMap(funcMap, funcPoint):
+def findPoint(xClick, yClick, xLoc, yLoc):
+    # WARN determine if grid, problematic for square grid
+    if len(xLoc) == len(yLoc):
+        iP = np.nanargmin(np.sqrt((xClick - xLoc)**2 + (yClick - yLoc)**2))
+    else:
+        iX = np.nanargmin(np.abs(xClick - xLoc))
+        iY = np.nanargmin(np.abs(yClick - yLoc))
+        iP = (iY, iX)
+    return iP
+
+
+def clickMap(funcMap, funcPoint, cSize=1):
     # funcMap - overall design and map plot
     # funcPoint - how to plot point given axes and index of point
     figM, axM, figP, axP, xLoc, yLoc = funcMap()
@@ -20,12 +31,17 @@ def clickMap(funcMap, funcPoint):
         if xClick is None or yClick is None:
             print('click on map plz')
             return
-        iP = np.nanargmin(np.sqrt((xClick - xLoc)**2 + (yClick - yLoc)**2))
+        iP = findPoint(xClick, yClick, xLoc, yLoc)
         for ax in axM.flatten():
-            # for ax in temp:
             [p.remove() for p in reversed(ax.patches)]
-            circle = plt.Circle([xLoc[iP], yLoc[iP]], 1,
-                                color='black', fill=False)
+            if len(iP) == 1:
+                xc = xLoc[iP]
+                yc = yLoc[iP]
+            else:
+                xc = xLoc[iP[1]]
+                yc = yLoc[iP[0]]
+            circle = plt.Circle(
+                [xc, yc], cSize, color='black', fill=False)
             ax.add_patch(circle)
         if type(axP) is not np.ndarray:
             axP.clear()
@@ -43,6 +59,7 @@ def clickMap(funcMap, funcPoint):
 
 
 def clickMulti(funcM, funcP, funcT=None, circleSize=None):
+    # multi scatter actually
     figM, axM, figP, axP, xMat, yMat, labelLst = funcM()
     if type(axM) is not np.ndarray:
         axM = np.array([axM])
@@ -59,7 +76,7 @@ def clickMulti(funcM, funcP, funcT=None, circleSize=None):
         iM = labelLst.index(label)
         xx = xMat[:, iM]
         yy = yMat[:, iM]
-        iP = np.nanargmin(np.sqrt((xClick - xx)**2 + (yClick - yy)**2))
+        iP = findPoint(xClick, yClick, xx, yy)
         for k, (ax, labelT) in enumerate(zip(axM.flatten(), labelLst)):
             [p.remove() for p in reversed(ax.patches)]
             xc = xMat[iP, k]
@@ -77,6 +94,38 @@ def clickMulti(funcM, funcP, funcT=None, circleSize=None):
         if funcT is not None:
             title = funcT(iP, iM)
             figP.suptitle(title)
+        figM.canvas.draw()
+        figP.canvas.draw()
+    figM.canvas.mpl_connect('button_press_event',
+                            lambda event: onclick(event))
+    figM.show()
+    figP.show()
+    return figM, figP
+
+
+def clickMultiMap(funcM, funcP, circleSize=1, color='k'):
+    # multi scatter actually
+    figM, axM, figP, axP, xLst, yLst = funcM()
+    if type(axM) is not np.ndarray:
+        axM = np.array([axM])
+
+    def onclick(event):
+        xClick = event.xdata
+        yClick = event.ydata
+        for k, ax in enumerate(axM.flatten()):
+            [p.remove() for p in reversed(ax.patches)]
+            iY, iX = findPoint(xClick, yClick, xLst[k], yLst[k])
+            xc = xLst[k][iX]
+            yc = yLst[k][iY]
+            circle = plt.Circle([xc, yc], circleSize,
+                                color=color, fill=False)
+            ax.add_patch(circle)
+        if type(axP) is np.ndarray:
+            for ax in axP:
+                ax.clear()
+        else:
+            axP.clear()
+        funcP(axP, yClick, xClick)
         figM.canvas.draw()
         figP.canvas.draw()
     figM.canvas.mpl_connect('button_press_event',

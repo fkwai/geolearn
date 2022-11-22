@@ -1,0 +1,1 @@
+varVal = 'prcp,tmax,tmin'

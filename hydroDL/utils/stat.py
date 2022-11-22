@@ -117,3 +117,19 @@ def calPercent(x, p, rank=True):
         vmin = np.nanmin(x)
         vmax = np.nanmax(x)
         return (vmax-vmin)*p+vmin
+
+
+def gridCorrT(gridX, gridY):
+    # grid in [...,nt]
+    nt = gridX.shape[-1]
+    xm = np.nanmean(gridX, axis=-1)
+    ym = np.nanmean(gridY, axis=-1)
+    gridXM = np.repeat(xm[..., np.newaxis], nt, axis=-1)
+    gridYM = np.repeat(ym[..., np.newaxis], nt, axis=-1)
+    dX = gridX-gridXM
+    dY = gridY-gridYM
+    cov = np.nansum(dX*dY, axis=-1)
+    sX = np.sqrt(np.nansum(dX*dX, axis=-1))
+    sY = np.sqrt(np.nansum(dY*dY, axis=-1))
+    r = cov/(sX*sY)
+    return r

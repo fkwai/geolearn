@@ -193,3 +193,6 @@ def titleInner(ax, titleStr, offset=0.1, top=True):
     else:
         _ = ax.text(.5, offset, titleStr, horizontalalignment='center',
                     transform=ax.transAxes)
+
+
+  

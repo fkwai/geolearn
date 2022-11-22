@@ -4,6 +4,11 @@ import collections
 print('loading package hydroDL')
 
 
+hostName = socket.gethostname()
+if hostName == 'AW-m17':
+    os.environ['PROJ_LIB'] = r'C:\Users\geofk\anaconda3\envs\pytorch\Library\share\proj'
+
+
 def initPath():
     """initial shortcut for some import paths
     """
@@ -26,7 +31,7 @@ def initPath():
         dirResult = os.path.join(os.path.sep, 'D:', 'rnnSMAP',
                                  'Result_SMAPgrid')
         os.environ[
-            'PROJ_LIB'] = r'C:\Users\geofk\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
+            'PROJ_LIB'] = r'C:\Users\geofk\anaconda3\envs\pytorch\Library\share\proj'
 
     pathSMAP = collections.OrderedDict(
         DB_L3_Global=os.path.join(dirDB, 'Daily_L3'),
@@ -45,4 +50,4 @@ def initPath():
     return pathSMAP, pathCamels
 
 
-pathSMAP, pathCamels = initPath()
+# pathSMAP, pathCamels = initPath()

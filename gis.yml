@@ -1,0 +1,12 @@
+name: gis
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - scipy 
+  - matplotlib
+  - netcdf4
+  - esmpy
+  - xarray
+  - scipy
+  - conda-forge::cartopy

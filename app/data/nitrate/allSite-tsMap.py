@@ -38,7 +38,7 @@ cs = usgs.codePdf.loc[code]['shortName']
 
 
 def funcM():
-    figM = plt.figure(figsize=(8,4))
+    figM = plt.figure(figsize=(8, 4))
     gsM = gridspec.GridSpec(1, 1)
     axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, matR, s=16, cb=True)
     axM.set_title('median {} [mg/l]'.format(cs))

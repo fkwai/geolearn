@@ -2,9 +2,11 @@
 :dataset: db.dataset is a container of data
 """
 
+extentCONUS = [-125, -65, 25, 50]
+
 
 class Dataframe(object):
-    
+
     def getGeo(self, ndigit=8):
         # return self.lat, self.lon
         pass
