@@ -1,11 +1,9 @@
 
+import hydroDL.utils.gis.cube
 import hydroDL.utils.ts
 from scipy import interpolate
 import numpy as np
-import netCDF4
 from hydroDL import kPath
-import os
-import pandas as pd
 import hydroDL.data.cmip.io
 import hydroDL.data.gridMET.io
 import importlib
@@ -26,9 +24,9 @@ varG = 'pr'
 varC = 'pr'
 func = 'nansum'
 
-varG = 'tmmx'
-varC = 'tasmax'
-func = 'nanmean'
+# varG = 'tmmx'
+# varC = 'tasmax'
+# func = 'nanmean'
 
 
 # read gridMet
@@ -57,14 +55,20 @@ t2 = tG2 if np.array_equal(tG2, tC2) else Exception('t2')
 
 
 # interpolate
-latM, lonM = np.meshgrid(latC, lonC, indexing='ij')
-interp = interpolate.RegularGridInterpolator(
-    (latG[::-1], lonG), gridF1[::-1, :, :], bounds_error=False, fill_value=np.nan)
-grid1 = interp((latM, lonM))
-interp = interpolate.RegularGridInterpolator(
-    (latG[::-1], lonG), gridF2[::-1, :, :], bounds_error=False, fill_value=np.nan)
-grid2 = interp((latM, lonM))
+# latM, lonM = np.meshgrid(latC, lonC, indexing='ij')
+# interp = interpolate.RegularGridInterpolator(
+#     (latG[::-1], lonG), gridF1[::-1, :, :], bounds_error=False, fill_value=np.nan)
+# grid1 = interp((latM, lonM))
+# interp = interpolate.RegularGridInterpolator(
+#     (latG[::-1], lonG), gridF2[::-1, :, :], bounds_error=False, fill_value=np.nan)
+# grid2 = interp((latM, lonM))
+intp = hydroDL.utils.gis.cube.getIntp(latG, lonG, latC, lonC)
+grid1 = hydroDL.utils.gis.cube.intpCube(gridF1, latG, lonG, intp)
+grid2 = hydroDL.utils.gis.cube.intpCube(gridF2, latG, lonG, intp)
 
+# same time
+# grid1T = hydroDL.utils.gis.cube.intp(gridF1, latG, lonG, data1, latC, lonC)
+# grid2T = hydroDL.utils.gis.cube.intp(gridF2, latG, lonG, data2, latC, lonC)
 
 fig = plt.figure()
 gs = gridspec.GridSpec(1, 2)
@@ -92,10 +96,9 @@ gridA2, _ = hydroDL.utils.ts.data2Climate(grid2, t2, func=func)
 dataA2, _ = hydroDL.utils.ts.data2Climate(data2, t2, func=func)
 rA1 = hydroDL.utils.stat.gridCorrT(gridA1, dataA1)
 rA2 = hydroDL.utils.stat.gridCorrT(gridA2, dataA2)
-
+vR = [-0.5, 0.5]
 
 fig = plt.figure(figsize=(16, 4))
-vR = [0.5, 1]
 gs = gridspec.GridSpec(1, 2)
 ax = mapplot.mapGrid(fig, gs[0, 0], latC, lonC,
                      rF1, vRange=vR, cbOri='horizontal')
@@ -106,7 +109,6 @@ fig.show()
 
 
 fig = plt.figure(figsize=(16, 4))
-vR = [0.5, 1]
 gs = gridspec.GridSpec(1, 2)
 ax = mapplot.mapGrid(fig, gs[0, 0], latC, lonC,
                      rM1, vRange=vR, cbOri='horizontal')
@@ -117,7 +119,6 @@ fig.show()
 
 
 fig = plt.figure(figsize=(16, 4))
-vR = [0.5, 1]
 gs = gridspec.GridSpec(1, 2)
 ax = mapplot.mapGrid(fig, gs[0, 0], latC, lonC,
                      rA1, vRange=vR, cbOri='horizontal')
