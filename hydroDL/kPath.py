@@ -41,8 +41,8 @@ elif hostName[:4] == 'icme':
     dirJob = r'/home/kuaifang/jobs/'
 elif hostName[:2] == 'sh':
     host = 'sherlock'
-    dirData = r'/scratch/users/kuaifang/Data/'
-    dirRaw = r'/scratch/users/kuaifang/DataRaw/'
-    dirWQ = r'/scratch/users/kuaifang/waterQuality/'
+    dirData = r'/oak/stanford/schools/ees/kmaher/Kuai/Data/'
+    dirRaw = r'/oak/stanford/schools/ees/kmaher/'
+    dirWQ = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/'
     dirJob = r'/scratch/users/kuaifang/jobs/'
     dirCode = r'/home/users/kuaifang/GitHUB/geolearn'
