@@ -32,7 +32,7 @@ if __name__ == '__main__':
     emask = args.emask
 
 workDir = kPath.dirWQ
-dataFolder = os.path.join(kPath.dirData, 'gridMET')
+dataFolder = os.path.join(kPath.dirUsgsForcing, 'gridMET')
 maskFolder = os.path.join(kPath.dirData, 'USGS', 'gridMET', 'mask')
 rawFolder = os.path.join(kPath.dirData, 'USGS', 'gridMET', 'raw')
 
@@ -40,14 +40,14 @@ siteNoLstAll = [f[:-4]
                 for f in sorted(os.listdir(maskFolder)) if f[-3:] == 'npy']
 siteNoLst = siteNoLstAll[smask:emask]
 
+
 def readMask(siteNoLst, data):
     nanMaskAll = np.isnan(data)
     nanMask = nanMaskAll.any(axis=0)
     maskLst = list()
-    k = 0
     t0 = time.time()
     for k, siteNo in enumerate(siteNoLst):
-        mask = np.load(os.path.join(maskFolder, siteNo+'.npy'))
+        mask = np.load(os.path.join(maskFolder, siteNo+'.npz'))
         mask[nanMask] = 0
         mask = mask/np.sum(mask)
         maskLst.append(mask)
@@ -73,8 +73,7 @@ for yr in range(syr, eyr):
     m2 = maskAll.reshape(-1, ns)
     out = np.matmul(m1, m2)
     df = pd.DataFrame(data=out, index=t, columns=siteNoLst)
-    fileName = os.path.join(rawFolder, '{}_{}_{}_{}.csv'.format(var, yr, smask, emask))
+    fileName = os.path.join(
+        rawFolder, '{}_{}_{}_{}.csv'.format(var, yr, smask, emask))
     df.to_csv(fileName)
     print('finished year {} time {}'.format(yr, time.time()-t0))
-
-

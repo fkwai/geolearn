@@ -166,7 +166,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
             xT, yT = subsetRandom(
                 dataLst, batchSize, sizeLst,
                 opt=optBatch, wS=wS, wT=wT)
-            model.zero_grad()
+            model.zero_grad(set_to_none=True)
             yP = model(xT)
             if type(lossFun) is crit.RmseLoss2D:
                 loss = lossFun(yP, yT[-1, :, :])

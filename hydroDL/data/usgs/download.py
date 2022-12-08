@@ -1,4 +1,4 @@
-import urllib
+import urllib.request
 __all__ = ['downloadDaily', 'downloadSample']
 
 

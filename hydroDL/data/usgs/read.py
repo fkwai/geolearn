@@ -141,7 +141,7 @@ def readStreamflow(siteNo, startDate=None, csv=True):
         pandas.DataFrame -- [description]
     """
     if csv is False:
-        fileQ = os.path.join(kPath.dirData, 'USGS', 'streamflow', siteNo)
+        fileQ = os.path.join(kPath.dirRaw, 'USGS', 'streamflow', siteNo)
         dfQ = readUsgsText(fileQ, dataType='streamflow')
         if dfQ is None:
             return None
@@ -156,8 +156,7 @@ def readStreamflow(siteNo, startDate=None, csv=True):
         else:
             dfQ = dfQ[['date', '00060_00003']]
     else:
-        fileQ = os.path.join(kPath.dirData, 'USGS',
-                             'streamflow', 'csv', siteNo)
+        fileQ = os.path.join(kPath.dirUSGS, 'streamflow', 'csv', siteNo)
         dfQ = pd.read_csv(fileQ)
         dfQ['date'] = pd.to_datetime(dfQ['date'], format='%Y-%m-%d')
         if startDate is not None:
