@@ -96,10 +96,10 @@ saveFile = os.path.join(kPath.dirData, 'USGS', 'errLst.csv')
 df.to_csv(saveFile, index=False, header=False)
 # NO ERROR SITES!!
 
-# gageII shapefile
-fileCountC = os.path.join(invDir, 'count_NWIS_sample_gageII')
-tabC = pd.read_csv(fileCountC, dtype={'site_no': str})
-tabC = tabC.set_index('site_no')
-siteNoLst = tabC.index.tolist()
-outShapeFile = os.path.join(usgsDir, 'basins', 'basinAll.shp')
-gageII.extractBasins(siteNoLst, outShapeFile)
+# # gageII shapefile
+# fileCountC = os.path.join(invDir, 'count_NWIS_sample_gageII')
+# tabC = pd.read_csv(fileCountC, dtype={'site_no': str})
+# tabC = tabC.set_index('site_no')
+# siteNoLst = tabC.index.tolist()
+# outShapeFile = os.path.join(usgsDir, 'basins', 'basinAll.shp')
+# gageII.extractBasins(siteNoLst, outShapeFile)

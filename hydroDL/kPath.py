@@ -42,7 +42,13 @@ elif hostName[:4] == 'icme':
 elif hostName[:2] == 'sh':
     host = 'sherlock'
     dirData = r'/oak/stanford/schools/ees/kmaher/Kuai/Data/'
-    dirRaw = r'/oak/stanford/schools/ees/kmaher/'
+    dirRaw = r'/oak/stanford/schools/ees/kmaher/DataRaw/'
     dirWQ = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/'
     dirJob = r'/scratch/users/kuaifang/jobs/'
     dirCode = r'/home/users/kuaifang/GitHUB/geolearn'
+elif hostName == 'mini':
+    host = 'mini'
+    dirData = r'/home/kuai/work/Data/'
+    dirRaw = r'/sda/DataRaw/'
+    dirWQ = r'/home/kuai/work//waterQuality/'    
+    dirCode = r'/home/kuai/GitHUB/geolearn'
