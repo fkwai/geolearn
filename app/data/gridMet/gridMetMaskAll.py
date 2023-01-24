@@ -1,12 +1,12 @@
 import os
 import time
 import numpy as np
-from hydroDL.data import gridMET
+import hydroDL.data.gridMET.io as io
 from hydroDL import kPath
 
 # save all mask to one file
 ncFile = os.path.join(kPath.dirData, 'gridMET', 'etr_1979.nc')
-data = gridMET.readNcData(ncFile)
+data = io.readNcData(ncFile)
 nanMaskAll = np.isnan(data)
 nanMask = nanMaskAll.any(axis=0)
 
