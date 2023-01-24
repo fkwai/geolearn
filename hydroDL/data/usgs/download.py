@@ -4,7 +4,7 @@ __all__ = ['downloadDaily', 'downloadSample']
 
 def downloadDaily(siteNo, nwisCode, state, saveFile):
     strCode = ''.join(['cb_{}=on&'.format(x) for x in nwisCode])
-    fmtUrl = 'https://waterdata.usgs.gov/{}/nwis/dv?{}&format=rdb&site_no={}&referred_module=wq&period=&begin_date=1900-01-01&end_date=2020-02-02'
+    fmtUrl = 'https://waterdata.usgs.gov/{}/nwis/dv?{}&format=rdb&site_no={}&period=&begin_date=1900-01-01'
     strUrl = fmtUrl.format(state, strCode, siteNo)
     urllib.request.urlretrieve(strUrl, saveFile)
     return strUrl
