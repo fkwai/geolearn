@@ -1,0 +1,23 @@
+1673253210639	geckodriver	INFO	Listening on 127.0.0.1:55639
+1673253211105	mozrunner::runner	INFO	Running command: "/snap/firefox/current/firefox.launcher" "--marionette" "--remote-debugging-port" "39821" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "/tmp/rust_mozprofileb4Fv7I"
+Gtk-Message: 00:33:31.119: Not loading module "atk-bridge": The functionality is provided by GTK natively. Please try to not load it.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+ATTENTION: default value of option mesa_glthread overridden by environment.
+amdgpu: os_same_file_description couldn't determine if two DRM fds reference the same file description.
+If they do, bad things may happen!
+1673253211519	Marionette	INFO	Marionette enabled
+1673253211522	Marionette	INFO	Listening on port 32771
+ATTENTION: default value of option mesa_glthread overridden by environment.
+Read port: 32771
+[Parent 81323, Main Thread] WARNING: g_dbus_proxy_new: assertion 'G_IS_DBUS_CONNECTION (connection)' failed: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:167
+
+(firefox:81323): GLib-GIO-CRITICAL **: 00:33:31.621: g_dbus_proxy_new: assertion 'G_IS_DBUS_CONNECTION (connection)' failed
+[Parent 81323, Main Thread] WARNING: g_dbus_proxy_new: assertion 'G_IS_DBUS_CONNECTION (connection)' failed: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:167
+
+(firefox:81323): GLib-GIO-CRITICAL **: 00:33:31.621: g_dbus_proxy_new: assertion 'G_IS_DBUS_CONNECTION (connection)' failed
+WebDriver BiDi listening on ws://127.0.0.1:39821
+1673253211645	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at /tmp/rust_mozprofileb4Fv7I/search.json.mozlz4", (void 0)))
+DevTools listening on ws://127.0.0.1:39821/devtools/browser/9c01e597-5176-444a-a49f-5013bc8339a0
+1673253261742	Marionette	INFO	Stopped listening on port 32771
+console.warn: TopSitesFeed: Failed to fetch data from Contile server: NetworkError when attempting to fetch resource.
