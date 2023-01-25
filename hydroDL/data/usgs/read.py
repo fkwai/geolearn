@@ -58,46 +58,7 @@ def readSample(siteNo, codeLst=None, startDate=None, csv=False, flag=0):
     if codeLst is None:
         csv = False
     if csv is False:
-        fileC = os.path.join(kPath.dirData, 'USGS', 'sample', siteNo)
-        dfC = readUsgsText(fileC, dataType='sample')
-        if startDate is not None:
-            dfC = dfC[dfC['date'] >= startDate]
-        dfC = dfC.set_index('date')
-        if codeLst is None:
-            codeSel = [x for x in dfC.columns.tolist() if x.isdigit()]
-        else:
-            codeSel = list(set(codeLst) & set(dfC.columns.tolist()))
-        codeSel_cd = [code + '_cd' for code in codeSel]
-        dfC = dfC[codeSel+codeSel_cd].dropna(how='all')
-        if len(dfC) == 0:
-            return None if flag == 0 else (None, None)
-        dfC1 = dfC[codeSel]
-        dfC2 = dfC[codeSel_cd]
-        bx = dfC1.notna().values & dfC2.isna().values
-        dfC2.values[bx] = 'x'
-        dfC2 = dfC2.fillna('')
-        bDup = dfC.index.duplicated(keep=False)
-        indUni = dfC.index[~bDup]
-        indDup = dfC.index[bDup].unique()
-        indAll = dfC.index.unique()
-        dfO1 = pd.DataFrame(index=indAll, columns=codeSel)
-        dfO2 = pd.DataFrame(index=indAll, columns=codeSel_cd)
-        dfO1.loc[indUni] = dfC1.loc[indUni][codeSel]
-        dfO2.loc[indUni] = dfC2.loc[indUni][codeSel_cd]
-        for ind in indDup:
-            temp1 = dfC1.loc[ind]
-            temp2 = dfC2.loc[ind]
-            for code in codeSel:
-                if 'x' in temp2[code+'_cd'].tolist():
-                    dfO1.loc[ind][code] = temp1[code][temp2[code+'_cd']
-                                                      == 'x'].mean()
-                    if temp2[code+'_cd'].tolist().count('x') > 1:
-                        dfO2.loc[ind][code+'_cd'] = 'X'
-                    else:
-                        dfO2.loc[ind][code+'_cd'] = 'x'
-                else:
-                    dfO1.loc[ind][code] = temp1[code].mean()
-                    dfO2.loc[ind][code+'_cd'] = ''.join(temp2[code+'_cd'])
+        dfO1,dfO2=readSampleRaw(siteNo,codeLst=codeLst,startDate=startDate)
     else:
         dirC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csv')
         fileC1 = os.path.join(dirC, siteNo)
@@ -129,7 +90,51 @@ def readSample(siteNo, codeLst=None, startDate=None, csv=False, flag=0):
     else:
         return dfO1.reindex(columns=codeLst)
 
-
+def readSampleRaw(siteNo,codeLst=None,startDate=None):
+    fileC = os.path.join(kPath.dirRaw, 'USGS', 'sample', siteNo)
+    dfC = readUsgsText(fileC, dataType='sample')
+    if dfC is None:
+        return(None,None)
+    if startDate is not None:
+        dfC = dfC[dfC['date'] >= startDate]
+    dfC = dfC.set_index('date')
+    if codeLst is None:
+        codeSel = [x for x in dfC.columns.tolist() if x.isdigit()]
+    else:
+        codeSel = list(set(codeLst) & set(dfC.columns.tolist()))
+    codeSel_cd = [code + '_cd' for code in codeSel]
+    dfC = dfC[codeSel+codeSel_cd].dropna(how='all')
+    if len(dfC) == 0:
+        return None if flag == 0 else (None, None)
+    dfC1 = dfC[codeSel]
+    dfC2 = dfC[codeSel_cd]
+    bx = dfC1.notna().values & dfC2.isna().values
+    dfC2.values[bx] = 'x'
+    dfC2 = dfC2.fillna('')
+    bDup = dfC.index.duplicated(keep=False)
+    indUni = dfC.index[~bDup]
+    indDup = dfC.index[bDup].unique()
+    indAll = dfC.index.unique()
+    dfO1 = pd.DataFrame(index=indAll, columns=codeSel)
+    dfO2 = pd.DataFrame(index=indAll, columns=codeSel_cd)
+    dfO1.loc[indUni] = dfC1.loc[indUni][codeSel]
+    dfO2.loc[indUni] = dfC2.loc[indUni][codeSel_cd]
+    for ind in indDup:
+        temp1 = dfC1.loc[ind]
+        temp2 = dfC2.loc[ind]
+        for code in codeSel:
+            if 'x' in temp2[code+'_cd'].tolist():
+                dfO1.loc[ind][code] = temp1[code][temp2[code+'_cd']
+                                                  == 'x'].mean()
+                if temp2[code+'_cd'].tolist().count('x') > 1:
+                    dfO2.loc[ind][code+'_cd'] = 'X'
+                else:
+                    dfO2.loc[ind][code+'_cd'] = 'x'
+            else:
+                dfO1.loc[ind][code] = temp1[code].mean()
+                dfO2.loc[ind][code+'_cd'] = ''.join(temp2[code+'_cd'])
+    return dfO1, dfO2
+    
 def readStreamflow(siteNo, startDate=None, csv=True):
     """read USGS streamflow (00060) data, did:
     1. fill missing average observation (00060_00003) by available max and min.
@@ -181,7 +186,7 @@ def readUsgsText(fileName, dataType=None):
         typeLst = f.readline()[:-1].split('\t')
     if k == 0:
         return None
-
+    # performance warning. ignore it as only run once
     pdf = pd.read_table(fileName, header=k, dtype=str).drop(0)
     for i, x in enumerate(typeLst):
         if x[-1] == 'n':
