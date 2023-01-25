@@ -43,7 +43,7 @@ elif hostName[:2] == 'sh':
     host = 'sherlock'
     dirData = r'/oak/stanford/schools/ees/kmaher/Kuai/Data/'
     dirRaw = r'/oak/stanford/schools/ees/kmaher/DataRaw/'
-    dirUsgs = r'/oak/stanford/schools/ees/kmaher/Kuai/USGS'
+    dirUsgs = r'/oak/stanford/schools/ees/kmaher/Kuai/USGS/'
     dirWQ = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/'
     dirJob = r'/scratch/users/kuaifang/jobs/'
     dirCode = r'/home/users/kuaifang/GitHUB/geolearn'
