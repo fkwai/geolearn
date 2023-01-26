@@ -50,6 +50,7 @@ elif hostName[:2] == 'sh':
 elif hostName == 'mini':
     host = 'mini'
     dirData = r'/home/kuai/work/Data/'
-    dirRaw = r'/sda/DataRaw/'
+    dirUsgs = r'/home/kuai/work/dbUSGS/'
+    dirRaw = r'/mnt/sda/dataRaw/'
     dirWQ = r'/home/kuai/work/waterQuality/'    
     dirCode = r'/home/kuai/GitHUB/geolearn'
