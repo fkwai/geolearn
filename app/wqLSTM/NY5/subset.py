@@ -19,8 +19,8 @@ random.Random(seed).shuffle(indT)
 for k in range(5):
     t1 = np.sort(t[indT[::5]])
     t2 = np.setdiff1d(t, t1)
-    DF.createSubset('pkRT5_b{}'.format(k), dateLst=t1)
-    DF.createSubset('rmRT5_b{}'.format(k), dateLst=t2)
+    DF.createSubset('pkRT5b{}'.format(k), dateLst=t1)
+    DF.createSubset('rmRT5b{}'.format(k), dateLst=t2)
 
 
 # pick by year
@@ -31,16 +31,16 @@ for k in range(5):
     yrIn = yrAry[yrAry % 5 == k]
     t1 = dbBasin.func.pickByYear(DF.t, yrIn)
     t2 = dbBasin.func.pickByYear(DF.t, yrIn, pick=False)
-    DF.createSubset('pkYr5_b{}'.format(k), dateLst=t1)
-    DF.createSubset('rmYr5_b{}'.format(k), dateLst=t2)
+    DF.createSubset('pkYr5b{}'.format(k), dateLst=t1)
+    DF.createSubset('rmYr5b{}'.format(k), dateLst=t2)
 
 # before after 2010
 DF.saveSubset('B15', ed='2015-12-31')
 DF.saveSubset('A15', sd='2016-01-01')
 
 # examine test/train rate
-trainLst = ['rmYr5_b0', 'rmRT5_b0', 'B15']
-testLst = ['pkYr5_b0', 'pkRT5_b0', 'A15']
+trainLst = ['rmYr5b0', 'rmRT5b0', 'B15']
+testLst = ['pkYr5b0', 'pkRT5b0', 'A15']
 df = pd.DataFrame(index=DF.varC, columns=trainLst)
 aLst = list()
 bLst = list()
