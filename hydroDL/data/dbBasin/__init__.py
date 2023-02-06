@@ -1,6 +1,6 @@
 import pickle
 from hydroDL.data import Dataframe, DataModel
-from hydroDL.data import transform, gageII, usgs,  gridMET, ntn, GLASS
+from hydroDL.data import transform, gageII, usgs, gridMET, ntn, GLASS
 from hydroDL import kPath
 import time
 import os
@@ -15,7 +15,7 @@ from .func import *
 from sklearn.preprocessing import QuantileTransformer, PowerTransformer
 
 
-class DataFrameBasin():
+class DataFrameBasin:
     def __init__(self, caseName):
         self.caseName = caseName
         t0 = time.time()
@@ -26,7 +26,7 @@ class DataFrameBasin():
         self.f = npz['f']
         self.c = npz['c']
         self.g = npz['g']
-        with open(os.path.join(saveFolder, 'info')+'.json', 'r') as fp:
+        with open(os.path.join(saveFolder, 'info') + '.json', 'r') as fp:
             dictData = json.load(fp)
         self.name = dictData['name']
         self.varQ = dictData['varQ']
@@ -41,27 +41,58 @@ class DataFrameBasin():
         self.subset = self.loadSubset()
         self.addT()
         self.dataProvision()
-        print('loading data {} {:.2f}s'.format(caseName, time.time()-t0))
+        print('loading data {} {:.2f}s'.format(caseName, time.time() - t0))
 
     @classmethod
-    def new(cls, caseName, siteNoLst, nFill=5, freq='D',
-            sdStr='1979-01-01', edStr='2019-12-31',
-            varF=gridMET.varLst+ntn.varLst+GLASS.varLst,
-            varQ=usgs.varQ, varG=gageII.varLst, varC=usgs.varC):
+    def new(
+        cls,
+        caseName,
+        siteNoLst,
+        nFill=5,
+        freq='D',
+        sdStr='1979-01-01',
+        edStr='2019-12-31',
+        varF=gridMET.varLst + ntn.varLst + GLASS.varLst,
+        varQ=usgs.varQ,
+        varG=gageII.varLst,
+        varC=usgs.varC,
+        rmFlag='True',
+    ):
         print('creating data class')
         siteNoLst.sort()
-        io.wrapData(caseName, siteNoLst, nFill=nFill,
-                    freq=freq, sdStr=sdStr, edStr=edStr,
-                    varF=varF, varQ=varQ, varG=varG, varC=varC)
+        io.wrapData(
+            caseName,
+            siteNoLst,
+            nFill=nFill,
+            freq=freq,
+            sdStr=sdStr,
+            edStr=edStr,
+            varF=varF,
+            varQ=varQ,
+            varG=varG,
+            varC=varC,
+            rmFlag=rmFlag
+        )
         io.initSubset(caseName)
         wqData = cls(caseName)
         return wqData
 
     def saveAs(self, caseName):
-        io.saveDataFrame(caseName, c=self.c, q=self.q, f=self.f, g=self.g,
-                         varC=self.varC, varQ=self.varQ, varF=self.varF, varG=self.varG,
-                         sdStr=str(self.sd), edStr=str(self.ed), freq=self.freq,
-                         siteNoLst=self.siteNoLst)
+        io.saveDataFrame(
+            caseName,
+            c=self.c,
+            q=self.q,
+            f=self.f,
+            g=self.g,
+            varC=self.varC,
+            varQ=self.varQ,
+            varF=self.varF,
+            varG=self.varG,
+            sdStr=str(self.sd),
+            edStr=str(self.ed),
+            freq=self.freq,
+            siteNoLst=self.siteNoLst,
+        )
         # save subset
         saveFolder = io.caseFolder(caseName)
         subsetFile = os.path.join(saveFolder, 'subset.json')
@@ -84,15 +115,14 @@ class DataFrameBasin():
 
     def getGeo(self, subsetName=None):
         siteNoLst = self.getSite(subsetName=subsetName)
-        dfCrd = gageII.readData(
-            varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
+        dfCrd = gageII.readData(varLst=['LAT_GAGE', 'LNG_GAGE'], siteNoLst=siteNoLst)
         lat = dfCrd['LAT_GAGE'].values
         lon = dfCrd['LNG_GAGE'].values
         return lat, lon
 
     def dataProvision(self):
         # set negtive Q to 0
-        bq = np.less(self.q, 0., where=~np.isnan(self.q))
+        bq = np.less(self.q, 0.0, where=~np.isnan(self.q))
         if np.any(bq):
             print('Find negative Q, filled zero')
             self.q[bq] = 0
@@ -108,7 +138,7 @@ class DataFrameBasin():
                     temp.append(dataT[:, :, varT.index(var)])
         if len(temp) != len(varLst):
             raise Exception('Variable {} not found!'.format(var))
-        return (np.stack(temp, axis=2))
+        return np.stack(temp, axis=2)
 
     def extractC(self, varLst):
         temp = list()
@@ -120,14 +150,13 @@ class DataFrameBasin():
                     temp.append(dataT[:, varT.index(var)])
         if len(temp) != len(varLst):
             raise Exception('Variable {} not found!'.format(var))
-        return (np.stack(temp, axis=1))
+        return np.stack(temp, axis=1)
 
     def saveSubset(self, name, sd=None, ed=None, siteNoLst=None, mask=False):
         subsetFile = os.path.join(self.saveFolder, 'subset.json')
         dictSubset = self.loadSubset()
         if type(mask) is np.ndarray:
-            maskFile = os.path.join(
-                self.saveFolder, 'mask', name+'.npy')
+            maskFile = os.path.join(self.saveFolder, 'mask', name + '.npy')
             np.save(maskFile, mask)
             mask = True
         dictNew = {name: dict(sd=sd, ed=ed, siteNoLst=siteNoLst, mask=mask)}
@@ -166,7 +195,7 @@ class DataFrameBasin():
         if sd < self.t[0] or ed > self.t[-1]:
             raise Exception('Wrong sd or ed in subset')
         indT1 = np.where(self.t == sd)[0][0]
-        indT2 = np.where(self.t == ed)[0][0]+1
+        indT2 = np.where(self.t == ed)[0][0] + 1
         # site
         if subset['siteNoLst'] is None:
             indS = np.arange(len(self.siteNoLst))
@@ -174,8 +203,7 @@ class DataFrameBasin():
             indS = [self.siteNoLst.index(s) for s in subset['siteNoLst']]
         # mask
         if subset['mask'] is True:
-            maskFile = os.path.join(
-                self.saveFolder, 'mask', name+'.npy')
+            maskFile = os.path.join(self.saveFolder, 'mask', name + '.npy')
             mask = np.load(maskFile)
         else:
             mask = False
@@ -187,7 +215,11 @@ class DataFrameBasin():
             indT1, indT2, indS, mask = self.readSubset(subsetName)
         else:
             indT1, indT2, indS, mask = (
-                kw['indT1'], kw['indT2'], kw['indS'], kw['mask'])
+                kw['indT1'],
+                kw['indT2'],
+                kw['indS'],
+                kw['mask'],
+            )
         if data is None:
             out = None
         elif data.ndim == 3:
@@ -204,7 +236,7 @@ class DataFrameBasin():
         matT, varTLst = io.calT(t)
         matTE = np.repeat(matT[:, None, :], ns, axis=1)
         self.f = np.concatenate([self.f, matTE], axis=2)
-        self.varF = self.varF+varTLst
+        self.varF = self.varF + varTLst
 
 
 class DataModelBasin(DataModel):
@@ -216,8 +248,13 @@ class DataModelBasin(DataModel):
             DF = dataFrame
         else:
             raise Exception('unknown DataFrame')
-        dictD = dict(subset='all', varX=DF.varF+DF.varQ,
-                     varXC=DF.varG, varY=DF.varC, varYC=None)
+        dictD = dict(
+            subset='all',
+            varX=DF.varF + DF.varQ,
+            varXC=DF.varG,
+            varY=DF.varC,
+            varYC=None,
+        )
         dictD.update(kw)
         self.caseName = DF.caseName
         self.dictD = dictD
@@ -253,8 +290,9 @@ class DataModelBasin(DataModel):
                 # mtd = io.extractVarMtd(var)
                 mtd = None if var is None else ['skip' for x in var]
             statLst.append(dict(mtdLst=mtd))
-        self.transIn(statX=statLst[0], statXC=statLst[1],
-                     statY=statLst[2], statYC=statLst[3])
+        self.transIn(
+            statX=statLst[0], statXC=statLst[1], statY=statLst[2], statYC=statLst[3]
+        )
 
     def transIn(self, *, statX, statXC, statY, statYC):
         if self.X is not None:
@@ -267,8 +305,7 @@ class DataModelBasin(DataModel):
             self.yc, self.statYC = transform.transIn(self.YC, **statYC)
 
     def borrowStat(self, DM: DataModel):
-        self.transIn(statX=DM.statX, statXC=DM.statXC,
-                     statY=DM.statY, statYC=DM.statYC)
+        self.transIn(statX=DM.statX, statXC=DM.statXC, statY=DM.statY, statYC=DM.statYC)
 
     def getDataRaw(self):
         return self.X, self.XC, self.Y, self.YC
@@ -281,8 +318,8 @@ class DataModelBasin(DataModel):
 
     def saveStat(self, saveFolder):
         for s in self.strLst:
-            stat = getattr(self, 'stat'+s)
-            statFile = os.path.join(saveFolder, 'stat'+s)
+            stat = getattr(self, 'stat' + s)
+            statFile = os.path.join(saveFolder, 'stat' + s)
             with open(statFile, 'wb') as f:
                 pickle.dump(stat, f)
 
@@ -290,12 +327,13 @@ class DataModelBasin(DataModel):
         for s in self.strLst:
             dataRaw = getattr(self, s)
             if dataRaw is not None:
-                statFile = os.path.join(saveFolder, 'stat'+s)
+                statFile = os.path.join(saveFolder, 'stat' + s)
                 with open(statFile, 'rb') as f:
                     stat = pickle.load(f)
-                    setattr(self, 'stat'+s, stat)
-        self.transIn(statX=self.statX, statXC=self.statXC,
-                     statY=self.statY, statYC=self.statYC)
+                    setattr(self, 'stat' + s, stat)
+        self.transIn(
+            statX=self.statX, statXC=self.statXC, statY=self.statY, statYC=self.statYC
+        )
 
     def transOutY(self, yP):
         if yP.shape[-1] != 0:
