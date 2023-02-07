@@ -22,7 +22,7 @@ for label in labelLst:
         mtdYC = dbBasin.io.extractVarMtd(varYC)
         outName = '{}-{}-{}'.format(dataName, label, trainSet)
         dictP = basinFull.wrapMaster(outName=outName, dataName=dataName, trainSet=trainSet,
-                                     nEpoch=500, batchSize=[365, 100], 
+                                     nEpoch=500, batchSize=[365, 500], 
                                      varX=varX, varY=varY, varXC=varXC, varYC=varYC,
                                      mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
