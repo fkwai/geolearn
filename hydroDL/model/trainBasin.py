@@ -3,10 +3,12 @@ import torch
 import time
 from hydroDL.model import rnn, crit
 from hydroDL.data import transform
+import pickle
+from datetime import datetime
+import os
 
 
-def subsetRandom(dataLst, batchSize, sizeLst,
-                 opt='Random', wS=None, wT=None):
+def subsetRandom(dataLst, batchSize, sizeLst, opt='Random', wS=None, wT=None):
     """get a random subset of training data
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
@@ -26,30 +28,28 @@ def subsetRandom(dataLst, batchSize, sizeLst,
     [nx, nxc, ny, nyc, nt, ns] = sizeLst
     if opt == 'Random':
         iS = np.random.randint(0, ns, [nbatch])
-        iT = np.random.randint(0, nt-rho+1, [nbatch])
+        iT = np.random.randint(0, nt - rho + 1, [nbatch])
     elif opt == 'Weight':
         iS = np.random.choice(ns, nbatch, p=wS)
         iT = np.zeros(nbatch).astype(int)
         for k in range(nbatch):
-            iT[k] = np.random.choice(nt-rho+1, p=wT[:, iS[k]])
+            iT[k] = np.random.choice(nt - rho + 1, p=wT[:, iS[k]])
     xTemp = np.full([rho, nbatch, nx], np.nan)
     xcTemp = np.full([rho, nbatch, nxc], np.nan)
     yTemp = np.full([rho, nbatch, ny], np.nan)
     ycTemp = np.full([rho, nbatch, nyc], np.nan)
     if x is not None:
         for k in range(nbatch):
-            xTemp[:, k, :] = x[iT[k]:iT[k]+rho, iS[k], :]
+            xTemp[:, k, :] = x[iT[k] : iT[k] + rho, iS[k], :]
     if y is not None:
         for k in range(nbatch):
-            yTemp[:, k, :] = y[iT[k]:iT[k]+rho, iS[k], :]
+            yTemp[:, k, :] = y[iT[k] : iT[k] + rho, iS[k], :]
     if xc is not None:
         xcTemp = np.tile(xc[iS, :], [rho, 1, 1])
     if yc is not None:
         ycTemp[-1, :, :] = yc[iS, :]
-    xTensor = torch.from_numpy(np.concatenate(
-        [xTemp, xcTemp], axis=-1)).float()
-    yTensor = torch.from_numpy(np.concatenate(
-        [yTemp, ycTemp], axis=-1)).float()
+    xTensor = torch.from_numpy(np.concatenate([xTemp, xcTemp], axis=-1)).float()
+    yTensor = torch.from_numpy(np.concatenate([yTemp, ycTemp], axis=-1)).float()
     if torch.cuda.is_available():
         xTensor = xTensor.cuda()
         yTensor = yTensor.cuda()
@@ -92,7 +92,7 @@ def dealNaN(dataTup, optNaN):
     if len(rmLst) > 0:
         rmAry = np.concatenate(rmLst)
         for k in range(len(dataLst)):
-            dataLst[k] = np.delete(dataLst[k], rmAry, axis=dataLst[k].ndim-2)
+            dataLst[k] = np.delete(dataLst[k], rmAry, axis=dataLst[k].ndim - 2)
         print('nan found and removed')
     return dataLst
 
@@ -103,19 +103,31 @@ def batchWeight(matY, rho, nbatch, opt='obsDay'):
     if opt == 'obsDay':
         matD = np.any(matB, axis=2)
         filt = np.ones(rho, dtype=int)
-        countT = np.apply_along_axis(lambda m: np.convolve(
-            m, filt, mode='valid'), axis=0, arr=matD)
+        countT = np.apply_along_axis(
+            lambda m: np.convolve(m, filt, mode='valid'), axis=0, arr=matD
+        )
         nT = np.sum(countT, axis=0)
-        wS = nT/np.sum(countT)
-        wT = countT/nT
+        wS = nT / np.sum(countT)
+        wT = countT / nT
         wT[np.isnan(wT)] = 0
-        pr = np.mean(countT)*nbatch/np.sum(matD)
+        pr = np.mean(countT) * nbatch / np.sum(matD)
     return pr, wS, wT
 
 
-def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
-               nEp=100, cEp=0, logFile=None, optBatch='Random', nIterEp=None):
-    """[summary]    
+def trainModel(
+    dataLst,
+    model,
+    lossFun,
+    optim,
+    batchSize=[None, 100],
+    nEp=100,
+    cEp=0,
+    optBatch='Random',
+    nIterEp=None,
+    logFile=None,
+    outFolder=None,
+):
+    """[summary]
     Arguments:
         dataLst {list} --  see trainModel [x,xc,y,yc]
             x {np.array} -- input time series of size [nt,np,nx]
@@ -145,7 +157,7 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
 
     # training
     if optBatch == 'Random':
-        pr = nbatch*rho/ns/nt
+        pr = nbatch * rho / ns / nt
         wS = None
         wT = None
     elif optBatch == 'Weight':
@@ -164,8 +176,8 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
         t0 = time.time()
         for iIter in range(nIterEp):
             xT, yT = subsetRandom(
-                dataLst, batchSize, sizeLst,
-                opt=optBatch, wS=wS, wT=wT)
+                dataLst, batchSize, sizeLst, opt=optBatch, wS=wS, wT=wT
+            )
             model.zero_grad(set_to_none=True)
             yP = model(xT)
             if type(lossFun) is crit.RmseLoss2D:
@@ -173,14 +185,29 @@ def trainModel(dataLst, model, lossFun, optim, batchSize=[None, 100],
             else:
                 loss = lossFun(yP, yT)
             loss.backward()
+            # skip and debug nan grad
+            for name, param in model.named_parameters():
+                if torch.isnan(param.grad).any() or torch.isinf(param.grad).any():
+                    strTime = datetime.datetime.now().strftime('%m%d%H%M%S')
+                    fileName = 'debug{}-{}-{}'.format(iEp, iIter, strTime)
+                    if outFolder is None:
+                        filePath = fileName
+                    else:
+                        filePath = os.path.join(outFolder, fileName)
+                    print('nan in grad, skipped and see {}'.format(fileName))
+                    with open(filePath, 'wb') as handle:
+                        pickle.dump(
+                            dict(xT=xT, yT=yT, lossFun=lossFun, model=model), handle
+                        )
+                    model.zero_grad()
             # torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optim.step()
             lossEp = lossEp + loss.item()
             # except:
             #     print('iteration Failed: iter {} ep {}'.format(iIter, iEp+cEp))
-        lossEp = lossEp / nIterEp        
+        lossEp = lossEp / nIterEp
         ct = time.time() - t0
-        logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp+cEp, lossEp, ct)
+        logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp + cEp, lossEp, ct)
         print(logStr, flush=True)
         # log.write(logStr+'\n')
         print(logStr, file=log, flush=True)
@@ -200,12 +227,16 @@ def testModel(model, x, xc, ny=None, batchSize=100):
     if batchSize > ns:
         batchSize = ns
     for k in range(len(iS)):
-        print('batch: '+str(k))
+        print('batch: ' + str(k))
         if xc is not None:
-            xT = torch.from_numpy(np.concatenate(
-                [x[:, iS[k]:iE[k], :], np.tile(xc[iS[k]:iE[k], :], [nt, 1, 1])], axis=-1)).float()
+            xT = torch.from_numpy(
+                np.concatenate(
+                    [x[:, iS[k] : iE[k], :], np.tile(xc[iS[k] : iE[k], :], [nt, 1, 1])],
+                    axis=-1,
+                )
+            ).float()
         else:
-            xT = torch.from_numpy(x[:, iS[k]:iE[k], :]).float()
+            xT = torch.from_numpy(x[:, iS[k] : iE[k], :]).float()
         if torch.cuda.is_available():
             xT = xT.cuda()
             model = model.cuda()

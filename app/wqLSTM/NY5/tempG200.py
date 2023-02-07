@@ -19,8 +19,9 @@ outFolder = basinFull.nameFolder(outName)
 
 dictVar = {k: dictP[k] for k in ('varX', 'varXC', 'varY', 'varYC')}
 DM = dbBasin.DataModelBasin(DF, subset='all', **dictVar)
-dataTup = DM.getData()
 DM.loadStat(outFolder)
+dataTup = DM.getData()
+
 
 model = basinFull.defineModel(dataTup, dictP)
 model = basinFull.loadModelState(outName, 500, model)

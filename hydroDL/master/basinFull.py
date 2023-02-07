@@ -16,6 +16,8 @@ defaultMaster = dict(
     trainSet='all',
     outName=None,
     hiddenSize=256,
+    nLayer=1,
+    dropout=0.5,
     batchSize=[365, 500],
     nEpoch=500,
     saveEpoch=100,
@@ -93,7 +95,13 @@ def defineModel(dataTup, dictP):
             nx=nx + nxc, ny=ny + nyc, hiddenSize=dictP['hiddenSize']
         )
     elif dictP['modelName'] == 'LstmModel':
-        model = rnn.LstmModel(nx=nx + nxc, ny=ny + nyc, hiddenSize=dictP['hiddenSize'])
+        model = rnn.LstmModel(
+            nx=nx + nxc,
+            ny=ny + nyc,
+            hiddenSize=dictP['hiddenSize'],
+            nLayer=dictP['nLayer'],
+            dr=dictP['dropout']
+        )
     else:
         raise RuntimeError('Model not specified')
     return model
@@ -172,6 +180,7 @@ def trainModel(outName):
             logFile=logFile,
             optBatch=dictP['optBatch'],
             nIterEp=dictP['nIterEp'],
+            outFolder=outFolder
         )
         # save model
         saveModelState(outName, k + sEp, model, optim=optim)

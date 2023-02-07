@@ -12,7 +12,7 @@ def submitJob(jobName, cmdLine, nH=8, nM=16):
         fh.writelines('#SBATCH --time={}:0:0\n'.format(nH))
         fh.writelines('#SBATCH --mem={}000\n'.format(nM))
         # fh.writelines('#SBATCH --qos=normal\n')
-        fh.writelines('#SBATCH --partition=owners\n')
+        # fh.writelines('#SBATCH --partition=owners\n')
         fh.writelines('#SBATCH --mail-type=ALL\n')        
         fh.writelines('#SBATCH --mail-user=kuaifang@stanford.edu\n')
         if kPath.host == 'icme':
@@ -36,7 +36,7 @@ def submitJobGPU(jobName, cmdLine, nH=8, nM=16):
         fh.writelines('#SBATCH --time={}:0:0\n'.format(nH))
         fh.writelines('#SBATCH --mem={}000\n'.format(nM))
         fh.writelines('#SBATCH --qos=normal\n')
-        fh.writelines('#SBATCH --partition=owners\n')
+        # fh.writelines('#SBATCH --partition=owners\n')
         fh.writelines('#SBATCH --mail-type=ALL\n')
         fh.writelines('#SBATCH --mail-user=kuaifang@stanford.edu\n')
         if kPath.host == 'icme':
@@ -44,5 +44,7 @@ def submitJobGPU(jobName, cmdLine, nH=8, nM=16):
         elif kPath.host == 'sherlock':
             fh.writelines(
                 'source /home/users/kuaifang/envs/pytorch/bin/activate\n')
+        fh.writelines('hostname')
+        fh.writelines('nvidia-smi -L')
         fh.writelines(cmdLine)
     os.system('sbatch {}'.format(jobFile))
