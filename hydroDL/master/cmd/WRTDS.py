@@ -13,6 +13,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
     testSet = 'all'
     yW = WRTDS.testWRTDS(args.dataName, args.trainSet, testSet, usgs.varC)
-    dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
-    fileName = '{}-{}-{}'.format(args.dataName, args.trainSet, testSet)
-    np.savez_compressed(os.path.join(dirRoot, fileName), yW)
