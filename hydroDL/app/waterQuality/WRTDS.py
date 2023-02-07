@@ -41,6 +41,7 @@ def calWRTDS(
     codeLst=usgs.varC,
     reCal=False,
 ):
+    # legacy code
     dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-{}'.format(freq))
     dirOut = os.path.join(dirRoot, trainSet)
     saveName = os.path.join(dirOut, siteNo)
@@ -140,6 +141,9 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
     yOut = np.full([len(d2.t), len(d2.siteNoLst), len(varY)], np.nan)
     t0 = time.time()
     for indS, siteNo in enumerate(d2.siteNoLst):
+        siteFile=os.path.join(outFolder, siteNo)
+        if os.path.exists(siteFile):
+            continue
         for indC, code in enumerate(varY):
             print('{} {} {} {}'.format(indS, siteNo, code, time.time() - t0))
             y1 = d1.Y[:, indS, indC].copy()
@@ -172,9 +176,9 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
                 yOut[k, indS, indC] = yp
         # save a siteFile
         dfOut = pd.DataFrame(index=d2.t, columns=codeLst, data=yOut[:, indS, :])
-        dfOut.to_csv(os.path.join(outFolder, siteNo))
-        outFile = outFolder + '.npz'
-        np.savez_compressed(outFile, yOut)
+        dfOut.to_csv(siteFile)
+    # outFile = outFolder + '.npz'
+    # np.savez_compressed(outFile, yOut)
     return yOut
 
 

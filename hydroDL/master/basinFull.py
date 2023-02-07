@@ -12,15 +12,30 @@ from hydroDL.model import rnn, crit, trainBasin
 
 
 defaultMaster = dict(
-    dataName='test', trainSet='all', outName=None,
-    hiddenSize=256, batchSize=[365, 500],
-    nEpoch=500, saveEpoch=100, resumeEpoch=0,
-    optNaN=[1, 1, 0, 0], overwrite=True,
-    modelName='LstmModel', crit='RmseLoss', optim='AdaDelta',
-    varX=gridMET.varLst, varXC=gageII.varLst,
-    varY=['00060'], varYC=None, borrowStat=None,
-    optBatch='Weight', nIterEp=None,
-    mtdX=None, mtdY=None, mtdXC=None, mtdYC=None
+    dataName='test',
+    trainSet='all',
+    outName=None,
+    hiddenSize=256,
+    batchSize=[365, 500],
+    nEpoch=500,
+    saveEpoch=100,
+    resumeEpoch=0,
+    optNaN=[1, 1, 0, 0],
+    overwrite=True,
+    modelName='LstmModel',
+    crit='RmseLoss',
+    optim='AdaDelta',
+    varX=gridMET.varLst,
+    varXC=gageII.varLst,
+    varY=['00060'],
+    varYC=None,
+    borrowStat=None,
+    optBatch='Weight',
+    nIterEp=None,
+    mtdX=None,
+    mtdY=None,
+    mtdXC=None,
+    mtdYC=None,
 )
 
 
@@ -35,18 +50,18 @@ def wrapMaster(**kw):
     dictPar.update(kw)
     diff = list(set(dictPar) - set(defaultMaster))
     if len(diff) > 0:
-        raise Exception('parameters not understand: '+' '.join(diff))
+        raise Exception('parameters not understand: ' + ' '.join(diff))
 
     # create model folder
     if dictPar['outName'] is None:
-        dictPar['outName'] = dictPar['dataName']+'_'+dictPar['trainSet']
+        dictPar['outName'] = dictPar['dataName'] + '_' + dictPar['trainSet']
     outFolder = nameFolder(dictPar['outName'])
     if os.path.exists(outFolder):
         if dictPar['overwrite'] is False:
-            outName = outFolder+'_'+date.today().strftime("%Y%m%d")
+            outName = outFolder + '_' + date.today().strftime("%Y%m%d")
             outFolder = os.path.join(kPath.dirWQ, 'model', outName)
             if os.path.exists(outFolder):
-                print('overwrite in folder: '+outName)
+                print('overwrite in folder: ' + outName)
             else:
                 os.mkdir(outFolder)
             dictPar['outName'] = outName
@@ -70,15 +85,15 @@ def loadMaster(outName):
 def defineModel(dataTup, dictP):
     [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
     if dictP['crit'] == 'SigmaLoss':
-        ny = ny*2
-        nyc = nyc*2
+        ny = ny * 2
+        nyc = nyc * 2
     # define model
     if dictP['modelName'] == 'CudnnLSTM':
         model = rnn.CudnnLstmModel(
-            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
+            nx=nx + nxc, ny=ny + nyc, hiddenSize=dictP['hiddenSize']
+        )
     elif dictP['modelName'] == 'LstmModel':
-        model = rnn.LstmModel(
-            nx=nx+nxc, ny=ny+nyc, hiddenSize=dictP['hiddenSize'])
+        model = rnn.LstmModel(nx=nx + nxc, ny=ny + nyc, hiddenSize=dictP['hiddenSize'])
     else:
         raise RuntimeError('Model not specified')
     return model
@@ -87,7 +102,12 @@ def defineModel(dataTup, dictP):
 def loadModelState(outName, ep, model):
     outFolder = nameFolder(outName)
     modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
-    model.load_state_dict(torch.load(modelStateFile))
+    if torch.cuda.is_available():
+        model.load_state_dict(torch.load(modelStateFile))
+    else:
+        model.load_state_dict(
+            torch.load(modelStateFile, map_location=torch.device('cpu'))
+        )
     return model
 
 
@@ -106,13 +126,16 @@ def trainModel(outName):
 
     # load data
     DF = dbBasin.DataFrameBasin(dictP['dataName'])
-    dictVar = {k: dictP[k]
-               for k in ('varX', 'varXC', 'varY', 'varYC')}
+    dictVar = {k: dictP[k] for k in ('varX', 'varXC', 'varY', 'varYC')}
     DM = dbBasin.DataModelBasin(DF, subset=dictP['trainSet'], **dictVar)
     if dictP['borrowStat'] is not None:
         DM.loadStat(dictP['borrowStat'])
-    DM.trans(mtdX=dictP['mtdX'], mtdXC=dictP['mtdXC'],
-             mtdY=dictP['mtdY'], mtdYC=dictP['mtdYC'])
+    DM.trans(
+        mtdX=dictP['mtdX'],
+        mtdXC=dictP['mtdXC'],
+        mtdY=dictP['mtdY'],
+        mtdYC=dictP['mtdYC'],
+    )
     DM.saveStat(outFolder)
     dataTup = DM.getData()
     dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
@@ -139,19 +162,26 @@ def trainModel(outName):
         os.remove(logFile)
     for k in range(0, nEp, sEp):
         model, optim, lossEp = trainBasin.trainModel(
-            dataTup, model, lossFun, optim, batchSize=dictP['batchSize'],
-            nEp=sEp, cEp=k, logFile=logFile,
-            optBatch=dictP['optBatch'], nIterEp=dictP['nIterEp'])
+            dataTup,
+            model,
+            lossFun,
+            optim,
+            batchSize=dictP['batchSize'],
+            nEp=sEp,
+            cEp=k,
+            logFile=logFile,
+            optBatch=dictP['optBatch'],
+            nIterEp=dictP['nIterEp'],
+        )
         # save model
-        saveModelState(outName, k+sEp, model, optim=optim)
-        lossLst = lossLst+lossEp
+        saveModelState(outName, k + sEp, model, optim=optim)
+        lossLst = lossLst + lossEp
 
     lossFile = os.path.join(outFolder, 'loss.csv')
     pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
 
-def testModel(outName,  DF=None, testSet='all', ep=None,
-              reTest=False, batchSize=20):
+def testModel(outName, DF=None, testSet='all', ep=None, reTest=False, batchSize=20):
     # load master
     dictP = loadMaster(outName)
     if ep is None:
@@ -169,8 +199,7 @@ def testModel(outName,  DF=None, testSet='all', ep=None,
         # load test data
         if DF is None:
             DF = dbBasin.DataFrameBasin(dictP['dataName'])
-        dictVar = {k: dictP[k]
-                   for k in ('varX', 'varXC', 'varY', 'varYC')}
+        dictVar = {k: dictP[k] for k in ('varX', 'varXC', 'varY', 'varYC')}
         DM = dbBasin.DataModelBasin(DF, subset=testSet, **dictVar)
         DM.loadStat(outFolder)
         dataTup = DM.getData()
@@ -183,8 +212,7 @@ def testModel(outName,  DF=None, testSet='all', ep=None,
         xc = dataTup[1]
         ny = np.shape(dataTup[2])[2]
         # test model - point by point
-        yOut, ycOut = trainBasin.testModel(
-            model, x, xc, ny, batchSize=batchSize)
+        yOut, ycOut = trainBasin.testModel(model, x, xc, ny, batchSize=batchSize)
         yP = DM.transOutY(yOut)
         ycP = DM.transOutYC(ycOut)
         np.savez(testFile, yP=yP, ycP=ycP)

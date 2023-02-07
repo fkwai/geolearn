@@ -24,7 +24,7 @@ for label in labelLst:
         mtdXC = dbBasin.io.extractVarMtd(varXC)
         varYC = None
         mtdYC = dbBasin.io.extractVarMtd(varYC)
-        outName = '{}-{}-{}'.format(dataName, label, trainSet)
+        outName = 'test-{}-{}-{}'.format(dataName, label, trainSet)
         dictP = basinFull.wrapMaster(
             outName=outName,
             dataName=dataName,
@@ -39,8 +39,9 @@ for label in labelLst:
             mtdY=mtdY,
             mtdXC=mtdXC,
             mtdYC=mtdYC,
-            saveEpoch=20
+            saveEpoch=20,
+            nIterEp=2
         )
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-        slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-        # basinFull.trainModel(outName)
+        # slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+        basinFull.trainModel(outName)
