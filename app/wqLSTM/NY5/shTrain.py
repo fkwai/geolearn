@@ -30,7 +30,7 @@ for label in labelLst:
             dataName=dataName,
             trainSet=trainSet,
             nEpoch=500,
-            batchSize=[365, 500],
+            batchSize=[1000, 100],
             varX=varX,
             varY=varY,
             varXC=varXC,
@@ -39,8 +39,7 @@ for label in labelLst:
             mtdY=mtdY,
             mtdXC=mtdXC,
             mtdYC=mtdYC,
-            saveEpoch=20,
-            nIterEp=2
+            saveEpoch=20
         )
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
         slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
