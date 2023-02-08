@@ -44,7 +44,7 @@ def submitJobGPU(jobName, cmdLine, nH=8, nM=16):
         elif kPath.host == 'sherlock':
             fh.writelines(
                 'source /home/users/kuaifang/envs/pytorch/bin/activate\n')
-        fh.writelines('hostname')
-        fh.writelines('nvidia-smi -L')
+        fh.writelines('hostname\n')
+        fh.writelines('nvidia-smi -L\n')
         fh.writelines(cmdLine)
     os.system('sbatch {}'.format(jobFile))

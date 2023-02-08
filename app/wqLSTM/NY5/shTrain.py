@@ -24,7 +24,7 @@ for label in labelLst:
         mtdXC = dbBasin.io.extractVarMtd(varXC)
         varYC = None
         mtdYC = dbBasin.io.extractVarMtd(varYC)
-        outName = 'test-{}-{}-{}'.format(dataName, label, trainSet)
+        outName = '{}-{}-{}'.format(dataName, label, trainSet)
         dictP = basinFull.wrapMaster(
             outName=outName,
             dataName=dataName,
