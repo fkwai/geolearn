@@ -752,11 +752,12 @@ class LstmModel(torch.nn.Module):
         self.linearIn = torch.nn.Linear(nx, hiddenSize)
         self.lstm = torch.nn.LSTM(hiddenSize, hiddenSize, nLayer, dropout=dr)
         self.linearOut = torch.nn.Linear(hiddenSize, ny)
+        self.dropout=nn.Dropout(dr)
         self.gpu = 1
 
     def forward(self, x):
         x0 = self.relu(self.linearIn(x))
         y, (hn, cn) = self.lstm(x0)
-        out = self.linearOut(y)
+        out = self.linearOut(self.dropout(y))
         # out = y.mean(dim=2, keepdim=True)
         return out

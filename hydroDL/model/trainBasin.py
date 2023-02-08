@@ -188,7 +188,7 @@ def trainModel(
             # skip and debug nan grad
             for name, param in model.named_parameters():
                 if torch.isnan(param.grad).any() or torch.isinf(param.grad).any():
-                    strTime = datetime.datetime.now().strftime('%m%d%H%M%S')
+                    strTime = datetime.now().strftime('%m%d%H%M%S')
                     fileName = 'debug{}-{}-{}'.format(iEp, iIter, strTime)
                     if outFolder is None:
                         filePath = fileName
