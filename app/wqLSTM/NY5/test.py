@@ -19,13 +19,13 @@ labelLst = ['FT2QC', 'QFT2C', 'QT2C']
 trainLst = ['B15', 'rmYr5b0', 'rmRT5b0']
 testLst = ['A15', 'pkYr5b0', 'pkRT5b0']
 
-label='QT2C'
-trainSet='rmYr5b0'
-testSet='pkYr5b0'
+label='QFT2C'
+trainSet='B15'
+testSet='A15'
 
 
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
-ep=40
+ep=80
 DF = dbBasin.DataFrameBasin(dataName)
 
 dictMaster=basinFull.loadMaster(outName)
@@ -40,6 +40,23 @@ obs1 = DF.extractSubset(matObs, trainSet)
 obs2 = DF.extractSubset(matObs, testSet)
 corrL1 = utils.stat.calCorr(yP1, obs1)
 corrL2 = utils.stat.calCorr(yP2, obs2)
+
+# WRTDS
+# yW = WRTDS.testWRTDS(dataName, trainSet, testSet, codeLst)
+dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
+folderName = '{}-{}-{}'.format(dataName, trainSet, 'all')
+
+yWLst=list()
+for k,siteNo in enumerate(DF.siteNoLst):
+    print('reading {} {}'.format(k,siteNo))
+    fileName=os.path.join(dirWRTDS,folderName,siteNo)
+    dfW=pd.read_csv(fileName,index_col=0)
+    yWLst.append(dfW.values)
+yW=np.stack(yWLst,axis=-1).swapaxes(1,2)
+yW1 = DF.extractSubset(yW, trainSet)
+yW2 = DF.extractSubset(yW, testSet)
+corrW1 = utils.stat.calCorr(yW1, obs1)
+corrW2 = utils.stat.calCorr(yW2, obs2)
 
 # count
 matB = (~np.isnan(DF.c)).astype(int).astype(float)
@@ -59,7 +76,7 @@ dataPlot = list()
 for k in indPlot:
     code = varY[k]
     codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
-    dataPlot.append([corrL1[:, k], corrL2[:, k]])
+    dataPlot.append([corrW1[:, k], corrL1[:, k]])
 fig, axes = figplot.boxPlot(
     dataPlot, widths=0.5, figsize=(12, 4), label1=codeStrLst,yRange=[0,1])
 fig.show()

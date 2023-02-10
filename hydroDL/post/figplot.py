@@ -32,14 +32,17 @@ def clickMap(funcMap, funcPoint, cSize=1):
             print('click on map plz')
             return
         iP = findPoint(xClick, yClick, xLoc, yLoc)
+        print(iP)
         for ax in axM.flatten():
             [p.remove() for p in reversed(ax.patches)]
-            if len(iP) == 1:
-                xc = xLoc[iP]
-                yc = yLoc[iP]
-            else:
-                xc = xLoc[iP[1]]
-                yc = yLoc[iP[0]]
+            xc = xLoc[iP]
+            yc = yLoc[iP]
+            # if type(iP) is int:
+            #     xc = xLoc[iP]
+            #     yc = yLoc[iP]
+            # else:
+            #     xc = xLoc[iP[1]]
+            #     yc = yLoc[iP[0]]
             circle = plt.Circle(
                 [xc, yc], cSize, color='black', fill=False)
             ax.add_patch(circle)

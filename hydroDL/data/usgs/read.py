@@ -237,7 +237,12 @@ def readUsgsText(fileName, dataType=None):
         if x[-1] == 'n':
             pdf[headLst[i]] = pd.to_numeric(pdf[headLst[i]], errors='coerce')
         if x[-1] == 'd':
-            pdf[headLst[i]] = pd.to_datetime(pdf[headLst[i]], errors='coerce')
+            if x == '5d':
+                pdf[headLst[i]] = pd.to_datetime(
+                    pdf[headLst[i]], format='%H:%M', errors='coerce'
+                ).dt.time
+            else:
+                pdf[headLst[i]] = pd.to_datetime(pdf[headLst[i]], errors='coerce')
     # modify - only rename head or add columns, will not modify values
     if dataType == 'dailyTS':
         out = renameDailyTS(pdf)
