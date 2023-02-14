@@ -39,9 +39,9 @@ ax.plot([0, 0.6], [0, 0.2], '-k')
 fig.show()
 
 tab = tab.merge(tabDMC, left_on='try_id', right_on='AccSpeciesID')
-tab['LFMC'] = tab['LFMC value']
+tab['LFMC'] = tab['LFMC value']/100
 tab['date'] = pd.to_datetime(tab['Sampling date'], format='%Y%m%d')
-tab['RWC'] = tab['LFMC'] / tab['DMC']
+tab['RWC'] = tab['DMC']*tab['LFMC']/(1-tab['DMC'])
 
 tabPlot = tab[['siteId', 'date', 'try_id', 'try_spec', 'LFMC', 'RWC', 'DMC']]
 tabSite = tab[['siteId', 'Latitude', 'Longitude']].drop_duplicates()

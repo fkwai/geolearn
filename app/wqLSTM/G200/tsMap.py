@@ -21,7 +21,7 @@ dataName = 'G200N'
 #     DF = dbBasin.DataFrameBasin(dataName)
 DF = dbBasin.DataFrameBasin(dataName)
 
-codeLst = usgs.newC
+codeLst = usgs.varC
 
 trainLst = ['rmR20', 'rmL20', 'rmRT20', 'rmYr5', 'B10']
 testLst = ['pkR20', 'pkL20', 'pkRT20', 'pkYr5', 'A10']

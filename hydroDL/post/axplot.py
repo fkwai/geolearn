@@ -46,7 +46,7 @@ def multiYrTS(axes, yrLst, t, dataPlot, cLst='rbk', styLst='--*', legLst=None):
     for yr in yrLst:
         bp = np.in1d(ty, yr)
         ind = np.where(bp)[0]
-        indLst.append([ind])
+        indLst.append(ind)
     for k in range(ny):
         print(k)
         ind = indLst[k]
@@ -60,8 +60,8 @@ def multiYrTS(axes, yrLst, t, dataPlot, cLst='rbk', styLst='--*', legLst=None):
         if k > 0:
             # axes[k].set_yticklabels([])
             axes[k].yaxis.set_visible(False)
-        if legLst is not None:
-            axes[-1].legend(loc='upper right')
+    if legLst is not None:
+        axes[-1].legend(loc='upper right')
     return axes
 
 

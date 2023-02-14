@@ -56,7 +56,7 @@ for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
 # load linear/seasonal
-dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+dirPar = os.path.join(kPath.dirWQ,'modelStat','LR-All','QS','param')
 matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
 for k, code in enumerate(codeLst):
     filePar = os.path.join(dirPar, code)

@@ -56,7 +56,8 @@ for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
 # load linear/seasonal
-dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+# dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+dirPar = os.path.join(kPath.dirWQ,'modelStat','LR-All','QS','param')
 matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
 for k, code in enumerate(codeLst):
     filePar = os.path.join(dirPar, code)
@@ -76,7 +77,7 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 
 # ts map
 lat, lon = DF.getGeo()
-code = '00915'
+code = '00660'
 indC = codeLst.index(code)
 indS = np.where(~matRm[:, indC])[0]
 importlib.reload(figplot)
@@ -116,3 +117,4 @@ def funcP(iP, axP):
 
 
 figplot.clickMap(funcM, funcP)
+
