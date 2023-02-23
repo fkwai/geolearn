@@ -18,8 +18,8 @@ dataName = 'NY5'
 DF = dbBasin.DataFrameBasin(dataName)
 codeLst = usgs.varC
 
-trainLst = ['rmRT20', 'rmL20', 'rmYr5']
-testLst = ['pkRT20', 'pkL20', 'pkYr5']
+trainLst = ['rmRT20b0', 'rmL20', 'rmYr5b0']
+testLst = ['pkRT20b0', 'pkL20', 'pkYr5b0']
 
 # count
 matB = (~np.isnan(DF.c)*~np.isnan(DF.q[:, :, 0:1])).astype(int).astype(float)

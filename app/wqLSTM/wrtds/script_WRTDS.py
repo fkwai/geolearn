@@ -21,4 +21,4 @@ for trainSet, testSet in zip(trainLst, testLst):
     yW = WRTDS.testWRTDS(dataName, trainSet, testSet, usgs.varC)
     dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
     fileName = '{}-{}-{}'.format(dataName, trainSet, testSet)
-np.savez_compressed(os.path.join(dirRoot, fileName), yW=yW)
+    np.savez_compressed(os.path.join(dirRoot, fileName), yW)

@@ -30,6 +30,7 @@ yT=data['yT']
 lossFun=data['lossFun']
 model=data['model']
 
+model.zero_grad(set_to_none=True)
 yP = model(xT)
 loss = lossFun(yP, yT)
 loss.backward()

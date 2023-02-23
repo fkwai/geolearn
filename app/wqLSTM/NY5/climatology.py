@@ -70,7 +70,7 @@ q2 = DF.extractSubset(matQ, testSet)
 lat, lon = DF.getGeo()
 
 
-code = '00915'
+code = '00660'
 indC = varY.index(code)
 indCW = varY_WRTDS.index(code)
 indS = np.where(~matRm[:, indC])[0]

@@ -47,6 +47,7 @@ elif hostName[:2] == 'sh':
     dirWQ = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/'
     dirJob = r'/scratch/users/kuaifang/jobs/'
     dirCode = r'/home/users/kuaifang/GitHUB/geolearn'
+    dirVeg=r'/oak/stanford/schools/ees/kmaher/Kuai/VegetationWater/'
 elif hostName == 'mini':
     host = 'mini'
     dirData = r'/home/kuai/work/Data/'
@@ -54,3 +55,5 @@ elif hostName == 'mini':
     dirRaw = r'/mnt/sda/dataRaw/'
     dirWQ = r'/home/kuai/work/waterQuality/'    
     dirCode = r'/home/kuai/GitHUB/geolearn'
+    dirVeg = r'/home/kuai/work/VegetationWater/data/'
+
