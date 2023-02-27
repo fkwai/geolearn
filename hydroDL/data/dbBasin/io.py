@@ -289,14 +289,14 @@ def extractVarMtd(varLst):
 def label2var(label, norm=False):
     dictVar = dict(
         F=gridMET.varLst,
-        Q=['00060'],
+        Q=['streamflow'],
         P=ntn.varLst,
         T=['datenum', 'sinT', 'cosT'],
         R=GLASS.varLst,
         C=usgs.varC,
     )
     if norm is True:
-        dictVar['C'] = [c + '-N' for c in usgs.newC]
+        dictVar['C'] = [c + '-N' for c in usgs.varC]
     varLst = list()
     for x in label:
         varLst = varLst + dictVar[x]

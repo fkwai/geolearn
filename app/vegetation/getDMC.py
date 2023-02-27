@@ -24,10 +24,11 @@ meanDMC2 = tabDMC.groupby(['AccSpeciesID'])['StdValue'].mean()
 stdDMC2 = tabDMC.groupby(['AccSpeciesID'])['StdValue'].std()
 
 fig, ax = plt.subplots(1, 1)
-ax.plot(meanDMC1, medianDMC1, 'r*',label='per spec per site')
+ax.plot(meanDMC1, stdDMC1, 'r*',label='per spec per site')
 ax.plot(meanDMC2, stdDMC2, 'b*',label='per spec')
 ax.set_xlabel('mean of DMC')
 ax.set_ylabel('std of DMC')
+ax.legend()
 fig.show()
 
 meanDMC = meanDMC.rename('DMC')

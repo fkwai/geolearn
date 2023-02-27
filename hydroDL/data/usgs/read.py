@@ -81,7 +81,7 @@ def readSample(siteNo, codeLst=None, startDate=None, csv=True, flag=0):
     Keyword Arguments:
         codeLst {list} -- usgs code of interesting fields (default: {sampleCodeLst})
         startDate {date} -- start date (default: {None})
-        flag {int} -- 0 no flag; 1 str flag; 2 num flag
+        flag {int} -- 0 no flag; 1 str flag; 2 num flag (0 no flag 1 with flag)
     Returns:
         pandas.DataFrame -- [description]
     """
@@ -134,6 +134,11 @@ def readSampleCsv(siteNo, flag=False):
 
 
 def readSampleRaw(siteNo):
+    """
+    flag x - only value in a day, without usgs flag
+    flag X - multiple values in a day, without usgs flag
+    others - usgs flags
+    """
     fileC = os.path.join(kPath.dirRaw, 'USGS', 'sample', siteNo)
     dfC = readUsgsText(fileC, dataType='sample')
     if dfC is None:

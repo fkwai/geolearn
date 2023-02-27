@@ -39,8 +39,7 @@ for k, siteNo in enumerate(siteNoLst):
     dfCountD.update(dfC.groupby(dfC.index.year).agg('count'))    
     countMat[k, :, :] = dfCountD.values    
 
-np.save(os.path.join(dirInv, 'matCountDaily'), countMatD)
-np.save(os.path.join(dirInv, 'matCountWeekly'), countMatW)
+np.save(os.path.join(dirInv, 'matCount'), countMat)
 
 # sum up
 nyLst = list(range(5, 21))  # samples in year
