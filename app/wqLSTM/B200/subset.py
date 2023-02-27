@@ -8,7 +8,7 @@ from hydroDL.post import axplot, figplot
 import random
 
 # DF = dbBasin.DataFrameBasin.new(dataName, siteNoLst, sdStr=sd, edStr=ed)
-dataName = 'any-B200'
+dataName = 'rmTK-B200'
 DF = dbBasin.DataFrameBasin(dataName)
 
 # randomly 5-fold

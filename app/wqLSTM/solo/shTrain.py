@@ -8,8 +8,8 @@ labelLst = ['FT2QC', 'QFT2C', 'QT2C']
 # trainLst = ['B15']+['rmYr5b{}'.format(k) for k in range(5)]+['rmRT5b{}'.format(k) for k in range(5)]
 # testLst = ['A15']+['pkYr5b{}'.format(k) for k in range(5)]+['pkRT5b{}'.format(k) for k in range(5)]
 
-trainLst = ['B15', 'rmYr5b0']
-testLst = ['A15', 'pkYr5b0']
+trainLst = ['rmYr5b0']
+testLst = ['pkYr5b0']
 codeLst = ['00915', '00955', '00618']
 
 

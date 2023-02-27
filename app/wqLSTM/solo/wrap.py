@@ -13,20 +13,20 @@ with open(saveFile, 'r') as f:
 label = 'B200'
 
 # DF for single codes
-# for code in ['00915', '00955', '00618']:
-#     siteName = '{}-{}'.format(code, label)
-#     dataName = '{}-{}'.format(code, label)
-#     siteNoLst = dictSite[siteName]
-#     DF = dbBasin.DataFrameBasin.new(
-#         dataName,
-#         siteNoLst,
-#         varC=[code],
-#         varQ=usgs.varQ,
-#         varF=gridMET.varLst,
-#         varG=gageII.varLstEx,
-#         sdStr='1979-01-01',
-#         edStr='2023-01-01',
-#     )
+for code in ['00915', '00955', '00618']:
+    siteName = '{}-{}'.format(code, label)
+    dataName = '{}-{}'.format(code, label)
+    siteNoLst = dictSite[siteName]
+    DF = dbBasin.DataFrameBasin.new(
+        dataName,
+        siteNoLst,
+        varC=[code],
+        varQ=usgs.varQ,
+        varF=gridMET.varLst,
+        varG=gageII.varLstEx,
+        sdStr='1979-01-01',
+        edStr='2023-01-01',
+    )
 
 # subset
 # pick by year

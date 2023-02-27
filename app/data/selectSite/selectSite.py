@@ -19,7 +19,7 @@ matCount = np.sum(matB, axis=0)
 
 # threshold
 the = 100
-matPick = matCount[:, 2:] > the
+matPick = matCount > the
 dictSite = dict()
 
 # all
