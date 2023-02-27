@@ -6,7 +6,7 @@ from hydroDL.post import mapplot, axplot, figplot
 import numpy as np
 from hydroDL import kPath
 
-DIR_VEG = kPath.dirVeg
+DIR_VEG = os.path.join(kPath.dirVeg,'data')
 
 # load LFMC
 fileLFMC = os.path.join(DIR_VEG, 'LFMC-global.csv')
@@ -98,5 +98,11 @@ def funcP(iP, axP):
     axP[0].legend()
     axP[1].legend()
 
+%matplotlib widget
+import matplotlib.pyplot as plt
+fig,ax=plt.subplots(1,1)
+ax.plot([1,1],[2,2])
+fig.show()
 
+%matplotlib widget
 figplot.clickMap(funcM, funcP)
