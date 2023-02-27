@@ -8,7 +8,7 @@ from hydroDL.post import axplot, figplot
 import random
 
 # DF = dbBasin.DataFrameBasin.new(dataName, siteNoLst, sdStr=sd, edStr=ed)
-dataName = 'NY5'
+dataName = 'any-B200'
 DF = dbBasin.DataFrameBasin(dataName)
 
 # randomly 5-fold
@@ -34,7 +34,7 @@ for k in range(5):
     DF.createSubset('pkYr5b{}'.format(k), dateLst=t1)
     DF.createSubset('rmYr5b{}'.format(k), dateLst=t2)
 
-# before after 2010
+# before after 2015
 DF.saveSubset('B15', ed='2015-12-31')
 DF.saveSubset('A15', sd='2016-01-01')
 

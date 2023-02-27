@@ -4,9 +4,7 @@ from hydroDL import kPath
 import numpy as np
 import pandas as pd
 
-dataName = 'dbAll'
-codeLst = usgs.varC
+dataName = '00955-B200'
 DF = dbBasin.DataFrameBasin(dataName)
 
-code = '00915'
-indC=DF.varC.index(code)
+# tsmap of C-Q and C-T

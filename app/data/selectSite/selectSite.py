@@ -57,10 +57,6 @@ if os.path.exists(saveFile):
 with open(saveFile, 'w') as f:
     json.dump(dictSite, f, indent=2)
 
-# saveName = 'siteNoLst_79_23'
-# saveFile = os.path.join(kPath.dirUsgs, 'siteSel', saveName)
-# with open(saveFile, 'w') as f:
-#     json.dump(dict(ny5_rmTK=siteNoLst), f, indent=2)
 
 # dataName = 'NY5'
 # DF = dbBasin.DataFrameBasin.new(

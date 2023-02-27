@@ -10,9 +10,9 @@ saveName = 'siteNoLst_79_23'
 saveFile = os.path.join(kPath.dirUsgs, 'siteSel', saveName)
 with open(saveFile, 'r') as f:
     dictSite=json.load(f)
-siteNoLst=dictSite['ny5_rmTK']
+siteNoLst=dictSite['any-B200']
 
-dataName = 'NY5'
+dataName = 'any-B200'
 DF = dbBasin.DataFrameBasin.new(
     dataName,
     siteNoLst,
