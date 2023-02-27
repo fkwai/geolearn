@@ -213,12 +213,12 @@ def readSiteTS(
         if dfQ is None:
             dfQ = pd.DataFrame(index=td, columns=varQ)
         else:
-            dfQ = dfQ.rename(columns={'00060_00003': '00060'})
+            dfQ = dfQ.rename(columns={'00060_00003': 'streamflow'})
             if 'runoff' in varLst:
                 if area is None:
                     tabArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=[siteNo])
                     area = tabArea['DRAIN_SQKM'].values[0]
-                dfQ['runoff'] = calRunoffArea(dfQ['00060'], area)
+                dfQ['runoff'] = calRunoffArea(dfQ['streamflow'], area)
         dfD = dfD.join(dfQ)
     if len(varF) > 0:
         dfF = gridMET.readBasin(siteNo, varLst=varF)
