@@ -42,5 +42,5 @@ for label in labelLst:
             saveEpoch=20
         )
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-        # slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-        basinFull.trainModel(outName)
+        slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+        # basinFull.trainModel(outName)
