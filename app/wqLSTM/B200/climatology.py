@@ -2,13 +2,13 @@ import pandas as pd
 from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS, transform, dbBasin
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from hydroDL.post import axplot, figplot, mapplot
 from hydroDL import kPath, utils
 import os
 from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
-import matplotlib
-import matplotlib.gridspec as gridspec
+
 
 dataName = 'NY5'
 DF = dbBasin.DataFrameBasin(dataName)

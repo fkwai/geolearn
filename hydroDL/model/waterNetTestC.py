@@ -263,9 +263,15 @@ class Trans0110C2(waterNetTest.WaterNet0110):
         nh = self.nh
         nr = self.nr
         nc = self.nc
-        Sf = torch.zeros(ns, nh).cuda()
-        Ss = torch.zeros(ns, nh).cuda()
-        Sg = torch.zeros(ns, nh).cuda()
+        Sf = torch.zeros(ns, nh)
+        Ss = torch.zeros(ns, nh)
+        Sg = torch.zeros(ns, nh)
+        Cs = torch.zeros(nc, ns, nh)
+        if torch.cuda.is_available():
+            Sf = Sf.cuda()
+            Ss = Ss.cuda()
+            Sg = Sg.cuda()
+            Cs = Cs.cuda()
         w = self.fcW(xc)
         [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
         gL = gL*2
@@ -281,8 +287,7 @@ class Trans0110C2(waterNetTest.WaterNet0110):
         wc = self.fcC(xc)
         [eqs, eqg] = sepPar(wc, nh*nc, self.cLst)
         eqs = eqs.view(ns, nh, nc).permute(-1, 0, 1)*10
-        eqg = eqg.view(ns, nh, nc).permute(-1, 0, 1)*10
-        Cs = torch.zeros(nc, ns, nh).cuda()
+        eqg = eqg.view(ns, nh, nc).permute(-1, 0, 1)*10        
         Cg = eqg*qb/kg
         xTC = torch.cat([T1[:, :, None], T2[:, :, None],
                         torch.tile(xc, [nt, 1, 1])], dim=-1)
@@ -298,11 +303,17 @@ class Trans0110C2(waterNetTest.WaterNet0110):
         Pla = P*(1-vf)
         Pl = Pla[:, :, None]*vi
         Ev = E[:, :, None]*ve
-        Q1T = torch.zeros(nt, ns, nh).cuda()
-        Q2T = torch.zeros(nt, ns, nh).cuda()
-        Q3T = torch.zeros(nt, ns, nh).cuda()
-        C2T = torch.zeros(nc, nt, ns, nh).cuda()
-        C3T = torch.zeros(nc, nt, ns, nh).cuda()
+        Q1T = torch.zeros(nt, ns, nh)
+        Q2T = torch.zeros(nt, ns, nh)
+        Q3T = torch.zeros(nt, ns, nh)
+        C2T = torch.zeros(nc, nt, ns, nh)
+        C3T = torch.zeros(nc, nt, ns, nh)
+        if torch.cuda.is_available():
+            Q1T=Q1T.cuda()
+            Q2T=Q2T.cuda()
+            Q3T=Q3T.cuda()
+            C2T=C2T.cuda()
+            C3T=C3T.cuda()
         for k in range(nt):
             qf = torch.minimum(Sf+Ps[k, :, None], vm[k, :, :])
             Sf = torch.relu(Sf+Ps[k, :, None]-vm[k, :, :])

@@ -18,7 +18,7 @@ matB = matC * ~matF * matQ[:, :, None]
 matCount = np.sum(matB, axis=0)
 
 # threshold
-the = 100
+the = 200
 matPick = matCount > the
 dictSite = dict()
 

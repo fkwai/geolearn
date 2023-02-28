@@ -123,7 +123,7 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
         os.makedirs(outFolder)
 
     # Calculate WRTDS from train and test set
-    varX = ['00060']
+    varX = ['streamflow']
     varY = codeLst
     d1 = dbBasin.DataModelBasin(DF, subset=trainSet, varX=varX, varY=varY)
     d2 = dbBasin.DataModelBasin(DF, subset=testSet, varX=varX, varY=varY)
@@ -141,8 +141,10 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
     yOut = np.full([len(d2.t), len(d2.siteNoLst), len(varY)], np.nan)
     t0 = time.time()
     for indS, siteNo in enumerate(d2.siteNoLst):
-        siteFile=os.path.join(outFolder, siteNo)
+        siteFile = os.path.join(outFolder, siteNo)
         if os.path.exists(siteFile):
+            yp = pd.read_csv(siteFile, index_col=0).values
+            yOut[:, indS, :] = yp
             continue
         for indC, code in enumerate(varY):
             print('{} {} {} {}'.format(indS, siteNo, code, time.time() - t0))
