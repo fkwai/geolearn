@@ -9,7 +9,7 @@ labelLst = ['FT2QC', 'QFT2C', 'QT2C']
 
 trainLst = ['rmYr5b0']
 testLst = ['pkYr5b0']
-codeLst = ['00915', '00955', '00618']
+codeLst = usgs.varC
 
 
 def label2var(label, code):

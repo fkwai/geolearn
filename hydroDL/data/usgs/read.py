@@ -125,7 +125,7 @@ def readSampleCsv(siteNo, flag=False):
     else:
         fileC = os.path.join(dirC, siteNo + '_flag')
     if os.path.exists(fileC):
-        dfO = pd.read_csv(fileC)
+        dfO = pd.read_csv(fileC, dtype=str)
         dfO['date'] = pd.to_datetime(dfO['date'], format='%Y-%m-%d')
         dfO = dfO.set_index('date')
         return dfO

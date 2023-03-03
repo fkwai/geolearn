@@ -41,16 +41,13 @@ len(tab)
 fileDMC = os.path.join(DIR_VEG, 'TRY', 'DMC.csv')
 tabDMC_temp = pd.read_csv(fileDMC)
 meanDMC = tabDMC_temp.groupby(['AccSpeciesID'])['StdValue'].mean()
-medianDMC = tabDMC_temp.groupby(['AccSpeciesID'])['StdValue'].median()
+minDMC = tabDMC_temp.groupby(['AccSpeciesID'])['StdValue'].quantile(0.1)
 stdDMC = tabDMC_temp.groupby(['AccSpeciesID'])['StdValue'].std()
-meanDMC = meanDMC.rename('DMC')
-stdDMC = stdDMC.rename('DMC_std')
-tabDMC = pd.merge(meanDMC, stdDMC, right_index=True, left_index=True)
-tab = tab.merge(tabDMC, left_on='try_id', right_on='AccSpeciesID')
+minDMC = minDMC.rename('DMC')
+tab = tab.merge(minDMC, left_on='try_id', right_on='AccSpeciesID')
 tab['LFMC'] = tab['LFMC value'] / 100
 tab['date'] = pd.to_datetime(tab['Sampling date'], format='%Y%m%d')
 tab['RWC'] = tab['DMC'] * tab['LFMC'] / (1 - tab['DMC'])
-tab.to_csv(os.path.join(DIR_VEG, 'rwc.csv'), index=False)
 
 
 # extract sites
@@ -64,45 +61,29 @@ tabSite = tabSite.merge(cntSample, left_on='siteId', right_on='siteId')
 tabS = tabSite[['siteId', 'Latitude', 'Longitude']]
 tabS.to_csv(os.path.join(DIR_VEG, 'rwc_sites.csv'), index=False)
 
-# load SAR and Landsat
 
-# plot ts map
-lat = tabSite['Latitude'].values
-lon = tabSite['Longitude'].values
-extentUS = [-125, -65, 25, 50]
-extentEU = [-5, 15, 40, 45]
-extentGlobal = [-180, 180, -90, 90]
+tabOut = tab[
+    ['RWC', 'siteId', 'date', 'DMC', 'try_id', 'Elevation(m.a.s.l)', 'Slope(%)']
+]
+tabOut = tabOut.rename(
+    columns={
+        'RWC': 'percent',
+        'siteId': 'site',
+        'Elevation(m.a.s.l)': 'elevation',
+        'Slope(%)': 'slope',
+    }
+)
+tabOut = tabOut.replace({'slope': {'< 10': 10.0}})
+tabOut['slope'] = tabOut['slope'].astype(float)
 
-
-def funcM():
-    figM = plt.figure(figsize=(8, 6))
-    gsM = gridspec.GridSpec(1, 1)
-    axM = mapplot.mapPoint(
-        figM, gsM[0, 0], lat, lon, tabSite['try_id'], extent=extentGlobal
-    )
-    figP, axP = plt.subplots(2, 1)
-    return figM, axM, figP, axP, lon, lat
+tabOut.to_csv(os.path.join(DIR_VEG, 'rwc.csv'), index=False)
 
 
-def funcP(iP, axP):
-    print(iP)
-    siteId = tabSite.iloc[iP]['siteId']
-    tabData = tabPlot[tabPlot['siteId'] == siteId]
-    specLst = tabData['try_spec'].unique().tolist()
-    for spec in specLst:
-        temp = tabData[tabData['try_spec'] == spec]
-        axP[0].plot(temp['date'], temp['LFMC'], '-*', label=spec)
-        axP[1].plot(
-            temp['date'], temp['RWC'], '-*', label='{:.2f}'.format(temp.iloc[0]['DMC'])
-        )
-    axP[0].legend()
-    axP[1].legend()
+tabOut = tab[['RWC', 'siteId', 'date', 'DMC', 'try_id', 'Elevation(m.a.s.l)']]
+tabOut = tabOut.rename(
+    columns={'RWC': 'percent', 'siteId': 'site', 'Elevation(m.a.s.l)': 'elevation'}
+)
+# tabOut = tabOut.replace({'slope': {'< 10': 10.0}})
+# tabOut['slope'] = tabOut['slope'].astype(float)
 
-# %matplotlib widget
-import matplotlib.pyplot as plt
-fig,ax=plt.subplots(1,1)
-ax.plot([1,1],[2,2])
-fig.show()
-
-# %matplotlib widget
-figplot.clickMap(funcM, funcP)
+tabOut.to_csv(os.path.join(DIR_VEG, 'rwc.csv'), index=False)
