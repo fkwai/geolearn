@@ -9,7 +9,10 @@ labelLst = ['FT2QC', 'QFT2C', 'QT2C']
 
 trainLst = ['rmYr5b0']
 testLst = ['pkYr5b0']
-codeLst = usgs.varC
+codeLst = usgs.varC.copy()
+codeExist=['00915', '00955', '00618']
+for code in codeExist:
+    codeLst.remove(code)
 
 
 def label2var(label, code):

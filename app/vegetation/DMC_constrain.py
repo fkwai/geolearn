@@ -74,10 +74,10 @@ fig.show()
 
 fig, ax = plt.subplots(1, 1)
 ax.plot(tabTemp['RWC'], tabTemp['RWC_mean'], '*')
-ax.plot([0, tabTemp['RWC'], tabTemp['RWC_mean']], [0, tabTemp['RWC_mean'].max()], '-r')
+ax.plot([0, tabTemp['RWC_mean'].max()], [0, tabTemp['RWC_mean'].max()], '-r')
 r = len(tabTemp[tabTemp['RWC'] > 1]) / len(tabTemp)
-ax.set_xlabel('RWC')
-ax.set_ylabel('DMC')
+ax.set_xlabel('RWC - from 10% DMC')
+ax.set_ylabel('RWC - from mean DMC')
 
 ax.legend()
 fig.show()
