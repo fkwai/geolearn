@@ -30,7 +30,7 @@ def label2var(label, code):
     return varX, varY, varXC, varYC
 
 
-for code in ['00915', '00955', '00618']:
+for code in codeLst:
     dataName = '{}-{}'.format(code, 'B200')
     for label in labelLst:
         for trainSet in trainLst:
