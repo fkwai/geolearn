@@ -56,7 +56,7 @@ corrW2 = utils.stat.calCorr(yW2, obs2)
 
 # global model
 ep = 180
-# DFG = dbBasin.DataFrameBasin('NY5')
+DFG = dbBasin.DataFrameBasin('NY5')
 label='QFT2C'
 outName = '{}-{}-{}'.format('NY5', label, trainSet)
 dictMaster = basinFull.loadMaster(outName)
