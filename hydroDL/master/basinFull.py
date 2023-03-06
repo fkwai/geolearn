@@ -167,13 +167,13 @@ def trainModel(outName, resumeEpoch=0):
     logFile = os.path.join(outFolder, 'log')
     if os.path.exists(logFile) and resumeEpoch == 0:
         os.remove(logFile)
-    log = open(logFile, 'a')
+    logH = open(logFile, 'a')
     if resumeEpoch > 0:
         timeStr = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        print('resume {} Ep{}'.format(timeStr, resumeEpoch), log, flush=True)
+        print('resume {} Ep{}'.format(timeStr, resumeEpoch), logH, flush=True)
         print('resume {} Ep{}'.format(timeStr, resumeEpoch), flush=True)
     for k in range(resumeEpoch, nEp, sEp):
-        model, optim, logStr = trainBasin.trainModel(
+        model, optim = trainBasin.trainModel(
             dataTup,
             model,
             lossFun,
@@ -184,12 +184,11 @@ def trainModel(outName, resumeEpoch=0):
             optBatch=dictP['optBatch'],
             nIterEp=dictP['nIterEp'],
             outFolder=outFolder,
-        )
-        print(logStr, log, flush=True)
-        print(logStr, flush=True)
+            logH=logH,
+        )        
         # save model
         saveModelState(outName, k + sEp, model, optim=optim)
-
+    logH.close()
 
 def resumeModel(outName, resumeOpt=-1):
     """

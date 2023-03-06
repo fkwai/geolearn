@@ -125,6 +125,7 @@ def trainModel(
     optBatch='Random',
     nIterEp=None,
     outFolder=None,
+    logH=None
 ):
     """[summary]
     Arguments:
@@ -206,8 +207,11 @@ def trainModel(
         lossEp = lossEp / nIterEp
         ct = time.time() - t0
         logStr = 'Epoch {} Loss {} time {:.2f} '.format(iEp + cEp, lossEp, ct)
-        print(logStr)  # to console, disable flush
-    return model, optim, logStr
+        if logH is not None:
+            logH.write(logStr + '\n')
+            logH.flush()        
+        print(logStr, flush=True)
+    return model, optim
 
 
 def testModel(model, x, xc, ny=None, batchSize=100):
