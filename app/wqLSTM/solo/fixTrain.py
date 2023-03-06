@@ -39,4 +39,7 @@ cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull
 for outName in errLst1:
     slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
 
+cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {} -R -1'
+for outName in errLst2:
+    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
   

@@ -191,15 +191,15 @@ def trainModel(outName, resumeEpoch=0):
         saveModelState(outName, k + sEp, model, optim=optim)
 
 
-def resumeModel(outName, resumeOpt=0):
+def resumeModel(outName, resumeOpt=-1):
     """
-    resumeOpt = 0: resume from the last saved epoch    
+    resumeOpt = -1: resume from the last saved epoch    
     """
     # find out last saved epoch
     outFolder = nameFolder(outName)
     dictP = loadMaster(outName)
     sEp = dictP['saveEpoch']
-    if resumeOpt == 0:
+    if resumeOpt < 0:
         ep = 0
         for f in os.listdir(outFolder):
             if f.startswith('modelState_ep'):
