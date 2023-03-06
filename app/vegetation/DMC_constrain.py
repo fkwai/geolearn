@@ -40,6 +40,10 @@ len(tab)
 # load DMC
 fileDMC = os.path.join(DIR_VEG, 'TRY', 'DMC.csv')
 tabDMC = pd.read_csv(fileDMC)
+
+
+specLst1=tab['try_id'].unique().tolist()
+
 meanDMC = tabDMC.groupby(['AccSpeciesID'])['StdValue'].mean()
 stdDMC = tabDMC.groupby(['AccSpeciesID'])['StdValue'].std()
 stdDMC = stdDMC.rename('DMC_std')

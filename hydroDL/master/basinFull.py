@@ -21,12 +21,10 @@ defaultMaster = dict(
     batchSize=[365, 500],
     nEpoch=500,
     saveEpoch=100,
-    resumeEpoch=0,
     optNaN=[1, 1, 0, 0],
-    overwrite=True,
     modelName='LstmModel',
     crit='RmseLoss',
-    optim='AdaDelta',
+    optim='Adadelta',
     varX=gridMET.varLst,
     varXC=gageII.varLst,
     varY=['00060'],
@@ -46,7 +44,7 @@ def nameFolder(outName):
     return outFolder
 
 
-def wrapMaster(**kw):
+def wrapMaster(overwrite=True, **kw):
     # default parameters
     dictPar = defaultMaster.copy()
     dictPar.update(kw)
@@ -59,7 +57,7 @@ def wrapMaster(**kw):
         dictPar['outName'] = dictPar['dataName'] + '_' + dictPar['trainSet']
     outFolder = nameFolder(dictPar['outName'])
     if os.path.exists(outFolder):
-        if dictPar['overwrite'] is False:
+        if overwrite is False:
             outName = outFolder + '_' + date.today().strftime("%Y%m%d")
             outFolder = os.path.join(kPath.dirWQ, 'model', outName)
             if os.path.exists(outFolder):
@@ -100,23 +98,28 @@ def defineModel(dataTup, dictP):
             ny=ny + nyc,
             hiddenSize=dictP['hiddenSize'],
             nLayer=dictP['nLayer'],
-            dr=dictP['dropout']
+            dr=dictP['dropout'],
         )
     else:
         raise RuntimeError('Model not specified')
     return model
 
 
-def loadModelState(outName, ep, model):
+def loadModelState(outName, ep, model, optim):
     outFolder = nameFolder(outName)
     modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
+    optimStateFile = os.path.join(outFolder, 'optimState_ep{}'.format(ep))
     if torch.cuda.is_available():
         model.load_state_dict(torch.load(modelStateFile))
+        optim.load_state_dict(torch.load(optimStateFile))
     else:
         model.load_state_dict(
             torch.load(modelStateFile, map_location=torch.device('cpu'))
         )
-    return model
+        optim.load_state_dict(
+            torch.load(optimStateFile, map_location=torch.device('cpu'))
+        )
+    return model, optim
 
 
 def saveModelState(outName, ep, model, optim=None):
@@ -128,7 +131,7 @@ def saveModelState(outName, ep, model, optim=None):
         torch.save(optim.state_dict(), optStateFile)
 
 
-def trainModel(outName):
+def trainModel(outName, resumeEpoch=0):
     outFolder = nameFolder(outName)
     dictP = loadMaster(outName)
 
@@ -148,28 +151,29 @@ def trainModel(outName):
     dataTup = DM.getData()
     dataTup = trainBasin.dealNaN(dataTup, dictP['optNaN'])
 
-    # define loss
+    # define model, loss, optim
     lossFun = getattr(crit, dictP['crit'])()
-    # define model
     model = defineModel(dataTup, dictP)
-
     if torch.cuda.is_available():
         lossFun = lossFun.cuda()
         model = model.cuda()
 
-    if dictP['optim'] == 'AdaDelta':
-        optim = torch.optim.Adadelta(model.parameters())
-    else:
-        raise RuntimeError('optimizor function not specified')
+    optim = getattr(torch.optim, dictP['optim'])(model.parameters())
+    if resumeEpoch > 0:
+        model, optim = loadModelState(outName, resumeEpoch, model, optim)
 
-    lossLst = list()
     nEp = dictP['nEpoch']
     sEp = dictP['saveEpoch']
     logFile = os.path.join(outFolder, 'log')
-    if os.path.exists(logFile):
+    if os.path.exists(logFile) and resumeEpoch == 0:
         os.remove(logFile)
-    for k in range(0, nEp, sEp):
-        model, optim, lossEp = trainBasin.trainModel(
+    log = open(logFile, 'a')
+    if resumeEpoch > 0:
+        timeStr = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        print('resume {} Ep{}'.format(timeStr, resumeEpoch), log, flush=True)
+        print('resume {} Ep{}'.format(timeStr, resumeEpoch), flush=True)
+    for k in range(resumeEpoch, nEp, sEp):
+        model, optim, logStr = trainBasin.trainModel(
             dataTup,
             model,
             lossFun,
@@ -177,18 +181,32 @@ def trainModel(outName):
             batchSize=dictP['batchSize'],
             nEp=sEp,
             cEp=k,
-            logFile=logFile,
             optBatch=dictP['optBatch'],
             nIterEp=dictP['nIterEp'],
-            outFolder=outFolder
+            outFolder=outFolder,
         )
+        print(logStr, log, flush=True)
+        print(logStr, flush=True)
         # save model
         saveModelState(outName, k + sEp, model, optim=optim)
-        lossLst = lossLst + lossEp
 
-    lossFile = os.path.join(outFolder, 'loss.csv')
-    pd.DataFrame(lossLst).to_csv(lossFile, index=False, header=False)
 
+def resumeModel(outName, resumeOpt=0):
+    """
+    resumeOpt = 0: resume from the last saved epoch    
+    """
+    # find out last saved epoch
+    outFolder = nameFolder(outName)
+    dictP = loadMaster(outName)
+    sEp = dictP['saveEpoch']
+    if resumeOpt == 0:
+        ep = 0
+        for f in os.listdir(outFolder):
+            if f.startswith('modelState_ep'):
+                ep = max(ep, int(f.split('ep')[-1]))
+    else:
+        ep = resumeOpt
+    trainModel(outName, resumeEpoch=ep)
 
 def testModel(outName, DF=None, testSet='all', ep=None, reTest=False, batchSize=20):
     # load master

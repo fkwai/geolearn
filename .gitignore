@@ -6,3 +6,4 @@
 geolearn.egg-info
 kuai-pytorch
 .ipynb_checkpoints/
+temp*

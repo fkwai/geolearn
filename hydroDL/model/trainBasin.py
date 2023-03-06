@@ -124,7 +124,6 @@ def trainModel(
     cEp=0,
     optBatch='Random',
     nIterEp=None,
-    logFile=None,
     outFolder=None,
 ):
     """[summary]
@@ -142,6 +141,9 @@ def trainModel(
         batchSize {list} -- [description] (default: {[100, 365]})
         nEp {int} -- [number of epochs to run] (default: {100})
         cEp {int} -- [current epoch (only for print)] (default: {0})
+        optBatch {str} -- [description] (default: {'Random'})
+        nIterEp {int} -- [number of iterations per epoch] (default: {None})
+        outFolder {str} -- [in case of save debug files] (default: {None})
 
     Returns:
         [type] -- [description]
@@ -165,12 +167,8 @@ def trainModel(
     if nIterEp is None:
         nIterEp = 1 if pr > 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
     print('iter per epoch {}'.format(nIterEp), flush=True)
-    lossEp = 0
-    lossEpLst = list()
     t0 = time.time()
     model.train()
-    if logFile is not None:
-        log = open(logFile, 'a')
     for iEp in range(1, nEp + 1):
         lossEp = 0
         t0 = time.time()
@@ -207,14 +205,9 @@ def trainModel(
             #     print('iteration Failed: iter {} ep {}'.format(iIter, iEp+cEp))
         lossEp = lossEp / nIterEp
         ct = time.time() - t0
-        logStr = 'Epoch {} Loss {:.3f} time {:.2f}'.format(iEp + cEp, lossEp, ct)
-        print(logStr, flush=True)
-        # log.write(logStr+'\n')
-        print(logStr, file=log, flush=True)
-        lossEpLst.append(lossEp)
-
-    log.close()
-    return model, optim, lossEpLst
+        logStr = 'Epoch {} Loss {} time {:.2f} '.format(iEp + cEp, lossEp, ct)
+        print(logStr)  # to console, disable flush
+    return model, optim, logStr
 
 
 def testModel(model, x, xc, ny=None, batchSize=100):
