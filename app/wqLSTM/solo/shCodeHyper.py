@@ -61,7 +61,7 @@ def trainModel(code, dr, hs, rho, nLayer):
     )
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
     slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-    basinFull.trainModel(outName)
+    # basinFull.trainModel(outName)
 
 
 drLst = [0.25, 0.5, 0.75]
