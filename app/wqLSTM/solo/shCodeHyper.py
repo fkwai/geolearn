@@ -54,7 +54,7 @@ def trainModel(code, dr, hs, rho, nLayer):
         mtdXC=mtdXC,
         mtdYC=mtdYC,
         saveEpoch=20,
-        dropOut=dr,
+        dropout=dr,
         hiddenSize=hs,
         nLayer=nLayer,
     )
