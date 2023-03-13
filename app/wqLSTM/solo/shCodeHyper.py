@@ -36,9 +36,10 @@ def trainModel(code, dr, hs, rho, nLayer):
     mtdY = dbBasin.io.extractVarMtd(varY)
     mtdXC = dbBasin.io.extractVarMtd(varXC)
     mtdYC = dbBasin.io.extractVarMtd(varYC)
-    outName = '{}-{}-{}-d{}-h{}-rho{}-nl{}'.format(
-        dataName, label, trainSet, dr, hs, rho, nLayer
+    outName = '{}-{}-{}-d{:.0f}-h{}-rho{}-nl{}'.format(
+        dataName, label, trainSet, dr * 100, hs, rho, nLayer
     )
+    # print(outName)
     dictP = basinFull.wrapMaster(
         outName=outName,
         dataName=dataName,
@@ -60,12 +61,12 @@ def trainModel(code, dr, hs, rho, nLayer):
     )
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
     slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
-    # basinFull.trainModel(outName)
+    basinFull.trainModel(outName)
 
 
-drLst = [0.25, 0.75]
-hsLst = [16, 64, 128, 512]
-rhoLst = [365, 2000]
+drLst = [0.25, 0.5, 0.75]
+hsLst = [64, 256, 512]
+rhoLst = [365, 1000, 2000]
 nLayerLst = [1, 2]
 
 # codeLst = ['00618','00915','00955']
@@ -78,4 +79,4 @@ for trainSet in trainLst:
         for hs in hsLst:
             for rho in rhoLst:
                 for nLayer in nLayerLst:
-                    trainModel(code, dr, hs, rho, nLayer)        
+                    trainModel(code, dr, hs, rho, nLayer)
