@@ -64,17 +64,18 @@ def trainModel(code, dr, hs, rho, nLayer):
 
 
 drLst = [0.25, 0.75]
-hsLst = [16, 64, 128]
-rhoLst = [182, 365, 2000]
-nLayerLst = [1, 2, 3]
+hsLst = [16, 64, 128, 512]
+rhoLst = [365, 2000]
+nLayerLst = [1, 2]
 
 # codeLst = ['00618','00915','00955']
 
 code = '00915'
-for label in labelLst:
-    for trainSet in trainLst:
-        for dr in drLst:
-            for hs in hsLst:
-                for rho in rhoLst:
-                    for nLayer in nLayerLst:
-                        trainModel(code, dr, hs, rho, nLayer)        
+# for label in labelLst:
+label = 'QFT2C'
+for trainSet in trainLst:
+    for dr in drLst:
+        for hs in hsLst:
+            for rho in rhoLst:
+                for nLayer in nLayerLst:
+                    trainModel(code, dr, hs, rho, nLayer)        
