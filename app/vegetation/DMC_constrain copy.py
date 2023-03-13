@@ -52,4 +52,53 @@ tab1 = tab[tab['try_id'] == spec][['Latitude', 'Longitude', 'LFMC value']]
 tab2 = tabDMC[tabDMC['AccSpeciesID'] == spec][['Latitude', 'Longitude', 'StdValue']]
 
 s1 = tab1.groupby(['Latitude', 'Longitude']).nunique().index.values
-s1
+
+
+
+meanDMC1 = tabDMC.groupby(['AccSpeciesID', 'Latitude', 'Longitude'])['StdValue'].mean()
+
+tabDMC.groupby(['Latitude', 'Longitude']).grouper.group_info[0]
+
+specLst1 = tab['try_id'].unique().tolist()
+
+meanDMC = tabDMC.groupby(['AccSpeciesID'])['StdValue'].mean()
+stdDMC = tabDMC.groupby(['AccSpeciesID'])['StdValue'].std()
+stdDMC = stdDMC.rename('DMC_std')
+
+
+tabTemp = tab.copy()
+q = 0.05
+minDMC = tabDMC.groupby(['AccSpeciesID'])['StdValue'].quantile(q)
+minDMC = minDMC.rename('DMC')
+meanDMC = meanDMC.rename('DMC_mean')
+
+
+tabTemp = tabTemp.merge(minDMC, left_on='try_id', right_on='AccSpeciesID')
+tabTemp = tabTemp.merge(meanDMC, left_on='try_id', right_on='AccSpeciesID')
+
+tabTemp['LFMC'] = tabTemp['LFMC value'] / 100
+tabTemp['date'] = pd.to_datetime(tabTemp['Sampling date'], format='%Y%m%d')
+tabTemp['RWC'] = tabTemp['DMC'] * tabTemp['LFMC'] / (1 - tabTemp['DMC'])
+tabTemp['RWC_mean'] = tabTemp['DMC_mean'] * tabTemp['LFMC'] / (1 - tabTemp['DMC_mean'])
+
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(tabTemp['RWC'], tabTemp['DMC'], 'b*')
+ax.plot([1, 1], [0, tabTemp['DMC'].max()], '-r')
+r = len(tabTemp[tabTemp['RWC'] > 1]) / len(tabTemp)
+ax.set_xlabel('RWC')
+ax.set_ylabel('DMC')
+ax.set_title('quantile = {}, RWC>1: {:.2f}'.format(q, r))
+ax.legend()
+fig.show()
+
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(tabTemp['RWC'], tabTemp['RWC_mean'], '*')
+ax.plot([0, tabTemp['RWC_mean'].max()], [0, tabTemp['RWC_mean'].max()], '-r')
+r = len(tabTemp[tabTemp['RWC'] > 1]) / len(tabTemp)
+ax.set_xlabel('RWC - from 10% DMC')
+ax.set_ylabel('RWC - from mean DMC')
+
+ax.legend()
+fig.show()

@@ -27,7 +27,7 @@ defaultMaster = dict(
     optim='Adadelta',
     varX=gridMET.varLst,
     varXC=gageII.varLst,
-    varY=['00060'],
+    varY=['runoff'],
     varYC=None,
     borrowStat=None,
     optBatch='Weight',
@@ -105,21 +105,26 @@ def defineModel(dataTup, dictP):
     return model
 
 
-def loadModelState(outName, ep, model, optim):
+def loadModelState(outName, ep, model, optim=None):
     outFolder = nameFolder(outName)
     modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
     optimStateFile = os.path.join(outFolder, 'optimState_ep{}'.format(ep))
     if torch.cuda.is_available():
         model.load_state_dict(torch.load(modelStateFile))
-        optim.load_state_dict(torch.load(optimStateFile))
     else:
         model.load_state_dict(
             torch.load(modelStateFile, map_location=torch.device('cpu'))
         )
-        optim.load_state_dict(
-            torch.load(optimStateFile, map_location=torch.device('cpu'))
-        )
-    return model, optim
+    if optim is not None:
+        if torch.cuda.is_available():
+            optim.load_state_dict(torch.load(optimStateFile))
+        else:
+            optim.load_state_dict(
+                torch.load(optimStateFile, map_location=torch.device('cpu'))
+            )
+        return model, optim
+    else:
+        return model
 
 
 def saveModelState(outName, ep, model, optim=None):
@@ -160,7 +165,7 @@ def trainModel(outName, resumeEpoch=0):
 
     optim = getattr(torch.optim, dictP['optim'])(model.parameters())
     if resumeEpoch > 0:
-        model, optim = loadModelState(outName, resumeEpoch, model, optim)
+        model, optim = loadModelState(outName, resumeEpoch, model, optim=optim)
 
     nEp = dictP['nEpoch']
     sEp = dictP['saveEpoch']
@@ -185,14 +190,15 @@ def trainModel(outName, resumeEpoch=0):
             nIterEp=dictP['nIterEp'],
             outFolder=outFolder,
             logH=logH,
-        )        
+        )
         # save model
         saveModelState(outName, k + sEp, model, optim=optim)
     logH.close()
 
+
 def resumeModel(outName, resumeOpt=-1):
     """
-    resumeOpt = -1: resume from the last saved epoch    
+    resumeOpt = -1: resume from the last saved epoch
     """
     # find out last saved epoch
     outFolder = nameFolder(outName)
@@ -206,6 +212,7 @@ def resumeModel(outName, resumeOpt=-1):
     else:
         ep = resumeOpt
     trainModel(outName, resumeEpoch=ep)
+
 
 def testModel(outName, DF=None, testSet='all', ep=None, reTest=False, batchSize=20):
     # load master

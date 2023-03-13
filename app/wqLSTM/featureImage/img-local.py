@@ -51,9 +51,9 @@ def funcP(iP, axP):
 figplot.clickMap(funcM, funcP)
 
 # local feature image range
-nC = 20
-nQ = 20
-nD = 20
+nC = 50
+nQ = 50
+nD = 50
 binD = np.linspace(1, 365, nD + 1)
 imgLst1 = list()
 imgLst2 = list()

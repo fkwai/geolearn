@@ -43,3 +43,11 @@ def vRange(data, centerZero=False, prct=10):
     #         new_f.__name__ = f.__name__
     #         return new_f
     #     return decorate
+
+def intersect(a, b,returnIndex=False):
+    """ return the intersection of two lists """
+    out = list(set(a) & set(b))
+    if returnIndex:   
+        return out, [a.index(i) for i in out], [b.index(i) for i in out]     
+    else:
+        return out
