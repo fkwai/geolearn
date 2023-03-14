@@ -49,12 +49,11 @@ def mapGrid(fig, gs, lat, lon, data,
     else:
         vmin, vmax = vRange
 
-    ax = fig.add_subplot(gs, projection=ccrs.PlateCarree())
+    ax = fig.add_subplot(gs)
     if extent is not None:
-        ax.set_extent(extent, crs=ccrs.PlateCarree())
+        ax.set_extent(extent)
     ax.coastlines(resolution='auto', color='k')
-    cm = ax.pcolormesh(lon, lat, data,  vmin=vmin, vmax=vmax,
-                       transform=ccrs.PlateCarree())
+    cm = ax.pcolormesh(lon, lat, data,  vmin=vmin, vmax=vmax)
     if cb is True:
         plt.colorbar(cm, orientation=cbOri)
     return ax
