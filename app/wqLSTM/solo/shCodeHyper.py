@@ -2,6 +2,7 @@ from hydroDL.data import usgs, gageII, gridMET, ntn, GLASS
 from hydroDL.master import slurm
 from hydroDL.data import dbBasin
 from hydroDL.master import basinFull
+import os
 
 labelLst = ['FT2QC', 'QFT2C', 'QT2C']
 # trainLst = ['B15']+['rmYr5b{}'.format(k) for k in range(5)]+['rmRT5b{}'.format(k) for k in range(5)]
@@ -59,6 +60,9 @@ def trainModel(code, dr, hs, rho, nLayer):
         hiddenSize=hs,
         nLayer=nLayer,
     )
+    outFolder = basinFull.nameFolder(outName)
+    if os.path.exists(os.path.join(outFolder, 'modelState_ep{}'.format(20))):
+        return
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
     slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
     # basinFull.trainModel(outName)

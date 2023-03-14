@@ -396,3 +396,59 @@ class WaterNet0119(torch.nn.Module):
             return yOut, (QpR, QsR, QgR), (SfT, SsT, SgT)
         else:
             return yOut
+
+class WaterNet0313(torch.nn.Module):
+    def __init__(self, nh, ng, nr):
+        # with a interception bucket
+        super().__init__()
+        self.nh = nh
+        self.ng = ng
+        self.nr = nr
+        self.fcR = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*nr))
+        # [kp, ks, kg, gp, gl, qb, ga]
+        self.wLst = [
+            'sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
+            'exp', 'relu', 'skip']
+        self.fcW = nn.Sequential(
+            nn.Linear(ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*len(self.wLst)))
+        # [vi,ve,vm]
+        self.vLst = ['skip', 'relu', 'exp']
+        self.fcT = nn.Sequential(
+            nn.Linear(6+ng, 256),
+            nn.Tanh(),
+            nn.Dropout(),
+            nn.Linear(256, nh*len(self.vLst)))
+        self.DP = nn.Dropout()
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for layer in self.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+
+    def getParams(self, x, xc, nt, nh, nr):
+        xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
+        w = self.fcW(xc)
+        [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
+        gL = gL**2
+        kg = kg/10
+        ga = torch.softmax(self.DP(ga), dim=-1)
+        v = self.fcT(xcT)
+        [vi, ve, vm] = sepPar(v, nh, self.vLst)
+        vi = F.hardsigmoid(vi*2)
+        ve = ve*2
+        wR = self.fcR(xc)
+        rf = torch.relu(wR)
+        return [kp, ks, kg, gp, gL, qb, ga], [vi, ve, vm], rf
+
+    @staticmethod
+    def forwardFull(P,Tmin,Tmax,vi,ve,vm):
+        bucket.divideP(P, Tmin, Tmax)
+
