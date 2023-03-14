@@ -61,10 +61,10 @@ def trainModel(code, dr, hs, rho, nLayer):
         nLayer=nLayer,
     )
     outFolder = basinFull.nameFolder(outName)
-    if os.path.exists(os.path.join(outFolder, 'modelState_ep{}'.format(20))):
-        return
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+    if not os.path.exists(os.path.join(outFolder, 'modelState_ep{}'.format(20))):
+        # slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+        print(outName)
     # basinFull.trainModel(outName)
 
 
