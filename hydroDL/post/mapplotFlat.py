@@ -27,7 +27,7 @@ def mapPoint(fig, gs, lat, lon, data,
         vmin, vmax = vRange
 
     ax = fig.add_subplot(gs)
-    ax.set_extent(extent)
+    # ax.set_extent(extent)
     # ax.coastlines(resolution='auto', color='k')
     ind = np.where(~np.isnan(data))[0]
     cs = ax.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
