@@ -113,10 +113,11 @@ figplot.clickMap(funcM, funcP)
 
 # PCA of image
 from sklearn.decomposition import PCA
+
 m1 = imgAry1.reshape(nC * nD, -1).swapaxes(0, 1)
 m2 = imgAry2.reshape(nC * nQ, -1).swapaxes(0, 1)
 pca1 = PCA(n_components=150)
-pc1=pca1.fit(m1)
+pc1 = pca1.fit(m1)
 p1 = pca1.transform(m1)
 pca2 = PCA(n_components=150)
 pca2.fit(m2)
@@ -153,25 +154,25 @@ if len(dictMaster['varY']) > 1:
 corrL1 = utils.stat.calCorr(yP1, obs1)
 corrL2 = utils.stat.calCorr(yP2, obs2)
 
-i=1
-j=5
-fig, axes = plt.subplots(2, 1,figsize=(4,8))
-axes[0].scatter(p1[:,i],p1[:,j],c=corrL2)
-axes[1].scatter(p2[:,i],p2[:,j],c=corrL2)
-fig.suptitle('pc{} vs pc{}'.format(i,j))
+i = 1
+j = 5
+fig, axes = plt.subplots(2, 1, figsize=(4, 8))
+axes[0].scatter(p1[:, i], p1[:, j], c=corrL2)
+axes[1].scatter(p2[:, i], p2[:, j], c=corrL2)
+fig.suptitle('pc{} vs pc{}'.format(i, j))
 fig.show()
 
-r1=np.ndarray(50)
-r2=np.ndarray(50)
+r1 = np.ndarray(50)
+r2 = np.ndarray(50)
 for k in range(50):
-    r1[k]=np.corrcoef(p1[:,k],corrL2[:,0])[0,1]
-    r2[k]=np.corrcoef(p2[:,k],corrL2[:,0])[0,1]
+    r1[k] = np.corrcoef(p1[:, k], corrL2[:, 0])[0, 1]
+    r2[k] = np.corrcoef(p2[:, k], corrL2[:, 0])[0, 1]
 
-    
-i1,j1=np.argsort(r1**2)[-2:]
-i2,j2=np.argsort(r2**2)[-2:]
-fig, axes = plt.subplots(2, 1,figsize=(4,8))
-axes[0].scatter(p1[:,i1],p1[:,j1],c=corrL2)
-axes[1].scatter(p2[:,i2],p2[:,j2],c=corrL2)
-fig.suptitle('pc{} vs pc{}; pc{} vs pc{}'.format(i1,j1,i2,j2))
+
+i1, j1 = np.argsort(r1**2)[-2:]
+i2, j2 = np.argsort(r2**2)[-2:]
+fig, axes = plt.subplots(2, 1, figsize=(4, 8))
+axes[0].scatter(p1[:, i1], p1[:, j1], c=corrL2)
+axes[1].scatter(p2[:, i2], p2[:, j2], c=corrL2)
+fig.suptitle('pc{} vs pc{}; pc{} vs pc{}'.format(i1, j1, i2, j2))
 fig.show()

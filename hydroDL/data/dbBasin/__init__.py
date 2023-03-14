@@ -195,7 +195,7 @@ class DataFrameBasin:
         if sd < self.t[0] or ed > self.t[-1]:
             raise Exception('Wrong sd or ed in subset')
         indT1 = np.where(self.t == sd)[0][0]
-        indT2 = np.where(self.t == ed)[0][0] + 1
+        indT2 = np.where(self.t == ed)[0][0] + 1 # MAYBE FIX THIS LATER
         # site
         if subset['siteNoLst'] is None:
             indS = np.arange(len(self.siteNoLst))

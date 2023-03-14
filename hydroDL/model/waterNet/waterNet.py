@@ -3,33 +3,7 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
-
-
-def convTS(x, w):
-    nt, ns, nh = x.shape
-    if w.dim() == 1:
-        w = w.repeat([ns, 1])
-    nr = int(w.shape[-1]/nh)
-    r = torch.softmax(w.view(ns*nh, 1, nr), dim=-1)
-    a = x.permute(1, 2, 0).view(1, ns*nh, nt)
-    y = F.conv1d(a, r, groups=ns*nh).view(ns, nh, nt-nr+1).permute(2, 0, 1)
-    return y
-
-
-def sepPar(p, nh, actLst):
-    outLst = list()
-    for k, act in enumerate(actLst):
-        if act == 'skip':
-            outLst.append(p[..., nh*k:nh*(k+1)])
-        else:
-            if hasattr(torch, act):
-                ff = getattr(torch, act)
-            elif hasattr(F, act):
-                ff = getattr(F, act)
-            else:
-                Exception('can not find activate func')
-            outLst.append(ff(p[..., nh*k:nh*(k+1)]))
-    return outLst
+from hydroDL.model.waterNet.func import convTS, sepPar
 
 
 def waterForward(x, w, v, nh, outQ=False):
@@ -396,59 +370,3 @@ class WaterNet0119(torch.nn.Module):
             return yOut, (QpR, QsR, QgR), (SfT, SsT, SgT)
         else:
             return yOut
-
-class WaterNet0313(torch.nn.Module):
-    def __init__(self, nh, ng, nr):
-        # with a interception bucket
-        super().__init__()
-        self.nh = nh
-        self.ng = ng
-        self.nr = nr
-        self.fcR = nn.Sequential(
-            nn.Linear(ng, 256),
-            nn.Tanh(),
-            nn.Dropout(),
-            nn.Linear(256, nh*nr))
-        # [kp, ks, kg, gp, gl, qb, ga]
-        self.wLst = [
-            'sigmoid', 'sigmoid', 'sigmoid', 'sigmoid',
-            'exp', 'relu', 'skip']
-        self.fcW = nn.Sequential(
-            nn.Linear(ng, 256),
-            nn.Tanh(),
-            nn.Dropout(),
-            nn.Linear(256, nh*len(self.wLst)))
-        # [vi,ve,vm]
-        self.vLst = ['skip', 'relu', 'exp']
-        self.fcT = nn.Sequential(
-            nn.Linear(6+ng, 256),
-            nn.Tanh(),
-            nn.Dropout(),
-            nn.Linear(256, nh*len(self.vLst)))
-        self.DP = nn.Dropout()
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        for layer in self.children():
-            if hasattr(layer, 'reset_parameters'):
-                layer.reset_parameters()
-
-    def getParams(self, x, xc, nt, nh, nr):
-        xcT = torch.cat([x, torch.tile(xc, [nt, 1, 1])], dim=-1)
-        w = self.fcW(xc)
-        [kp, ks, kg, gp, gL, qb, ga] = sepPar(w, nh, self.wLst)
-        gL = gL**2
-        kg = kg/10
-        ga = torch.softmax(self.DP(ga), dim=-1)
-        v = self.fcT(xcT)
-        [vi, ve, vm] = sepPar(v, nh, self.vLst)
-        vi = F.hardsigmoid(vi*2)
-        ve = ve*2
-        wR = self.fcR(xc)
-        rf = torch.relu(wR)
-        return [kp, ks, kg, gp, gL, qb, ga], [vi, ve, vm], rf
-
-    @staticmethod
-    def forwardFull(P,Tmin,Tmax,vi,ve,vm):
-        bucket.divideP(P, Tmin, Tmax)
-
