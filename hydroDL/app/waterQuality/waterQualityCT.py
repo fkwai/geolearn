@@ -403,19 +403,20 @@ def wrapData(caseName, siteNoLst, rho=365, nFill=5, varC=usgs.varC, varG=gageII.
         json.dump(dictData, fp, indent=4)
 
 
-def calRunoff(q, info):
-    siteNoLst = info.siteNo.unique().tolist()
-    dfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
-    dfArea.rename({'STAID': 'siteNo'})
-    area = info.join(dfArea, on='siteNo')['DRAIN_SQKM'].values
-    runoff = calRunoffArea(q, area)
-    return runoff
+# legacy code
+# def calRunoff(q, info):
+#     siteNoLst = info.siteNo.unique().tolist()
+#     dfArea = gageII.readData(varLst=['DRAIN_SQKM'], siteNoLst=siteNoLst)
+#     dfArea.rename({'STAID': 'siteNo'})
+#     area = info.join(dfArea, on='siteNo')['DRAIN_SQKM'].values
+#     runoff = calRunoffArea(q, area)
+#     return runoff
 
 
-def calRunoffArea(q, area):
-    unitConv = 0.3048**3*365*24*60*60/1000**2
-    runoff = q/area*unitConv
-    return runoff
+# def calRunoffArea(q, area):
+#     unitConv = 0.3048**3*365*24*60*60/1000**2
+#     runoff = q/area*unitConv
+#     return runoff
 
 
 def countSite(info):

@@ -1,5 +1,5 @@
 import ee
-ee.Initialize()
+# ee.Initialize()
 # ee.Authenticate()
-from . import utils
-from .extractData import getRegion
+# from . import geeutils
+# from .extractData import getRegion

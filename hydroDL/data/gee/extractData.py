@@ -1,7 +1,7 @@
 import ee
 import time
 import pandas as pd
-from . import utils
+from . import geeutils
 
 
 def col2lst(imageCol, nImage=None):

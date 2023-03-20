@@ -13,8 +13,8 @@ from hydroDL.post import mapplot, axplot, figplot
 varLst = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
 
 # read gridMet
-dataLst0 = list()
-tLst0 = list()
+dataLst = list()
+tLst = list()
 yrLst = list(range(2010, 2020))
 sd = np.datetime64('2010-01-01')
 ed = np.datetime64('2020-01-01')
@@ -22,16 +22,18 @@ ed = np.datetime64('2020-01-01')
 for yr in yrLst:
     ncFile = os.path.join(kPath.dirRaw, 'gridMET',
                           '{}_{}.nc'.format('pr', yr))
-    data, lat, lon, t = hydroDL.data.gridMET.io.readNcData(ncFile)
-    dataLst0.append(data.astype('float32'))
-    tLst0.append(t)
-data0 = np.concatenate(dataLst0, axis=0, dtype=float)
-t0 = np.concatenate(tLst0, axis=-1)
-_, lat0, lon0 = hydroDL.data.gridMET.io.readNcInfo(ncFile)
-data0 = np.transpose(data0, axes=(1, 2, 0))
+    data, (lat, lon, t) = hydroDL.data.gridMET.io.readNcData(ncFile)
+    dataLst.append(data.astype('float32'))
+    tLst.append(t)
+dataAll = np.concatenate(dataLst, axis=-1, dtype=float)
+tAll = np.concatenate(tLst, axis=-1)
+
 
 fig = plt.figure()
 gs = gridspec.GridSpec(1, 1)
-ax = mapplot.mapGrid(fig, gs[0, 0], lat0, lon0,
-                     np.mean(data0, axis=-1))
+ax = mapplot.mapGrid(fig, gs[0, 0], lat, lon,
+                     np.mean(data, axis=-1)*365)
 fig.show()
+
+fh = netCDF4.Dataset(ncFile)
+fh.variables

@@ -16,7 +16,7 @@ H = []
 Q = []
 p = 5
 rhoW = 2
-rhoB = 1
+rhoB = 3
 
 s0 = I
 with torch.no_grad():
@@ -40,6 +40,14 @@ for t in range(rhoW + rhoB, nt):
     _ = k.grad.zero_()
 
 # merged
+nt = 10
+k = torch.tensor(1.0, requires_grad=True)
+I = torch.tensor(0.0, requires_grad=True)
+H = []
+Q = []
+p = 5
+rhoW = 2
+rhoB = 3
 s = I
 with torch.no_grad():
     for t in range(rhoW):
@@ -54,12 +62,12 @@ for t in range(rhoW, nt):
             s = func(s, i + t - rhoB + 1, k)
         _ = H.pop(0)
     _ = H.append(s.detach())
-    _ = Q.append(s)        
+    _ = Q.append(s)
     s.backward(retain_graph=True)
     k.grad
     _ = k.grad.zero_()
 
-QT=torch.stack(Q)
+QT = torch.stack(Q)
 
 
 def print_graph(g, level=0):
