@@ -16,6 +16,7 @@ def testModel(code, dr, hs, rho, nLayer,ep=500):
         )
         yP1, ycP1 = basinFull.testModel(outName, testSet=trainSet, ep=ep)
         yP2, ycP2 = basinFull.testModel(outName, testSet=testSet, ep=ep)
+        return outName
 
 drLst = [0.25, 0.5, 0.75]
 hsLst = [64, 256, 512]
@@ -33,9 +34,10 @@ for dr in drLst:
     for hs in hsLst:
         for rho in rhoLst:
             for nLayer in nLayerLst:
-                try:
-                    testModel(code, dr, hs, rho, nLayer)
-                except:
-                    print(code, dr, hs, rho, nLayer)
+                for ep in [100,300, 500]:
+                    try:
+                        outName=testModel(code, dr, hs, rho, nLayer)
+                    except:
+                        print(code, dr, hs, rho, nLayer)
 
 
