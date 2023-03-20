@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import datetime as dt
 
-sn = 1e-5
+sn = np.exp(-5)
 code = '00955'
 dataName = '{}-B200'.format(code)
 DF = dbBasin.DataFrameBasin(dataName)
@@ -46,6 +46,7 @@ def funcP(iP, axP):
     axT2.plot(DF.t, DF.q[:, iP, 1], 'b-')
     sc1 = axP1.scatter(day, DF.c[:, iP, 0], c=year)
     sc2 = axP2.scatter(logQ[:, iP], DF.c[:, iP, 0], c=year)
+    # plt.colorbar(sc1)
 
 
 figplot.clickMap(funcM, funcP)
@@ -62,13 +63,17 @@ extLst2 = list()
 for k, siteNo in enumerate(DF.siteNoLst):
     c = DF.c[:, k, 0]
     q = logQ[:, k]
+    ind = ~np.isnan(c) & ~np.isnan(q)
+    c = c[ind]
+    q = q[ind]
+    d = day[ind]
     binC = np.linspace(np.nanmin(c), np.nanmax(c), num=nC + 1)
     binQ = np.linspace(np.nanmin(q), np.nanmax(q), num=nQ + 1)
     extent1 = [binD[0], binD[-1], binC[0], binC[-1]]
     extent2 = [binQ[0], binQ[-1], binC[0], binC[-1]]
-    img1 = np.histogram2d(day, DF.c[:, k, 0], bins=[binD, binC], density=True)[0]
+    img1 = np.histogram2d(day, DF.c[:, k, 0], bins=[binD, binC])[0]
     img1 = img1.swapaxes(0, 1)
-    img2 = np.histogram2d(logQ[:, k], DF.c[:, k, 0], bins=[binQ, binC], density=True)[0]
+    img2 = np.histogram2d(logQ[:, k], DF.c[:, k, 0], bins=[binQ, binC])[0]
     img2 = img2.swapaxes(0, 1)
     imgLst1.append(img1)
     imgLst2.append(img2)
@@ -103,9 +108,13 @@ def funcP(iP, axP):
     axT1.plot(DF.t, DF.c[:, iP, 0], 'r*')
     axT2.plot(DF.t, DF.q[:, iP, 1], 'b-')
     axP1.scatter(day, DF.c[:, iP, 0], c=year)
-    axP2.imshow(imgAry1[:, :, iP], origin='lower', extent=extLst1[iP], aspect='auto')
+    im1=axP2.imshow(imgAry1[:, :, iP], origin='lower', extent=extLst1[iP], aspect='auto')
     axP3.scatter(logQ[:, iP], DF.c[:, iP, 0], c=year)
-    axP4.imshow(imgAry2[:, :, iP], origin='lower', extent=extLst2[iP], aspect='auto')
+    im2 = axP4.imshow(
+        imgAry2[:, :, iP], origin='lower', extent=extLst2[iP], aspect='auto'
+    )
+    # plt.colorbar(im1)
+    # plt.colorbar(im2)
 
 
 figplot.clickMap(funcM, funcP)
@@ -113,9 +122,15 @@ figplot.clickMap(funcM, funcP)
 
 # PCA of image
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
-m1 = imgAry1.reshape(nC * nD, -1).swapaxes(0, 1)
-m2 = imgAry2.reshape(nC * nQ, -1).swapaxes(0, 1)
+mA1 = imgAry1.reshape(nC * nD, -1).swapaxes(0, 1)
+mA2 = imgAry2.reshape(nC * nQ, -1).swapaxes(0, 1)
+scaler = StandardScaler()
+m1 = scaler.fit_transform(mA1)
+m2 = scaler.fit_transform(mA2)
+
+
 pca1 = PCA(n_components=150)
 pc1 = pca1.fit(m1)
 p1 = pca1.transform(m1)
@@ -131,6 +146,15 @@ axes[0].set_ylabel('Explained variance')
 axes[1].set_ylabel('Explained variance')
 fig.show()
 
+# eigen image
+nE = 5
+e1 = pca1.components_[:nE].reshape(nE,nD, nC)
+e2 = pca2.components_[:nE].reshape(nE,nQ, nC)
+fig, axes = plt.subplots(2, nE)
+for k in range(nE):
+    axes[0, k].imshow(e1[k, ::-1, :])
+    axes[1, k].imshow(e2[k, ::-1, :])
+fig.show()
 
 # load perfomance of LSTM
 from hydroDL.master import basinFull
@@ -154,8 +178,8 @@ if len(dictMaster['varY']) > 1:
 corrL1 = utils.stat.calCorr(yP1, obs1)
 corrL2 = utils.stat.calCorr(yP2, obs2)
 
-i = 1
-j = 5
+i = 0
+j = 0
 fig, axes = plt.subplots(2, 1, figsize=(4, 8))
 axes[0].scatter(p1[:, i], p1[:, j], c=corrL2)
 axes[1].scatter(p2[:, i], p2[:, j], c=corrL2)
@@ -175,4 +199,12 @@ fig, axes = plt.subplots(2, 1, figsize=(4, 8))
 axes[0].scatter(p1[:, i1], p1[:, j1], c=corrL2)
 axes[1].scatter(p2[:, i2], p2[:, j2], c=corrL2)
 fig.suptitle('pc{} vs pc{}; pc{} vs pc{}'.format(i1, j1, i2, j2))
+fig.show()
+
+i1=1
+j1=1
+fig, axes = plt.subplots(2, 1, figsize=(4, 8))
+axes[0].scatter(p1[:, i1], corrL2, c=corrL2)
+axes[1].scatter(p2[:, j1], corrL2, c=corrL2)
+fig.suptitle('pc{} vs LSTM R; pc{} vs LSTM R'.format(i1, j1))
 fig.show()
