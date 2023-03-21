@@ -73,6 +73,13 @@ model = WaterNet0313(nf, ng, nh, nr, rho=rho)
 optim = torch.optim.Adam(model.parameters())
 lossFun = crit.LogLoss2D()
 
+if torch.cuda.is_available():
+    model = model.cuda()
+    x = x.cuda()
+    xc = xc.cuda()
+    y = y.cuda()
+    lossFun = lossFun.cuda()
+
 model.train()
 for ep in range(1, 1001):
     print(ep)
