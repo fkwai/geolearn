@@ -138,7 +138,7 @@ class WaterNet0313(torch.nn.Module):
             qOut = torch.sum(
                 qp * paramG['ga'] + qs * paramG['ga'] + qd * paramG['ga'], dim=1
             )
-            print('{} forward {}'.format(iT, time.time() - t0))
+            # print('{} forward {}'.format(iT, time.time() - t0))
 
             # if lossFun is not None:
             #     loss = lossFun(qOut, y[iT, ...])
