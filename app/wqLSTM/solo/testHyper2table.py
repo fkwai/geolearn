@@ -21,6 +21,9 @@ obs1 = DF.extractSubset(matObs, trainSet)
 obs2 = DF.extractSubset(matObs, testSet)
 
 
+outName='00915-B200-QFT2C-rmYr5b0-d25-h64-rho365-nl1'
+yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=500)
+
 def testModel(code, dr, hs, rho, nLayer, ep=500):
     dataName = '{}-{}'.format(code, 'B200')
     outName = '{}-{}-{}-d{:.0f}-h{}-rho{}-nl{}'.format(
@@ -47,7 +50,7 @@ for dr in drLst:
             for nLayer in nLayerLst:
                 for ep in [100, 300, 500]:
                     try:
-                        corr = testModel(code, dr, hs, rho, nLayer)
+                        corr = testModel(code, dr, hs, rho, nLayer,ep=ep)
                         temp = {
                             'dr': dr,
                             'hs': hs,
@@ -56,7 +59,8 @@ for dr in drLst:
                             'ep': ep,
                             'corr': np.nanmedian(corr),
                         }
-                        tab = tab.append(temp)
+                        tab = tab.append(temp, ignore_index = True)
 
                     except:
                         print(code, dr, hs, rho, nLayer)
+tab.to_csv('temp.csv')
