@@ -11,8 +11,11 @@ from collections import OrderedDict
 from hydroDL.model.waterNet.modelFull import WaterNet0313
 from hydroDL.model import crit
 import time
+import os
 
 # load data
+saveDir = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/waterNet/'
+
 code = '00955'
 dataName = '{}-{}'.format(code, 'B200')
 DF = dbBasin.DataFrameBasin(dataName)
@@ -77,19 +80,21 @@ for ep in range(1, 1001):
     model.zero_grad()
     optim.zero_grad()
     yOut = model(x, xc, y=y[:, :, 0])
-    # optim.step()
-    # t1 = time.time()
-    # # loss = lossFun(yOut[:, :, None], y[nr - 1 :, :, :])
+    
+    t1 = time.time()
+    loss = lossFun(yOut[:, :, None], y[nr - 1 :, :, :])
     # loss = lossFun(yOut[:, :, None], y)
-    # print('forward {:.2f}'.format(t1 - t0))
+    print('forward {:.2f}'.format(t1 - t0))    
+    loss.backward()
+    t2 = time.time()
+    print('backward {:.2f}'.format(t2 - t1))
+    optim.step()
+    print(ep, loss.item())
 
-    # # loss.backward()
-    # t2 = time.time()
-    # print('backward {:.2f}'.format(t2 - t1))
-
-    # optim.step()
-    # print(ep, loss.item())
-
+    if ep % 50 == 0:
+        modelFile = os.path.join(
+            saveDir, 'wfq-{}-ep{}'.format(dataName, ep))
+        torch.save(model.state_dict(), modelFile)
 
 # Qpr = torch.stack(Qp)
 # Qsr = torch.stack(Qs)

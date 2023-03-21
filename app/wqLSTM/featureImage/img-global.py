@@ -51,9 +51,9 @@ def funcP(iP, axP):
 figplot.clickMap(funcM, funcP)
 
 # global feature image
-nC = 20
-nQ = 20
-nD = 20
+nC = 50
+nQ = 50
+nD = 50
 binC = np.linspace(np.nanmin(DF.c), np.nanmax(DF.c), num=nC + 1)
 binQ = np.linspace(np.nanmin(logQ), np.nanmax(logQ), num=nQ + 1)
 binD = np.linspace(1, 365, nD + 1)

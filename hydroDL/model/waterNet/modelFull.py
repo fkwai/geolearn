@@ -81,10 +81,10 @@ class WaterNet0313(torch.nn.Module):
             Sg = Sg.cuda()
         return Sf, Ss, Sg
 
-    def forward(self, x, xc, outStep=False, optim=None, y=None):
+    def forward(self, x, xc, outStep=False):
         nt = x.shape[0]
         ns = x.shape[1]
-        lossFun = nn.MSELoss()
+        # lossFun = nn.MSELoss()
         Prcp, Evp, T1, T2, Rad, Hum = [x[:, :, k] for k in range(x.shape[-1])]
         Sf, Ss, Sd = self.initState(ns)
         paramK, paramG, paramR = self.getParam(x, xc)
@@ -140,10 +140,10 @@ class WaterNet0313(torch.nn.Module):
             )
             print('{} forward {}'.format(iT, time.time() - t0))
 
-            if lossFun is not None:
-                loss = lossFun(qOut, y[iT, ...])
-                loss.backward(retain_graph=True)
-                print('{} backward {}'.format(iT, time.time() - t0))
+            # if lossFun is not None:
+            #     loss = lossFun(qOut, y[iT, ...])
+            #     loss.backward(retain_graph=True)
+            #     print('{} backward {}'.format(iT, time.time() - t0))
 
         # routing
         QpT = torch.stack(Qp, dim=0)

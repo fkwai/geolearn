@@ -179,11 +179,13 @@ corrL1 = utils.stat.calCorr(yP1, obs1)
 corrL2 = utils.stat.calCorr(yP2, obs2)
 
 i = 0
-j = 0
+j = 1
 fig, axes = plt.subplots(2, 1, figsize=(4, 8))
-axes[0].scatter(p1[:, i], p1[:, j], c=corrL2)
-axes[1].scatter(p2[:, i], p2[:, j], c=corrL2)
+cb1=axes[0].scatter(p1[:, i], p1[:, j], c=corrL2)
+cb2=axes[1].scatter(p2[:, i], p2[:, j], c=corrL2)
 fig.suptitle('pc{} vs pc{}'.format(i, j))
+plt.colorbar(cb1)
+plt.colorbar(cb2)
 fig.show()
 
 r1 = np.ndarray(50)
