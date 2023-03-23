@@ -23,16 +23,8 @@ scale = 500
 sd = '2015-01-01'
 ed = '2023-03-01'
 
-# col = product.sentinel1(sd, ed)
-# outFolder = os.path.join(kPath.dirVeg, 'RS', 'sentinel1')
-col = product.landset8(sd, ed)
-outFolder = os.path.join(kPath.dirVeg, 'RS', 'landset')
 
-if not os.path.exists(outFolder):
-    os.mkdir(outFolder)
-
-
-def download(col,outFolder):
+def download(col, outFolder):
     if not os.path.exists(outFolder):
         os.mkdir(outFolder)
     # for ind, row in tabCrd.iterrows():
@@ -49,24 +41,15 @@ def download(col,outFolder):
         df.to_csv(fileName, index=False)
         print(siteId, time.time() - t0)
 
-col = product.sentinel1(sd, ed)
-outFolder = os.path.join(kPath.dirVeg, 'RS', 'sentinel1')
-download(col,outFolder)
+
+# col = product.sentinel1(sd, ed)
+# outFolder = os.path.join(kPath.dirVeg, 'RS', 'sentinel1')
+# download(col,outFolder)
 
 col = product.landset8(sd, ed)
-outFolder = os.path.join(kPath.dirVeg, 'RS', 'landset')
-download(col,outFolder)
+outFolder = os.path.join(kPath.dirVeg, 'RS', 'landsat8-500m')
+download(col, outFolder)
 
-col = (
-    ee.ImageCollection('LARSE/GEDI/GEDI02_B_002_MONTHLY').filterDate(sd, ed)
-    .select('solar_elevation')
-    # .filter(ee.Filter.eq('CLOUD_COVER', 0))
-)
-siteDict=dictLst[0]
-lat = siteDict['crd'][0]
-lon = siteDict['crd'][1]
-siteId = siteDict['siteId']
-fileName = os.path.join(outFolder, siteId + '.csv')
-geometry = ee.Geometry.Point([lon, lat])
-region = col.getRegion(geometry, int(1000)).getInfo()
-df = geeutils.record2df(region)
+# col = product.MCD15A3H(sd, ed)
+# outFolder = os.path.join(kPath.dirVeg, 'RS', 'MCD15A3H')
+# download(col,outFolder)

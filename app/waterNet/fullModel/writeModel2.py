@@ -86,8 +86,7 @@ for ep in range(1, 1001):
     t0 = time.time()
     model.zero_grad()
     optim.zero_grad()
-    yOut = model(x, xc, y=y[:, :, 0])
-    
+    yOut = model(x, xc, y=y[:, :, 0])    
     t1 = time.time()
     loss = lossFun(yOut[:, :, None], y[nr - 1 :, :, :])
     # loss = lossFun(yOut[:, :, None], y)
@@ -97,7 +96,6 @@ for ep in range(1, 1001):
     print('backward {:.2f}'.format(t2 - t1))
     optim.step()
     print(ep, loss.item())
-
     if ep % 50 == 0:
         modelFile = os.path.join(
             saveDir, 'wfq-{}-ep{}'.format(dataName, ep))

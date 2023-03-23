@@ -84,7 +84,6 @@ class WaterNet0313(torch.nn.Module):
     def forward(self, x, xc, outStep=False):
         nt = x.shape[0]
         ns = x.shape[1]
-        # lossFun = nn.MSELoss()
         Prcp, Evp, T1, T2, Rad, Hum = [x[:, :, k] for k in range(x.shape[-1])]
         Sf, Ss, Sd = self.initState(ns)
         paramK, paramG, paramR = self.getParam(x, xc)
@@ -138,13 +137,6 @@ class WaterNet0313(torch.nn.Module):
             qOut = torch.sum(
                 qp * paramG['ga'] + qs * paramG['ga'] + qd * paramG['ga'], dim=1
             )
-            # print('{} forward {}'.format(iT, time.time() - t0))
-
-            # if lossFun is not None:
-            #     loss = lossFun(qOut, y[iT, ...])
-            #     loss.backward(retain_graph=True)
-            #     print('{} backward {}'.format(iT, time.time() - t0))
-
         # routing
         QpT = torch.stack(Qp, dim=0)
         QsT = torch.stack(Qs, dim=0)
@@ -155,8 +147,8 @@ class WaterNet0313(torch.nn.Module):
         # QpR = QpT * paramG['ga']
         # QsR = QsT * paramG['ga']
         # QdR = QdT * paramG['ga']
-        yOut = torch.sum(QpR + QsR + QdR, dim=2)
+        qOut = torch.sum(QpR + QsR + QdR, dim=2)
         if outStep:
-            return yOut, (Qp, Qs, Qd), (Hf, Hs, Hd)
+            return qOut, (Qp, Qs, Qd), (Hf, Hs, Hd)
         else:
-            return yOut
+            return qOut
