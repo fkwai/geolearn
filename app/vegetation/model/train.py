@@ -16,8 +16,8 @@ subsetName = '5fold_0_train'
 
 
 # subsetName='all'
-DF.loadSubset(subsetName)
-DM = dbVeg.DataModelVeg(DF, subsetName=subsetName)
+indS=DF.loadSubset(subsetName)
+DM = dbVeg.DataModelVeg(DF, subset=subsetName)
 outFolder = os.path.join(kPath.dirVeg, 'model', 'LSTMfull', subsetName)
 if not os.path.exists(outFolder):
     os.mkdir(outFolder)
