@@ -25,9 +25,9 @@ dataTup = DM.getData()
 dataTup = trainBasin.dealNaN(dataTup, [1, 1, 0, 0])
 [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
 
-ep = 400
+ep = 200
 modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
-model = rnn.LstmModel(nx + nxc, ny, 128, nLayer=2)
+model = rnn.LstmModel(nx + nxc, ny, 16, nLayer=3)
 if torch.cuda.is_available():
     model.load_state_dict(torch.load(modelStateFile))
 else:

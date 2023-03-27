@@ -24,8 +24,8 @@ for k, site in enumerate(siteSingle):
     print(k, site)
     tab = tabAll[tabAll['siteId'] == site]
     tab = tab.sort_values(by=['Date'])
-    crd = tabCrd.loc[site]
-    if not np.isnan(crd['lat']):
+    crd = tabCrd.loc[site]    
+    if not np.isnan(crd['lat']) and not np.isnan(crd['lon']) and not crd['State'] == 'AK':
         siteDict = dict(
             siteId=site,
             siteName=crd['Site'],

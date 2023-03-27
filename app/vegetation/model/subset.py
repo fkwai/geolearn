@@ -6,7 +6,7 @@ import json
 import os
 
 importlib.reload(hydroDL.data.dbVeg)
-df = dbVeg.DataFrameBasin('single')
+df = dbVeg.DataFrameVeg('single')
 
 subsetName='5fold_0_train'
 # subsetName='all'
@@ -20,7 +20,7 @@ np.random.shuffle(ind)
 n = 5
 indLst = np.array_split(ind, n)
 dictSubset = dict()
-dictSubset['all'] = ind.tolist()
+dictSubset['all'] = sorted(ind.tolist())
 for k in range(n):
     indTest = sorted(indLst[k].tolist())
     indTrain = sorted(np.concatenate(indLst[:k] + indLst[k + 1 :]).tolist())

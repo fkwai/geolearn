@@ -42,6 +42,10 @@ for var in varLst:
     dfM = dfD.resample('SM').mean()
     dfLst.append(dfM)
 
+# save df to csv
+for var, dfM in zip(varLst, dfLst):
+    dfM.to_csv(os.path.join(kPath.dirVeg, 'forcings', '{}.csv'.format(var)))
+
 tM = dfM.index.values
 sdN = '2016-08-31'
 edN = '2021-12-15'

@@ -58,11 +58,12 @@ for k in range(resumeEpoch, nEp, sEp):
         model,
         lossFun,
         optim,
-        batchSize=[50, 100],
+        batchSize=[10, 200],
         nEp=sEp,
         cEp=k,
         outFolder=outFolder,
         logH=logH,
+        optBatch='Weight',
     )
     # save model
     modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(k + sEp))

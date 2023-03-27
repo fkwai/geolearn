@@ -12,7 +12,7 @@ mixFile = os.path.join(kPath.dirVeg, 'NFMD', 'NFMD_mix.json')
 
 sd = '2014-12-31'
 ed = '2023-02-15'
-tAll = pd.date_range(sd, ed, freq='SM')
+tAll = pd.date_range(sd, ed)
 
 # load NFMD json
 with open(singleFile, 'r') as fp:
@@ -68,8 +68,8 @@ matS = np.full([len(tAll), len(siteIdLst), len(varLst)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirSentinel, siteId + '.csv'))
     df.index = pd.to_datetime(df['time'])
-    dfi = interpSM(df, var=varLst)
-    temp = pd.DataFrame(index=tAll).join(dfi)
+    df.index = pd.to_datetime(df['time']).dt.date.astype('datetime64[D]')
+    temp = pd.DataFrame(index=tAll).join(df)
     matS[:, siteIdLst.index(siteId), :] = temp.values
 1 - np.sum(np.isnan(matS)) / (len(matS.flatten()))
 
