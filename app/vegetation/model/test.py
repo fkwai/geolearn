@@ -25,7 +25,7 @@ dataTup = DM.getData()
 dataTup = trainBasin.dealNaN(dataTup, [1, 1, 0, 0])
 [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
 
-ep = 500
+ep = 400
 modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
 model = rnn.LstmModel(nx + nxc, ny, 128, nLayer=2)
 if torch.cuda.is_available():
@@ -50,3 +50,5 @@ fig.show()
 from hydroDL import utils
 
 rmse, corr = utils.stat.calErr(a[:, :, 0], b[:, :, 0])
+corr
+rmse
