@@ -24,9 +24,11 @@ tN = pd.date_range(sdN, edN, freq='SM')
 matF = np.full([len(tN), len(dfSite), len(varLst)], np.nan)
 for k,var in enumerate(varLst):
     dfM = pd.read_csv(os.path.join(kPath.dirVeg, 'forcings', '{}.csv'.format(var)), index_col=0)
+    dfM.index=pd.to_datetime(dfM.index)
     tM = dfM.index.values
     _, indT1, indT2 = np.intersect1d(tM, tN, return_indices=True)
-    v = dfM.values[indT1, :]
+
+    v = dfM[dfSite['siteId']].values[indT1, :]
     matF[:, :, k] = v
 
 

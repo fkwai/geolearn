@@ -26,24 +26,32 @@ def subsetRandom(dataLst, batchSize, sizeLst, opt='Random', wS=None, wT=None):
     [x, xc, y, yc] = dataLst
     [rho, nbatch] = batchSize
     [nx, nxc, ny, nyc, nt, ns] = sizeLst
-    if opt == 'Random':
+    if opt == 'Index':
         iS = np.random.randint(0, ns, [nbatch])
-        iT = np.random.randint(0, nt - rho + 1, [nbatch])
-    elif opt == 'Weight':
-        iS = np.random.choice(ns, nbatch, p=wS)
-        iT = np.zeros(nbatch).astype(int)
-        for k in range(nbatch):
-            iT[k] = np.random.choice(nt - rho + 1, p=wT[:, iS[k]])
-    xTemp = np.full([rho, nbatch, nx], np.nan)
+        xTemp = x[:, iS, :]
+        yTemp = y[:, iS, :] if y is not None else np.ndarray([nt, nbatch, 0])
+    else:
+        if opt == 'Random':
+            iS = np.random.randint(0, ns, [nbatch])
+            iT = np.random.randint(0, nt - rho + 1, [nbatch])
+        elif opt == 'Weight':
+            iS = np.random.choice(ns, nbatch, p=wS)
+            iT = np.zeros(nbatch).astype(int)
+            for k in range(nbatch):
+                iT[k] = np.random.choice(nt - rho + 1, p=wT[:, iS[k]])
+        else:
+            raise ValueError('opt must be Index, Random or Weight')
+        xTemp = np.full([rho, nbatch, nx], np.nan)        
+        yTemp = np.full([rho, nbatch, ny], np.nan)        
+        if x is not None:
+            for k in range(nbatch):
+                xTemp[:, k, :] = x[iT[k] : iT[k] + rho, iS[k], :]
+        if y is not None:
+            for k in range(nbatch):
+                yTemp[:, k, :] = y[iT[k] : iT[k] + rho, iS[k], :]
     xcTemp = np.full([rho, nbatch, nxc], np.nan)
-    yTemp = np.full([rho, nbatch, ny], np.nan)
     ycTemp = np.full([rho, nbatch, nyc], np.nan)
-    if x is not None:
-        for k in range(nbatch):
-            xTemp[:, k, :] = x[iT[k] : iT[k] + rho, iS[k], :]
-    if y is not None:
-        for k in range(nbatch):
-            yTemp[:, k, :] = y[iT[k] : iT[k] + rho, iS[k], :]
+
     if xc is not None:
         xcTemp = np.tile(xc[iS, :], [rho, 1, 1])
     if yc is not None:
@@ -92,7 +100,8 @@ def dealNaN(dataTup, optNaN):
     if len(rmLst) > 0:
         rmAry = np.concatenate(rmLst)
         for k in range(len(dataLst)):
-            dataLst[k] = np.delete(dataLst[k], rmAry, axis=dataLst[k].ndim - 2)
+            if dataLst[k] is not None:
+                dataLst[k] = np.delete(dataLst[k], rmAry, axis=dataLst[k].ndim - 2)
         print('nan found and removed')
     return dataLst
 
@@ -125,7 +134,7 @@ def trainModel(
     optBatch='Random',
     nIterEp=None,
     outFolder=None,
-    logH=None
+    logH=None,
 ):
     """[summary]
     Arguments:
@@ -165,6 +174,9 @@ def trainModel(
         wT = None
     elif optBatch == 'Weight':
         pr, wS, wT = batchWeight(dataLst[2], rho, nbatch)
+    elif optBatch == 'Index':
+        pr = nbatch / ns
+        wS, wT = None, None
     if nIterEp is None:
         nIterEp = 1 if pr > 1 else int(np.ceil(np.log(0.01) / np.log(1 - pr)))
     print('iter per epoch {}'.format(nIterEp), flush=True)
@@ -180,7 +192,7 @@ def trainModel(
             model.zero_grad(set_to_none=True)
             yP = model(xT)
             if type(lossFun) is crit.RmseLoss2D:
-                loss = lossFun(yP, yT[-1, :, :])
+                loss = lossFun(yP[-1, :, :], yT[-1, :, :])
             else:
                 loss = lossFun(yP, yT)
             loss.backward()
@@ -209,7 +221,7 @@ def trainModel(
         logStr = 'Epoch {} Loss {} time {:.2f} '.format(iEp + cEp, lossEp, ct)
         if logH is not None:
             logH.write(logStr + '\n')
-            logH.flush()        
+            logH.flush()
         print(logStr, flush=True)
     return model, optim
 

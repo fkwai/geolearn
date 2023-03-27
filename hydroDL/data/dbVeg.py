@@ -67,6 +67,7 @@ class DataModelVeg(DataModel):
         self.varY = dictD['varY']
         self.varXC = dictD['varXC']
         self.varYC = dictD['varYC']
+        # load subset
         indS = DF.loadSubset(self.subset)
         self.X = DF.x[:, indS, :]
         self.Y = DF.y[:, indS, None]

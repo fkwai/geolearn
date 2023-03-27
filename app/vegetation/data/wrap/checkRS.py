@@ -43,8 +43,7 @@ dirLandsat = os.path.join(kPath.dirVeg, 'RS', 'landsat8-500m')
 df = pd.read_csv(os.path.join(dirLandsat, siteIdLst[20] + '.csv'))
 # tL = pd.to_datetime(df['time']).dt.date.astype('datetime64[D]').drop_duplicates()
 # (tL[1:] - tL[:-1]).unique()
-tL = pd.date_range('2015-01-10', '2023-02-17', freq='16D')
-matL = np.full([len(tL), len(siteIdLst), len(varLst)], np.nan)
+matL = np.full([len(tAll), len(siteIdLst), len(varLst)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirLandsat, siteId + '.csv'))    
     # drop cloudy days
@@ -55,8 +54,8 @@ for siteId in siteIdLst:
     # interpolate
     df = df[~df['QA_PIXEL'].isin(all_masked_values)]    
     df.index = pd.to_datetime(df['time']).dt.date.astype('datetime64[D]')
-    df.groupby(df.index).mean()
-    temp = pd.DataFrame(index=tL).join(df[varLst])
+    df=df[varLst].groupby(df.index).mean()
+    temp = pd.DataFrame(index=tAll).join(df[varLst])
     # temp=pd.merge(pd.DataFrame(index=tAll),dfi,left_index=True,right_index=True)
     matL[:, siteIdLst.index(siteId), :] = temp.values
 1 - np.sum(np.isnan(matL)) / (len(matL.flatten()))
@@ -67,8 +66,8 @@ varLst = ['VV', 'VH']
 matS = np.full([len(tAll), len(siteIdLst), len(varLst)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirSentinel, siteId + '.csv'))
-    df.index = pd.to_datetime(df['time'])
     df.index = pd.to_datetime(df['time']).dt.date.astype('datetime64[D]')
+    df=df[varLst].groupby(df.index).mean()
     temp = pd.DataFrame(index=tAll).join(df)
     matS[:, siteIdLst.index(siteId), :] = temp.values
 1 - np.sum(np.isnan(matS)) / (len(matS.flatten()))
@@ -76,12 +75,14 @@ for siteId in siteIdLst:
 # imageshow
 imgL = np.sum(~np.isnan(matL), axis=-1)
 imgS = np.sum(~np.isnan(matS), axis=-1)
-indT = np.where((tAll.month == 3) & (tAll.day == 15))[0]
+indT = np.where((tAll.day == 15))[0]
 fig, axes = plt.subplots(2, 1, figsize=(12, 4))
 axes[0].set_yticks(indT)
 axes[0].set_yticklabels(tAll[indT].strftime('%Y-%m-%d'))
-axes[0].imshow(imgL, aspect='auto')
+im1=axes[0].imshow(imgL, aspect='auto')
 axes[1].set_yticks(indT)
 axes[1].set_yticklabels(tAll[indT].strftime('%Y-%m-%d'))
-axes[1].imshow(imgS, aspect='auto')
+im2=axes[1].imshow(imgS, aspect='auto')
+fig.colorbar(im1, ax=axes[0])
+fig.colorbar(im2, ax=axes[1])
 fig.show()
