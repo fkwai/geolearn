@@ -52,6 +52,8 @@ for k, (var, dfM) in enumerate(zip(varLst, dfLst)):
     v = dfM.values[indT1, :]
     matF[:, :, k] = v
 
+# save to forcing files
+
 
 # append forcings
 outFile = os.path.join(kPath.dirVeg, 'model', 'data', 'trainData.npz')
