@@ -34,7 +34,7 @@ dataTup = trainBasin.dealNaN(dataTup, [1, 1, 0, 0])
 
 # define model, loss, optim
 lossFun = crit.MSELoss()
-model = rnn.LstmModel(nx + nxc, ny, 128, nLayer=2)
+model = rnn.LstmModel(nx + nxc, ny, 16, nLayer=3)
 if torch.cuda.is_available():
     lossFun = lossFun.cuda()
     model = model.cuda()
