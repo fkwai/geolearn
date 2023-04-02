@@ -12,7 +12,7 @@ def sentinel1(sd, ed, product='COPERNICUS/S1_GRD'):
     return col
 
 
-def landset8(sd, ed, product='LANDSAT/LC08/C02/T1_L2'):
+def landsat8(sd, ed, product='LANDSAT/LC08/C02/T1_L2'):
     col = (
         ee.ImageCollection(product)
         .filterDate(sd, ed)

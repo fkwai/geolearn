@@ -19,6 +19,7 @@ varX = data['varX']
 varY = data['varY']
 
 
+# constant
 def get_value(filename, mx, my):
     ds = gdal.Open(filename)
     gt = ds.GetGeoTransform()
@@ -26,8 +27,6 @@ def get_value(filename, mx, my):
     px = ((mx - gt[0]) / gt[1]).astype(int)  # x pixel
     py = ((my - gt[3]) / gt[5]).astype(int)  # y pixel
     return data[py, px]
-
-
 dictConst = {
     'slope': 'usa_slope_project.tif',
     'dem': 'usa_dem.tif',

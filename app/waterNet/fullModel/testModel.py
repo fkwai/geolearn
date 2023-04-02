@@ -12,10 +12,11 @@ from hydroDL.model.waterNet.modelFull import WaterNet0313
 from hydroDL.model import crit
 import time
 import os
+from hydroDL import kPath, utils
+
 
 # load data
-saveDir = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/waterNet/'
-
+saveDir = os.path.join(kPath.dirWQ, 'waterNet')
 code = '00955'
 dataName = '{}-{}'.format(code, 'B200')
 DF = dbBasin.DataFrameBasin(dataName)
@@ -48,7 +49,8 @@ DM2 = dbBasin.DataModelBasin(
 DM2.borrowStat(DM1)
 dataTup2 = DM2.getData()
 
-(xP, xcP, yP, ycP) = dataTup1
+# (xP, xcP, yP, ycP) = dataTup1
+(xP, xcP, yP, ycP) = dataTup2
 x = torch.from_numpy(xP).float()
 xc = torch.from_numpy(xcP).float()
 y = torch.from_numpy(yP).float()
@@ -59,7 +61,7 @@ tW = np.datetime64('1980-10-01')
 rhoW = np.where(t == tW)[0][0]
 rho = (5, 365, rhoW)
 nf = x.shape[-1]
-nh = 16
+nh = 4
 ng = xc.shape[-1]
 nr = 5
 hs = 256
@@ -80,42 +82,10 @@ if torch.cuda.is_available():
     y = y.cuda()
     lossFun = lossFun.cuda()
 
-model.train()
-for ep in range(1, 1001):
-    print(ep)
-    t0 = time.time()
-    model.zero_grad()
-    optim.zero_grad()
-    yOut = model(x, xc)    
-    t1 = time.time()
-    loss = lossFun(yOut[:, :, None], y[nr - 1 :, :, :])
-    # loss = lossFun(yOut[:, :, None], y)
-    print('forward {:.2f}'.format(t1 - t0))    
-    loss.backward()
-    t2 = time.time()
-    print('backward {:.2f}'.format(t2 - t1))
-    optim.step()
-    print(ep, loss.item())
-    if ep % 50 == 0:
-        modelFile = os.path.join(
-            saveDir, 'wfq-{}-ep{}'.format(dataName, ep))
-        torch.save(model.state_dict(), modelFile)
+modelFile = os.path.join(saveDir, 'wfq-{}-ep{}'.format(dataName, 500))
+model.load_state_dict(torch.load(modelFile, map_location=torch.device('cpu')))
 
-# Qpr = torch.stack(Qp)
-# Qsr = torch.stack(Qs)
-# Qdr = torch.stack(Qd)
-# Hfr = torch.stack(Hf)
-# Hsr = torch.stack(Hs)
-# Hdr = torch.stack(Hd)
-
-
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots(1, 1)
-ax.plot(yOut[:, 0].detach().numpy())
-fig.show()
-
-# Qp, Qs, Qd = [], [], []
-# Hf, Hs, Hd = [], [], []
-# Qp, Qs, Qd, Hf, Hs, Hd = [1, 1, 1, 1, 1, 1]
-# import make_dot
+model.eval()
+yOut = model(x, xc)
+corr = utils.stat.calCorr(yOut.detach().numpy(), yP[nr - 1 :, :, 0])
+np.nanmean(corr)

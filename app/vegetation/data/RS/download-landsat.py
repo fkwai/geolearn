@@ -50,6 +50,6 @@ def download(col, outFolder):
 # outFolder = os.path.join(kPath.dirVeg, 'RS', 'sentinel1')
 # download(col, outFolder)
 
-col = product.landset8(sd, ed)
+col = product.landsat8(sd, ed)
 outFolder = os.path.join(kPath.dirVeg, 'RS', 'landsat8-500m')
 download(col, outFolder)

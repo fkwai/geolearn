@@ -19,7 +19,7 @@ def caseFolder(caseName):
     return os.path.join(kPath.dirVeg, 'model', 'data', caseName)
 
 
-class DataFrameVeg:
+class DataFrameVeg(Dataframe):
     def __init__(self, caseName):
         saveFolder = caseFolder(caseName)
         self.saveFolder = saveFolder
