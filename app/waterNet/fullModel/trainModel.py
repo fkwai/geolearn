@@ -87,7 +87,7 @@ for ep in range(1, 1001):
     optim.zero_grad()
     yOut = model(x, xc)    
     t1 = time.time()
-    loss = lossFun(yOut[:, :, None], y[nr - 1 :, :, :])
+    loss = lossFun(yOut[:, :, None], y[rhoW+nr - 1 :, :, :])
     # loss = lossFun(yOut[:, :, None], y)
     print('forward {:.2f}'.format(t1 - t0))    
     loss.backward()
