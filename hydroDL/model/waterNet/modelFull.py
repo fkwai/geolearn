@@ -152,9 +152,6 @@ class WaterNet0313(torch.nn.Module):
                     l.append(v)
                 for l, v in zip([Qp, Qs, Qd], [qp, qs, qd]):
                     l.append(v)
-            qOut = torch.sum(
-                qp * paramG['ga'] + qs * paramG['ga'] + qd * paramG['ga'], dim=1
-            )
         if outStep:
             Hf, Hs, Hd = [torch.stack(l, dim=0) for l in [Hf, Hs, Hd]]
             Qp, Qs, Qd = [torch.stack(l, dim=0) for l in [Qp, Qs, Qd]]
