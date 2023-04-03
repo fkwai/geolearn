@@ -34,10 +34,11 @@ class WaterNet0313(torch.nn.Module):
             ks=lambda x: torch.sigmoid(x),  # shallow
             kd=lambda x: torch.sigmoid(x),  # deep
             gd=lambda x: torch.sigmoid(x),  # partition of shallow to deep
-            gl=lambda x: torch.pow(torch.exp(x), 2) * 10,  # effective depth
-            qb=lambda x: torch.relu(x),  # baseflow
+            gl=lambda x: torch.tanh(x) * 100,  # effective depth
+            gl=lambda x: torch.pow(torch.sigmoid(x) * 10, 3),  # effective depth
+            qb=lambda x: torch.relu(x) / 10,  # baseflow
             ga=lambda x: torch.softmax(x, -1),  # area
-            gi=lambda x: F.hardsigmoid(x),  # interception
+            gi=lambda x: F.hardsigmoid(x) / 2,  # interception
             ge=lambda x: torch.relu(x),  # evaporation
         )
         self.kDict = dict(
@@ -149,6 +150,7 @@ class WaterNet0313(torch.nn.Module):
         # QdR = QdT * paramG['ga']
         qOut = torch.sum(QpR + QsR + QdR, dim=2)
         if outStep:
-            return qOut, (Qp, Qs, Qd), (Hf, Hs, Hd)
+            Hf, Hs, Hd = [torch.stack(l, dim=0) for l in [Hf, Hs, Hd]]
+            return qOut, (QpR, QsR, QdR), (Hf, Hs, Hd)
         else:
             return qOut

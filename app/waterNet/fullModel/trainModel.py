@@ -82,7 +82,6 @@ if torch.cuda.is_available():
 
 model.train()
 for ep in range(1, 1001):
-    print(ep)
     t0 = time.time()
     model.zero_grad()
     optim.zero_grad()

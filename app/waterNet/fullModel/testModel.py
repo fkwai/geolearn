@@ -37,7 +37,7 @@ varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 
 trainSet = 'B15'
-testSet = 'A15'
+testSet = 'all'
 DM1 = dbBasin.DataModelBasin(
     DF, subset=trainSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC
 )
@@ -61,7 +61,7 @@ tW = np.datetime64('1980-10-01')
 rhoW = np.where(t == tW)[0][0]
 rho = (5, 365, rhoW)
 nf = x.shape[-1]
-nh = 4
+nh = 16
 ng = xc.shape[-1]
 nr = 5
 hs = 256
@@ -83,9 +83,59 @@ if torch.cuda.is_available():
     lossFun = lossFun.cuda()
 
 modelFile = os.path.join(saveDir, 'wfq-{}-ep{}'.format(dataName, 500))
+
 model.load_state_dict(torch.load(modelFile, map_location=torch.device('cpu')))
 
 model.eval()
-yOut = model(x, xc)
-corr = utils.stat.calCorr(yOut.detach().numpy(), yP[nr - 1 :, :, 0])
+yOut, (Qp, Qs, Qd), (Hf, Hs, Hd) = model(x, xc, outStep=True)
+Hf, Hs, Hd = [l.detach().numpy() for l in [Hf, Hs, Hd]]
+Qp, Qs, Qd = [l.detach().numpy() for l in [Qp, Qs, Qd]]
+Q = yOut.detach().numpy()
+obs = yP[nr - 1 :, :, 0]
+corr = utils.stat.calCorr(Q, obs)
 np.nanmean(corr)
+
+# plot
+import matplotlib.pyplot as plt
+from hydroDL.post import axplot, figplot, mapplot
+import matplotlib.gridspec as gridspec
+
+lat, lon = DF.getGeo()
+t = DF.t[nr - 1 :]
+
+
+def funcM():
+    figM = plt.figure(figsize=(8, 4))
+    gsM = gridspec.GridSpec(1, 1)
+    axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, corr, s=16, cb=True)
+    figP, axP = plt.subplots(4, 1, figsize=[15, 8], sharex=True)
+    figP.subplots_adjust(wspace=0, hspace=0)
+    return figM, axM, figP, axP, lon, lat
+
+
+def funcP(iP, axP):
+    print(iP)
+    axP[0].plot(t, obs[:, iP], 'k-')
+    axP[0].plot(t, Q[:, iP], 'r-')
+    axP[1].plot(t, Qp[:, iP, :])
+    axP[2].plot(t, Qs[:, iP, :])
+    axP[3].plot(t, Qd[:, iP, :])
+
+
+figM, figP = figplot.clickMap(funcM, funcP)
+
+# parameters
+paramK, paramG, paramR = model.getParam(x, xc)
+
+
+paramG.keys()
+a=paramG['ge'].detach().numpy()
+fig,ax=plt.subplots(1,1)
+im=ax.imshow(a)
+# im=ax.imshow(a,vmax=200)
+fig.colorbar(im,ax=ax)
+fig.show()
+
+fig,ax=plt.subplots(1,1)
+ax.hist(a.flatten(),bins=10)
+fig.show()

@@ -13,6 +13,7 @@ def submitJob(jobName, cmdLine, nH=8, nM=16):
         fh.writelines('#SBATCH --mem={}000\n'.format(nM))
         # fh.writelines('#SBATCH --qos=normal\n')
         # fh.writelines('#SBATCH --partition=owners\n')
+        fh.writelines('#SBATCH -C "GPU_SKU:P100_PCIE|GPU_SKU:RTX_2080Ti|GPU_SKU:V100_PCIE|GPU_SKU:V100S_PCIE|GPU_SKU:V100_SXM2"')
         fh.writelines('#SBATCH --mail-type=ALL\n')        
         fh.writelines('#SBATCH --mail-user=kuaifang@stanford.edu\n')
         if kPath.host == 'icme':
