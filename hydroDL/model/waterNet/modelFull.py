@@ -121,6 +121,8 @@ class WaterNet0313(torch.nn.Module):
         H = [[Ss, Sd]]
         Q = []
         qOut = torch.zeros(nt - self.nr - self.rho_warmup + 1, ns)
+        if torch.cuda.is_available():
+            qOut = qOut.cuda()
         for iT in range(self.rho_warmup, nt):
             t0 = time.time()
             if iT < self.rho_warmup + self.rho_short:
