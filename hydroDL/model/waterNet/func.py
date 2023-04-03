@@ -48,3 +48,12 @@ def sepParam(p, nh, pDict):
         else:
             outDict[key] = ff(p[..., nh * k : nh * (k + 1)])
     return outDict
+
+
+def onePeakWeight(w, nh, nr):
+    ns = w.shape[0]
+    w = torch.sigmoid(w)
+    u = torch.relu(w[:, :nh])
+    r = torch.cumsum(torch.relu(w[:, nh:].view(ns, nh, nr)), dim=-1)
+    k = torch.softmax(r - u[:, :, None] * nr, dim=-1).permute(2, 0, 1)
+    return k

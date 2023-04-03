@@ -6,6 +6,7 @@ from hydroDL.model.waterNet.func import convTS, sepParam
 from hydroDL.model.dropout import createMask, DropMask
 from collections import OrderedDict
 import time
+from sys import getsizeof
 
 
 def defineFCNN(nx, ny, hs=256, dr=0.5):
@@ -16,7 +17,7 @@ def defineFCNN(nx, ny, hs=256, dr=0.5):
 
 
 class WaterNet0313(torch.nn.Module):
-    def __init__(self, nf, ng, nh, nr, rho=(5, 365, 639), hs=256, dr=0.5):
+    def __init__(self, nf, ng, nh, nr, rho=(5, 365, 0), hs=256, dr=0.5):
         super(WaterNet0313, self).__init__()
         self.nf = nf
         self.nh = nh
@@ -33,7 +34,7 @@ class WaterNet0313(torch.nn.Module):
             kp=lambda x: torch.sigmoid(x),  # ponding
             ks=lambda x: torch.sigmoid(x),  # shallow
             kd=lambda x: torch.sigmoid(x),  # deep
-            gd=lambda x: torch.sigmoid(x),  # partition of shallow to deep            
+            gd=lambda x: torch.sigmoid(x),  # partition of shallow to deep
             gl=lambda x: torch.pow(torch.sigmoid(x) * 10, 3),  # effective depth
             qb=lambda x: torch.relu(x) / 10,  # baseflow
             ga=lambda x: torch.softmax(x, -1),  # area
@@ -44,10 +45,11 @@ class WaterNet0313(torch.nn.Module):
             km=lambda x: torch.exp(x),  # snow melt
         )
         self.FC = nn.Linear(self.ng, hs)
-        self.FC_r = nn.Linear(hs, self.nh * self.nr)
+        self.FC_r = nn.Linear(hs, self.nh * (self.nr + 1))
         self.FC_g = nn.Linear(hs, self.nh * len(self.gDict))
         self.FC_kin = nn.Linear(4, hs)
         self.FC_kout = nn.Linear(hs, self.nh * len(self.kDict))
+        self.reset_parameters()
 
     def getParam(self, x, xc):
         f = x[:, :, 2:]  # T1, T2, Rad and Hum
@@ -63,7 +65,7 @@ class WaterNet0313(torch.nn.Module):
         pR = self.FC_r(DropMask.apply(torch.tanh(state), mask_r, self.training))
         paramK = sepParam(pK, self.nh, self.kDict)
         paramG = sepParam(pG, self.nh, self.gDict)
-        paramR = pR
+        paramR = func.onePeakWeight(pR, self.nh, self.nr)
         return paramK, paramG, paramR
 
     def reset_parameters(self):
@@ -103,20 +105,22 @@ class WaterNet0313(torch.nn.Module):
             Sd_new, qd = bucket.deep(Sd, Id, k=paramG['kd'], baseflow=paramG['qb'])
             return (Sf_new, Ss_new, Sd_new), (qp, qs, qd)
 
-        Qp, Qs, Qd = [], [], []
         if outStep:
             Hf, Hs, Hd = [], [], []
+            Qp, Qs, Qd = [], [], []
         # warmup
         with torch.no_grad():
             for iT in range(self.rho_warmup):
                 (Sf, Ss, Sd), (qp, qs, qd) = step(iT)
-                for l, v in zip([Qp, Qs, Qd], [qp, qs, qd]):
-                    l.append(v)
                 if outStep:
+                    for l, v in zip([Qp, Qs, Qd], [qp, qs, qd]):
+                        l.append(v)
                     for l, v in zip([Hf, Hs, Hd], [Sf, Ss, Sd]):
                         l.append(v)
         # forward
-        H = [[Ss.detach(), Sd.detach()]]
+        H = [[Ss, Sd]]
+        Q = []
+        qOut = torch.zeros(nt - self.nr - self.rho_warmup + 1, ns)
         for iT in range(self.rho_warmup, nt):
             t0 = time.time()
             if iT < self.rho_warmup + self.rho_short:
@@ -129,27 +133,31 @@ class WaterNet0313(torch.nn.Module):
             if (iT - self.rho_warmup) % self.rho_long == 0:
                 Sf.detach_()
             H.append([Ss.detach(), Sd.detach()])
-            for l, v in zip([Qp, Qs, Qd], [qp, qs, qd]):
-                l.append(v)
+            # routing
+            Q.append([qp, qs, qd])
+            if iT >= self.rho_warmup + self.nr - 1:
+                Qp = torch.stack([Q[x][0] for x in range(self.nr)], dim=0)
+                Qs = torch.stack([Q[x][1] for x in range(self.nr)], dim=0)
+                Qd = torch.stack([Q[x][2] for x in range(self.nr)], dim=0)
+                out = torch.sum(
+                    torch.sum(Qp * paramR, dim=0) * paramG['ga']
+                    + torch.sum(Qs * paramR, dim=0) * paramG['ga']
+                    + torch.sum(Qd * paramR, dim=0) * paramG['ga'],
+                    dim=1,
+                )
+                qOut[iT-self.rho_warmup-self.nr+1, :] = out
+                Q.pop(0)
             if outStep:
                 for l, v in zip([Hf, Hs, Hd], [Sf, Ss, Sd]):
+                    l.append(v)
+                for l, v in zip([Qp, Qs, Qd], [qp, qs, qd]):
                     l.append(v)
             qOut = torch.sum(
                 qp * paramG['ga'] + qs * paramG['ga'] + qd * paramG['ga'], dim=1
             )
-        # routing
-        QpT = torch.stack(Qp, dim=0)
-        QsT = torch.stack(Qs, dim=0)
-        QdT = torch.stack(Qd, dim=0)
-        QpR = convTS(QpT, paramR) * paramG['ga']
-        QsR = convTS(QsT, paramR) * paramG['ga']
-        QdR = convTS(QdT, paramR) * paramG['ga']
-        # QpR = QpT * paramG['ga']
-        # QsR = QsT * paramG['ga']
-        # QdR = QdT * paramG['ga']
-        qOut = torch.sum(QpR + QsR + QdR, dim=2)
         if outStep:
             Hf, Hs, Hd = [torch.stack(l, dim=0) for l in [Hf, Hs, Hd]]
-            return qOut, (QpR, QsR, QdR), (Hf, Hs, Hd)
+            Qp, Qs, Qd = [torch.stack(l, dim=0) for l in [Qp, Qs, Qd]]
+            return qOut, (Qp, Qs, Qd), (Hf, Hs, Hd)
         else:
             return qOut

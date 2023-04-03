@@ -117,10 +117,12 @@ def funcP(iP, axP):
     print(iP)
     axP[0].plot(t, obs[:, iP], 'k-')
     axP[0].plot(t, Q[:, iP], 'r-')
-    axP[1].plot(t, Qp[:, iP, :])
-    axP[2].plot(t, Qs[:, iP, :])
-    axP[3].plot(t, Qd[:, iP, :])
-
+    # axP[1].plot(t, Qp[:, iP, :])
+    # axP[2].plot(t, Qs[:, iP, :])
+    # axP[3].plot(t, Qd[:, iP, :])
+    axP[1].plot(t, Hf[nr - 1:, iP, :])
+    axP[2].plot(t, Hs[nr - 1:, iP, :])
+    axP[3].plot(t, Hd[nr - 1:, iP, :])
 
 figM, figP = figplot.clickMap(funcM, funcP)
 
