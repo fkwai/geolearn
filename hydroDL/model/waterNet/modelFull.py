@@ -33,8 +33,7 @@ class WaterNet0313(torch.nn.Module):
             kp=lambda x: torch.sigmoid(x),  # ponding
             ks=lambda x: torch.sigmoid(x),  # shallow
             kd=lambda x: torch.sigmoid(x),  # deep
-            gd=lambda x: torch.sigmoid(x),  # partition of shallow to deep
-            gl=lambda x: torch.tanh(x) * 100,  # effective depth
+            gd=lambda x: torch.sigmoid(x),  # partition of shallow to deep            
             gl=lambda x: torch.pow(torch.sigmoid(x) * 10, 3),  # effective depth
             qb=lambda x: torch.relu(x) / 10,  # baseflow
             ga=lambda x: torch.softmax(x, -1),  # area
