@@ -18,9 +18,9 @@ rho = 7
 # subsetName='all'
 indS = DF.loadSubset(subsetName)
 DM = dbVeg.DataModelVeg(DF, subset=subsetName)
-outFolder = os.path.join(kPath.dirVeg, 'model', 'LSTMfull', subsetName)
+outFolder = os.path.join(kPath.dirVeg, 'model', 'LSTMend', subsetName)
 if not os.path.exists(outFolder):
-    os.mkdir(outFolder)
+    os.makedirs(outFolder)
 DM.trans(
     mtdX=['norm' for x in DM.varX],
     mtdXC=['norm' for x in DM.varXC],

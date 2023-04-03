@@ -12,7 +12,7 @@ from hydroDL.master import basinFull, slurm
 
 importlib.reload(hydroDL.data.dbVeg)
 DF = dbVeg.DataFrameVeg('single')
-subsetName = '5fold_0_train'
+subsetName = 'all'
 
 
 # subsetName='all'
@@ -34,11 +34,12 @@ dataTup = trainBasin.dealNaN(dataTup, [1, 1, 0, 0])
 
 # define model, loss, optim
 lossFun = crit.MSELoss()
-model = rnn.LstmModel(nx + nxc, ny, 16, nLayer=3)
+model = rnn.LstmModel(nx + nxc, ny, 128, nLayer=2)
 if torch.cuda.is_available():
     lossFun = lossFun.cuda()
     model = model.cuda()
-optim = torch.optim.Adam(model.parameters(), lr=0.001)
+# optim = torch.optim.Adam(model.parameters(), lr=0.001)
+optim = torch.optim.Adadelta(model.parameters())
 
 # train
 nEp = 500
@@ -58,7 +59,7 @@ for k in range(resumeEpoch, nEp, sEp):
         model,
         lossFun,
         optim,
-        batchSize=[10, 200],
+        batchSize=[20, 100],
         nEp=sEp,
         cEp=k,
         outFolder=outFolder,
