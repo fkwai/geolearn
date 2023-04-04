@@ -97,7 +97,7 @@ for ep in range(1, 1001):
     print(ep, loss.item())
     if ep % 50 == 0:
         modelFile = os.path.join(
-            saveDir, 'wfq-{}-ep{}'.format(dataName, ep))
+            saveDir, 'wfq2-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
 
 # Qpr = torch.stack(Qp)

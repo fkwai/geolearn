@@ -1,9 +1,10 @@
 #!/bin/bash
 #SBATCH -p gpu
 #SBATCH -G 1
-#SBATCH --job-name=wfq2-00955-B15
-#SBATCH --output=/scratch/users/kuaifang/jobs/wfq2-00955-B15.out
-#SBATCH --error=/scratch/users/kuaifang/jobs/wfq2-00955-B15.err
+#SBATCH -C "GPU_SKU:V100_PCIE|GPU_SKU:V100S_PCIE|GPU_SKU:V100_SXM2"
+#SBATCH --job-name=wfq-00955-B15
+#SBATCH --output=/scratch/users/kuaifang/jobs/wfq-00955-B15.out
+#SBATCH --error=/scratch/users/kuaifang/jobs/wfq-00955-B15.err
 #SBATCH --time=24:0:0
 #SBATCH --mem=32000
 #SBATCH --qos=normal
