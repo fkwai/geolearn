@@ -87,76 +87,75 @@ class WaterNet0313(torch.nn.Module):
         nt = x.shape[0]
         ns = x.shape[1]
         Prcp, Evp, T1, T2, Rad, Hum = [x[:, :, k] for k in range(x.shape[-1])]
-        Sf, Ss, Sd = self.initState(ns)
+        storage = self.initState(ns)
         paramK, paramG, paramR = self.getParam(x, xc)
         Ps, Pl = func.divideP(Prcp, T1, T2)
         Ps = Ps.unsqueeze(-1)
         Pl = Pl.unsqueeze(-1)
         Evp = Evp.unsqueeze(-1)
-
-        def step(k):
-            Sf_new, qf = bucket.snow(Sf, Ps[k, ...], paramK['km'][k, ...])
-            Is = qf + Pl[k, ...] * paramG['gi'] - Evp[k, ...] * paramG['ge']
-            Ss_new, qp, qsA = bucket.shallow(
-                Ss, Is, L=paramG['gl'], k1=paramG['kp'], k2=paramG['ks']
-            )
-            qs = qsA * (1 - paramG['gd'])
-            Id = qsA * paramG['gd']
-            Sd_new, qd = bucket.deep(Sd, Id, k=paramG['kd'], baseflow=paramG['qb'])
-            return (Sf_new, Ss_new, Sd_new), (qp, qs, qd)
-
+        input = [Ps, Pl, Evp]
+        param = [paramK, paramG, paramR]
         if outStep:
             Hf, Hs, Hd = [], [], []
-            Qp, Qs, Qd = [], [], []
+            Of, Op, Os, Od = [], [], [], []
+
+        def saveStep(b):
+            if b:
+                Sf, Ss, Sd = storage
+                qf, qp, qs, qd = flux
+                (qf, qp, qs, qd)
+                for l, v in zip([Hf, Hs, Hd], [Sf, Ss, Sd]):
+                    l.append(v)
+                for l, v in zip([Of, Op, Os, Od], [qf, qp, qs, qd]):
+                    l.append(v)
+
         # warmup
         with torch.no_grad():
             for iT in range(self.rho_warmup):
-                (Sf, Ss, Sd), (qp, qs, qd) = step(iT)
-                if outStep:
-                    for l, v in zip([Qp, Qs, Qd], [qp, qs, qd]):
-                        l.append(v)
-                    for l, v in zip([Hf, Hs, Hd], [Sf, Ss, Sd]):
-                        l.append(v)
+                storage, flux = bucket.step(iT, storage, input, param)
+                saveStep(outStep)
         # forward
-        H = [[Ss, Sd]]
+        H = []
         Q = []
         qOut = torch.zeros(nt - self.nr - self.rho_warmup + 1, ns)
         if torch.cuda.is_available():
             qOut = qOut.cuda()
         for iT in range(self.rho_warmup, nt):
             t0 = time.time()
+            print(iT,storage[1].sum(),'before')
             if iT < self.rho_warmup + self.rho_short:
-                (Sf, Ss, Sd), (qp, qs, qd) = step(iT)
-            else:
-                Ss, Sd = H[0]
-                for i in range(self.rho_short):
-                    (Sf, Ss, Sd), (qp, qs, qd) = step(iT)
+                storage, flux = bucket.step(iT, storage, input, param)
+            else:                
+                storage = H[0]
+                for i in range(iT - self.rho_short + 1, iT + 1):
+                    print(i,storage[1].sum(),'re-before')
+                    storage, flux = bucket.step(i, storage, input, param)
+                    print(i,storage[1].sum(),'re-after')
                 _ = H.pop(0)
+            print(iT,storage[1].sum(),'after')
+            Sf, Ss, Sd = storage
+            qf, qp, qs, qd = flux
             if (iT - self.rho_warmup) % self.rho_long == 0:
                 Sf.detach_()
-            H.append([Ss.detach(), Sd.detach()])
+            H.append([Sf, Ss.detach(), Sd.detach()])
             # routing
             Q.append([qp, qs, qd])
             if iT >= self.rho_warmup + self.nr - 1:
                 Qp = torch.stack([Q[x][0] for x in range(self.nr)], dim=0)
                 Qs = torch.stack([Q[x][1] for x in range(self.nr)], dim=0)
                 Qd = torch.stack([Q[x][2] for x in range(self.nr)], dim=0)
+                QpR = torch.sum(Qp * paramR, dim=0)
+                QsR = torch.sum(Qs * paramR, dim=0)
+                QdR = torch.sum(Qd * paramR, dim=0)
                 out = torch.sum(
-                    torch.sum(Qp * paramR, dim=0) * paramG['ga']
-                    + torch.sum(Qs * paramR, dim=0) * paramG['ga']
-                    + torch.sum(Qd * paramR, dim=0) * paramG['ga'],
-                    dim=1,
+                    QpR * paramG['ga'] + QsR * paramG['ga'] + QdR * paramG['ga'], dim=1
                 )
-                qOut[iT-self.rho_warmup-self.nr+1, :] = out
+                qOut[iT - self.rho_warmup - self.nr + 1, :] = out
                 Q.pop(0)
-            if outStep:
-                for l, v in zip([Hf, Hs, Hd], [Sf, Ss, Sd]):
-                    l.append(v)
-                for l, v in zip([Qp, Qs, Qd], [qp, qs, qd]):
-                    l.append(v)
+            saveStep(outStep)
         if outStep:
             Hf, Hs, Hd = [torch.stack(l, dim=0) for l in [Hf, Hs, Hd]]
-            Qp, Qs, Qd = [torch.stack(l, dim=0) for l in [Qp, Qs, Qd]]
-            return qOut, (Qp, Qs, Qd), (Hf, Hs, Hd)
+            Of, Op, Os, Od = [torch.stack(l, dim=0) for l in [Of, Op, Os, Od]]
+            return qOut, (Of, Op, Os, Od), (Hf, Hs, Hd)
         else:
             return qOut

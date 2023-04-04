@@ -71,7 +71,7 @@ dr = 0.5
 # import hydroDL.model.waterNet.modelFull
 
 # importlib.reload(hydroDL.model.waterNet.modelFull)
-model = WaterNet0313(nf, ng, nh, nr, rho=rho)
+model = WaterNet0313(nf, ng, nh, nr, rho=(5, 365, rhoW))
 optim = torch.optim.Adam(model.parameters())
 lossFun = crit.LogLoss2D()
 
@@ -82,18 +82,22 @@ if torch.cuda.is_available():
     y = y.cuda()
     lossFun = lossFun.cuda()
 
-modelFile = os.path.join(saveDir, 'wfq-{}-ep{}'.format(dataName, 500))
+modelFile = os.path.join(saveDir, 'wfq2-{}-ep{}'.format(dataName, 300))
 
 model.load_state_dict(torch.load(modelFile, map_location=torch.device('cpu')))
 
 model.eval()
-yOut, (Qp, Qs, Qd), (Hf, Hs, Hd) = model(x, xc, outStep=True)
+yOut, (Qf,Qp, Qs, Qd), (Hf, Hs, Hd) = model(x, xc, outStep=True)
 Hf, Hs, Hd = [l.detach().numpy() for l in [Hf, Hs, Hd]]
 Qp, Qs, Qd = [l.detach().numpy() for l in [Qp, Qs, Qd]]
 Q = yOut.detach().numpy()
-obs = yP[nr - 1 :, :, 0]
+obs = yP[rhoW + nr - 1 :, :, 0]
 corr = utils.stat.calCorr(Q, obs)
 np.nanmean(corr)
+
+
+# parameters
+paramK, paramG, paramR = model.getParam(x, xc)
 
 # plot
 import matplotlib.pyplot as plt
@@ -101,9 +105,10 @@ from hydroDL.post import axplot, figplot, mapplot
 import matplotlib.gridspec as gridspec
 
 lat, lon = DF.getGeo()
-t = DF.t[nr - 1 :]
+t = DF.t[rhoW + nr - 1 :]
+t2 = DF.t[ nr - 1 :]
 
-
+# result
 def funcM():
     figM = plt.figure(figsize=(8, 4))
     gsM = gridspec.GridSpec(1, 1)
@@ -114,30 +119,54 @@ def funcM():
 
 
 def funcP(iP, axP):
-    print(iP)
+    print(iP,DF.siteNoLst[iP])
     axP[0].plot(t, obs[:, iP], 'k-')
     axP[0].plot(t, Q[:, iP], 'r-')
     # axP[1].plot(t, Qp[:, iP, :])
     # axP[2].plot(t, Qs[:, iP, :])
     # axP[3].plot(t, Qd[:, iP, :])
-    axP[1].plot(t, Hf[nr - 1:, iP, :])
-    axP[2].plot(t, Hs[nr - 1:, iP, :])
-    axP[3].plot(t, Hd[nr - 1:, iP, :])
+    axP[1].plot(t2, Hf[nr - 1 :, iP, :])
+    axP[2].plot(t2, Hs[nr - 1 :, iP, :])
+    axP[3].plot(t2, Hd[nr - 1 :, iP, :])
+
 
 figM, figP = figplot.clickMap(funcM, funcP)
 
-# parameters
-paramK, paramG, paramR = model.getParam(x, xc)
+# inputs
+iP=0
+Prcp, Evp, T1, T2, Rad, Hum = [x[:, :, k] for k in range(x.shape[-1])]
+Ps, Pl = func.divideP(Prcp, T1, T2)
+Ps = Ps.unsqueeze(-1)
+Pl = Pl.unsqueeze(-1)
+Evp = Evp.unsqueeze(-1)
+Is = Qf + Pl * paramG['gi'] - Evp * paramG['ge']
+# Is = Qf + Pl * paramG['gi']
+
+def funcM():
+    figM = plt.figure(figsize=(8, 4))
+    gsM = gridspec.GridSpec(1, 1)
+    axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, corr, s=16, cb=True)
+    figP, axP = plt.subplots(4, 1, figsize=[15, 8], sharex=True)
+    figP.subplots_adjust(wspace=0, hspace=0)
+    return figM, axM, figP, axP, lon, lat
+def funcP(iP, axP):
+    print(iP,DF.siteNoLst[iP])
+    axP[0].plot(t, obs[:, iP], 'k-')
+    axP[0].plot(t, Q[:, iP], 'r-')
+    axP[1].plot(t2, Is[nr - 1 :, iP, :].detach().numpy())
+    axP[2].plot(t2, Hs[nr - 1 :, iP, :])
+    axP[3].plot(t2, Hd[nr - 1 :, iP, :])
+figM, figP = figplot.clickMap(funcM, funcP)
 
 
 paramG.keys()
-a=paramG['ge'].detach().numpy()
-fig,ax=plt.subplots(1,1)
-im=ax.imshow(a)
+a = paramG['ge'].detach().numpy()
+fig, ax = plt.subplots(1, 1)
+im = ax.imshow(a)
 # im=ax.imshow(a,vmax=200)
-fig.colorbar(im,ax=ax)
+fig.colorbar(im, ax=ax)
 fig.show()
 
-fig,ax=plt.subplots(1,1)
-ax.hist(a.flatten(),bins=10)
+fig, ax = plt.subplots(1, 1)
+ax.hist(a.flatten(), bins=10)
 fig.show()

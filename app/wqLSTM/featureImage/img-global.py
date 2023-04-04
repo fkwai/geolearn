@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import datetime as dt
 
-sn = 1e-5
+sn = np.exp(-5)
 code = '00955'
 dataName = '{}-B200'.format(code)
 DF = dbBasin.DataFrameBasin(dataName)
@@ -46,28 +46,41 @@ def funcP(iP, axP):
     axT2.plot(DF.t, DF.q[:, iP, 1], 'b-')
     sc1 = axP1.scatter(day, DF.c[:, iP, 0], c=year)
     sc2 = axP2.scatter(logQ[:, iP], DF.c[:, iP, 0], c=year)
+    # plt.colorbar(sc1)
 
 
 figplot.clickMap(funcM, funcP)
 
-# global feature image
-nC = 50
-nQ = 50
-nD = 50
-binC = np.linspace(np.nanmin(DF.c), np.nanmax(DF.c), num=nC + 1)
-binQ = np.linspace(np.nanmin(logQ), np.nanmax(logQ), num=nQ + 1)
-binD = np.linspace(1, 365, nD + 1)
-extent1 = [binD[0], binD[-1], binC[0], binC[-1]]
-extent2 = [binQ[0], binQ[-1], binC[0], binC[-1]]
+# smooth image
+from scipy import stats
+from hydroDL import utils
+
 imgLst1 = list()
 imgLst2 = list()
-for k, siteNo in enumerate(DF.siteNoLst):
-    img1 = np.histogram2d(day, DF.c[:, k, 0], bins=[binD, binC], density=True)[0]
-    img1 = img1.swapaxes(0, 1)
-    img2 = np.histogram2d(logQ[:, k], DF.c[:, k, 0], bins=[binQ, binC], density=True)[0]
-    img2 = img2.swapaxes(0, 1)
-    imgLst1.append(img1)
-    imgLst2.append(img2)
+extLst1 = list()
+extLst2 = list()
+for iP, siteNo in enumerate(DF.siteNoLst):
+    print(iP, siteNo)
+    n = 100
+    d, c, q = utils.rmNan([day, DF.c[:, iP, 0], logQ[:, iP]], returnInd=False)
+    k1 = stats.gaussian_kde([d, c])
+    k2 = stats.gaussian_kde([q, c])
+    c1, c2 = np.min(c), np.max(c)
+    d1, d2 = np.min(d), np.max(d)
+    q1, q2 = np.min(q), np.max(q)
+    dd = np.linspace(1, 365, 100)
+    cc = np.linspace(np.nanmin(c), np.nanmax(c), 100)
+    qq = np.linspace(np.nanmin(q), np.nanmax(q), 100)
+    dm, cm = np.mgrid[d1 : d2 : n * 1j, c1 : c2 : n * 1j]
+    qm, cm = np.mgrid[q1 : q2 : n * 1j, c1 : c2 : n * 1j]
+    p1 = np.vstack([dm.ravel(), cm.ravel()])
+    p2 = np.vstack([qm.ravel(), cm.ravel()])
+    z1 = np.reshape(k1(p1).T, cm.shape)
+    z2 = np.reshape(k2(p2).T, cm.shape)
+    imgLst1.append(np.rot90(z1))
+    imgLst2.append(np.rot90(z2))
+    extLst1.append([d1, d2, c1, c2])
+    extLst2.append([q1, q2, c1, c2])
 imgAry1 = np.stack(imgLst1, axis=-1)
 imgAry2 = np.stack(imgLst2, axis=-1)
 
@@ -79,45 +92,31 @@ def funcM():
     axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, meanC)
     axM.set_title('{} {}'.format(usgs.codePdf.loc[code]['shortName'], code))
     figP = plt.figure(figsize=(10, 8))
-    gsP = gridspec.GridSpec(2, 4)
+    gsP = gridspec.GridSpec(2, 2)
     axT1 = figP.add_subplot(gsP[0, :])
     axT2 = axT1.twinx()
     axP1 = figP.add_subplot(gsP[1, 0])
     axP2 = figP.add_subplot(gsP[1, 1])
-    axP3 = figP.add_subplot(gsP[1, 2])
-    axP4 = figP.add_subplot(gsP[1, 3])
-    axPLst = [axT1, axT2, axP1, axP2, axP3, axP4]
+    axPLst = [axT1, axT2, axP1, axP2]
     axP = np.array(axPLst)
     return figM, axM, figP, axP, lon, lat
 
 
 def funcP(iP, axP):
     print(iP)
-    [axT1, axT2, axP1, axP2, axP3, axP4] = axP
+    [axT1, axT2, axP1, axP2] = axP
     axT1.plot(DF.t, DF.c[:, iP, 0], 'r*')
     axT2.plot(DF.t, DF.q[:, iP, 1], 'b-')
-    axP1.scatter(day, DF.c[:, iP, 0], c=year)
-    axP2.imshow(imgAry1[:, :, iP], origin='lower', extent=extent1, aspect='auto')
-    axP3.scatter(logQ[:, iP], DF.c[:, iP, 0], c=year)
-    axP4.imshow(imgAry2[:, :, iP], origin='lower', extent=extent2, aspect='auto')
+    axP1.plot(day, DF.c[:, iP, 0],'k*')
+    im1 = axP1.imshow(
+        imgAry1[:, :, iP], extent=extLst1[iP], aspect='auto'
+    )
+    axP2.plot(logQ[:, iP], DF.c[:, iP, 0],'k*')
+    im2 = axP2.imshow(
+        imgAry2[:, :, iP], extent=extLst2[iP], aspect='auto'
+    )
+    # plt.colorbar(im1)
+    # plt.colorbar(im2)
 
 
 figplot.clickMap(funcM, funcP)
-
-
-# PCA of image
-from sklearn.decomposition import PCA
-
-m1 = imgAry1.reshape(nC * nD, -1).swapaxes(0, 1)
-m2 = imgAry2.reshape(nC * nQ, -1).swapaxes(0, 1)
-pca1 = PCA(n_components=150)
-pca1.fit(m1)
-pca2 = PCA(n_components=150)
-pca2.fit(m1)
-fig, axes = plt.subplots(2, 1)
-axes[0].plot(np.cumsum(pca1.explained_variance_ratio_ * 100))
-axes[1].plot(np.cumsum(pca2.explained_variance_ratio_ * 100))
-axes[1].set_xlabel('Number of components')
-axes[0].set_ylabel('Explained variance')
-axes[1].set_ylabel('Explained variance')
-fig.show()
