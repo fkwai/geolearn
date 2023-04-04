@@ -85,36 +85,16 @@ for ep in range(1, 1001):
     t0 = time.time()
     model.zero_grad()
     optim.zero_grad()
-    yOut = model(x, xc)    
+    yOut = model(x, xc)
     t1 = time.time()
-    loss = lossFun(yOut[:, :, None], y[rhoW+nr - 1 :, :, :])
+    loss = lossFun(yOut[:, :, None], y[rhoW + nr - 1 :, :, :])
     # loss = lossFun(yOut[:, :, None], y)
-    print('forward {:.2f}'.format(t1 - t0))    
+    print('forward {:.2f}'.format(t1 - t0), flush=True)
     loss.backward()
     t2 = time.time()
-    print('backward {:.2f}'.format(t2 - t1))
+    print('backward {:.2f}'.format(t2 - t1), flush=True)
     optim.step()
-    print(ep, loss.item())
+    print(ep, loss.item(), flush=True)
     if ep % 50 == 0:
-        modelFile = os.path.join(
-            saveDir, 'wfq2-{}-ep{}'.format(dataName, ep))
+        modelFile = os.path.join(saveDir, 'wfq2-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
-
-# Qpr = torch.stack(Qp)
-# Qsr = torch.stack(Qs)
-# Qdr = torch.stack(Qd)
-# Hfr = torch.stack(Hf)
-# Hsr = torch.stack(Hs)
-# Hdr = torch.stack(Hd)
-
-
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots(1, 1)
-ax.plot(yOut[:, 0].detach().numpy())
-fig.show()
-
-# Qp, Qs, Qd = [], [], []
-# Hf, Hs, Hd = [], [], []
-# Qp, Qs, Qd, Hf, Hs, Hd = [1, 1, 1, 1, 1, 1]
-# import make_dot

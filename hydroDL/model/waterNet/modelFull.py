@@ -122,17 +122,17 @@ class WaterNet0313(torch.nn.Module):
             qOut = qOut.cuda()
         for iT in range(self.rho_warmup, nt):
             t0 = time.time()
-            print(iT,storage[1].sum(),'before')
+            # print(iT,storage[1].sum(),'before')
             if iT < self.rho_warmup + self.rho_short:
                 storage, flux = bucket.step(iT, storage, input, param)
             else:                
                 storage = H[0]
                 for i in range(iT - self.rho_short + 1, iT + 1):
-                    print(i,storage[1].sum(),'re-before')
+                    # print(i,storage[1].sum(),'re-before')
                     storage, flux = bucket.step(i, storage, input, param)
-                    print(i,storage[1].sum(),'re-after')
+                    # print(i,storage[1].sum(),'re-after')
                 _ = H.pop(0)
-            print(iT,storage[1].sum(),'after')
+            # print(iT,storage[1].sum(),'after')
             Sf, Ss, Sd = storage
             qf, qp, qs, qd = flux
             if (iT - self.rho_warmup) % self.rho_long == 0:
