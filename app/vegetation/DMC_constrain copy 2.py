@@ -54,7 +54,7 @@ outFolder = os.path.join(DIR_VEG, 'map-DMC-LFMC')
 tryIdLst = tabDMC['AccSpeciesID'].unique().tolist()
 tryIdLst.remove(0)
 
-tryIdLst=[4509]
+tryIdLst=[44567]
 for tryId in tryIdLst:
     tabD = tabDMC[tabDMC['AccSpeciesID'] == tryId]
     tabL = tab[tab['try_id'] == tryId]
@@ -62,8 +62,10 @@ for tryId in tryIdLst:
         fileName = 'L{}-D{}-T{}'.format(len(tabL), len(tabD), tryId)
 
         tabDM = tabD.groupby(['siteId'])['StdValue'].mean()
-        maxD = (1 - tabDM) / tabDM
-        maxL = tabL.groupby(['siteId'])['LFMC value'].max()
+        # maxD = (1 - tabDM) / tabDM
+        # maxL = tabL.groupby(['siteId'])['LFMC value'].max()
+        maxD = tabDM
+        maxL = tabL.groupby(['siteId'])['LFMC value'].mean()/1.5
         maxL2 = tabL.groupby(['siteId'])['LFMC value'].quantile(0.9)
 
         lat1 = siteDMC.loc[maxD.index]['Latitude'].values

@@ -80,7 +80,7 @@ def funcM():
     axM = mapplot.mapPoint(
         figM, gsM[0, 0], lat, lon, tabSite['try_id'], extent=extentGlobal
     )
-    figP, axP = plt.subplots(2, 1)
+    figP, axP = plt.subplots(1, 1)
     return figM, axM, figP, axP, lon, lat
 
 
@@ -91,12 +91,12 @@ def funcP(iP, axP):
     specLst = tabData['try_spec'].unique().tolist()
     for spec in specLst:
         temp = tabData[tabData['try_spec'] == spec]
-        axP[0].plot(temp['date'], temp['LFMC'], '-*', label=spec)
-        axP[1].plot(
-            temp['date'], temp['RWC'], '-*', label='{:.2f}'.format(temp.iloc[0]['DMC'])
+        axP.plot(temp['date'], temp['LFMC'], 'r-*', label=spec)
+        axP.plot(
+            temp['date'], temp['RWC'], 'b-*', label='{:.2f}'.format(temp.iloc[0]['DMC'])
         )
-    axP[0].legend()
-    axP[1].legend()
+    axP.legend()
+figplot.clickMap(funcM, funcP)
 
 # %matplotlib widget
 import matplotlib.pyplot as plt

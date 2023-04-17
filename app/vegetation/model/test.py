@@ -26,7 +26,7 @@ dataTup = trainBasin.dealNaN(dataTup, [1, 1, 0, 0])
 [nx, nxc, ny, nyc, nt, ns] = trainBasin.getSize(dataTup)
 
 ep = 500
-modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(ep))
+modelStateFile = os.path.join(outFolder, 'modelState_ep{}'.format(500))
 model = rnn.LstmModel(nx + nxc, ny, 128, nLayer=2)
 if torch.cuda.is_available():
     model.load_state_dict(torch.load(modelStateFile))
@@ -44,7 +44,7 @@ b = yP
 import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(1, 1)
-ax.plot(a[:, :, 0], b[:, :, 0], '*')
+ax.plot(a[:, :, 0].flatten(), b[:, :, 0].flatten(), '*')
 fig.show()
 
 from hydroDL import utils

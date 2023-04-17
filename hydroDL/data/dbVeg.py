@@ -25,11 +25,15 @@ class DataFrameVeg(Dataframe):
         self.saveFolder = saveFolder
         npz = np.load(os.path.join(saveFolder, 'data.npz'))
         self.varX = npz['varX'].tolist()
-        self.varY = [npz['varY'].tolist()] # adhoc
+        if type(npz['varY']) is str:  # adhoc fix
+            self.varY = [npz['varY']]
+        else:
+            self.varY = npz['varY']
         self.varXC = npz['varXC'].tolist()
         self.x = npz['x']
         self.y = npz['y']
         self.xc = npz['xc']
+        self.yc = None
         info = pd.read_csv(os.path.join(saveFolder, 'info.csv'))
         self.siteIdLst = info['siteId'].tolist()
         self.t = npz['t']
@@ -44,7 +48,7 @@ class DataFrameVeg(Dataframe):
         return indS
 
 
-class DataModelVeg(DataModel):
+class DataModelVeg:
     def __init__(self, dataFrame, **kw):
         super(DataModelVeg, self).__init__()
         if type(dataFrame) is str:
@@ -103,6 +107,9 @@ class DataModelVeg(DataModel):
     def getDataRaw(self):
         return self.X, self.XC, self.Y, self.YC
 
+    def getData(self):
+        return self.x, self.xc, self.y, None
+
     def save(self):
         pass
 
@@ -124,6 +131,7 @@ class DataModelVeg(DataModel):
                 with open(statFile, 'rb') as f:
                     stat = pickle.load(f)
                     setattr(self, 'stat' + s, stat)
+        self.statYC = None
         self.transIn(
             statX=self.statX, statXC=self.statXC, statY=self.statY, statYC=self.statYC
         )

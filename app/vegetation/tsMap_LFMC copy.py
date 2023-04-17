@@ -11,7 +11,7 @@ tabLFMC = pd.read_csv(fileLFMC)
 
 # date
 tabData = tabLFMC
-tabData = tabLFMC[tabLFMC['Sampling date'] > 20150101]
+tabData = tabLFMC[tabLFMC['Sampling date'] > 20160101]
 
 
 # add id

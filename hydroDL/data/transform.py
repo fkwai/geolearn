@@ -6,6 +6,7 @@ from sklearn.preprocessing import QuantileTransformer, PowerTransformer
 sn = 1e-5
 
 dictTran = dict(mtdLst=None, statLn=None, statQT=None)
+mtdLnLst = ['norm', 'stan', 'scale', 'minmax']
 
 
 def transIn(dataIn, *, mtdLst=list(), statLn=None, statQT=None):
@@ -22,12 +23,11 @@ def transIn(dataIn, *, mtdLst=list(), statLn=None, statQT=None):
     indLn, mtdLn = (list(), list())
     for k, mtd in enumerate(mtdLst):
         temp = mtd.split('-')
-        if temp[-1] == 'norm' or temp[-1] == 'stan' or temp[-1] == 'scale':
+        if temp[-1] in mtdLnLst:
             indLn.append(k)
             mtdLn.append(temp[-1])
     if len(indLn) > 0:
-        data[..., indLn], statLn = linearIn(
-            data[..., indLn], mtdLn, statIn=statLn)
+        data[..., indLn], statLn = linearIn(data[..., indLn], mtdLn, statIn=statLn)
     # QT
     indQT = list()
     for k, mtd in enumerate(mtdLst):
@@ -49,7 +49,12 @@ def transOut(dataIn, dictTran):
     indLn = list()
     for k, mtd in enumerate(mtdLst):
         temp = mtd.split('-')
-        if temp[-1] == 'norm' or temp[-1] == 'stan':
+        if (
+            temp[-1] == 'norm'
+            or temp[-1] == 'stan'
+            or temp[-1] == 'scale'
+            or temp[-1] == 'minmax'
+        ):
             indLn.append(k)
     if len(indLn) > 0:
         data[..., indLn] = linearOut(data[..., indLn], statLn)
@@ -82,11 +87,16 @@ def linearIn(dataIn, mtdLst, statIn=None):
             if mtd == 'norm':
                 v1 = np.nanpercentile(data[..., i], 15)
                 v2 = np.nanpercentile(data[..., i], 85)
-                stat = [(v2+v1)/2, (v2-v1)/2]
+                stat = [(v2 + v1) / 2, (v2 - v1) / 2]
             if mtd == 'stan':
                 stat = [np.nanmean(data[..., i]), np.nanstd(data[..., i])]
             if mtd == 'scale':
                 stat = [0, np.nanpercentile(np.abs(data[..., i]), 90)]
+            if mtd == 'minmax':
+                stat = [
+                    np.nanmin(data[..., i]),
+                    np.nanmax(data[..., i]) - np.nanmin(data[..., i]),
+                ]
             vS[i, :] = stat
     else:
         vS = statIn.copy()
@@ -94,7 +104,7 @@ def linearIn(dataIn, mtdLst, statIn=None):
     for i in range(data.shape[-1]):
         # turn out to be faster than (data-vS0)/vS1
         vS[i, 1] = 1 if vS[i, 1] == 0 else vS[i, 1]
-        data[..., i] = (data[..., i]-vS[i, 0])/vS[i, 1]
+        data[..., i] = (data[..., i] - vS[i, 0]) / vS[i, 1]
     return data, vS
 
 
@@ -104,7 +114,7 @@ def linearOut(dataIn, statIn):
     out = np.full(data.shape, np.nan)
     # turn out to be faster than (data-vS0)/vS1
     for i in range(data.shape[-1]):
-        out[..., i] = data[..., i]*vS[i, 1]+vS[i, 0]
+        out[..., i] = data[..., i] * vS[i, 1] + vS[i, 0]
     return out
 
 
@@ -112,7 +122,8 @@ def qtIn(dataIn, statIn=None, nq=50):
     temp = dataIn.copy().reshape(-1, dataIn.shape[-1])
     if statIn is None:
         qt = QuantileTransformer(
-            n_quantiles=nq, random_state=0, output_distribution='uniform')
+            n_quantiles=nq, random_state=0, output_distribution='uniform'
+        )
         qt.fit(temp)
     else:
         qt = statIn
@@ -133,11 +144,11 @@ def qtOut(dataIn, statIn):
 def logIn(dataIn, mtdLst):
     data = dataIn.copy()
     indLog = [i for i, mtd in enumerate(mtdLst) if mtd == 'log']
-    data[..., indLog] = np.log(data[..., indLog]+sn)
+    data[..., indLog] = np.log(data[..., indLog] + sn)
     indLog2 = [i for i, mtd in enumerate(mtdLst) if mtd == 'log2']
     temp = data[..., indLog2].copy()
-    temp[temp > 0] = np.log(temp[temp > 0]+1)
-    temp[temp < 0] = -np.log(-temp[temp < 0]+1)
+    temp[temp > 0] = np.log(temp[temp > 0] + 1)
+    temp[temp < 0] = -np.log(-temp[temp < 0] + 1)
     data[..., indLog2] = temp
     return data
 
@@ -145,10 +156,10 @@ def logIn(dataIn, mtdLst):
 def logOut(dataIn, mtdLst):
     data = dataIn.copy()
     indLog = [i for i, mtd in enumerate(mtdLst) if mtd == 'log']
-    data[..., indLog] = np.exp(data[..., indLog])-sn
+    data[..., indLog] = np.exp(data[..., indLog]) - sn
     indLog2 = [i for i, mtd in enumerate(mtdLst) if mtd == 'log2']
     temp = data[..., indLog2].copy()
-    temp[temp > 0] = np.exp(temp[temp > 0])-1
-    temp[temp < 0] = -np.exp(-temp[temp < 0])+1
+    temp[temp > 0] = np.exp(temp[temp > 0]) - 1
+    temp[temp < 0] = -np.exp(-temp[temp < 0]) + 1
     data[..., indLog2] = temp
     return data

@@ -82,12 +82,15 @@ if torch.cuda.is_available():
     y = y.cuda()
     lossFun = lossFun.cuda()
 
-modelFile = os.path.join(saveDir, 'wfq2-{}-ep{}'.format(dataName, 300))
+modelFile = os.path.join(saveDir, 'wfq2-{}-ep{}'.format(dataName, 500))
 
 model.load_state_dict(torch.load(modelFile, map_location=torch.device('cpu')))
 
-model.eval()
-yOut, (Qf,Qp, Qs, Qd), (Hf, Hs, Hd) = model(x, xc, outStep=True)
+# model.eval()
+t0 = time.time()
+yOut, (Qf, Qp, Qs, Qd), (Hf, Hs, Hd) = model(x, xc, outStep=True)
+time.time() - t0
+
 Hf, Hs, Hd = [l.detach().numpy() for l in [Hf, Hs, Hd]]
 Qp, Qs, Qd = [l.detach().numpy() for l in [Qp, Qs, Qd]]
 Q = yOut.detach().numpy()
@@ -106,7 +109,7 @@ import matplotlib.gridspec as gridspec
 
 lat, lon = DF.getGeo()
 t = DF.t[rhoW + nr - 1 :]
-t2 = DF.t[ nr - 1 :]
+t2 = DF.t[nr - 1 :]
 
 # result
 def funcM():
@@ -119,7 +122,7 @@ def funcM():
 
 
 def funcP(iP, axP):
-    print(iP,DF.siteNoLst[iP])
+    print(iP, DF.siteNoLst[iP])
     axP[0].plot(t, obs[:, iP], 'k-')
     axP[0].plot(t, Q[:, iP], 'r-')
     # axP[1].plot(t, Qp[:, iP, :])
@@ -133,7 +136,7 @@ def funcP(iP, axP):
 figM, figP = figplot.clickMap(funcM, funcP)
 
 # inputs
-iP=0
+iP = 0
 Prcp, Evp, T1, T2, Rad, Hum = [x[:, :, k] for k in range(x.shape[-1])]
 Ps, Pl = func.divideP(Prcp, T1, T2)
 Ps = Ps.unsqueeze(-1)
@@ -142,6 +145,7 @@ Evp = Evp.unsqueeze(-1)
 Is = Qf + Pl * paramG['gi'] - Evp * paramG['ge']
 # Is = Qf + Pl * paramG['gi']
 
+
 def funcM():
     figM = plt.figure(figsize=(8, 4))
     gsM = gridspec.GridSpec(1, 1)
@@ -149,13 +153,17 @@ def funcM():
     figP, axP = plt.subplots(4, 1, figsize=[15, 8], sharex=True)
     figP.subplots_adjust(wspace=0, hspace=0)
     return figM, axM, figP, axP, lon, lat
+
+
 def funcP(iP, axP):
-    print(iP,DF.siteNoLst[iP])
+    print(iP, DF.siteNoLst[iP])
     axP[0].plot(t, obs[:, iP], 'k-')
     axP[0].plot(t, Q[:, iP], 'r-')
     axP[1].plot(t2, Is[nr - 1 :, iP, :].detach().numpy())
     axP[2].plot(t2, Hs[nr - 1 :, iP, :])
     axP[3].plot(t2, Hd[nr - 1 :, iP, :])
+
+
 figM, figP = figplot.clickMap(funcM, funcP)
 
 

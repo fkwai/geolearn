@@ -25,6 +25,30 @@ def dataTs2End(dataTup, rho):
     return (xE, xcE, None, yE)
 
 
+def dataTs2Range(dataTup, rho,returnInd=False):
+    # assuming yc is none
+    x, xc, y, yc = dataTup
+    nt = y.shape[0]
+    jL, iL = np.where(~np.isnan(y).any(axis=-1))
+    xLst, xcLst, ycLst = list(), list(), list()
+    for j, i in zip(jL, iL):
+        if j >= rho and j < nt - rho:
+            if x is not None:
+                xLst.append(x[j - rho : j + rho + 1, i, :])
+            if xc is not None:
+                xcLst.append(xc[i, :])
+            if yc is None:                
+                ycLst.append(y[j, i, :])
+    xE = np.stack(xLst, axis=0)
+    xE = xE.swapaxes(0, 1)
+    xcE = np.stack(xcLst, axis=0)
+    ycE = np.stack(ycLst, axis=0)
+    if returnInd:
+        return (xE, xcE, None, ycE), (jL, iL)
+    else:
+        return (xE, xcE, None, ycE)
+
+
 def wrapMaster(out, optData, optModel, optLoss, optTrain):
     mDict = OrderedDict(
         out=out, data=optData, model=optModel, loss=optLoss, train=optTrain

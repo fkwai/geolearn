@@ -15,9 +15,10 @@ DF = dbVeg.DataFrameVeg('single')
 subsetName = 'all'
 
 
-# subsetName='all'
-indS=DF.loadSubset(subsetName)
+subsetName='5fold_0_train'
+indS = DF.loadSubset(subsetName)
 DM = dbVeg.DataModelVeg(DF, subset=subsetName)
+DM.varY = [DM.varY]
 outFolder = os.path.join(kPath.dirVeg, 'model', 'LSTMfull', subsetName)
 if not os.path.exists(outFolder):
     os.mkdir(outFolder)
@@ -34,7 +35,7 @@ dataTup = trainBasin.dealNaN(dataTup, [1, 1, 0, 0])
 
 # define model, loss, optim
 lossFun = crit.MSELoss()
-model = rnn.LstmModel(nx + nxc, ny, 128, nLayer=2)
+model = rnn.LstmModel(nx + nxc, ny, 16, nLayer=3)
 if torch.cuda.is_available():
     lossFun = lossFun.cuda()
     model = model.cuda()
