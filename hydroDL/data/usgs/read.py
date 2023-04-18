@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 from hydroDL import kPath
+
 """ issues to fix
 - line 235: 
     PerformanceWarning: DataFrame is highly fragmented. 
@@ -15,8 +16,14 @@ from hydroDL import kPath
 """
 
 
-__all__ = ['readSample', 'readStreamflow',
-           'readUsgsText', 'removeFlag', 'codePdf', 'sampleFull']
+__all__ = [
+    'readSample',
+    'readStreamflow',
+    'readUsgsText',
+    'removeFlag',
+    'codePdf',
+    'sampleFull',
+]
 
 fileCode = os.path.join(kPath.dirData, 'USGS', 'inventory', 'codeWQ.csv')
 if os.path.exists(fileCode):
@@ -25,8 +32,9 @@ else:
     codePdf = None
 
 
-fileSampleFull = os.path.join(kPath.dirData, 'USGS',
-                              'inventory', 'usgsSampleCodeFull.csv')
+fileSampleFull = os.path.join(
+    kPath.dirData, 'USGS', 'inventory', 'usgsSampleCodeFull.csv'
+)
 if os.path.exists(fileSampleFull):
     samplePdfFull = pd.read_csv(fileSampleFull, dtype=str).set_index('parm_cd')
     sampleFull = list(samplePdfFull.index)
@@ -35,14 +43,36 @@ else:
     sampleFull = None
 
 
-codeLstWQ = ['00010', '00095', '00300', '00400', '00405', '00410',
-             '00440', '00600', '00605', '00618', '00660', '00665',
-             '00681', '00915', '00925', '00930', '00935', '00940',
-             '00945', '00950', '00955', '70303', '71846', '80154']
+codeLstWQ = [
+    '00010',
+    '00095',
+    '00300',
+    '00400',
+    '00405',
+    '00410',
+    '00440',
+    '00600',
+    '00605',
+    '00618',
+    '00660',
+    '00665',
+    '00681',
+    '00915',
+    '00925',
+    '00930',
+    '00935',
+    '00940',
+    '00945',
+    '00950',
+    '00955',
+    '70303',
+    '71846',
+    '80154',
+]
 codeLstIso = ['82085', '82745', '82082']
 
 
-def readSample(siteNo, codeLst=None, startDate=None, csv=False, flag=0):
+def readSample(siteNo, codeLst=None, startDate=None, csv=True, flag=0):
     """read USGS sample data, did:
     1. extract data of interested code and date
     2. average repeated daily observation
@@ -51,76 +81,31 @@ def readSample(siteNo, codeLst=None, startDate=None, csv=False, flag=0):
     Keyword Arguments:
         codeLst {list} -- usgs code of interesting fields (default: {sampleCodeLst})
         startDate {date} -- start date (default: {None})
-        flag {int} -- 0 no flag; 1 str flag; 2 num flag 
+        flag {int} -- 0 no flag; 1 str flag; 2 num flag (0 no flag 1 with flag)
     Returns:
         pandas.DataFrame -- [description]
     """
     if codeLst is None:
         csv = False
     if csv is False:
-        fileC = os.path.join(kPath.dirData, 'USGS', 'sample', siteNo)
-        dfC = readUsgsText(fileC, dataType='sample')
-        if startDate is not None:
-            dfC = dfC[dfC['date'] >= startDate]
-        dfC = dfC.set_index('date')
-        if codeLst is None:
-            codeSel = [x for x in dfC.columns.tolist() if x.isdigit()]
-        else:
-            codeSel = list(set(codeLst) & set(dfC.columns.tolist()))
-        codeSel_cd = [code + '_cd' for code in codeSel]
-        dfC = dfC[codeSel+codeSel_cd].dropna(how='all')
-        if len(dfC) == 0:
-            return None if flag == 0 else (None, None)
-        dfC1 = dfC[codeSel]
-        dfC2 = dfC[codeSel_cd]
-        bx = dfC1.notna().values & dfC2.isna().values
-        dfC2.values[bx] = 'x'
-        dfC2 = dfC2.fillna('')
-        bDup = dfC.index.duplicated(keep=False)
-        indUni = dfC.index[~bDup]
-        indDup = dfC.index[bDup].unique()
-        indAll = dfC.index.unique()
-        dfO1 = pd.DataFrame(index=indAll, columns=codeSel)
-        dfO2 = pd.DataFrame(index=indAll, columns=codeSel_cd)
-        dfO1.loc[indUni] = dfC1.loc[indUni][codeSel]
-        dfO2.loc[indUni] = dfC2.loc[indUni][codeSel_cd]
-        for ind in indDup:
-            temp1 = dfC1.loc[ind]
-            temp2 = dfC2.loc[ind]
-            for code in codeSel:
-                if 'x' in temp2[code+'_cd'].tolist():
-                    dfO1.loc[ind][code] = temp1[code][temp2[code+'_cd']
-                                                      == 'x'].mean()
-                    if temp2[code+'_cd'].tolist().count('x') > 1:
-                        dfO2.loc[ind][code+'_cd'] = 'X'
-                    else:
-                        dfO2.loc[ind][code+'_cd'] = 'x'
-                else:
-                    dfO1.loc[ind][code] = temp1[code].mean()
-                    dfO2.loc[ind][code+'_cd'] = ''.join(temp2[code+'_cd'])
+        dfO1, dfO2 = readSampleRaw(siteNo)
     else:
-        dirC = os.path.join(kPath.dirData, 'USGS', 'sample', 'csv')
-        fileC1 = os.path.join(dirC, siteNo)
-        if not os.path.exists(fileC1):
-            return None if flag == 0 else (None, None)
-        dfO1 = pd.read_csv(fileC1)
-        dfO1['date'] = pd.to_datetime(dfO1['date'], format='%Y-%m-%d')
-        dfO1 = dfO1.set_index('date')
-        if flag > 0:
-            fileC2 = os.path.join(dirC, siteNo+'_flag')
-            dfO2 = pd.read_csv(fileC2)
-            dfO2['date'] = pd.to_datetime(dfO2['date'], format='%Y-%m-%d')
-            dfO2 = dfO2.set_index('date')
-        if startDate is not None:
-            dfO1 = dfO1[dfO1.index >= startDate]
-            if flag > 0:
-                dfO2 = dfO2[dfO2.index >= startDate]
+        dfO1 = readSampleCsv(siteNo)
+    if dfO1 is None:
+        if flag == 0:
+            return None
+        else:
+            return (None, None)
     if codeLst is None:
         codeLst = dfO1.columns.tolist()
+    if startDate is not None:
+        dfO1 = dfO1[dfO1.index >= startDate]
     if flag > 0:
+        dfO2 = readSampleCsv(siteNo, flag=True)
+        if startDate is not None:
+            dfO2 = dfO2[dfO2.index >= startDate]
         if flag == 2:
-            dfO3 = pd.DataFrame(
-                index=dfO2.index, columns=dfO2.columns, dtype=int)
+            dfO3 = pd.DataFrame(index=dfO2.index, columns=dfO2.columns, dtype=int)
             dfO3[(dfO2 == 'x') | (dfO2 == 'X')] = 0
             dfO3[(dfO2 != 'x') & (dfO2 != 'X') & (dfO2.notna())] = 1
             dfO2 = dfO3
@@ -128,6 +113,70 @@ def readSample(siteNo, codeLst=None, startDate=None, csv=False, flag=0):
         return (dfO1.reindex(columns=codeLst), dfO2.reindex(columns=codeLst_cd))
     else:
         return dfO1.reindex(columns=codeLst)
+
+
+def readSampleCsv(siteNo, flag=False):
+    '''
+    flag {int} -- 0 no flag; 1 str flag; 2 num flag
+    '''
+    dirC = os.path.join(kPath.dirUsgs, 'sample', 'csvAll')
+    if flag == 0:
+        fileC = os.path.join(dirC, siteNo)
+    else:
+        fileC = os.path.join(dirC, siteNo + '_flag')
+    if os.path.exists(fileC):
+        dfO = pd.read_csv(fileC, dtype=str)
+        dfO['date'] = pd.to_datetime(dfO['date'], format='%Y-%m-%d')
+        dfO = dfO.set_index('date')
+        return dfO
+    else:
+        return None
+
+
+def readSampleRaw(siteNo):
+    """
+    flag x - only value in a day, without usgs flag
+    flag X - multiple values in a day, without usgs flag
+    others - usgs flags
+    """
+    fileC = os.path.join(kPath.dirRaw, 'USGS', 'sample', siteNo)
+    dfC = readUsgsText(fileC, dataType='sample')
+    if dfC is None:
+        return (None, None)
+    dfC = dfC[dfC['sample_dt'].notnull()]
+    dfC = dfC.set_index('date')
+    codeSel = [x for x in dfC.columns.tolist() if x.isdigit()]
+    codeSel_cd = [code + '_cd' for code in codeSel]
+    dfC = dfC[codeSel + codeSel_cd].dropna(how='all')
+    if len(dfC) == 0:
+        return (None, None)
+    dfC1 = dfC[codeSel]
+    dfC2 = dfC[codeSel_cd]
+    bx = dfC1.notna().values & dfC2.isna().values
+    dfC2.values[bx] = 'x'
+    dfC2 = dfC2.fillna('')
+    bDup = dfC.index.duplicated(keep=False)
+    indUni = dfC.index[~bDup]
+    indDup = dfC.index[bDup].unique()
+    indAll = dfC.index.unique()
+    dfO1 = pd.DataFrame(index=indAll, columns=codeSel)
+    dfO2 = pd.DataFrame(index=indAll, columns=codeSel_cd)
+    dfO1.loc[indUni] = dfC1.loc[indUni][codeSel]
+    dfO2.loc[indUni] = dfC2.loc[indUni][codeSel_cd]
+    for ind in indDup:
+        temp1 = dfC1.loc[ind]
+        temp2 = dfC2.loc[ind]
+        for code in codeSel:
+            if 'x' in temp2[code + '_cd'].tolist():
+                dfO1.loc[ind][code] = temp1[code][temp2[code + '_cd'] == 'x'].mean()
+                if temp2[code + '_cd'].tolist().count('x') > 1:
+                    dfO2.loc[ind][code + '_cd'] = 'X'
+                else:
+                    dfO2.loc[ind][code + '_cd'] = 'x'
+            else:
+                dfO1.loc[ind][code] = temp1[code].mean()
+                dfO2.loc[ind][code + '_cd'] = ''.join(temp2[code + '_cd'])
+    return dfO1, dfO2
 
 
 def readStreamflow(siteNo, startDate=None, csv=True):
@@ -149,14 +198,20 @@ def readStreamflow(siteNo, startDate=None, csv=True):
             dfQ = dfQ[dfQ['date'] >= startDate]
         if '00060_00001' in dfQ.columns and '00060_00002' in dfQ.columns:
             # fill nan using other two fields
-            avgQ = dfQ[['00060_00001', '00060_00002']].mean(
-                axis=1, skipna=False)
+            avgQ = dfQ[['00060_00001', '00060_00002']].mean(axis=1, skipna=False)
             dfQ['00060_00003'] = dfQ['00060_00003'].fillna(avgQ)
             dfQ = dfQ[['date', '00060_00003']]
         else:
             dfQ = dfQ[['date', '00060_00003']]
     else:
-        fileQ = os.path.join(kPath.dirUSGS, 'streamflow', 'csv', siteNo)
+        fileQ = os.path.join(kPath.dirUsgs, 'streamflow', 'csv', siteNo)
+        if not os.path.exists(fileQ):
+            fileRaw = os.path.join(kPath.dirRaw, 'USGS', 'streamflow', siteNo)
+            if not os.path.exists(fileQ):
+                print('site {} does not exist'.format(siteNo))
+            else:
+                print('site {} not in csv but in raw'.format(siteNo))
+            return None
         dfQ = pd.read_csv(fileQ)
         dfQ['date'] = pd.to_datetime(dfQ['date'], format='%Y-%m-%d')
         if startDate is not None:
@@ -181,13 +236,18 @@ def readUsgsText(fileName, dataType=None):
         typeLst = f.readline()[:-1].split('\t')
     if k == 0:
         return None
-
+    # performance warning. ignore it as only run once
     pdf = pd.read_table(fileName, header=k, dtype=str).drop(0)
     for i, x in enumerate(typeLst):
         if x[-1] == 'n':
             pdf[headLst[i]] = pd.to_numeric(pdf[headLst[i]], errors='coerce')
         if x[-1] == 'd':
-            pdf[headLst[i]] = pd.to_datetime(pdf[headLst[i]], errors='coerce')
+            if x == '5d':
+                pdf[headLst[i]] = pd.to_datetime(
+                    pdf[headLst[i]], format='%H:%M', errors='coerce'
+                ).dt.time
+            else:
+                pdf[headLst[i]] = pd.to_datetime(pdf[headLst[i]], errors='coerce')
     # modify - only rename head or add columns, will not modify values
     if dataType == 'dailyTS':
         out = renameDailyTS(pdf)
@@ -208,7 +268,7 @@ def renameDailyTS(pdf):
         if temp[0].isdigit():
             if len(temp) == 3:
                 headLst[i] = temp[1] + '_' + temp[2]
-                pdf[head] = pdf[head].astype(np.float)
+                pdf[head] = pdf[head].astype(float)
             else:
                 headLst[i] = temp[1] + '_' + temp[2] + '_cd'
     pdf.columns = headLst
@@ -221,24 +281,35 @@ def renameStreamflow(pdf):
     # pick the longest average Q field
     headLst = pdf.columns.tolist()
     tempS = [head.split('_') for head in headLst if head[-1].isdigit()]
-    codeLst = list(set([int(s[0])-int(s[2]) for s in tempS]))
+    codeLst = list(set([int(s[0]) - int(s[2]) for s in tempS]))
     tempN = list()
     for code in codeLst:
         for k in range(3):
-            head = '{}_00060_{:05n}'.format(code+k+1, k+1)
+            head = '{}_00060_{:05n}'.format(code + k + 1, k + 1)
             if head not in headLst:
                 pdf[head] = np.nan
-                pdf[head+'_cd'] = 'N'
-        tempLst = ['{}_00060_{:05n}'.format(code+k+1, k+1) for k in range(3)]
+                pdf[head + '_cd'] = 'N'
+        tempLst = ['{}_00060_{:05n}'.format(code + k + 1, k + 1) for k in range(3)]
         temp = ((~pdf[tempLst[0]].isna()) & (~pdf[tempLst[1]].isna())) | (
-            ~pdf[tempLst[2]].isna())
+            ~pdf[tempLst[2]].isna()
+        )
         tempN.append(temp.sum())
     code = codeLst[tempN.index(max(tempN))]
     # (searched and no code of leading zero)
-    pdf = pdf.rename(columns={'{}_00060_{:05n}'.format(
-        code+x+1, x+1): '00060_{:05n}'.format(x+1) for x in range(3)})
-    pdf = pdf.rename(columns={'{}_00060_{:05n}_cd'.format(
-        code+x+1, x+1): '00060_{:05n}_cd'.format(x+1) for x in range(3)})
+    pdf = pdf.rename(
+        columns={
+            '{}_00060_{:05n}'.format(code + x + 1, x + 1): '00060_{:05n}'.format(x + 1)
+            for x in range(3)
+        }
+    )
+    pdf = pdf.rename(
+        columns={
+            '{}_00060_{:05n}_cd'.format(code + x + 1, x + 1): '00060_{:05n}_cd'.format(
+                x + 1
+            )
+            for x in range(3)
+        }
+    )
 
     # time field
     pdf['date'] = pd.to_datetime(pdf['datetime'], format='%Y-%m-%d')
@@ -252,7 +323,7 @@ def renameSample(pdf):
         if head[1:].isdigit():
             if head.startswith('p'):
                 headLst[i] = head[1:]
-                pdf[head] = pdf[head].astype(np.float)
+                pdf[head] = pdf[head].astype(float)
             else:
                 headLst[i] = head[1:] + '_cd'
     pdf.columns = headLst

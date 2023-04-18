@@ -28,7 +28,7 @@ if hostName == 'AW-m17':
         'PROJ_LIB'] = r'C:\Users\geofk\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
     dirData = r'C:\Users\geofk\work\database'
     dirRaw = r'F:\dataRaw'
-    dirUSGS = r'F:\USGS'
+    dirUsgs = r'F:\USGS'
     dirWQ = r'C:\Users\geofk\work\waterQuality'
     dirCode = r'C:\Users\geofk\work\GitHUB\geolearn'
     # dirWQ = r'C:\Users\geofk\work\example\waterQuality'
@@ -42,7 +42,18 @@ elif hostName[:4] == 'icme':
 elif hostName[:2] == 'sh':
     host = 'sherlock'
     dirData = r'/oak/stanford/schools/ees/kmaher/Kuai/Data/'
-    dirRaw = r'/oak/stanford/schools/ees/kmaher/'
+    dirRaw = r'/oak/stanford/schools/ees/kmaher/DataRaw/'
+    dirUsgs = r'/oak/stanford/schools/ees/kmaher/Kuai/dbUSGS'
     dirWQ = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/'
     dirJob = r'/scratch/users/kuaifang/jobs/'
     dirCode = r'/home/users/kuaifang/GitHUB/geolearn'
+    dirVeg=r'/oak/stanford/schools/ees/kmaher/Kuai/VegetationWater/data/'
+elif hostName == 'mini':
+    host = 'mini'
+    dirData = r'/home/kuai/work/Data/'
+    dirUsgs = r'/home/kuai/work/dbUSGS/'
+    dirRaw = r'/mnt/sda/dataRaw/'
+    dirWQ = r'/home/kuai/work/waterQuality/'    
+    dirCode = r'/home/kuai/GitHUB/geolearn'
+    dirVeg = r'/home/kuai/work/VegetationWater/data/'
+

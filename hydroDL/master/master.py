@@ -9,9 +9,50 @@ import datetime as dt
 import pandas as pd
 
 
+def dataTs2End(dataTup, rho):
+    # assuming yc is none
+    x, xc, y, yc = dataTup
+    xMatLst = [x[k : -rho + 1 + k, ...] for k in range(rho - 1)] + [x[rho - 1 :, ...]]
+    xMat = np.stack(xMatLst, axis=0)
+    [jTemp, iTemp, k] = np.where(~np.isnan(y))
+    j = jTemp - rho + 1
+    i = iTemp[j >= 0]
+    j = j[j >= 0]
+    xE = xMat[:, j, i, :]
+    yE = y[j + rho - 1, i]
+    xcE = xc[i, :] if xc is not None else None
+    # ycE = yc[i, :] if yc is not None else None
+    return (xE, xcE, None, yE)
+
+
+def dataTs2Range(dataTup, rho,returnInd=False):
+    # assuming yc is none
+    x, xc, y, yc = dataTup
+    nt = y.shape[0]
+    jL, iL = np.where(~np.isnan(y).any(axis=-1))
+    xLst, xcLst, ycLst = list(), list(), list()
+    for j, i in zip(jL, iL):
+        if j >= rho and j < nt - rho:
+            if x is not None:
+                xLst.append(x[j - rho : j + rho + 1, i, :])
+            if xc is not None:
+                xcLst.append(xc[i, :])
+            if yc is None:                
+                ycLst.append(y[j, i, :])
+    xE = np.stack(xLst, axis=0)
+    xE = xE.swapaxes(0, 1)
+    xcE = np.stack(xcLst, axis=0)
+    ycE = np.stack(ycLst, axis=0)
+    if returnInd:
+        return (xE, xcE, None, ycE), (jL, iL)
+    else:
+        return (xE, xcE, None, ycE)
+
+
 def wrapMaster(out, optData, optModel, optLoss, optTrain):
     mDict = OrderedDict(
-        out=out, data=optData, model=optModel, loss=optLoss, train=optTrain)
+        out=out, data=optData, model=optModel, loss=optLoss, train=optTrain
+    )
     return mDict
 
 
@@ -62,9 +103,7 @@ def namePred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
 
     fileNameLst = list()
     for k in range(nt):
-        testName = '_'.join(
-            [subset, str(tRange[0]),
-             str(tRange[1]), 'ep' + str(epoch)])
+        testName = '_'.join([subset, str(tRange[0]), str(tRange[1]), 'ep' + str(epoch)])
         fileName = '_'.join([testName, target[k]])
         fileNameLst.append(fileName)
         if lossName == 'hydroDL.model.crit.SigmaLoss':
@@ -73,9 +112,9 @@ def namePred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
     if doMC is not False:
         mcFileNameLst = list()
         for fileName in fileNameLst:
-            fileName = '_'.join([testName, target[k], 'SigmaMC'+str(doMC)])
+            fileName = '_'.join([testName, target[k], 'SigmaMC' + str(doMC)])
             mcFileNameLst.append(fileName)
-        fileNameLst = fileNameLst+mcFileNameLst
+        fileNameLst = fileNameLst + mcFileNameLst
 
     # sum up to file path list
     filePathLst = list()
@@ -92,8 +131,7 @@ def readPred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
     dataPred = np.ndarray([obs.shape[0], obs.shape[1], len(filePathLst)])
     for k in range(len(filePathLst)):
         filePath = filePathLst[k]
-        dataPred[:, :, k] = pd.read_csv(
-            filePath, dtype=np.float, header=None).values
+        dataPred[:, :, k] = pd.read_csv(filePath, dtype=np.float, header=None).values
     isSigmaX = False
     if mDict['loss']['name'] == 'hydroDL.model.crit.SigmaLoss':
         isSigmaX = True
@@ -108,7 +146,7 @@ def mvobs(data, mvday, rmNan=True):
     ngage = data.shape[0]
     mvdata = np.full((ngage, obslen, 1), np.nan)
     for ii in range(obslen):
-        tempdata = data[:, ii:ii+mvday, :]
+        tempdata = data[:, ii : ii + mvday, :]
         tempmean = np.nanmean(tempdata, axis=1)
         mvdata[:, ii, 0] = tempmean[:, 0]
     if rmNan is True:
@@ -119,14 +157,14 @@ def mvobs(data, mvday, rmNan=True):
 def loadData(optData, readX=True, readY=True):
     if eval(optData['name']) is hydroDL.data.dbCsv.DataframeCsv:
         df = hydroDL.data.dbCsv.DataframeCsv(
-            rootDB=optData['rootDB'],
-            subset=optData['subset'],
-            tRange=optData['tRange'])
+            rootDB=optData['rootDB'], subset=optData['subset'], tRange=optData['tRange']
+        )
         if readY is True:
             y = df.getDataTs(
                 varLst=optData['target'],
                 doNorm=optData['doNorm'][1],
-                rmNan=optData['rmNan'][1])
+                rmNan=optData['rmNan'][1],
+            )
         else:
             y = None
 
@@ -134,42 +172,44 @@ def loadData(optData, readX=True, readY=True):
             x = df.getDataTs(
                 varLst=optData['varT'],
                 doNorm=optData['doNorm'][0],
-                rmNan=optData['rmNan'][0])
+                rmNan=optData['rmNan'][0],
+            )
             c = df.getDataConst(
                 varLst=optData['varC'],
                 doNorm=optData['doNorm'][0],
-                rmNan=optData['rmNan'][0])
+                rmNan=optData['rmNan'][0],
+            )
             if optData['daObs'] > 0:
                 nday = optData['daObs']
-                sd = utils.time.t2dt(
-                    optData['tRange'][0]) - dt.timedelta(days=nday)
-                ed = utils.time.t2dt(
-                    optData['tRange'][1]) - dt.timedelta(days=nday)
+                sd = utils.time.t2dt(optData['tRange'][0]) - dt.timedelta(days=nday)
+                ed = utils.time.t2dt(optData['tRange'][1]) - dt.timedelta(days=nday)
                 df = hydroDL.data.dbCsv.DataframeCsv(
-                    rootDB=optData['rootDB'],
-                    subset=optData['subset'],
-                    tRange=[sd, ed])
+                    rootDB=optData['rootDB'], subset=optData['subset'], tRange=[sd, ed]
+                )
                 obs = df.getDataTs(
                     varLst=optData['target'],
                     doNorm=optData['doNorm'][1],
-                    rmNan=optData['rmNan'][1])
+                    rmNan=optData['rmNan'][1],
+                )
                 x = (x, obs)
         else:
             x = None
             c = None
     elif eval(optData['name']) is hydroDL.data.camels.DataframeCamels:
         df = hydroDL.data.camels.DataframeCamels(
-            subset=optData['subset'], tRange=optData['tRange'])
+            subset=optData['subset'], tRange=optData['tRange']
+        )
         x = df.getDataTs(
             varLst=optData['varT'],
             doNorm=optData['doNorm'][0],
-            rmNan=optData['rmNan'][0])
-        y = df.getDataObs(
-            doNorm=optData['doNorm'][1], rmNan=optData['rmNan'][1])
+            rmNan=optData['rmNan'][0],
+        )
+        y = df.getDataObs(doNorm=optData['doNorm'][1], rmNan=optData['rmNan'][1])
         c = df.getDataConst(
             varLst=optData['varC'],
             doNorm=optData['doNorm'][0],
-            rmNan=optData['rmNan'][0])
+            rmNan=optData['rmNan'][0],
+        )
     else:
         raise Exception('unknown database')
     return df, x, y, c
@@ -216,26 +256,26 @@ def train(mDict):
         optModel['nx'] = nx
     if eval(optModel['name']) is hydroDL.model.rnn.CudnnLstmModel:
         model = hydroDL.model.rnn.CudnnLstmModel(
-            nx=optModel['nx'],
-            ny=optModel['ny'],
-            hiddenSize=optModel['hiddenSize'])
+            nx=optModel['nx'], ny=optModel['ny'], hiddenSize=optModel['hiddenSize']
+        )
     elif eval(optModel['name']) is hydroDL.model.rnn.LstmCloseModel:
         model = hydroDL.model.rnn.LstmCloseModel(
             nx=optModel['nx'],
             ny=optModel['ny'],
             hiddenSize=optModel['hiddenSize'],
-            fillObs=True)
+            fillObs=True,
+        )
     elif eval(optModel['name']) is hydroDL.model.rnn.AnnModel:
         model = hydroDL.model.rnn.AnnCloseModel(
-            nx=optModel['nx'],
-            ny=optModel['ny'],
-            hiddenSize=optModel['hiddenSize'])
+            nx=optModel['nx'], ny=optModel['ny'], hiddenSize=optModel['hiddenSize']
+        )
     elif eval(optModel['name']) is hydroDL.model.rnn.AnnCloseModel:
         model = hydroDL.model.rnn.AnnCloseModel(
             nx=optModel['nx'],
             ny=optModel['ny'],
             hiddenSize=optModel['hiddenSize'],
-            fillObs=True)
+            fillObs=True,
+        )
 
     # train
     if optTrain['saveEpoch'] > optTrain['nEpoch']:
@@ -252,19 +292,22 @@ def train(mDict):
         nEpoch=optTrain['nEpoch'],
         miniBatch=optTrain['miniBatch'],
         saveEpoch=optTrain['saveEpoch'],
-        saveFolder=out)
+        saveFolder=out,
+    )
 
 
-def test(out,
-         *,
-         tRange,
-         subset,
-         doMC=False,
-         suffix=None,
-         batchSize=None,
-         epoch=None,
-         reTest=False,
-         basinnorm=False):
+def test(
+    out,
+    *,
+    tRange,
+    subset,
+    doMC=False,
+    suffix=None,
+    batchSize=None,
+    epoch=None,
+    reTest=False,
+    basinnorm=False
+):
     mDict = readMasterFile(out)
 
     optData = mDict['data']
@@ -282,8 +325,7 @@ def test(out,
         optData['davar'] = "".join(optData['davar'])
 
     # generate file names and run model
-    filePathLst = namePred(
-        out, tRange, subset, epoch=epoch, doMC=doMC, suffix=suffix)
+    filePathLst = namePred(out, tRange, subset, epoch=epoch, doMC=doMC, suffix=suffix)
     print('output files:', filePathLst)
     for filePath in filePathLst:
         if not os.path.isfile(filePath):
@@ -293,7 +335,8 @@ def test(out,
         df, x, obs, c = loadData(optData)
         model = loadModel(out, epoch=epoch)
         hydroDL.model.train.testModel(
-            model, x, c, batchSize=batchSize, filePathLst=filePathLst, doMC=doMC)
+            model, x, c, batchSize=batchSize, filePathLst=filePathLst, doMC=doMC
+        )
     else:
         print('Loaded previous results')
         df, x, obs, c = loadData(optData, readX=False)
@@ -303,8 +346,7 @@ def test(out,
     dataPred = np.ndarray([obs.shape[0], obs.shape[1], len(filePathLst)])
     for k in range(len(filePathLst)):
         filePath = filePathLst[k]
-        dataPred[:, :, k] = pd.read_csv(
-            filePath, dtype=np.float, header=None).values
+        dataPred[:, :, k] = pd.read_csv(filePath, dtype=np.float, header=None).values
     isSigmaX = False
     if mDict['loss']['name'] == 'hydroDL.model.crit.SigmaLoss' or doMC is not False:
         isSigmaX = True
@@ -322,20 +364,18 @@ def test(out,
             obs = df.transform(obs, fieldLst=target, toNorm=False)
             if isSigmaX is True:
                 sigmaX = df.transform(
-                    sigmaX, fieldLst=target, toNorm=False, opt='sigma')
+                    sigmaX, fieldLst=target, toNorm=False, opt='sigma'
+                )
         elif eval(optData['name']) is hydroDL.data.camels.DataframeCamels:
-            pred = hydroDL.data.camels.transNorm(
-                pred, 'usgsFlow', toNorm=False)
+            pred = hydroDL.data.camels.transNorm(pred, 'usgsFlow', toNorm=False)
             obs = hydroDL.data.camels.transNorm(obs, 'usgsFlow', toNorm=False)
         if basinnorm is True:
             if type(subset) is list:
                 gageid = np.array(subset)
             elif type(subset) is str:
                 gageid = subset
-            pred = hydroDL.data.camels.basinNorm(
-                pred, gageid=gageid, toNorm=False)
-            obs = hydroDL.data.camels.basinNorm(
-                obs, gageid=gageid, toNorm=False)
+            pred = hydroDL.data.camels.basinNorm(pred, gageid=gageid, toNorm=False)
+            obs = hydroDL.data.camels.basinNorm(obs, gageid=gageid, toNorm=False)
     if isSigmaX is True:
         return df, pred, obs, sigmaX
     else:

@@ -37,7 +37,7 @@ fieldLst = ['ppt', 'tmean', 'tdmean']
 
 # test of gee server
 imageCol = ee.ImageCollection(datasetName).filterDate(
-    gee.utils.t2ee(sd), gee.utils.t2ee(ed)).filterBounds(point).select(
+    gee.geeutils.t2ee(sd), gee.geeutils.t2ee(ed)).filterBounds(point).select(
         fieldLst).sort('system:time_start')
 imageLst = imageCol.toList(5)
 image = ee.Image(imageLst.get(0))
@@ -55,7 +55,7 @@ dfLst = list()
 while t1 < t2 <= ed:
     t0 = time.time()
     imageCol = ee.ImageCollection("OREGONSTATE/PRISM/AN81d").filterDate(
-        gee.utils.t2ee(t1), gee.utils.t2ee(t2)).filterBounds(point).select(
+        gee.geeutils.t2ee(t1), gee.geeutils.t2ee(t2)).filterBounds(point).select(
             fieldLst).sort('system:time_start')
     df = gee.getRegion(imageCol, fieldLst, region)
     dfLst.append(df)

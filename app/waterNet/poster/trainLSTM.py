@@ -24,4 +24,4 @@ for dataName in dataLst:
                                  nEpoch=1000, batchSize=[rho, 100],
                                  mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC)
     cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
-    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=32)
+    slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)

@@ -33,7 +33,8 @@ varC = ['00010', '00095', '00300', '00400', '00405',
 
 codeIso = ['82085', '82082']
 
-varQ = ['00060', 'runoff']
+varQ = ['streamflow', 'runoff']
+
 chemLst = ['00300', '00405', '00410', '00440', '00600',
            '00605', '00618', '00660', '00665', '71846',
            '00915', '00925', '00930', '00935', '00940',
@@ -42,6 +43,7 @@ chemLst = ['00300', '00405', '00410', '00440', '00600',
 # normalization method
 dictStat = {
     'runoff': 'log-norm',
+    'streamflow': 'log-norm',
     'qPredY1': 'log-norm',
     'qPredY2': 'log-norm',
     '00010': 'norm',

@@ -23,7 +23,7 @@ fieldLst = ['ppt', 'tmean', 'tdmean']
 sd = pd.to_datetime('1981-01-01')
 ed = pd.to_datetime('2019-12-20')
 imageCol = ee.ImageCollection(datasetName).filterDate(
-    gee.utils.t2ee(sd), gee.utils.t2ee(ed)).filterBounds(geog).select(
+    gee.geeutils.t2ee(sd), gee.geeutils.t2ee(ed)).filterBounds(geog).select(
         fieldLst).sort('system:time_start')
 
 errLst = list()

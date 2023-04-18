@@ -40,6 +40,12 @@ def clickMap(funcMap, funcPoint, cSize=1):
             else:
                 xc = xLoc[iP]
                 yc = yLoc[iP]            
+            # if type(iP) is int:
+            #     xc = xLoc[iP]
+            #     yc = yLoc[iP]
+            # else:
+            #     xc = xLoc[iP[1]]
+            #     yc = yLoc[iP[0]]
             circle = plt.Circle(
                 [xc, yc], cSize, color='black', fill=False)
             ax.add_patch(circle)

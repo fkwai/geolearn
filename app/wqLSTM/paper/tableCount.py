@@ -13,7 +13,7 @@ from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 import matplotlib
 
-dataName = 'N200'
+dataName = 'NY5'
 
 DF = dbBasin.DataFrameBasin(dataName)
 codeLst = usgs.varC

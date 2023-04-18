@@ -19,7 +19,7 @@ def sameClass(obj1, obj2):
 
 def vRange(data, centerZero=False, prct=10):
     vmin = np.percentile(data[~np.isnan(data)], prct)
-    vmax = np.percentile(data[~np.isnan(data)], 100-prct)
+    vmax = np.percentile(data[~np.isnan(data)], 100 - prct)
     if centerZero:
         vv = np.max([np.abs(vmin), np.abs(vmax)])
         vmin = -vv
@@ -43,3 +43,22 @@ def vRange(data, centerZero=False, prct=10):
     #         new_f.__name__ = f.__name__
     #         return new_f
     #     return decorate
+
+
+def intersect(a, b, returnIndex=False):
+    """return the intersection of two lists"""
+    out = list(set(a) & set(b))
+    if returnIndex:
+        return out, [a.index(i) for i in out], [b.index(i) for i in out]
+    else:
+        return out
+
+
+def intersectMulti(tlst):
+    """return the intersection of multiple lists"""
+    out = sorted(list(set.intersection(*[set(list) for list in tlst])))
+    indLst = list()
+    for t in tlst:
+        _, _, ind = np.intersect1d(out, t, return_indices=True)
+        indLst.append(ind)
+    return out, indLst
