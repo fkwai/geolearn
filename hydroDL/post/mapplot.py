@@ -19,7 +19,9 @@ extentCONUS = [-125, -65, 25, 50]
 
 def mapPoint(fig, gs, lat, lon, data,
              vRange=None, cmap='jet', s=30, marker='o',
-             cb=True, centerZero=False, extent=extentCONUS):
+             cb=True, centerZero=False, extent=extentCONUS,
+             projection=ccrs.PlateCarree()):
+
     if np.isnan(data).all():
         print('all nan in data')
         return
@@ -27,9 +29,8 @@ def mapPoint(fig, gs, lat, lon, data,
         vmin, vmax = utils.vRange(data, centerZero=centerZero)
     else:
         vmin, vmax = vRange
-
-    ax = fig.add_subplot(gs, projection=ccrs.PlateCarree())
-    ax.set_extent(extent, crs=ccrs.PlateCarree())
+    ax = fig.add_subplot(gs, projection=projection)
+    ax.set_extent(extent, crs=ccrs.Geodetic())
     ax.coastlines(resolution='auto', color='k')
     ind = np.where(~np.isnan(data))[0]
     cs = ax.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
