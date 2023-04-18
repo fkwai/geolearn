@@ -34,12 +34,12 @@ def clickMap(funcMap, funcPoint, cSize=1):
         iP = findPoint(xClick, yClick, xLoc, yLoc)
         for ax in axM.flatten():
             [p.remove() for p in reversed(ax.patches)]
-            if len(iP) == 1:
-                xc = xLoc[iP]
-                yc = yLoc[iP]
-            else:
+            if type(iP) is tuple:
                 xc = xLoc[iP[1]]
                 yc = yLoc[iP[0]]
+            else:
+                xc = xLoc[iP]
+                yc = yLoc[iP]            
             circle = plt.Circle(
                 [xc, yc], cSize, color='black', fill=False)
             ax.add_patch(circle)
