@@ -90,7 +90,7 @@ Sg = SgT.detach().cpu().numpy()
 # LSTM
 outName = '{}-{}'.format('QN90ref', trainSet)
 yL, ycL = basinFull.testModel(
-    outName, DF=DF, testSet=testSet, reTest=False, ep=1000)
+    outName, DF=DF, testSet=testSet, reTest=False, ep=500)
 yL = yL[:, :, 0]
 
 nash1 = utils.stat.calNash(yP, y[nr-1:, :, 0])

@@ -26,4 +26,6 @@ for k, siteNo in enumerate(siteNoLst):
     dfCount.update(dfC.rename(columns={'00060_00003': siteNo}))
 # np.save(os.path.join(dirInv, 'matCountQ'), dfCount.values)
 countFile = os.path.join(kPath.dirUSGS, 'streamflow', 'countYr.csv')
+dfCount=dfCount.transpose().astype(int)
+dfCount.index.name='siteNo'
 dfCount.to_csv(countFile)

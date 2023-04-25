@@ -32,11 +32,14 @@ def clickMap(funcMap, funcPoint, cSize=1):
             print('click on map plz')
             return
         iP = findPoint(xClick, yClick, xLoc, yLoc)
-        print(iP)
         for ax in axM.flatten():
             [p.remove() for p in reversed(ax.patches)]
-            xc = xLoc[iP]
-            yc = yLoc[iP]
+            if type(iP) is tuple:
+                xc = xLoc[iP[1]]
+                yc = yLoc[iP[0]]
+            else:
+                xc = xLoc[iP]
+                yc = yLoc[iP]            
             # if type(iP) is int:
             #     xc = xLoc[iP]
             #     yc = yLoc[iP]

@@ -110,6 +110,18 @@ def calBias(pred, obs):
     return bias
 
 
+def calBiasR(pred, obs):
+    u1 = np.nanmean(pred, axis=0)
+    u2 = np.nanmean(obs, axis=0)
+    return u1/u2
+
+
+def calVarR(pred, obs):
+    s1 = np.nanstd(pred, axis=0)
+    s2 = np.nanstd(obs, axis=0)
+    return s1/s2
+
+
 def calPercent(x, p, rank=True):
     if rank:
         return np.nanpercentile(x, p*100)
