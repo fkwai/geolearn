@@ -67,10 +67,10 @@ nr = 5
 hs = 256
 dr = 0.5
 
-# import importlib
-# import hydroDL.model.waterNet.modelFull
+import importlib
+import hydroDL.model.waterNet.modelFull
 
-# importlib.reload(hydroDL.model.waterNet.modelFull)
+importlib.reload(hydroDL.model.waterNet.modelFull)
 model = WaterNet0313(nf, ng, nh, nr, rho=(5, 365, rhoW))
 optim = torch.optim.Adam(model.parameters())
 lossFun = crit.LogLoss2D()

@@ -26,5 +26,5 @@ for code in ['00915', '00955', '00618']:
         varF=gridMET.varLst,
         varG=gageII.varLstEx,
         sdStr='1979-01-01',
-        edStr='2023-01-01',
+        edStr='2022-12-31',
     )

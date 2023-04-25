@@ -22,6 +22,10 @@ day = tpd.dayofyear
 year = tpd.year
 logQ = np.log(DF.q[:, :, 1])
 logQ[np.isinf(logQ)] = np.nan
+dayMat = np.tile(day, [DF.c.shape[1], 1]).T.astype(np.float)
+nanMat = np.isnan(DF.c[:, :, 0])
+logQ[nanMat] = np.nan
+dayMat[nanMat] = np.nan
 
 # check the distribution of c and q
 fig, axes = plt.subplots(1, 2)
@@ -29,11 +33,86 @@ axes[0].hist(DF.c[:, :, 0].flatten(), bins=100)
 axes[1].hist(logQ.flatten(), bins=100)
 fig.show()
 
+fig, axes = plt.subplots(1, 3)
+axes[0].hist(np.nanmin(DF.c[:, :, 0], axis=0), bins=10)
+axes[1].hist(np.nanmin(logQ, axis=0), bins=10)
+axes[2].hist(np.nanmin(dayMat, axis=0), bins=10)
+fig.show()
+
+
+fig, axes = plt.subplots(1, 3)
+axes[0].hist(np.nanmax(DF.c[:, :, 0], axis=0), bins=10)
+axes[1].hist(np.nanmax(logQ, axis=0), bins=10)
+axes[2].hist(np.nanmax(dayMat, axis=0), bins=10)
+fig.show()
+
+
+# selected typical site
+siteId = '05288705'
+indSite = DF.siteNoLst.index(siteId)
+
+# plot c-t and c-q
+iP = indSite
+figP = plt.figure(figsize=(10, 8))
+gsP = gridspec.GridSpec(2, 2)
+axT1 = figP.add_subplot(gsP[0, :])
+axT2 = axT1.twinx()
+axP1 = figP.add_subplot(gsP[1, 0])
+axP2 = figP.add_subplot(gsP[1, 1])
+axT1.plot(DF.t, DF.c[:, iP, 0], 'r*', label='concentration')
+axT1.set_title('{} {}'.format(siteId, usgs.getCodeStr(code)))
+axT2.plot(DF.t, DF.q[:, iP, 1], 'b-', label='runoff')
+axP1.plot(day, DF.c[:, iP, 0], 'k*')
+axP1.set_xlabel('day of year')
+axP1.set_ylabel('concentration')
+axP2.plot(logQ[:, iP], DF.c[:, iP, 0], 'k*')
+axP2.set_xlabel('log runoff')
+axP2.set_ylabel('concentration')
+figP.show()
+
+# calculate kde
+d, c, q = utils.rmNan([day, DF.c[:, iP, 0], logQ[:, iP]], returnInd=False)
+n = len(c)
+h = n ** (-1.0 / (2 + 4))
+fig, axes = plt.subplots(2, 3)
+for k, bw in enumerate([0.2, 0.3, 0.35, 0.4, 0.45, 0.5]):
+    dm, cm = np.mgrid[0 : 1 : n * 1j, 0 : 1 : n * 1j]
+    qm, cm = np.mgrid[0 : 1 : n * 1j, 0 : 1 : n * 1j]
+    c1, c2 = np.min(c), np.max(c)
+    d1, d2 = 1, 365
+    q1, q2 = np.min(q), np.max(q)
+    dd = (d - d1) / (d2 - d1)
+    cc = (c - c1) / (c2 - c1)
+    qq = (q - q1) / (q2 - q1)
+    p1 = np.vstack([dm.ravel(), cm.ravel()])
+    p2 = np.vstack([qm.ravel(), cm.ravel()])
+    k1 = stats.gaussian_kde([dd, cc], bw_method=bw)
+    z1 = np.rot90(np.reshape(k1(p1).T, cm.shape))
+    j, i = utils.index2d(k, 2, 3)
+    axes[j, i].plot(dd, cc, '.', color='gray')
+    axes[j, i].imshow(z1, extent=(0, 1, 0, 1))
+    axes[j, i].set_title('bw={}'.format(bw))
+fig.show()
+
+
+k = 100
+h = n ** (-1.0 / (2 + 4))
+xx, yy = dd[k], cc[k]
+x, y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
+d = np.sqrt((x - xx) ** 2 + (y - yy) ** 2)
+g = np.rot90(np.exp(-((d) ** 2 / (2.0 * h**2))).T)
+fig, ax = plt.subplots(1, 1)
+ax.imshow(g, extent=(0, 1, 0, 1))
+ax.plot(dd, cc, '.', color='gray')
+ax.plot(xx, yy, 'r*')
+fig.show()
+
+
 n = 100
 # global image
-c1, c2 = 0, 60
-d1, d2 = 1, 365
-q1, q2 = -5, 5
+c1, c2 = np.nanmin(DF.c[:, :, 0]), np.nanmax(DF.c[:, :, 0])
+d1, d2 = 1, 366
+q1, q2 = np.nanmin(logQ), np.nanmax(logQ)
 dm, cm = np.mgrid[0 : 1 : n * 1j, 0 : 1 : n * 1j]
 qm, cm = np.mgrid[0 : 1 : n * 1j, 0 : 1 : n * 1j]
 p1 = np.vstack([dm.ravel(), cm.ravel()])
@@ -106,7 +185,7 @@ def funcM():
 
 
 def funcP(iP, axP):
-    print(iP,DF.siteNoLst[iP])
+    print(iP, DF.siteNoLst[iP])
     [axT1, axT2, axP1, axP2, axP3, axP4] = axP
     axT1.plot(DF.t, DF.c[:, iP, 0], 'r*')
     axT2.plot(DF.t, DF.q[:, iP, 1], 'b-')
@@ -203,7 +282,8 @@ temp = distMat / distMat.mean(axis=(0, 1))
 matD = temp.mean(axis=2)
 nM = 3
 from hydroDL.app import cluster
-center,dist=cluster.kmedoid(distMat[...,-1],5)
+
+center, dist = cluster.kmedoid(distMat[..., -1], 5)
 center, dist
 
 # normalize data

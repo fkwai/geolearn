@@ -18,7 +18,7 @@ def defineFCNN(nx, ny, hs=256, dr=0.5):
 
 class WaterNet0313(torch.nn.Module):
     def __init__(self, nf, ng, nh, nr, rho=(5, 365, 0), hs=256, dr=0.5):
-        super(WaterNet0313, self).__init__()
+        super().__init__()
         self.nf = nf
         self.nh = nh
         self.ng = ng
@@ -42,7 +42,7 @@ class WaterNet0313(torch.nn.Module):
             ge=lambda x: torch.relu(x),  # evaporation
         )
         self.kDict = dict(
-            km=lambda x: torch.exp(x),  # snow melt
+            km=lambda x: torch.exp(x*5),  # snow melt
         )
         self.FC = nn.Linear(self.ng, hs)
         self.FC_r = nn.Linear(hs, self.nh * (self.nr + 1))

@@ -7,10 +7,11 @@ from hydroDL.model.dropout import createMask, DropMask
 from collections import OrderedDict
 import time
 
+# forward with no_grad then record grad
 
 class WaterNet0313(torch.nn.Module):
     def __init__(self, nf, ng, nh, nr, rho=(5, 365, 0), hs=256, dr=0.5):
-        super(WaterNet0313, self).__init__()
+        super().__init__()
         self.nf = nf
         self.nh = nh
         self.ng = ng

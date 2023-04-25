@@ -14,7 +14,7 @@ dictLabel = {
     'SiO2': r'$\mathrm{SiO_2}$',
     'NHx': r'$\mathrm{NH_x}$',
     'N-org': r'$\mathrm{N_{org}}$',
-    'C': 'NPOC'
+    'C': 'NPOC',
 }
 
 
@@ -23,22 +23,66 @@ def codeStrPlot(strLst):
     for k, s in enumerate(strLst):
         if s in dictLabel.keys():
             strLst[k] = dictLabel[s]
-    return(strLst)
+    return strLst
 
 
-varC = ['00010', '00095', '00300', '00400', '00405',
-        '00600', '00605', '00618', '00660', '00665',
-        '00681', '00915', '00925', '00930', '00935',
-        '00940', '00945', '00955', '71846', '80154']
+def getCodeStr(code,optPlot=True):
+    strPlot = codePdf.loc[code]['shortName']
+    if optPlot:
+        if strPlot in dictLabel.keys():
+            strPlot = dictLabel[strPlot]
+    return strPlot
+
+
+varC = [
+    '00010',
+    '00095',
+    '00300',
+    '00400',
+    '00405',
+    '00600',
+    '00605',
+    '00618',
+    '00660',
+    '00665',
+    '00681',
+    '00915',
+    '00925',
+    '00930',
+    '00935',
+    '00940',
+    '00945',
+    '00955',
+    '71846',
+    '80154',
+]
 
 codeIso = ['82085', '82082']
 
 varQ = ['streamflow', 'runoff']
 
-chemLst = ['00300', '00405', '00410', '00440', '00600',
-           '00605', '00618', '00660', '00665', '71846',
-           '00915', '00925', '00930', '00935', '00940',
-           '00945', '00955', '00950', '80154', '00681']
+chemLst = [
+    '00300',
+    '00405',
+    '00410',
+    '00440',
+    '00600',
+    '00605',
+    '00618',
+    '00660',
+    '00665',
+    '71846',
+    '00915',
+    '00925',
+    '00930',
+    '00935',
+    '00940',
+    '00945',
+    '00955',
+    '00950',
+    '80154',
+    '00681',
+]
 
 # normalization method
 dictStat = {
@@ -80,43 +124,49 @@ dictStat = {
     '39087': 'log-norm',
     '70303': 'log-norm',
     '71846': 'log-norm',
-    '80154': 'log-norm'
+    '80154': 'log-norm',
 }
 
 # update stat mtd for mean, std and norm
 dictStatApp = dict()
 for code in varC:
-    dictStatApp[code+'-N'] = 'skip'
+    dictStatApp[code + '-N'] = 'skip'
     if code in ['00010', '00300', '00400']:
-        dictStatApp[code+'-M'] = 'norm'
-        dictStatApp[code+'-S'] = 'norm'
+        dictStatApp[code + '-M'] = 'norm'
+        dictStatApp[code + '-S'] = 'norm'
     else:
-        dictStatApp[code+'-M'] = 'log-norm'
-        dictStatApp[code+'-S'] = 'log-norm'
+        dictStatApp[code + '-M'] = 'log-norm'
+        dictStatApp[code + '-S'] = 'log-norm'
 dictStat.update(dictStatApp)
 
 # code of remarks
-dfFlagC = pd.DataFrame([
-    [0, 'x', 'No flags'],
-    [1, 'X', 'Averaged from no flag'],
-    [2, '<', 'less than'],
-    [3, '>', 'greater than'],
-    [4, 'A', 'average'],
-    [5, 'E', 'estimated'],
-    [6, 'M', 'presence verified but not quantified'],
-    [7, 'N', 'presumptive evidence of presence'],
-    [8, 'R', 'radchem non-detect, below ssLc'],
-    [9, 'S', 'most probable value'],
-    [10, 'U', 'analyzed for but not detected'],
-    [11, 'V', 'value affected by contamination']],
-    columns=['code', 'label', 'description']).set_index('code')
+dfFlagC = pd.DataFrame(
+    [
+        [0, 'x', 'No flags'],
+        [1, 'X', 'Averaged from no flag'],
+        [2, '<', 'less than'],
+        [3, '>', 'greater than'],
+        [4, 'A', 'average'],
+        [5, 'E', 'estimated'],
+        [6, 'M', 'presence verified but not quantified'],
+        [7, 'N', 'presumptive evidence of presence'],
+        [8, 'R', 'radchem non-detect, below ssLc'],
+        [9, 'S', 'most probable value'],
+        [10, 'U', 'analyzed for but not detected'],
+        [11, 'V', 'value affected by contamination'],
+    ],
+    columns=['code', 'label', 'description'],
+).set_index('code')
 
-dfFlagQ = pd.DataFrame([
-    [0, '0', 'No flags'],
-    [1, '<', 'The Value is known to be less than reported value'],
-    [2, '>', 'The value is known to be greater than reported value'],
-    [3, 'e', 'The value has been edited or estimated by USGS personnel'],
-    [4, 'R', 'Records for these data have been revised'],
-    [5, 'A', 'Approved for publication -- Processing and review completed'],
-    [6, 'P', 'Provisional data subject to revision']],
-    columns=['code', 'label', 'description']).set_index('code')
+dfFlagQ = pd.DataFrame(
+    [
+        [0, '0', 'No flags'],
+        [1, '<', 'The Value is known to be less than reported value'],
+        [2, '>', 'The value is known to be greater than reported value'],
+        [3, 'e', 'The value has been edited or estimated by USGS personnel'],
+        [4, 'R', 'Records for these data have been revised'],
+        [5, 'A', 'Approved for publication -- Processing and review completed'],
+        [6, 'P', 'Provisional data subject to revision'],
+    ],
+    columns=['code', 'label', 'description'],
+).set_index('code')

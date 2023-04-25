@@ -106,7 +106,7 @@ def funcM():
 
 
 def funcP(iP, axP):
-    print(iP,DF.siteNoLst[iP])
+    print(iP)
     [axT1, axT2, axP1, axP2, axP3, axP4] = axP
     axT1.plot(DF.t, DF.c[:, iP, 0], 'r*')
     axT2.plot(DF.t, DF.q[:, iP, 1], 'b-')
@@ -122,122 +122,69 @@ def funcP(iP, axP):
 
 figplot.clickMap(funcM, funcP)
 
-
-# contours
-from skimage import measure, metrics
-
-cG1 = [1, 5, 10]
-cG2 = [1, 10, 20]
-cL1 = [0.5, 1, 2]
-cL2 = [0.5, 1, 2]
-conG1, conG2, conL1, conL2 = list(), list(), list(), list()
-for conLst, img, cLst in zip(
-    [conG1, conG2, conL1, conL2], [imgG1, imgG2, imgL1, imgL2], [cG1, cG2, cL1, cL2]
-):
-    for k in range(len(DF.siteNoLst)):
-        temp = list()
-        z = img[:, :, k]
-        for cc in cLst:
-            con = measure.find_contours(z, cc)
-            temp.append(con)
-        conLst.append(temp)
-
-
-def funcP(iP, axP):
-    print(iP)
-    [axT1, axT2, axP1, axP2, axP3, axP4] = axP
-    axT1.plot(DF.t, DF.c[:, iP, 0], 'r*')
-    axT2.plot(DF.t, DF.q[:, iP, 1], 'b-')
-    # get data
-    d, c, q = utils.rmNan([day, DF.c[:, iP, 0], logQ[:, iP]], returnInd=False)
-    xLst, yLst = list(), list()
-    for ext, x, y in zip([extG1, extG2, extL1, extL2], [d, q, d, q], [c, c, c, c]):
-        if type(ext) is list:
-            xx = (x - ext[0]) / (ext[1] - ext[0]) * 100
-            yy = (1 - (y - ext[2]) / (ext[3] - ext[2])) * 100
-        else:
-            xx = (x - ext[0, iP]) / (ext[1, iP] - ext[0, iP]) * 100
-            yy = (1 - (y - ext[2, iP]) / (ext[3, iP] - ext[2, iP])) * 100
-        xLst.append(xx)
-        yLst.append(yy)
-    imgLst = [imgG1[:, :, iP], imgG2[:, :, iP], imgL1[:, :, iP], imgL2[:, :, iP]]
-    cirLst = [conG1[iP], conG2[iP], conL1[iP], conL2[iP]]
-    for k, ax in enumerate([axP1, axP2, axP3, axP4]):
-        ax.imshow(imgLst[k])
-        ax.plot(xLst[k], yLst[k], '*k')
-        for cir in cirLst[k]:
-            if cir is not None:
-                if type(cir) is list:
-                    for con in cir:
-                        ax.plot(con[:, 1], con[:, 0], '-r')
-                else:
-                    ax.plot(cir[:, 1], cir[:, 0], '-r')
-
-
-figplot.clickMap(funcM, funcP)
-
 # distance
 ns = len(DF.siteNoLst)
-disG1, disG2, disL1, disL2 = [np.zeros([ns, ns, 3]) for x in range(4)]
-for iD, (conLst, disMat) in enumerate(
-    zip([conG1, conG2, conL1, conL2], [disG1, disG2, disL1, disL2])
+distG1, distG2, distL1, distL2 = [np.zeros([ns, ns]) for x in range(4)]
+for iD, (img, dist) in enumerate(
+    zip([imgG1, imgG2, imgL1, imgL2], [distG1, distG2, distL1, distL2])
 ):
-    for k in range(3):
-        print(iD, k)
-        for j in range(ns):
-            c1 = conLst[j][k]
-            if type(c1) is list and len(c1) > 0:
-                c1 = c1[np.argmax([len(x) for x in c1])]
-            for i in range(ns):
-                c2 = conLst[i][k]
-                if type(c2) is list and len(c2) > 0:
-                    c2 = c2[np.argmax([len(x) for x in c2])]
-                disMat[j, i, k] = metrics.hausdorff_distance(c1, c2)
-distMat = np.concatenate([disG1, disG2, disL1, disL2], axis=2)
-distMat[np.isinf(distMat)] = 0
+    for j in range(ns):
+        for i in range(j):
+            # dist[j, i] = np.sqrt(np.mean((img[:, :, j] - img[:, :, i]) ** 2))
+            dist[j, i] = np.max(np.abs(img[:, :, j] - img[:, :, i]))
+            dist[i, j] = dist[j, i]
+fig, ax = plt.subplots(1, 1)
+ax.imshow(distG2)
+fig.show()
 
 # clustering k-m
-
-# normalize distMat on each dimension
-temp = distMat / distMat.mean(axis=(0, 1))
-matD = temp.mean(axis=2)
-nM = 3
 from hydroDL.app import cluster
-center,dist=cluster.kmedoid(distMat[...,-1],5)
-center, dist
+import importlib
 
-# normalize data
-for kk, iP in enumerate(center):
-    d, c, q = utils.rmNan([day, DF.c[:, iP, 0], logQ[:, iP]], returnInd=False)
-    xLst, yLst = list(), list()
-    for ext, x, y in zip([extG1, extG2, extL1, extL2], [d, q, d, q], [c, c, c, c]):
-        if type(ext) is list:
-            xx = (x - ext[0]) / (ext[1] - ext[0]) * 100
-            yy = (1 - (y - ext[2]) / (ext[3] - ext[2])) * 100
-        else:
-            xx = (x - ext[0, iP]) / (ext[1, iP] - ext[0, iP]) * 100
-            yy = (1 - (y - ext[2, iP]) / (ext[3, iP] - ext[2, iP])) * 100
-        xLst.append(xx)
-        yLst.append(yy)
-    imgLst = [imgG1[:, :, iP], imgG2[:, :, iP], imgL1[:, :, iP], imgL2[:, :, iP]]
-    cirLst = [conG1[iP], conG2[iP], conL1[iP], conL2[iP]]
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4))
-    for k, ax in enumerate(axes):
-        ax.imshow(imgLst[k])
-        ax.plot(xLst[k], yLst[k], '*k')
-        for cir in cirLst[k]:
-            if cir is not None:
-                if type(cir) is list:
-                    for con in cir:
-                        ax.plot(con[:, 1], con[:, 0], '-r')
-                else:
-                    ax.plot(cir[:, 1], cir[:, 0], '-r')
+importlib.reload(cluster)
+outFolder = r'/home/kuai/work/waterQuality/featImage/imageDist'
+
+img = imgL2
+matD = distL2
+saveStr = 'local-CQ'
+saveStrLst = ['global-CT', 'global-CQ', 'local-CT', 'local-CQ']
+for img, matD, saveStr in zip(
+    [imgG1, imgG2, imgL1, imgL2], [distG1, distG2, distL1, distL2], saveStrLst
+):
+    saveFolder = os.path.join(outFolder, saveStr)
+    if not os.path.exists(saveFolder):
+        os.makedirs(saveFolder)
+    kLst, cLst, sLst = list(), list(), list()
+    for k in range(2, 10):
+        kc, vc = cluster.kmedoid(matD, k)
+        figM = plt.figure(figsize=(8, 6))
+        gsM = gridspec.GridSpec(1, 1)
+        axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, vc, vRange=[0, k - 1])
+        axM.set_title('cluster map k={}'.format(k))
+        figM.savefig(os.path.join(saveFolder, 'map-k{}'.format(k)))
+        kLst.append(kc)
+        cLst.append(vc)
+        sLst.append(cluster.silhouette(matD, kc, vc))
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(np.arange(2, 10), sLst)
+    ax.set_title('silhouette score')
+    ax.set_xlabel('# cluster')
     fig.show()
-    fig.suptitle('cluster {}'.format(kk))
+    fig.savefig(os.path.join(saveFolder, 'silhouette'))
 
-figM = plt.figure(figsize=(8, 6))
-gsM = gridspec.GridSpec(1, 1)
-axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, vCluster)
-figM.show()
+    for nk in range(2, 10):
+        kc, vc = cluster.kmedoid(matD, nk)
+        imgFolder = os.path.join(saveFolder, 'k{}'.format(nk))
+        if not os.path.exists(imgFolder):
+            os.mkdir(imgFolder)
+        for k in range(nk):
+            ind = np.where(vc == k)[0]
+            for i in ind:
+                fig, ax = plt.subplots(1, 1)
+                ax.imshow(img[:, :, i])
+                figName = 'k{}-i{}'.format(k, i)
+                if i in kc:
+                    figName = figName + '-center'
+                fig.savefig(os.path.join(imgFolder, figName))
+                plt.close(fig)
 
-matD[center, 144]

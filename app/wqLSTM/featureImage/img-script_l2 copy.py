@@ -130,7 +130,8 @@ for iD, (img, dist) in enumerate(
 ):
     for j in range(ns):
         for i in range(j):
-            dist[j, i] = np.sqrt(np.mean((img[:, :, j] - img[:, :, i]) ** 2))
+            # dist[j, i] = np.sqrt(np.mean((img[:, :, j] - img[:, :, i]) ** 2))
+            dist[j, i] = np.mean(np.abs(img[:, :, j] - img[:, :, i]))
             dist[i, j] = dist[j, i]
 fig, ax = plt.subplots(1, 1)
 ax.imshow(distG2)
@@ -141,21 +142,73 @@ from hydroDL.app import cluster
 import importlib
 
 importlib.reload(cluster)
-cLst, dLst = list(), list()
-for k in range(2, 10):
-    center, dist = cluster.kmedoid(distL1, k)
-    cLst.append(center)
-    dLst.append(dist)
-fig, ax = plt.subplots(1, 1)
-ax.plot(np.arange(2, 10), dLst)
+outFolder = r'/home/kuai/work/waterQuality/featImage/imageDist'
+
+img = imgL2
+matD = distL2
+saveStr = 'local-CQ'
+saveStrLst = ['global-CT', 'global-CQ', 'local-CT', 'local-CQ']
+for img, matD, saveStr in zip(
+    [imgG1, imgG2, imgL1, imgL2], [distG1, distG2, distL1, distL2], saveStrLst
+):
+    saveFolder = os.path.join(outFolder, saveStr)
+    if not os.path.exists(saveFolder):
+        os.makedirs(saveFolder)
+    kLst, cLst, sLst = list(), list(), list()
+    for k in range(2, 10):
+        kc, vc = cluster.kmedoid(matD, k)
+        figM = plt.figure(figsize=(8, 6))
+        gsM = gridspec.GridSpec(1, 1)
+        axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, vc, vRange=[0, k - 1])
+        axM.set_title('cluster map k={}'.format(k))
+        figM.savefig(os.path.join(saveFolder, 'map-k{}'.format(k)))
+        kLst.append(kc)
+        cLst.append(vc)
+        sLst.append(cluster.silhouette(matD, kc, vc))
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(np.arange(2, 10), sLst)
+    ax.set_title('silhouette score')
+    ax.set_xlabel('# cluster')
+    fig.show()
+    fig.savefig(os.path.join(saveFolder, 'silhouette'))
+
+    for nk in range(2, 10):
+        kc, vc = cluster.kmedoid(matD, nk)
+        imgFolder = os.path.join(saveFolder, 'k{}'.format(nk))
+        os.mkdir(imgFolder)
+        for k in range(nk):
+            ind = np.where(vc == k)[0]
+            for i in ind:
+                fig, ax = plt.subplots(1, 1)
+                ax.imshow(img[:, :, i])
+                figName = 'k{}-i{}'.format(k, i)
+                if i in kc:
+                    figName = figName + '-center'
+                fig.savefig(os.path.join(imgFolder, figName))
+
+kc, vc = cluster.kmedoid(matD, 4)
+k = 3
+fig, ax = plt.subplots(2, 1)
+ax[0].imshow(imgG1[:, :, kc[k]])
+ind = np.where(vc == k)[0]
+np.random.shuffle(ind)
+ax[1].imshow(imgG1[:, :, ind[0]])
+fig.show()
+
+import scipy
+
+img1 = imgG1[:, :, 10]
+img2 = imgG1[:, :, 20]
+a = scipy.special.kl_div(img1, img2)
+fig, ax = plt.subplots(3, 1)
+ax[0].imshow(img1)
+ax[1].imshow(img2)
+ax[2].imshow(a)
 fig.show()
 
 
-distMat = distL1
-center, dist = cluster.kmedoid(distMat, 3)
-vc = np.argmin(distMat[center, :], axis=0)
 # normalize data
-for kk, iP in enumerate(center):
+for kk, iP in enumerate(kc):
     d, c, q = utils.rmNan([day, DF.c[:, iP, 0], logQ[:, iP]], returnInd=False)
     xLst, yLst = list(), list()
     for ext, x, y in zip([extG1, extG2, extL1, extL2], [d, q, d, q], [c, c, c, c]):
@@ -183,9 +236,10 @@ figM.show()
 
 # CQ CT plot to image
 def funcM():
+
     figM = plt.figure(figsize=(8, 6))
     gsM = gridspec.GridSpec(1, 1)
-    axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, meanC)
+    axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, vc)
     axM.set_title('{} {}'.format(usgs.codePdf.loc[code]['shortName'], code))
     figP = plt.figure(figsize=(10, 8))
     gsP = gridspec.GridSpec(2, 4)
