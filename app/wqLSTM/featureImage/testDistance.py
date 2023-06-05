@@ -192,8 +192,6 @@ import scipy
 
 a = scipy.spatial.distance.cdist(xx, yy)
 np.max(np.min(a, axis=1))
-ree(b_points).query(a_points, k=1)[0],
-)
 
 
 # distance contour
@@ -327,6 +325,10 @@ from sklearn import manifold
 mds_model = manifold.MDS(n_components = 2,dissimilarity = 'precomputed')
 mds_fit = mds_model.fit(distMat[:,:,0])
 mds_coords = mds_model.fit_transform(distMat[:,:,0]) 
+
+fig,ax=plt.subplots(1,1)
+ax.plot(mds_coords[:,0],mds_coords[:,1],'*')
+fig.show()
 
 conP = conL1
 imgP = imgL1

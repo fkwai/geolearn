@@ -36,7 +36,8 @@ n = 100
 c1, c2 = np.nanmin(logC), np.nanmax(logC)
 d1, d2 = 1, 365
 q1, q2 = np.nanmin(logQ), np.nanmax(logQ)
-xmD, ymD = np.mgrid[0 : 1 : n * 1j, -1 : 2 : 3 * n * 1j]
+# xmD, ymD = np.mgrid[0 : 1 : n * 1j, -1 : 2 : 3 * n * 1j]
+xmD, ymD = np.mgrid[0 : 1 : n * 1j, 0 : 1 : n * 1j]
 xmQ, ymQ = np.mgrid[0 : 1 : n * 1j, 0 : 1 : n * 1j]
 pD = np.vstack([xmD.ravel(), ymD.ravel()])
 pQ = np.vstack([xmQ.ravel(), ymQ.ravel()])
@@ -58,15 +59,22 @@ for iP, siteNo in enumerate(DF.siteNoLst):
     extLst1.append([d1, d2, cL1, cL2])
     extLst2.append([qL1, qL2, cL1, cL2])
     # C-T
-    xD = np.concatenate([dd - 1, dd, dd + 1])
+    # xD = np.concatenate([dd - 1, dd, dd + 1])
+    # # C-T global
+    # yDG = np.concatenate([cG, cG, cG])
+    # kDG = stats.gaussian_kde([xD, yDG])
+    # zDG = np.rot90(np.reshape(kDG(pD).T, ymD.shape))[n:-n, :]
+    # # C-T local
+    # yDL = np.concatenate([cL, cL, cL])
+    # kDL = stats.gaussian_kde([xD, yDL])
+    # zDL = np.rot90(np.reshape(kDL(pD).T, ymD.shape))[n:-n, :]
+    
     # C-T global
-    yDG = np.concatenate([cG, cG, cG])
-    kDG = stats.gaussian_kde([xD, yDG])
-    zDG = np.rot90(np.reshape(kDG(pD).T, ymD.shape))[n:-n, :]
+    kDG = stats.gaussian_kde([dd, cG])
+    zDG = np.rot90(np.reshape(kDG(pD).T, ymQ.shape))
     # C-T local
-    yDL = np.concatenate([cL, cL, cL])
-    kDL = stats.gaussian_kde([xD, yDL])
-    zDL = np.rot90(np.reshape(kDL(pD).T, ymD.shape))[n:-n, :]
+    kDL = stats.gaussian_kde([dd, cL])
+    zDL = np.rot90(np.reshape(kDL(pD).T, ymQ.shape))
     # C-Q global
     kQG = stats.gaussian_kde([qG, cG])
     zQG = np.rot90(np.reshape(kQG(pQ).T, ymQ.shape))
@@ -85,6 +93,38 @@ imgLQ = np.stack(imgLstQL, axis=-1)
 extLD = np.stack(extLst1, axis=-1)
 extLQ = np.stack(extLst2, axis=-1)
 
+# test
+iP = 95
+d, c, q = utils.rmNan([day, logC[:, iP], logQ[:, iP]], returnInd=False)
+dd = (d - d1) / (d2 - d1)
+cG = (c - c1) / (c2 - c1)
+qG = (q - q1) / (q2 - q1)
+# local extent
+cL1, cL2 = np.min(c), np.max(c)
+cL = (c - cL1) / (cL2 - cL1)
+# C-T
+xD = np.concatenate([dd - 1, dd, dd + 1])
+yDL = np.concatenate([cL, cL, cL])
+bw=0.25
+kDL = stats.gaussian_kde([xD, yDL],bw_method=0.15)
+xmD, ymD = np.mgrid[-1 : 2 : 3*n * 1j, 0 : 1 : n * 1j]
+
+pD = np.vstack([xmD.ravel(), ymD.ravel()])
+
+zDL = np.rot90(np.reshape(kDL(pD).T, [n*3,n]))
+
+fig,ax=plt.subplots(1,1)
+ax.imshow(zDL,extent=[-1,2,0,1])
+ax.plot(xD,yDL,'k*')
+fig.show()
+
+fig,ax=plt.subplots(1,1)
+ax.plot(xD,yDL,'r*')
+fig.show()
+
+
+
+
 # save
 outFolder = os.path.join(kPath.dirWQ, 'featImage', 'saveMat')
 saveFile = os.path.join(outFolder, 'img_{}.npz'.format(code))
@@ -102,8 +142,11 @@ np.savez(
 
 # load
 saveFile = os.path.join(outFolder, 'img_{}.npz'.format(code))
-npz = np.load(saveFile)    imgLst = 
-
+npz = np.load(saveFile)
+imgGD = npz['imgGD']
+imgGQ = npz['imgGQ']
+imgLD = npz['imgLD']
+imgLQ = npz['imgLQ']
 extG1 = npz['extG1']
 extG2 = npz['extG2']
 extL1 = npz['extL1']
@@ -156,7 +199,7 @@ for conLst, img in zip([conGD, conGQ, conLD, conLQ], [imgGD, imgGQ, imgLD, imgLQ
     for k in range(len(DF.siteNoLst)):
         temp = list()
         z = img[:, :, k]
-        for pc in pLst:
+        for pc in pcLst:
             cc = np.percentile(z, pc)
             con = measure.find_contours(z, cc)
             temp.append(con)
@@ -180,6 +223,7 @@ def funcP(iP, axP):
             yy = (1 - (y - ext[2, iP]) / (ext[3, iP] - ext[2, iP])) * 100
         xLst.append(xx)
         yLst.append(yy)
+    imgLst = 
     imgLst = [imgGD[:, :, iP], imgGQ[:, :, iP], imgLD[:, :, iP], imgLQ[:, :, iP]]
     cirLst = [conGD[iP], conGQ[iP], conLD[iP], conLQ[iP]]
     for k, ax in enumerate([axP1, axP2, axP3, axP4]):
@@ -210,11 +254,11 @@ for iD, (conLst, disMat) in enumerate(
         for j in range(ns):
             c1 = conLst[j][k]
             if type(c1) is list and len(c1) > 0:
-                c1 = np.concatenate(c1)
+                c1 = c1[np.argmax([len(x) for x in c1])]
             for i in range(ns):
                 c2 = conLst[i][k]
                 if type(c2) is list and len(c2) > 0:
-                    c2 = np.concatenate(c2)
+                    c2 = c2[np.argmax([len(x) for x in c2])]
                 disMat[j, i, k] = metrics.hausdorff_distance(c1, c2, method='modified')
 distMat = np.concatenate([disG1, disG2, disL1, disL2], axis=2)
 distMat[np.isinf(distMat)] = 0

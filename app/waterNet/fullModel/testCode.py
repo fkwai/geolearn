@@ -80,6 +80,7 @@ if torch.cuda.is_available():
     y = y.cuda()
     lossFun = lossFun.cuda()
 
+
 class test(torch.nn.Module):
     def __init__(self, nf, ng, nh, nr, rho=(5, 365, 0), hs=256, dr=0.5):
         super(test, self).__init__()
@@ -147,8 +148,10 @@ class test(torch.nn.Module):
             Sg = Sg.cuda()
         return Sf, Ss, Sg
 
-# forward    
-self=test(nf, ng, nh, nr, rho=(5, 365, 10), hs=256, dr=0.5)
+
+# forward
+nf=6
+self = test(nf, ng, nh, nr, rho=(5, 365, 10), hs=256, dr=0.5)
 nt = x.shape[0]
 ns = x.shape[1]
 Prcp, Evp, T1, T2, Rad, Hum = [x[:, :, k] for k in range(x.shape[-1])]
@@ -170,15 +173,15 @@ with torch.no_grad():
         SfLst.append(Sf)
         SsLst.append(Ss)
         SgLst.append(Sd)
-time.time()-t0
+time.time() - t0
 
 t0 = time.time()
 for iT in range(nt):
     storage, flux = bucket.step(iT, storage, input, param)
     Sf, Ss, Sd = storage
     if (iT - self.rho_warmup) % self.rho_long == 0:
-        Sf=Sf.detach()
+        Sf = Sf.detach()
     SfLst.append(Sf)
     SsLst.append(Ss.detach())
     SgLst.append(Sd.detach())
-time.time()-t0
+time.time() - t0

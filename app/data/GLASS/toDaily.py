@@ -35,3 +35,4 @@ for k, var in enumerate(varLst):
     axplot.plotTS(axes[k], dfV.index, dfV[var], styLst='*', cLst='r')
     axplot.plotTS(axes[k], dfVP.index, dfVP[var], styLst='-', cLst='b')
 fig.show()
+

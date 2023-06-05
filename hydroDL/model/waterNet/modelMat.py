@@ -9,6 +9,7 @@ import time
 
 # forward with no_grad then record grad
 
+
 class WaterNet0313(torch.nn.Module):
     def __init__(self, nf, ng, nh, nr, rho=(5, 365, 0), hs=256, dr=0.5):
         super().__init__()
@@ -36,6 +37,8 @@ class WaterNet0313(torch.nn.Module):
         )
         self.kDict = dict(
             km=lambda x: torch.exp(x),  # snow melt
+            ki=lambda x: torch.relu(x),  # interception
+            ke=lambda x: torch.exp(x),  # evaporation
         )
         self.FC = nn.Linear(self.ng, hs)
         self.FC_r = nn.Linear(hs, self.nh * (self.nr + 1))
@@ -53,7 +56,7 @@ class WaterNet0313(torch.nn.Module):
         mask_r = createMask(state, self.dr)
         pK = self.FC_kout(
             DropMask.apply(torch.tanh(self.FC_kin(f) + state), mask_k, self.training)
-        )  # check in debug
+        )
         pG = self.FC_g(DropMask.apply(torch.tanh(state), mask_g, self.training))
         pR = self.FC_r(DropMask.apply(torch.tanh(state), mask_r, self.training))
         paramK = sepParam(pK, self.nh, self.kDict)
@@ -116,5 +119,3 @@ class WaterNet0313(torch.nn.Module):
             Ss = Ss.cuda()
             Sd = Sd.cuda()
         # short term
-
-

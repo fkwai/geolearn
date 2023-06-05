@@ -1,4 +1,3 @@
-
 import time
 from hydroDL import kPath
 import os
@@ -23,31 +22,26 @@ for iV, var in enumerate(varLst):
         dataTemp = np.load(tempFile)['out']
         dataLst.append(dataTemp)
         t2 = time.time()
-        print('{} {} {:.2f}'.format(yr, var,  time.time()-t0), flush=True)
+        print('{} {} {:.2f}'.format(yr, var, time.time() - t0), flush=True)
     dictData[var] = np.concatenate(dataLst, axis=2)
-    print('{} {} {:.2f}'.format(yr, var, time.time()-t0))
+    print('{} {} {:.2f}'.format(yr, var, time.time() - t0))
 
 
 # construct time
 tLst, yrLst, dLst = [list(), list(), list()]
 for yr in np.arange(1982, 2019):
     for d in np.arange(1, 366, 8):
-        t = np.datetime64(str(yr))+np.timedelta64(d-1, 'D')
+        t = np.datetime64(str(yr)) + np.timedelta64(d - 1, 'D')
         tLst.append(t)
         yrLst.append(yr)
         dLst.append(d)
 tAry = np.array(tLst)
 nt = len(tAry)
 
-# Select sites
-siteNoFile=os.path.join(kPath.dirUsgs, 'basins', 'siteCONUS.csv')
-dfSite=pd.read_csv(siteNoFile,dtype={'siteNo':str})
-fileSiteNo = os.path.join(kPath.dirUsgs, 'basins', 'siteNoLst.json')
-with open(fileSiteNo) as fp:
-    dictSite = json.load(fp)
-siteNoLstAll = dictSite['CONUS']
-siteNoLstTemp = [f for f in sorted(os.listdir(outDir))]
-siteNoLst = [f for f in siteNoLstAll if f not in siteNoLstTemp]
+# all sites
+siteNoFile = os.path.join(kPath.dirUsgs, 'basins', 'siteCONUS.csv')
+dfSite = pd.read_csv(siteNoFile, dtype={'siteNo': str})
+siteNoLst = dfSite['siteNo'].tolist()
 
 # write to output
 dictNan = {'LAI': 2550, 'FAPAR': 255, 'NPP': 65535}
@@ -56,30 +50,34 @@ for var in varLst:
     dictData[var] = dictData[var].astype('float32')
     dictData[var][ind] = np.nan
 
-
+# specfied CONUS
 [j1, j2] = [800, 1300]
 [i1, i2] = [1100, 2300]
-
 ns = len(siteNoLst)
 maskLst = list()
 t0 = time.time()
 for k, siteNo in enumerate(siteNoLst):
     maskFile = os.path.join(maskDir, siteNo)
-    mask = np.load(maskFile+'.npz')['mask'].astype('float32')
+    mask = np.load(maskFile + '.npz')['mask'].astype('float32')
     temp = mask[j1:j2, i1:i2]
-    maskLst.append(temp/np.sum(temp))
-    print('{}/{} {:.2f}'.format(k, ns, time.time()-t0))
+    maskLst.append(temp / np.sum(temp))
+    print('{}/{} {:.2f}'.format(k, ns, time.time() - t0))
 maskAry = np.stack(maskLst, axis=2)
 
 # extract
-data = dictData['LAI']
-data[np.isnan(data)] = 0
-m1 = data.reshape(-1, nt)
-m2 = maskAry.reshape(-1, ns)
-out = np.matmul(m1.T, m2)
+varLst = ['LAI', 'FAPAR', 'NPP']
+outDict = dict()
+for var in varLst:
+    data = dictData[var]
+    data[np.isnan(data)] = 0
+    m1 = data.reshape(-1, nt)
+    m2 = maskAry.reshape(-1, ns)
+    out = np.matmul(m1.T, m2)
+    outDict[var] = out
 
 for k, siteNo in enumerate(siteNoLst):
-    df = pd.DataFrame(columns=varLst, data=out[:, k], index=tAry)
+    dataTemp =np.stack([outDict[var][:, k] for var in varLst],axis=-1)
+    df = pd.DataFrame(columns=varLst, data=dataTemp, index=tAry)
     df.index.name = 'date'
     df.to_csv(os.path.join(outDir, siteNo))
     print('saving {}'.format(siteNo))

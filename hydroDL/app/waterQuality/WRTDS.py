@@ -144,7 +144,11 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
         siteFile = os.path.join(outFolder, siteNo)
         if os.path.exists(siteFile):
             yp = pd.read_csv(siteFile, index_col=0).values
-            yOut[:, indS, :] = yp
+            if yp.shape[0] == len(d2.t):
+                yOut[:, indS, :] = yp
+            else:
+                print('ADHOC FIX')
+                yOut[:, indS, :] = yp[:-1,:]
             continue
         for indC, code in enumerate(varY):
             print('{} {} {} {}'.format(indS, siteNo, code, time.time() - t0))

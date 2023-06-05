@@ -30,7 +30,9 @@ for code in codeLst:
         sdStr='1979-01-01',
         edStr='2023-01-01',
     )
+for code in ['00915', '00955', '00618']:
     # subset
+    dataName = '{}-{}'.format(code, label)
     DF = dbBasin.DataFrameBasin(dataName)
     sy = DF.t[0].astype(object).year
     ey = DF.t[-1].astype(object).year
@@ -41,7 +43,6 @@ for code in codeLst:
         t2 = dbBasin.func.pickByYear(DF.t, yrIn, pick=False)
         DF.createSubset('pkYr5b{}'.format(k), dateLst=t1)
         DF.createSubset('rmYr5b{}'.format(k), dateLst=t2)
-
     # before after 2015
     DF.saveSubset('B15', ed='2015-12-31')
     DF.saveSubset('A15', sd='2016-01-01')
