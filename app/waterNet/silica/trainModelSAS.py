@@ -17,7 +17,7 @@ import os
 saveDir = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/waterNet/'
 saveDir = r'/home/kuai/work/waterQuality/waterNet/'
 code = '00955'
-dataName = '{}-{}'.format(code, 'B200')
+dataName = 'test'
 DF = dbBasin.DataFrameBasin(dataName)
 
 label = 'test'
@@ -35,8 +35,8 @@ mtdXC = ['QT' for var in varXC]
 varYC = None
 mtdYC = dbBasin.io.extractVarMtd(varYC)
 
-trainSet = 'B15'
-testSet = 'A15'
+trainSet = 'WY_82_09'
+testSet = 'WY_09_18'
 DM1 = dbBasin.DataModelBasin(
     DF, subset=trainSet, varX=varX, varXC=varXC, varY=varY, varYC=varYC
 )
@@ -55,7 +55,7 @@ y = torch.from_numpy(yP).float()
 
 # find out rho
 t = DF.getT(trainSet)
-tW = np.datetime64('1980-10-01')
+tW = np.datetime64('1983-10-01')
 rhoW = np.where(t == tW)[0][0]
 rho = (5, 365, rhoW)
 nf = x.shape[-1]
@@ -72,6 +72,9 @@ dr = 0.5
 model = WaterNet0510(nf, ng, nh)
 optim = torch.optim.Adam(model.parameters())
 lossFun = crit.LogLoss2D()
+modelFile = os.path.join(saveDir, 'wnSAS-{}-ep{}'.format(dataName, 4))
+model.load_state_dict(torch.load(modelFile, map_location=torch.device('cpu')))
+
 
 if torch.cuda.is_available():
     model = model.cuda()
@@ -80,6 +83,8 @@ if torch.cuda.is_available():
     y = y.cuda()
     lossFun = lossFun.cuda()
 
+torch.manual_seed(0)
+torch.autograd.set_detect_anomaly(True)
 model.train()
 for ep in range(1, 101):
     t0 = time.time()
@@ -89,5 +94,40 @@ for ep in range(1, 101):
     t1 = time.time()
     print('forward ep {} loss {:.2f} time {:.2f}'.format(ep, loss, t1 - t0), flush=True)
     modelFile = os.path.join(saveDir, 'wnSAS-{}-ep{}'.format(dataName, ep))
-    torch.save(model.state_dict(), modelFile)
+    # torch.save(model.state_dict(), modelFile)
 
+paramK, paramG = model.getParam(x, xc, raw=True)
+torch.any(torch.isnan(paramG['gk']))
+
+# debug
+sf = torch.concat(SfLst)
+d = torch.concat(DLst)
+torch.any(torch.isnan(sf))
+torch.any(torch.isnan(d))
+self.FC.param
+torch.any(torch.isnan(paramG['gk']))
+
+a, b = torch.where(torch.isnan(self.FC._parameters['weight']))
+
+# load model
+ep = 4
+saveDir = r'/home/kuai/work/waterQuality/waterNet/'
+modelFile = os.path.join(saveDir, 'wnSAS-{}-ep{}'.format(dataName, ep))
+
+temp = WaterNet0510(nf, ng, nh)
+temp.load_state_dict(torch.load(modelFile, map_location=torch.device('cpu')))
+
+torch.where(torch.isnan(temp.FC._parameters['weight']))
+torch.where(torch.isnan(temp.FC._parameters['weight']))[0].shape
+
+torch.any(torch.isnan(self.FC._parameters['weight']))
+
+self.FC._parameters['weight']
+
+self.FC._parameters['weight'].grad
+
+(ep==4) & (iIter==0)
+
+paramK, paramG = self.getParam(x, xc)
+gk = paramG['gk'].detach().numpy()
+gl = paramG['gl'].detach().numpy()

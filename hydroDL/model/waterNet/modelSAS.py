@@ -7,8 +7,6 @@ from hydroDL.model.dropout import createMask, DropMask
 from collections import OrderedDict
 import time
 
-# forward with no_grad then record grad
-
 
 class WaterNet0510(torch.nn.Module):
     def __init__(self, nf, ng, nh, rho_warmup=365, hs=256, dr=0.5, nd=366):
@@ -43,7 +41,7 @@ class WaterNet0510(torch.nn.Module):
         self.FC_kout = nn.Linear(hs, self.nh * len(self.kDict))
         self.reset_parameters()
 
-    def getParam(self, x, xc):
+    def getParam(self, x, xc, raw=False):
         f = x[:, :, 2:]  # T1, T2, Rad and Hum
         nt = x.shape[0]
         state = self.FC(xc)
@@ -55,10 +53,11 @@ class WaterNet0510(torch.nn.Module):
         )
         pG = self.FC_g(DropMask.apply(torch.tanh(state), mask_g, self.training))
         # pR = self.FC_r(DropMask.apply(torch.tanh(state), mask_r, self.training))
-        paramK = sepParam(pK, self.nh, self.kDict)
-        paramG = sepParam(pG, self.nh, self.gDict)
+        paramK = sepParam(pK, self.nh, self.kDict, raw=raw)
+        paramG = sepParam(pG, self.nh, self.gDict, raw=raw)
         # paramR = func.onePeakWeight(pR, self.nh, self.nr)
         # return paramK, paramG, paramR
+
         return paramK, paramG
 
     def reset_parameters(self):
@@ -74,22 +73,21 @@ class WaterNet0510(torch.nn.Module):
             D = D.cuda()
         return Sf, D
 
-    def forward(self, x, xc, outOpt=0):
+    def forwardAll(self, x, xc, outOpt=0):
         # outOpt: 0 for training state initialization
         #         1 for prediction
         nt = x.shape[0]
         ns = x.shape[1]
         Prcp, Evp, T1, T2, Rad, Hum = [x[:, :, k] for k in range(x.shape[-1])]
-        storage = self.initState(ns)
         Ps, Pl = func.divideP(Prcp, T1, T2)
         Ps = Ps.unsqueeze(-1)
         Pl = Pl.unsqueeze(-1)
         Evp = Evp.unsqueeze(-1)
         input = [Ps, Pl, Evp]
-
         # forward all time steps
         SfLst, DLst, fluxLst = [], [], []
         with torch.no_grad():
+            storage = self.initState(ns)
             param = self.getParam(x, xc)
             for iT in range(nt):
                 storage, flux = bucket.stepSAS(iT, storage, input, param)
@@ -97,25 +95,27 @@ class WaterNet0510(torch.nn.Module):
                 SfLst.append(Sf)
                 DLst.append(D)
                 if outOpt == 1:
-                    fluxLst.append(flux)
+                    fluxLst.append(flux[1])
         if outOpt == 0:
             return input, param, SfLst, DLst
         elif outOpt == 1:
             return fluxLst, input, param, SfLst, DLst
 
     def trainModel(
-        self, x, xc, y, optim, lossFun, nIterEpoch=10, batchSize=[100, 365], ep=None
+        self, x, xc, y, optim, lossFun, nIterEpoch=5, batchSize=[100, 365], ep=None
     ):
         nbatch, rho = batchSize
         nt = y.shape[0]
         ns = y.shape[1]
-        inputAll, paramAll, SfLst, DLst = self.forward(x, xc)
-        print('forward done')
+        t0 = time.time()
+        inputAll, paramAll, SfLst, DLst = self.forwardAll(x, xc)
+        print('forward done {}s'.format(time.time() - t0))
         [Ps, Pl, Evp] = inputAll
         # [paramK, paramG, paramR] = paramAll
         [paramK, paramG] = paramAll
         lossEp = 0
         for iIter in range(nIterEpoch):
+            t0 = time.time()
             iS = torch.randint(0, ns, [nbatch])
             iT = torch.randint(self.rho_warmup, nt - rho, [nbatch])
             Sf_sub = torch.FloatTensor(nbatch, self.nh)
@@ -150,7 +150,7 @@ class WaterNet0510(torch.nn.Module):
 
             param_sub = self.getParam(x_sub, xc_sub)
             input = [Ps_sub, Pl_sub, Evp_sub]
-            storage = (Sf_sub, D_sub)            
+            storage = (Sf_sub, D_sub)
             q_pred = torch.zeros(rho, nbatch)
             if torch.cuda.is_available():
                 q_pred = q_pred.cuda()
@@ -159,9 +159,31 @@ class WaterNet0510(torch.nn.Module):
                 q_bucket = torch.sum(flux[1], dim=-1)
                 q_pred[k, :] = torch.sum(q_bucket * param_sub[1]['ga'], dim=-1)
             loss = lossFun(q_pred, q_obs)
-            loss.backward()
-            optim.step()
+            # loss.backward()
+            # optim.step()
             if ep is not None:
-                print('ep {} iter {} loss {:.2f}'.format(ep, iIter, loss.item()))
+                print(
+                    'ep {} iter {} loss {:.2f} time {:.2f}'.format(
+                        ep, iIter, loss.item(), time.time() - t0
+                    )
+                )
+                # # print prameters
+                # paramK, paramG = self.getParam(x, xc, raw=True)
+                # gk = paramG['gk'].detach().numpy()
+                # gl = paramG['gl'].detach().numpy()
+                # print('gk', gk)
+                # print('gl', gl)
+            # print(self.FC._parameters['weight'].grad)
+            # print(torch.any(torch.isnan(self.FC._parameters['weight'])))
+            loss.backward()
+            # print(self.FC._parameters['weight'])
+            grad= self.FC._parameters['weight'].grad
+            print(torch.max(grad),torch.min(grad))  
+            print(torch.max(q_pred),torch.min(q_pred))   
+ 
+            # print(torch.any(torch.isnan(self.FC._parameters['weight'])))
+            optim.step()
             lossEp = lossEp + loss.item()
+            self.zero_grad()
+            optim.zero_grad()
         return lossEp / nIterEpoch

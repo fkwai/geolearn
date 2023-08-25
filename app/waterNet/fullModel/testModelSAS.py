@@ -12,6 +12,8 @@ from hydroDL.model.waterNet.modelSAS import WaterNet0510
 from hydroDL.model import crit
 import time
 import os
+import matplotlib.pyplot as plt
+
 
 # load data
 saveDir = r'/oak/stanford/schools/ees/kmaher/Kuai/waterQuality/waterNet/'
@@ -70,24 +72,45 @@ dr = 0.5
 
 # importlib.reload(hydroDL.model.waterNet.modelFull)
 model = WaterNet0510(nf, ng, nh)
-optim = torch.optim.Adam(model.parameters())
-lossFun = crit.LogLoss2D()
 
-if torch.cuda.is_available():
-    model = model.cuda()
-    x = x.cuda()
-    xc = xc.cuda()
-    y = y.cuda()
-    lossFun = lossFun.cuda()
+modelFile = os.path.join(saveDir, 'wnSAS-{}-ep{}'.format(dataName, 4))
 
-model.train()
-for ep in range(1, 101):
-    t0 = time.time()
-    model.zero_grad()
-    optim.zero_grad()
-    loss = model.trainModel(x, xc, y, optim, lossFun, ep=ep)
-    t1 = time.time()
-    print('forward ep {} loss {:.2f} time {:.2f}'.format(ep, loss, t1 - t0), flush=True)
-    modelFile = os.path.join(saveDir, 'wnSAS-{}-ep{}'.format(dataName, ep))
-    torch.save(model.state_dict(), modelFile)
+model.load_state_dict(torch.load(modelFile, map_location=torch.device('cpu')))
 
+# check param predicted
+paramK, paramG = model.getParam(x, xc)
+
+gk = paramG['gk'].detach().numpy()
+gl = paramG['gl'].detach().numpy()
+
+fluxLst, input, param, SfLst, DLst = model.forwardAll(x, xc, outOpt=1)
+
+model.eval()
+self = model
+f = x[:, :, 2:]  # T1, T2, Rad and Hum
+nt = x.shape[0]
+state = self.FC(xc)
+mask_k = createMask(state, self.dr)
+mask_g = createMask(state, self.dr)
+# mask_r = createMask(state, self.dr)
+pK = self.FC_kout(
+    DropMask.apply(torch.tanh(self.FC_kin(f) + state), mask_k, self.training)
+)
+pG = self.FC_g(DropMask.apply(torch.tanh(state), mask_g, self.training))
+# pR = self.FC_r(DropMask.apply(torch.tanh(state), mask_r, self.training))
+paramK = sepParam(pK, self.nh, self.kDict)
+paramG = sepParam(pG, self.nh, self.gDict)
+
+fig, ax = plt.subplots(1, 1)
+im = ax.imshow(pG.detach().numpy())
+fig.colorbar(im, ax=ax)
+fig.show()
+
+nt = len(fluxLst)
+Q = torch.stack([fluxLst[x][50, 8, :] for x in range(nt)]).numpy()
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(Q)
+fig.show()
+
+8 * 13514 * 366 * 16 * 500 / 1024 / 1024
