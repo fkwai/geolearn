@@ -49,6 +49,11 @@ gL = outP['gL']
 ga = outP['ga']
 par = np.nansum(gL*ga, axis=1)
 
+figM = plt.figure()
+gsM = gridspec.GridSpec(1, 1)
+axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, par, s=20)
+figM.show()
+
 rMat = np.ndarray(ng)
 for k in range(ng):
     rMat[k] = np.corrcoef(par, dataG[:, k])[0, 1]
@@ -68,18 +73,19 @@ np.corrcoef(a, b)
 lat, lon = DF.getGeo()
 figM = plt.figure()
 gsM = gridspec.GridSpec(1, 1)
-axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, par/100, [0, 50], s=20)
+axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, par, s=20)
 figM.show()
+
 
 figM = plt.figure()
 gsM = gridspec.GridSpec(1, 1)
-axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, tabG['SLOPE_PCT'], s=20)
+axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, tabG['AWCAVE'], s=20)
 figM.show()
 
 figM = plt.figure()
 gsM = gridspec.GridSpec(1, 1)
 axM = mapplot.mapPoint(figM, gsM[0, 0], lat,
-                       lon, tabG['ROCKDEPAVE']/tabG['BDAVE'], s=20)
+                       lon, tabG['ROCKDEPAVE']*tabG['BDAVE'], s=20)
 figM.show()
 
 

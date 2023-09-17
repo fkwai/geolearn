@@ -22,7 +22,7 @@ codeLst = usgs.varC
 
 
 # LSTM corr
-ep = 1000
+ep = 500
 dataName = 'G200'
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
@@ -56,7 +56,7 @@ for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
 # load linear/seasonal
-dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\Q\param'
 matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
 for k, code in enumerate(codeLst):
     filePar = os.path.join(dirPar, code)
@@ -65,6 +65,7 @@ for k, code in enumerate(codeLst):
 matLR[matRm] = np.nan
 
 # load TS
+DF = dbBasin.DataFrameBasin(dataName)
 yP, ycP = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=500)
 codeLst = usgs.varC
 # WRTDS
@@ -74,20 +75,20 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 
 
 dictPlot = dict()
-dictPlot['00618'] = ['01594440', '06905500', '12510500']
 
-code = '00618'
+# dictPlot['00915'] = ['12323800', '08057200', '02175000']
+dictPlot['00915'] = ['12323800', '07241550', '07241000']
+code = '00915'
 siteLst = dictPlot[code]
-codeStrO = usgs.codePdf.loc[code]['shortName']
-codeStr = usgs.dictLabel[codeStrO]
+codeStr = usgs.codePdf.loc[code]['shortName']
 outFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
-saveFolder = os.path.join(outFolder, code)
+saveFolder = os.path.join(outFolder, code+'-talk')
 if ~os.path.exists(saveFolder):
     os.mkdir(saveFolder)
 # ts map
-matplotlib.rcParams.update({'font.size': 14})
-matplotlib.rcParams.update({'lines.linewidth': 1.5})
-matplotlib.rcParams.update({'lines.markersize': 8})
+matplotlib.rcParams.update({'font.size': 16})
+matplotlib.rcParams.update({'lines.linewidth': 1})
+matplotlib.rcParams.update({'lines.markersize': 5})
 
 lat, lon = DF.getGeo()
 indC = codeLst.index(code)
@@ -100,38 +101,43 @@ yrLst = np.arange(1985, 2020, 5).tolist()
 ny = len(yrLst)
 
 # plot map and scatter
-figM = plt.figure(figsize=(16, 3))
-gsM = gridspec.GridSpec(1, 5)
-axS = figM.add_subplot(gsM[0, :1])
-axS.set_title('A) LSTM vs WRTDS')
+
+figM, axS = plt.subplots(1, 1)
+axS.set_title('LSTM vs WRTDS')
 cs = axplot.scatter121(axS, corrL2[indS, indC],
                        corrW2[indS, indC], matLR[indS, indC])
 axS.set_xlabel(r'$R_{LSTM}$')
 axS.set_ylabel(r'$R_{WRTDS}$')
-plt.colorbar(cs, orientation='vertical', label='seasonality')
+plt.colorbar(cs, orientation='vertical', label='linearity')
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([corrL2[ind, indC], corrW2[ind, indC]],
                         0.05, color='k', fill=False)
-    axS.add_patch(circle)
+    # axS.add_patch(circle)
+figM.show()
+
+figM = plt.figure(figsize=(8, 4))
+gsM = gridspec.GridSpec(1, 1)
 axM1 = mapplot.mapPoint(
-    figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24,cmap='viridis')
-axM1.set_title(r'B) $R_{LSTM}$'+' of {}'.format(codeStr))
+    figM, gsM[0, 0], lat[indS], lon[indS], corrL2[indS, indC], s=24, cmap='jet')
+axM1.set_title(r'$R_{LSTM}$'+' of {}'.format(codeStr))
+figM.show()
+
+figM = plt.figure(figsize=(8, 4))
+gsM = gridspec.GridSpec(1, 1)
 axM2 = mapplot.mapPoint(
-    figM, gsM[0, 3:], lat[indS], lon[indS], corrL2[indS, indC]**2-corrW2[indS, indC]**2, s=24,
-    vRange=[-0.1, 0.1],cmap='viridis')
-axM2.set_title(r'C) $\Delta R^2_{LSTM-WRTDS}$'+' of {}'.format(codeStr))
+    figM, gsM[0, 0], lat[indS], lon[indS], corrL2[indS, indC]**2-corrW2[indS, indC]**2, s=24,
+    vRange=[-0.1, 0.1], cmap='jet')
+axM2.set_title(r'$\Delta R^2_{LSTM-WRTDS}$'+' of {}'.format(codeStr))
+figM.show()
+
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([lon[ind], lat[ind]],
                         2, color='k', fill=False)
-    axM1.add_patch(circle)
+    # axM1.add_patch(circle)
     circle = plt.Circle([lon[ind], lat[ind]],
                         2, color='k', fill=False)
-    axM2.add_patch(circle)
-figM.tight_layout()
+    # axM2.add_patch(circle)
 figM.show()
-figM.savefig(os.path.join(saveFolder, 'map_{}'.format(code)))
-figM.savefig(os.path.join(saveFolder, 'map_{}.svg'.format(code)))
-
 
 # plot TS
 for siteNo, figN in zip(siteLst, 'DEF'):
@@ -139,9 +145,8 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     ind = DF.siteNoLst.index(siteNo)
     dataPlot = [yW[:, ind, indC], yP[:, ind, indC],
                 DF.c[:, ind, DF.varC.index(code)]]
-    # cLst = 'kbr'
-    cLst=  ['#377eb8','#e41a1c','k']
-
+    cLst = 'kbr'
+    # cLst=  ['#377eb8','#e41a1c','k']
     # legLst = [r'WRTDS $\rho$={:.2f}'.format(corrW2[ind, indC]),
     #           r'LSTM $\rho$={:.2f}'.format(corrL2[ind, indC]),
     #           '{} obs'.format(codeStr)]
@@ -155,11 +160,11 @@ for siteNo, figN in zip(siteLst, 'DEF'):
         axPLst.append(axP)
     axP = np.array(axPLst)
     axplot.multiYrTS(axP,  yrLst, DF.t, dataPlot, cLst=cLst)
-    for ax in axP:
-        ax.set_xlabel('')
-        ax.set_xticklabels('')
-    titleStr = r'{}) {} of site {} {}={:.2f}; {}={:.2f}'.format(
-        figN, codeStr, DF.siteNoLst[ind], '$R_{LSTM}$', corrL2[ind, indC], '$R_{WRTDS}$', corrW2[ind, indC])
+    # for ax in axP:
+    #     ax.set_xlabel('')
+    #     ax.set_xticklabels('')
+    titleStr = r'{} of site {} {}={:.2f}; {}={:.2f}'.format(
+        codeStr, DF.siteNoLst[ind], '$R_{LSTM}$', corrL2[ind, indC], '$R_{WRTDS}$', corrW2[ind, indC])
     figP.suptitle(titleStr)
     figP.tight_layout()
     figP.show()
@@ -167,13 +172,4 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     figP.savefig(os.path.join(
         saveFolder, 'tsYr5_{}_{}.svg'.format(code, siteNo)))
 
-np.nanmean(corrL2[indS, indC])
-np.nanmean(corrW2[indS, indC])
-
-np.nanmedian(corrL2[indS, indC])
-np.nanmedian(corrW2[indS, indC])
-scipy.stats.wilcoxon(corrL2[indS, indC], corrW2[indS, indC])
-scipy.stats.ttest_rel(corrL2[indS, indC], corrW2[indS, indC])
-
-for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
-    print(lon[ind], lat[ind])
+figP.show()

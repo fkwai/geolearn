@@ -79,7 +79,7 @@ dictPlot = dict()
 dictPlot['00010'] = ['02035000', '14203500', '11118500']
 dictPlot['00300'] = ['01193500', '07288650', '07050500']
 
-code = '00010'
+code = '00300'
 siteLst = dictPlot[code]
 codeStr = usgs.codePdf.loc[code]['shortName']
 outFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
@@ -116,11 +116,11 @@ for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
                         0.05, color='k', fill=False)
     axS.add_patch(circle)
 axM1 = mapplot.mapPoint(
-    figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24)
+    figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24,cmap='viridis')
 axM1.set_title(r'B) $R_{LSTM}$'+' of {}'.format(codeStr))
 axM2 = mapplot.mapPoint(
     figM, gsM[0, 3:], lat[indS], lon[indS], corrL2[indS, indC]**2-corrW2[indS, indC]**2, s=24,
-    vRange=[-0.1, 0.1])
+    vRange=[-0.1, 0.1],cmap='viridis')
 axM2.set_title(r'C) $\Delta R^2_{LSTM-WRTDS}$'+' of {}'.format(codeStr))
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([lon[ind], lat[ind]],
@@ -141,7 +141,8 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     ind = DF.siteNoLst.index(siteNo)
     dataPlot = [yW[:, ind, indC], yP[:, ind, indC],
                 DF.c[:, ind, DF.varC.index(code)]]
-    cLst = 'kbr'
+    # cLst = 'kbr'
+    cLst=  ['#377eb8','#e41a1c','k']
     # legLst = [r'WRTDS $\rho$={:.2f}'.format(corrW2[ind, indC]),
     #           r'LSTM $\rho$={:.2f}'.format(corrL2[ind, indC]),
     #           '{} obs'.format(codeStr)]
@@ -168,18 +169,18 @@ for siteNo, figN in zip(siteLst, 'DEF'):
         saveFolder, 'tsYr5_{}_{}.svg'.format(code, siteNo)))
 
 
-# legLst = ['WRTDS', 'LSTM', 'Obs.']
-# figP = plt.figure(figsize=(15, 3))
-# gsP = gridspec.GridSpec(1, ny, wspace=0)
-# axP0 = figP.add_subplot(gsP[0, 0])
-# axPLst = [axP0]
-# for k in range(1, ny):
-#     axP = figP.add_subplot(gsP[0, k], sharey=axP0)
-#     axPLst.append(axP)
-# axP = np.array(axPLst)
-# axplot.multiYrTS(axP,  yrLst, DF.t, dataPlot, cLst=cLst,legLst=legLst)
-# figP.tight_layout()
-# figP.show()
-# figP.savefig(os.path.join(
-#     saveFolder, 'tsYr5_leg.svg'.format(code, siteNo)))
+legLst = ['WRTDS', 'LSTM', 'Obs.']
+figP = plt.figure(figsize=(15, 3))
+gsP = gridspec.GridSpec(1, ny, wspace=0)
+axP0 = figP.add_subplot(gsP[0, 0])
+axPLst = [axP0]
+for k in range(1, ny):
+    axP = figP.add_subplot(gsP[0, k], sharey=axP0)
+    axPLst.append(axP)
+axP = np.array(axPLst)
+axplot.multiYrTS(axP,  yrLst, DF.t, dataPlot, cLst=cLst,legLst=legLst)
+figP.tight_layout()
+figP.show()
+figP.savefig(os.path.join(
+    saveFolder, 'tsYr5_leg.svg'.format(code, siteNo)))
 

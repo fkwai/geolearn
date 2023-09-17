@@ -115,3 +115,28 @@ plt.tight_layout()
 fig.show()
 plt.savefig(os.path.join(figFolder, 'heatmap_hyper'))
 plt.savefig(os.path.join(figFolder, 'heatmap_hyper.svg'))
+
+
+
+# load linear/seasonal
+dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
+for k, code in enumerate(codeLst):
+    filePar = os.path.join(dirPar, code)
+    dfCorr = pd.read_csv(filePar, dtype={'siteNo': str}).set_index('siteNo')
+    matLR[:, k] = dfCorr['rsq'].values
+matLR[matRm] = np.nan
+
+# plot trend
+var = DF.varC.copy()
+var.remove('00400')
+iC = np.array([DF.varC.index(code) for code in var])
+iR = np.argsort(np.nanmedian(matLR[:, iC], axis=0))
+ind = iC[iR]
+varP = [DF.varC[k] for k in ind]
+fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+x = np.nanmedian(matLR[:, ind], axis=0)
+for k,case in enumerate(caseLst):    
+    y = np.nanmedian(corrLst2[k][:, ind], axis=0)
+    ax.plot(x, y, 'r-*', label='LSTM')
+fig.show()

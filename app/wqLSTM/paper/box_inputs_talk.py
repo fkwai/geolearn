@@ -12,7 +12,11 @@ from hydroDL.master import basinFull
 from hydroDL.app.waterQuality import WRTDS
 
 dataName = 'G200'
-labelLst = ['FPRT2QC', 'QFPRT2C', 'QFRT2C', 'QFPT2C', 'QT2C']
+# labelLst = ['FPRT2QC', 'QFPRT2C', 'QFRT2C', 'QFPT2C', 'QT2C']
+# label2 = ['QFPV-C', 'QFV-C', 'QFP-C', 'Q-C', 'FPV-QC']
+
+labelLst = ['FPRT2QC', 'QFPRT2C']
+label2 = ['FPV-QC','QFPV-C']
 trainSet = 'rmYr5'
 testSet = 'pkYr5'
 
@@ -91,10 +95,10 @@ for k in indPlot:
     for kk in [1, 2, 3, 4, 0]:
         tempLst.append(corrLst2[kk][:, k])
     dataPlot.append(tempLst)
-label2 = ['QFPV-C', 'QFV-C', 'QFP-C', 'Q-C', 'FPV-QC']
 strLst = usgs.codeStrPlot(codeStrLst)
 
-cLst = ['#7f7f7f','#377eb8','#e41a1c','#4daf4a','#984ea3']
+# cLst = ['#7f7f7f','#377eb8','#e41a1c','#4daf4a','#984ea3']
+cLst='rg'
 
 fig, axes = figplot.boxPlot(
     dataPlot, widths=0.5, figsize=(12, 4), label1=strLst, label2=label2,
@@ -103,9 +107,9 @@ fig, axes = figplot.boxPlot(
 #     12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'])
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
-figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
-fig.savefig(os.path.join(figFolder, 'box_input_{}'.format(trainSet)))
-fig.savefig(os.path.join(figFolder, 'box_input_{}.svg'.format(trainSet)))
+# figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
+# fig.savefig(os.path.join(figFolder, 'box_input_{}'.format(trainSet)))
+# fig.savefig(os.path.join(figFolder, 'box_input_{}.svg'.format(trainSet)))
 
 indC = DF.varC.index('00945')
 a=corrLst2[1][:,indC]

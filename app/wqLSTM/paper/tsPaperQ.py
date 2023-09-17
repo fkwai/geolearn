@@ -115,11 +115,11 @@ for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
                         0.05, color='k', fill=False)
     axS.add_patch(circle)
 axM1 = mapplot.mapPoint(
-    figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24)
+    figM, gsM[0, 1:3], lat[indS], lon[indS], corrL2[indS, indC], s=24,cmap='viridis')
 axM1.set_title(r'B) $R_{LSTM}$'+' of {}'.format(codeStr))
 axM2 = mapplot.mapPoint(
     figM, gsM[0, 3:], lat[indS], lon[indS], corrL2[indS, indC]**2-corrW2[indS, indC]**2, s=24,
-    vRange=[-0.1, 0.1])
+    vRange=[-0.1, 0.1],cmap='viridis')
 axM2.set_title(r'C) $\Delta R^2_{LSTM-WRTDS}$'+' of {}'.format(codeStr))
 for ind in [DF.siteNoLst.index(siteNo) for siteNo in siteLst]:
     circle = plt.Circle([lon[ind], lat[ind]],
@@ -140,6 +140,7 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     dataPlot = [yW[:, ind, indC], yP[:, ind, indC],
                 DF.c[:, ind, DF.varC.index(code)]]
     cLst = 'kbr'
+    cLst=  ['#377eb8','#e41a1c','k']
     # legLst = [r'WRTDS $\rho$={:.2f}'.format(corrW2[ind, indC]),
     #           r'LSTM $\rho$={:.2f}'.format(corrL2[ind, indC]),
     #           '{} obs'.format(codeStr)]

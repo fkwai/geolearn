@@ -64,7 +64,8 @@ codeGroup = [
     ['00600', '00605', '00618', '00660', '00665', '00681', '71846'],
     ['00095', '00400', '00405', '00935', '00940', '00945', '80154']
 ]
-colorGroup = 'rmgb'
+# colorGroup = 'rmgb'
+colorGroup = ['#e41a1c','#984ea3','#4daf4a','#377eb8']
 labGroup = ['stream', 'weathering', 'nutrient', 'mix']
 #
 matplotlib.rcParams.update({'font.size': 16})

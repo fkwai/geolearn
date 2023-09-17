@@ -7,6 +7,18 @@ from hydroDL import utils
 import matplotlib.gridspec as gridspec
 
 
+colorsBlind = {
+    'blue':   [55,  126, 184],  #377eb8 
+    'orange': [255, 127, 0],    #ff7f00
+    'green':  [77,  175, 74],   #4daf4a
+    'pink':   [247, 129, 191],  #f781bf
+    'brown':  [166, 86,  40],   #a65628
+    'purple': [152, 78,  163],  #984ea3
+    'gray':   [153, 153, 153],  #999999
+    'red':    [228, 26,  28],   #e41a1c
+    'yellow': [222, 222, 0]     #dede00
+}  
+
 def findPoint(xClick, yClick, xLoc, yLoc):
     # WARN determine if grid, problematic for square grid
     if len(xLoc) == len(yLoc):

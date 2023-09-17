@@ -1,17 +1,24 @@
-from scipy.interpolate import RegularGridInterpolator
+from random import choices
+import matplotlib.pyplot as plt
 import numpy as np
 
+c = [1, 0]
+p = [0.8, 0.2]
 
-def f(x, y, z):
-    return 2 * x**3 + 3 * y**2 - z
 
+kLst = np.arange(10, 500, 10)
+fig, ax = plt.subplots(1, 1)
+for k in kLst:
+    for kk in range(int(1000/k)**2):
+        ss = choices(c, p, k=k)
+        _ = ax.plot(k, np.mean(ss), 'k*')
+fig.show()
 
-x = np.linspace(1, 4, 11)
-y = np.linspace(4, 7, 22)
-z = np.linspace(7, 9, 33)
-xg, yg, zg = np.meshgrid(x, y, z, indexing='ij', sparse=True)
-data = f(xg, yg, zg)
-
-interp = RegularGridInterpolator((x, y, z), data)
-
-interp = RegularGridInterpolator((x, y), data[:,:,0])
+fig, ax = plt.subplots(1, 1)
+ss = choices(c, p, k=2000)
+kLst = [5, 10, 20, 50, 100, 200, 500]
+for k in kLst:
+    temp=np.array(ss).reshape(k,-1)    
+    m=np.mean(temp,axis=0)
+    _ = ax.plot(np.ones(m.shape)*k, m, 'k*')
+fig.show()

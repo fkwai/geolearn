@@ -66,14 +66,14 @@ dirFig = r'C:\Users\geofk\work\Presentation\AGU2022\posterFig'
 
 
 bi = np.sum(QgP, axis=(0, 2))/np.sum(yP, axis=0)
-swe = np.sum(SsP, axis=(0, 2))
+swe = np.mean(np.sum(SfP[365:]*ga, axis=2),axis=0)
 lat, lon = DF.getGeo()
 
 # base flow index
 figM = plt.figure(figsize=(15, 5))
 gsM = gridspec.GridSpec(1, 1)
 axM = mapplot.mapPoint(figM, gsM[0, 0], lat,
-                       lon, swe, s=30)
+                       lon, swe/1000, s=30)
 figM.show()
 # figM.savefig(os.path.join(dirFig, 'bfi-sim.svg'))
 figM = plt.figure(figsize=(15, 5))

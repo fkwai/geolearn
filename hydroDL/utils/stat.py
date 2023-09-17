@@ -33,12 +33,22 @@ def calStat(pred, obs):
         return outDict
 
 
+# def calNash(pred, obs):
+#     # data in [nT,nS]
+#     nash = 1-np.nansum((pred-obs)**2, axis=0) / \
+#         np.nansum((obs-np.nanmean(obs, axis=0))**2, axis=0)
+#     return nash
 def calNash(pred, obs):
-    # data in [nT,nS]
-    nash = 1-np.nansum((pred-obs)**2, axis=0) / \
-        np.nansum((obs-np.nanmean(obs, axis=0))**2, axis=0)
-    return nash
-
+    mask = np.isnan(obs) | np.isnan(pred)
+    A = pred.copy()
+    B = obs.copy()
+    A[mask] = np.nan
+    B[mask] = np.nan
+    mA = A - B
+    mB = B - np.nanmean(B, axis=0)
+    p1 = np.nansum(mA**2, axis=0)
+    p2 = np.nansum(mB**2, axis=0)
+    return 1-p1/p2
 
 def calRmse(pred, obs):
     # data in [nT,nS]

@@ -27,8 +27,8 @@ label = 'QFPRT2C'
 
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 outFolder = basinFull.nameFolder(outName)
-corrName1 = 'corrQF-{}-Ep{}.npy'.format(trainSet, ep)
-corrName2 = 'corrQF-{}-Ep{}.npy'.format(testSet, ep)
+corrName1 = 'corrQ-{}-Ep{}.npy'.format(trainSet, ep)
+corrName2 = 'corrQ-{}-Ep{}.npy'.format(testSet, ep)
 corrFile1 = os.path.join(outFolder, corrName1)
 corrFile2 = os.path.join(outFolder, corrName2)
 corrL1 = np.load(corrFile1)
@@ -87,9 +87,9 @@ strPlotLst = strLst
 #     ss = '{} \n {:.1e}'.format(s, pLst[k])
 #     strPlotLst.append(ss)
 
-cLst = ['#e41a1c', '#377eb8']
+
 fig, axes = figplot.boxPlot(
-    dataPlot, widths=0.5, figsize=(12, 4), label1=strPlotLst, cLst=cLst)
+    dataPlot, widths=0.5, figsize=(12, 4), label1=strPlotLst)
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
 
@@ -98,7 +98,7 @@ plt.savefig(os.path.join(dirPaper, 'box_all'))
 plt.savefig(os.path.join(dirPaper, 'box_all.svg'))
 
 fig, axes = figplot.boxPlot(dataPlot, widths=0.5, figsize=(
-    12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'], legOnly=True, cLst=cLst)
+    12, 4), label1=codeStrLst, label2=['LSTM', 'WRTDS'], legOnly=True)
 fig.show()
 dirPaper = r'C:\Users\geofk\work\waterQuality\paper\G200'
 plt.savefig(os.path.join(dirPaper, 'box_legend.svg'))
