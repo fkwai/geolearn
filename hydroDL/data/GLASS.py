@@ -20,9 +20,9 @@ def readBasin(siteNo, varLst=varLst, freq='D'):
         pandas.Dataframe -- output table
     """
     if freq == 'R':  # raw frequency
-        dirF = os.path.join(kPath.dirUSGS, 'GLASS', 'output')
+        dirF = os.path.join(kPath.dirUsgs, 'GLASS', 'output')
     if freq == 'D':
-        dirF = os.path.join(kPath.dirUSGS, 'GLASS', 'Daily')
+        dirF = os.path.join(kPath.dirUsgs, 'GLASS', 'Daily')
     if freq == 'W':
         dirF = os.path.join(kPath.dirUSGS, 'GLASS', 'Weekly')
     fileF = os.path.join(dirF, siteNo)

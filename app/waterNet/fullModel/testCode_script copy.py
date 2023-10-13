@@ -134,8 +134,7 @@ input = [Ps, Pl, Evp]
 param = [paramK, paramG, paramR]
 
 iT = 0
-storage = (Sf, Ss, Sg)
-storage, flux = bucket.step(iT, storage, input, param)
+storage = (Sf, Ss)
 
 (Sf_new, Ss_new, Sd_new) = storage
 (qf, qp, qs, qd) = flux
@@ -160,46 +159,33 @@ Is = qf + P - E
 
 
 nd = 366
-
+ns = 155
 S = torch.zeros(ns, self.nh, nd)
 S = torch.ones(ns, self.nh, nd)
-D = torch.cumsum(S, -1) / 100
+D = torch.cumsum(S, -1) / 10
 
 gl = paramG['gl'].unsqueeze(-1)
 gk = paramG['gk'].unsqueeze(-1)
 
 D_new = D.clone()
 D_new[:, :, :-1] = D[:, :, 1:]
-D_total = torch.maximum(D[:,:,-1] + Is,torch.zeros(D[:,:,-1].shape))
-D_total_mat=D_total.unsqueeze(-1).repeat(1, 1, nd)
+D_total = torch.maximum(D[:, :, -1] + Is, torch.zeros(D[:, :, -1].shape))
+D_total_mat = D_total.unsqueeze(-1).repeat(1, 1, nd)
 D_new[:, :, -1] = D_total
 D_update = torch.minimum(D_new, D_total_mat)
 
-Is[-1,-2]
-D_update[-1,-2,:]
+Is[-1, -2]
+D_update[-1, -2, :]
 
-k1 = torch.exp(gk * (D_update -gl)) / gk
+k1 = torch.exp(gk * (D_update - gl)) / gk
 k1[D_update > gl] = D_update[D_update > gl]
 k2 = torch.cat([torch.exp(gk * -gl) / gk, k1[:, :, :-1]], dim=-1)
 Q = k1 - k2
 Q_cum = torch.cumsum(Q, -1)
 D_update = D_update - Q_cum
 
-
-Q[D > gl] = S_new[D > gl]
-S_out = S_new - Q
-
-a = D > gl
-b = D > gl.repeat(1, 1, nd)
-torch.equal(a, b)
-
-
-k1[0, 0, :10]
-k2[0, 0, :10]
-S_new[0, 0, :10]
-Q2 = S_new * k1
-
-Q[0, 0, :10]
-Q2[0, 0, :10]
-
 torch.exp(-gk * gl).shape
+
+fig,ax=plt.subplots(1,1)
+ax.plot(torch.zeros(10),D[0,0,:10]-gl[0,0].detach().numpy(),'*')
+fig.show()

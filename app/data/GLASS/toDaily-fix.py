@@ -8,21 +8,23 @@ from hydroDL.post import axplot, figplot
 from hydroDL.data import GLASS
 import json
 
-dirG = os.path.join(kPath.dirUSGS, 'GLASS', 'output')
-dirD = os.path.join(kPath.dirUSGS, 'GLASS', 'Daily')
+dirG = os.path.join(kPath.dirUsgs, 'GLASS', 'output')
+dirD = os.path.join(kPath.dirUsgs, 'GLASS', 'Daily')
 
-# read shapefiles to get siteNoLst
 # Select sites
-fileSiteNo = os.path.join(kPath.dirUSGS, 'basins', 'siteNoLst.json')
-with open(fileSiteNo) as fp:
-    dictSite = json.load(fp)
-siteNoLstAll = dictSite['CONUS']
-siteNoLstTemp = [f for f in sorted(os.listdir(dirD))]
-siteNoLst = [f for f in siteNoLstAll if f not in siteNoLstTemp]
+# fileSiteNo = os.path.join(kPath.dirUsgs, 'basins', 'siteNoLst.json')
+# with open(fileSiteNo) as fp:
+#     dictSite = json.load(fp)
+# siteNoLstAll = dictSite['CONUS']
+# siteNoLstTemp = [f for f in sorted(os.listdir(dirD))]
+# siteNoLst = [f for f in siteNoLstAll if f not in siteNoLstTemp]
+
+# all sites in dirG
+siteNoLst = [f for f in sorted(os.listdir(dirG))]
 
 # interploate by cubic-spline
-# varLst = ['LAI', 'FAPAR', 'NPP']
-varLst = ['LAI']
+varLst = ['LAI', 'FAPAR', 'NPP']
+# varLst = ['LAI']
 sdStr = '1982-01-01'
 edStr = '2018-12-31'
 tR = pd.date_range(np.datetime64(sdStr), np.datetime64(edStr))

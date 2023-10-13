@@ -38,12 +38,12 @@ def sepPar(p, nh, actLst):
     return outLst
 
 
-def sepParam(p, nh, pDict):
+def sepParam(p, nh, pDict, raw=False):
     outDict = dict()
     # pp = p.view(p.shape[0],nh,-1)
     for k, key in enumerate(pDict.keys()):
         ff = pDict[key]
-        if ff is None:
+        if ff is None or raw:
             outDict[key] = p[..., nh * k : nh * (k + 1)]
         else:
             outDict[key] = ff(p[..., nh * k : nh * (k + 1)])

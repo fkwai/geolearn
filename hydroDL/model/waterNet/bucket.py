@@ -37,7 +37,7 @@ def deep(S, I, *, k, baseflow):
 
 
 def expBucket(D, I, *, gk, gl):
-    gk = gk.unsqueeze(-1)
+    gk = gk.unsqueeze(-1) + 1e-5
     gl = gl.unsqueeze(-1)
     ns, nh, nd = D.shape
     D_new = D.clone()
@@ -46,10 +46,21 @@ def expBucket(D, I, *, gk, gl):
     D_total_mat = D_total.unsqueeze(-1).repeat(1, 1, nd)
     D_new[:, :, -1] = D_total
     D_update = torch.minimum(D_new, D_total_mat)
-    k1 = torch.exp(gk * (D_update - gl)) / gk
-    k1[D_update > gl] = D_update[D_update > gl]
-    k2 = torch.cat([torch.exp(gk * -gl) / gk, k1[:, :, :-1]], dim=-1)
-    Q = torch.relu(k1 - k2)  # very small rounding error
+    # k1 = torch.exp(gk * (D_update - gl)) / gk
+    # k1[D_update > gl] = D_update[D_update > gl]
+    # k2 = torch.cat([torch.exp(gk * -gl) / gk, k1[:, :, :-1]], dim=-1)
+    # Q = torch.relu((k1 - k2))  # very small rounding error
+
+    # test for tanh
+    k1 = torch.log(torch.cosh(D_update / gl))
+    # k2 = torch.cat([, k1[:, :, :-1]], dim=-1)
+
+
+    # k1 = torch.exp(gk * (D_update - gl))
+    # k1[D_update > gl] = D_update[D_update > gl]
+    # k2 = torch.cat([torch.exp(gk * -gl), k1[:, :, :-1]], dim=-1)
+    # Q = torch.relu((k1 - k2) / gk)  # very small rounding error
+
     Q_cum = torch.cumsum(Q, -1)
     D_update = D_update - Q_cum
     return D_update, Q
