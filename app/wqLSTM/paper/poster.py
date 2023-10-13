@@ -44,7 +44,7 @@ matB = (~np.isnan(DF.c)).astype(int).astype(float)
 matB1 = DF.extractSubset(matB, trainSet)
 matB2 = DF.extractSubset(matB, testSet)
 count1 = np.nansum(matB1, axis=0)
-count2 = np.nansum(matB2, axis=0)
+count2 = np.nansum(matB2, axis=0)c:\Program Files (x86)\Steam\steamapps\common\Baldurs Gate 3\bin\bink2w64.dll
 matRm = (count1 < 80) | (count2 < 20)
 for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan

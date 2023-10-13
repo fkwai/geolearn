@@ -163,8 +163,9 @@ for siteNo, figN in zip(siteLst, 'DEF'):
     # for ax in axP:
     #     ax.set_xlabel('')
     #     ax.set_xticklabels('')
-    titleStr = r'{} of site {} {}={:.2f}; {}={:.2f}'.format(
-        codeStr, DF.siteNoLst[ind], '$R_{LSTM}$', corrL2[ind, indC], '$R_{WRTDS}$', corrW2[ind, indC])
+    titleStr = r'{} of site {} {}={:.2f}; {}={:.2f}; {}={:.2f}'.format(
+        codeStr, DF.siteNoLst[ind], '$R_{LSTM}$', corrL2[ind, indC], '$R_{WRTDS}$', corrW2[ind, indC],
+        'linearity',matLR[ind,indC])
     figP.suptitle(titleStr)
     figP.tight_layout()
     figP.show()
@@ -173,3 +174,7 @@ for siteNo, figN in zip(siteLst, 'DEF'):
         saveFolder, 'tsYr5_{}_{}.svg'.format(code, siteNo)))
 
 figP.show()
+
+fig,ax=plt.subplots(1,1)
+ax.plot(corrL2[indS,indC],matLR[indS,indC]**0.5,'*')
+fig.show()

@@ -123,6 +123,13 @@ gsM = gridspec.GridSpec(1, 1)
 axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, kPlot)
 figM.show()
 
+lat, lon = DF.getGeo()
+figM = plt.figure()
+gsM = gridspec.GridSpec(1, 1)
+axM0 = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, kPlot)
+figM.show()
+
+
 
 # LSTM
 outName = '{}-{}'.format('QN90ref', trainSet)

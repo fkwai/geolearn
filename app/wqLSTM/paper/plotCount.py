@@ -126,7 +126,7 @@ for k, (codeG,  labG) in enumerate(zip(codeGroup, labGroup)):
         indSort = np.argsort(cc)
         xLst = list()
         pLst = list()
-        n=50
+        n=10
         for i in range(0, len(indSort), n):            
             y = vv[indSort[i:i+n]]
             x = cc[indSort[i:i+n]]
@@ -134,7 +134,7 @@ for k, (codeG,  labG) in enumerate(zip(codeGroup, labGroup)):
             xLst.append(np.mean(x))
         # c[c > 1500] = 1501
         axes[iy, ix].plot(cc, vv, '*', color='C'+str(kk), label=codeStr)
-        # axes[ix, iy].plot(xLst, pLst, '-', color='C'+str(kk))
+        axes[ix, iy].plot(xLst, pLst, '-', color='C'+str(kk))
     axplot.titleInner(axes[ix, iy], labG, top=False)
     axes[iy, ix].legend()
     # axes[iy, ix].set_xlim([0, 1501])

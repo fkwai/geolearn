@@ -134,9 +134,27 @@ iC = np.array([DF.varC.index(code) for code in var])
 iR = np.argsort(np.nanmedian(matLR[:, iC], axis=0))
 ind = iC[iR]
 varP = [DF.varC[k] for k in ind]
-fig, ax = plt.subplots(1, 1, figsize=(12, 4))
+fig, ax = plt.subplots(1, 1, figsize=(12, 6))
 x = np.nanmedian(matLR[:, ind], axis=0)
-for k,case in enumerate(caseLst):    
+for k,case in enumerate(caseLst[:]):    
     y = np.nanmedian(corrLst2[k][:, ind], axis=0)
-    ax.plot(x, y, 'r-*', label='LSTM')
+    if case == 'reference':
+        ax.plot(x, y, '-*', label=case,color='k')
+    elif case[:2]=='hs':
+        hs=int(case.split('-')[1])
+        ax.plot(x, y, '-*', label=case,color='r',alpha=min(1,hs/256))
+    elif case[:3]=='rho':
+        rho=int(case.split('-')[1])
+        ax.plot(x, y, '-*', label=case,color='b',alpha=rho/1000)
+    elif case[:2]=='ep':
+        ep=int(case.split('-')[1])
+        ax.plot(x, y, '-*', label=case,color='g',alpha=ep/500)
+txtLst = list()
+
+for k, code in enumerate(varP):
+    txt = ax.text(x[k], y[k]+0.1, usgs.codePdf.loc[code]['shortName'])
+    txtLst.append(txt)
+ax.legend()
 fig.show()
+plt.savefig(os.path.join(figFolder, 'twoDim_hyper'))
+plt.savefig(os.path.join(figFolder, 'twoDim_hyper.svg'))
