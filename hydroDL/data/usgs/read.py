@@ -85,8 +85,8 @@ def readSample(siteNo, codeLst=None, startDate=None, csv=True, flag=0):
     Returns:
         pandas.DataFrame -- [description]
     """
-    if codeLst is None:
-        csv = False
+    # if codeLst is None:
+    #     csv = False
     if csv is False:
         dfO1, dfO2 = readSampleRaw(siteNo)
     else:
@@ -330,7 +330,10 @@ def renameSample(pdf):
     # time field - not work for nan time, use date for current
     # temp = pdf['sample_dt'] + ' ' + pdf['sample_tm']
     # pdf['datetime'] = pd.to_datetime(temp, format='%Y-%m-%d %H:%M')
-    pdf['date'] = pd.to_datetime(pdf['sample_dt'], format='%Y-%m-%d')
+    temp = pd.to_datetime(pdf['sample_dt'], format='%Y-%m-%d')
+    temp.name='date'
+    pdf=pd.concat([pdf,temp],axis=1)
+
     return pdf
 
 

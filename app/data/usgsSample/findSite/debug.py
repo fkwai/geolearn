@@ -1,4 +1,3 @@
-
 from hydroDL import kPath
 from sklearn.decomposition import PCA
 import sklearn
@@ -18,13 +17,17 @@ import matplotlib.pyplot as plt
 from torch.nn.parameter import Parameter
 from hydroDL.model.waterNet import WaterNet0119, sepPar, convTS
 from hydroDL import utils
+
 importlib.reload(waterNetTestC)
 # extract data
 codeLst = ['00600', '00660', '00915', '00925', '00930', '00935', '00945']
 
 siteNo = '09163500'
 
-df = dbBasin.io.readSiteTS(siteNo, codeLst,)
+df = dbBasin.io.readSiteTS(
+    siteNo,
+    codeLst,
+)
 fig, axes = figplot.multiTS(df.index, df.values)
 fig.show()
 
@@ -44,7 +47,7 @@ if codeLst is None:
 else:
     codeSel = list(set(codeLst) & set(dfC.columns.tolist()))
 codeSel_cd = [code + '_cd' for code in codeSel]
-dfC = dfC[codeSel+codeSel_cd].dropna(how='all')
+dfC = dfC[codeSel + codeSel_cd].dropna(how='all')
 dfC1 = dfC[codeSel]
 dfC2 = dfC[codeSel_cd]
 bx = dfC1.notna().values & dfC2.isna().values
@@ -62,19 +65,17 @@ for ind in indDup:
     temp1 = dfC1.loc[ind]
     temp2 = dfC2.loc[ind]
     for code in codeSel:
-        if 'x' in temp2[code+'_cd'].tolist():
-            dfO1.loc[ind][code] = temp1[code][temp2[code+'_cd']
-                                                == 'x'].mean()
-            if temp2[code+'_cd'].tolist().count('x') > 1:
-                dfO2.loc[ind][code+'_cd'] = 'X'
+        if 'x' in temp2[code + '_cd'].tolist():
+            dfO1.loc[ind][code] = temp1[code][temp2[code + '_cd'] == 'x'].mean()
+            if temp2[code + '_cd'].tolist().count('x') > 1:
+                dfO2.loc[ind][code + '_cd'] = 'X'
             else:
-                dfO2.loc[ind][code+'_cd'] = 'x'
+                dfO2.loc[ind][code + '_cd'] = 'x'
         else:
             dfO1.loc[ind][code] = temp1[code].mean()
-            dfO2.loc[ind][code+'_cd'] = ''.join(temp2[code+'_cd'])
+            dfO2.loc[ind][code + '_cd'] = ''.join(temp2[code + '_cd'])
 
-    dfO3 = pd.DataFrame(
-        index=dfO2.index, columns=dfO2.columns, dtype=int)
+    dfO3 = pd.DataFrame(index=dfO2.index, columns=dfO2.columns, dtype=int)
     dfO3[(dfO2 == 'x') | (dfO2 == 'X')] = 0
     dfO3[(dfO2 != 'x') & (dfO2 != 'X') & (dfO2.notna())] = 1
     dfO2 = dfO3
