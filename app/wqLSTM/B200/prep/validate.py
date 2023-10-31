@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 df1 = dbBasin.DataFrameBasin('NY5')
-df2 = dbBasin.DataFrameBasin('G200')
+df2 = dbBasin.DataFrameBasin('rmTK-B200')
 
 siteNoLst = df2.siteNoLst
 
@@ -14,17 +14,17 @@ ind2 = 50
 ind1 = df1.siteNoLst.index(df2.siteNoLst[ind2])
 
 
-ind1 = 0
-ind2 = df2.siteNoLst.index(df1.siteNoLst[ind2])
+# ind1 = 0
+# ind2 = df2.siteNoLst.index(df1.siteNoLst[ind2])
 
 # plot q - runoff calculated wrong
 unitConv = 0.3048**3 * 24 * 60 * 60 / 1000
 area=df1.g[ind1,0]
 
 fig, ax = plt.subplots(1, 1)
-ax.plot(df1.t, df1.q[:, ind1, 0]/area*unitConv, '-r')
+# ax.plot(df1.t, df1.q[:, ind1, 0]/area*unitConv, '-r')
 ax.plot(df1.t, df1.q[:, ind1, 1], '-b')
-# ax.plot(df2.t, df2.q[:, ind2, 1], '-b')
+ax.plot(df2.t, df2.q[:, ind2, 1], '-r')
 fig.show()
 
 fig, ax = plt.subplots(1, 1)

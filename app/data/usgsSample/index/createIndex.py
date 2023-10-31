@@ -43,7 +43,6 @@ tabOut = pd.read_csv(
 )
 siteNoLst = tabOut['siteNo'].tolist()
 t0 = time.time()
-# load all data
 dictC = dict()
 dictCF = dict()
 for k, siteNo in enumerate(siteNoLst):
@@ -66,7 +65,7 @@ codeLst = usgs.varC
 t0 = time.time()
 for k, siteNo in enumerate(siteNoLst):
     print(k, siteNo, time.time() - t0)
-    tabC = dictC[siteNo].isna().copy()
+    tabC = (~dictC[siteNo].isna()).copy()
     tabC_a79 = tabC[tabC.index >= np.datetime64('1979-01-01')].copy()
     common_col = list(set(tabC.columns).intersection(set(codeLst)))
     tabC_v20 = tabC[common_col].copy()

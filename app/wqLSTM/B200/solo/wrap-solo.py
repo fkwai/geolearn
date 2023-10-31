@@ -30,8 +30,8 @@ for code in codeLst:
         sdStr='1979-01-01',
         edStr='2023-01-01',
     )
-for code in ['00915', '00955', '00618']:
-    # subset
+for code in codeLst:
+    # subset    
     dataName = '{}-{}'.format(code, label)
     DF = dbBasin.DataFrameBasin(dataName)
     sy = DF.t[0].astype(object).year

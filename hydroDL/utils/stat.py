@@ -90,6 +90,11 @@ def calMAPE(pred, obs):
     mape = np.nanmean(e, axis=0)
     return mape
 
+def calLogMAE(pred, obs):  
+    error = np.exp(np.nanmean(np.abs(np.log(obs/pred))))
+    return error
+
+
 
 def calCorrOld(pred, obs):
     # data in [nT,nS]

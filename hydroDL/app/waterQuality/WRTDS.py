@@ -114,14 +114,15 @@ def defineTrainSet(t, trainSet):
     return ind1, ind2
 
 
-def testWRTDS(dataName, trainSet, testSet, codeLst):
+def testWRTDS(dataName, trainSet, testSet, codeLst, logC=True,skip=False):
     DF = dbBasin.DataFrameBasin(dataName)
     dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
+    if logC:
+        dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin-logC')
     dirName = '{}-{}-{}'.format(dataName, trainSet, testSet)
     outFolder = os.path.join(dirRoot, dirName)
     if not os.path.exists(outFolder):
         os.makedirs(outFolder)
-
     # Calculate WRTDS from train and test set
     varX = ['streamflow']
     varY = codeLst
@@ -142,13 +143,7 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
     t0 = time.time()
     for indS, siteNo in enumerate(d2.siteNoLst):
         siteFile = os.path.join(outFolder, siteNo)
-        if os.path.exists(siteFile):
-            yp = pd.read_csv(siteFile, index_col=0).values
-            if yp.shape[0] == len(d2.t):
-                yOut[:, indS, :] = yp
-            else:
-                print('ADHOC FIX')
-                yOut[:, indS, :] = yp[:-1,:]
+        if os.path.exists(siteFile) and skip:
             continue
         for indC, code in enumerate(varY):
             print('{} {} {} {}'.format(indS, siteNo, code, time.time() - t0))
@@ -163,6 +158,11 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
             logq2 = np.log(q2 + sn)
             x2 = np.stack([logq2, yr2, sinT2, cosT2]).T
             [xx1, yy1], ind1 = utils.rmNan([x1, y1])
+            if logC:
+                y1[y1 < 0] = 0
+                y1 = np.log(y1 + sn)
+                y2[y2 < 0] = 0
+                y2 = np.log(y2 + sn)
             if testSet == 'all':
                 [xx2], ind2 = utils.rmNan([x2])
             else:
@@ -179,9 +179,13 @@ def testWRTDS(dataName, trainSet, testSet, codeLst):
                 ww, ind = calWeight(d)
                 model = sm.WLS(yy1[ind], xx1[ind], weights=ww).fit()
                 yp = model.predict(x2[k, :])[0]
-                yOut[k, indS, indC] = yp
+                if logC:
+                    yOut[k, indS, indC] = np.exp(yp) - sn
+                else:
+                    yOut[k, indS, indC] = yp
         # save a siteFile
         dfOut = pd.DataFrame(index=d2.t, columns=codeLst, data=yOut[:, indS, :])
+        dfOut.dropna(how='all', inplace=True)
         dfOut.to_csv(siteFile)
     return yOut
 

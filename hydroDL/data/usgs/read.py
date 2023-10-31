@@ -128,6 +128,8 @@ def readSampleCsv(siteNo, flag=False):
         dfO = pd.read_csv(fileC, dtype=str)
         dfO['date'] = pd.to_datetime(dfO['date'], format='%Y-%m-%d')
         dfO = dfO.set_index('date')
+        if flag == 0:
+            dfO = dfO.astype(float)
         return dfO
     else:
         return None
@@ -331,8 +333,8 @@ def renameSample(pdf):
     # temp = pdf['sample_dt'] + ' ' + pdf['sample_tm']
     # pdf['datetime'] = pd.to_datetime(temp, format='%Y-%m-%d %H:%M')
     temp = pd.to_datetime(pdf['sample_dt'], format='%Y-%m-%d')
-    temp.name='date'
-    pdf=pd.concat([pdf,temp],axis=1)
+    temp.name = 'date'
+    pdf = pd.concat([pdf, temp], axis=1)
 
     return pdf
 

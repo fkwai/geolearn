@@ -15,10 +15,10 @@ import matplotlib
 labelLst = ['FT2QC', 'QFT2C', 'QT2C']
 trainSet = 'rmYr5b0'
 testSet = 'pkYr5b0'
-ep = 500
+epG = 400  # models are killed before 500
+epL = 100
 
 # load global model
-epG = 400
 DFA = dbBasin.DataFrameBasin('rmTK-B200')
 yGLst1 = list()
 yGLst2 = list()
@@ -48,6 +48,8 @@ corrL1 = list()
 corrL2 = list()
 corrW1 = list()
 corrW2 = list()
+strFunc = 'calNash'
+errFunc = getattr(utils.stat, strFunc)
 for iC, code in enumerate(usgs.varC):
     corrLT1 = list()
     corrLT2 = list()
@@ -66,33 +68,21 @@ for iC, code in enumerate(usgs.varC):
         # local model
         outName = '{}-{}-{}'.format(dataName, label, trainSet)
         dictMaster = basinFull.loadMaster(outName)
-        yP1, ycP1 = basinFull.testModel(outName, DF=DF, testSet=trainSet, ep=ep)
-        yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=ep)
+        yP1, ycP1 = basinFull.testModel(outName, DF=DF, testSet=trainSet, ep=epL)
+        yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=epL)
         if len(dictMaster['varY']) > 1:
             yP1 = yP1[:, :, 1:]
             yP2 = yP2[:, :, 1:]
-        corrLT1.append(
-            utils.stat.calCorr(yP1[:, indS1, 0][indT1, :], obs1[:, indS1, 0][indT1, :])
-        )
-        corrLT2.append(
-            utils.stat.calCorr(yP2[:, indS1, 0][indT1, :], obs2[:, indS1, 0][indT1, :])
-        )
+        corrLT1.append(errFunc(yP1[:, indS1, 0][indT1, :], obs1[:, indS1, 0][indT1, :]))
+        corrLT2.append(errFunc(yP2[:, indS1, 0][indT1, :], obs2[:, indS1, 0][indT1, :]))
         corrGT1.append(
-            utils.stat.calCorr(
-                yGLst1[iL][:, indS2, iC][indT2, :], obs1[:, indS1, 0][indT1, :]
-            )
+            errFunc(yGLst1[iL][:, indS2, iC][indT2, :], obs1[:, indS1, 0][indT1, :])
         )
         corrGT2.append(
-            utils.stat.calCorr(
-                yGLst2[iL][:, indS2, iC][indT2, :], obs2[:, indS1, 0][indT1, :]
-            )
+            errFunc(yGLst2[iL][:, indS2, iC][indT2, :], obs2[:, indS1, 0][indT1, :])
         )
-    corrW1.append(
-        utils.stat.calCorr(yW1[:, indS2, iC][indT2, :], obs1[:, indS1, 0][indT1, :])
-    )
-    corrW2.append(
-        utils.stat.calCorr(yW2[:, indS2, iC][indT2, :], obs2[:, indS1, 0][indT1, :])
-    )
+    corrW1.append(errFunc(yW1[:, indS2, iC][indT2, :], obs1[:, indS1, 0][indT1, :]))
+    corrW2.append(errFunc(yW2[:, indS2, iC][indT2, :], obs2[:, indS1, 0][indT1, :]))
     corrL1.append(corrLT1)
     corrL2.append(corrLT2)
     corrG1.append(corrGT1)
@@ -104,19 +94,20 @@ mean = np.array([np.nanmean(corr) for corr in corrW2])
 indPlot = np.argsort(mean)
 codeStrLst = list()
 dataPlot = list()
-iL = 2
+iL = 0
 for k in indPlot:
     code = usgs.varC[k]
     codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
-    # dataPlot.append([corrW1[:, k], corrL1[:, k]]) # training
-    dataPlot.append([corrW2[k], corrL2[k][iL], corrG2[k][iL]])  # testing
+    dataPlot.append([corrW1[k], corrL1[k][iL], corrG1[k][iL]])  # training
+    # dataPlot.append([corrW2[k], corrL2[k][iL], corrG2[k][iL]])  # testing
+
+
 fig, axes = figplot.boxPlot(
     dataPlot,
     widths=0.5,
     figsize=(12, 4),
-    yRange=[0, 1],
     label1=codeStrLst,
-    label2=['WRTDS','LSTM-solo','LSTM-global'],
+    label2=['WRTDS', 'LSTM-solo', 'LSTM-global'],
 )
-fig.suptitle('Correlation of water quality prediction, {}'.format(labelLst[iL]))
+fig.suptitle('{} {}'.format(strFunc, labelLst[iL]))
 fig.show()

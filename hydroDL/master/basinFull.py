@@ -214,7 +214,7 @@ def resumeModel(outName, resumeOpt=-1):
     trainModel(outName, resumeEpoch=ep)
 
 
-def testModel(outName, DF=None, testSet='all', ep=None, reTest=False, batchSize=20):
+def testModel(outName, DF=None, testSet='all', ep=None, reTest=False, batchSize=100):
     # load master
     dictP = loadMaster(outName)
     if ep is None:

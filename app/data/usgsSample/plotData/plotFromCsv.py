@@ -9,6 +9,7 @@ from hydroDL.app.waterQuality import cqType
 import importlib
 
 import matplotlib.gridspec as gridspec
+from scipy.optimize import curve_fit
 
 
 tabCrd=pd.read_csv(os.path.join(kPath.dirUsgs,  'index', 'siteGageII.csv'),
@@ -21,10 +22,18 @@ code='00945'
 # plot cdf
 fig, ax = plt.subplots(1, 1)
 count=tabCount[code].values
-ax.plot(np.sort(count),'*')
+y=np.sort(count[count>0])
+x=np.arange(len(y))
+ax.plot(x,y,'*')
 fig.show()
 
-the=100
+
+# def func(x, a, b, c):
+#     return a * np.exp(-b * x) + c
+# popt, pcov = curve_fit(func, x, y)
+# yy = func(x, *popt)
+
+the=200
 tabSel=tabCount.loc[tabCount[code]>the,code]
 
 siteNoLst=tabSel.index.tolist()
@@ -33,10 +42,17 @@ lon=tabCrd.loc[siteNoLst]['lon'].values
 count=tabSel.values
 
 
+
 figM, axM = plt.subplots(1, 1, figsize=(8, 6))
 gs = gridspec.GridSpec(1, 1)
 axM = mapplot.mapPoint(figM, gs[0, 0], lat, lon, count)
 figM.show()
+
+
+siteNo='01097000'
+code='00945'
+dfC,dfF=usgs.readSample(siteNo, codeLst=[code], flag=2)
+
 
 def funcM():
     figM, axM = plt.subplots(1, 1, figsize=(8, 6))
