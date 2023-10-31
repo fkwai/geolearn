@@ -68,6 +68,7 @@ tab.to_csv('temp.csv')
 tabHyper=pd.read_csv('/home/kuai/GitHUB/geolearn/app/wqLSTM/B200/solo/temp.csv',index_col=0)
 tabHyper
 
+# table to plot
 columns = ['dr', 'hs', 'rho', 'nLayer', 'ep']
 dataPlot=list()
 for col in columns:

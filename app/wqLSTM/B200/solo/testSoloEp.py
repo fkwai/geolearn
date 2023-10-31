@@ -10,36 +10,55 @@ from hydroDL.master import basinFull
 from hydroDL.master import slurm
 
 codeLst = usgs.varC
-labelLst = ['FT2QC', 'QFT2C', 'QT2C']
+labelLst = ['QFT2C', 'QT2C','FT2QC']
 trainSet = 'rmYr5b0'
 testSet = 'pkYr5b0'
-ep = 100
-ep1 = 20
-errLst1 = list()
-errLst2 = list()
-errLst3 = list()
-outLst = list()
 
-for code in codeLst:
-    dataName = '{}-{}'.format(code, 'B200')
-    # DF = dbBasin.DataFrameBasin(dataName)
-    # local model
-    for label in labelLst:
-        outName = '{}-{}-{}'.format(dataName, label, trainSet)
+epLst= range(20,501,20)
+for label in labelLst:    
+    for code in codeLst:        
+        dataName = '{}-{}'.format(code, 'B200')    
+        DF=dbBasin.DataFrameBasin('{}-{}'.format(code, 'B200'))
+        outName = '{}-{}-{}'.format(dataName, label, trainSet)        
         dictMaster = basinFull.loadMaster(outName)
         outFolder = basinFull.nameFolder(outName)
-        if not os.path.exists(os.path.join(outFolder, 'modelState_ep{}'.format(ep1))):
-            errLst1.append(outName)
-        else:
-            if not os.path.exists(
-                os.path.join(outFolder, 'modelState_ep{}'.format(ep))
-            ):
-                errLst2.append(outName)
-            else:
-                outLst.append(outName)
-        if not os.path.exists(os.path.join(outFolder, 'master.json')):
-            errLst3.append(outName)
+        matObs = DF.extractT([code])
+        obs1 = DF.extractSubset(matObs, trainSet)
+        obs2 = DF.extractSubset(matObs, testSet)
+        tabOut1=pd.DataFrame(index=DF.siteNoLst,columns=epLst)
+        tabOut2=pd.DataFrame(index=DF.siteNoLst,columns=epLst)
+        for ep in epLst:
+            yP1, ycP1 = basinFull.testModel(outName, testSet=trainSet, ep=ep)
+            yP2, ycP2 = basinFull.testModel(outName, testSet=testSet, ep=ep)
+            corr1 = utils.stat.calCorr(yP1, obs1)
+            corr2 = utils.stat.calCorr(yP2, obs2)
+            tabOut1[ep]=corr1
+            tabOut2[ep]=corr2
+        tabOut1.to_csv(os.path.join(outFolder,'corrEpTrain.csv'))
+        tabOut2.to_csv(os.path.join(outFolder,'corrEpTest.csv'))
 
-for outName in outLst:
-    yP1, ycP1 = basinFull.testModel(outName, testSet=trainSet, ep=ep)
-    yP2, ycP2 = basinFull.testModel(outName, testSet=testSet, ep=ep)
+
+
+# errLst1 = list()
+# errLst2 = list()
+# errLst3 = list()
+# test for error
+# epLst= range(20,501,20)
+# for label in labelLst:    
+#     for code in codeLst:        
+#         for ep in epLst:
+#             dataName = '{}-{}'.format(code, 'B200')            
+#             outName = '{}-{}-{}'.format(dataName, label, trainSet)
+#             dictMaster = basinFull.loadMaster(outName)
+#             outFolder = basinFull.nameFolder(outName)
+#             if not os.path.exists(os.path.join(outFolder, 'modelState_ep{}'.format(ep))):
+#                 errLst1.append(outName)
+#             else:
+#                 if not os.path.exists(
+#                     os.path.join(outFolder, 'modelState_ep{}'.format(ep))
+#                 ):
+#                     errLst2.append(outName)
+#                 else:
+#                     outLst.append(outName)
+#             if not os.path.exists(os.path.join(outFolder, 'master.json')):
+#                 errLst3.append(outName)
