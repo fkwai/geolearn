@@ -10,33 +10,36 @@ from hydroDL.master import basinFull
 from hydroDL.master import slurm
 
 codeLst = usgs.varC
-labelLst = ['QFT2C', 'QT2C','FT2QC']
+labelLst = ['QFT2C', 'QT2C', 'FT2QC']
 trainSet = 'rmYr5b0'
 testSet = 'pkYr5b0'
 
-epLst= range(20,501,20)
-for label in labelLst:    
-    for code in codeLst:        
-        dataName = '{}-{}'.format(code, 'B200')    
-        DF=dbBasin.DataFrameBasin('{}-{}'.format(code, 'B200'))
-        outName = '{}-{}-{}'.format(dataName, label, trainSet)        
+epLst = range(20, 501, 20)
+for label in labelLst:
+    for code in codeLst:
+        dataName = '{}-{}'.format(code, 'B200')
+        DF = dbBasin.DataFrameBasin('{}-{}'.format(code, 'B200'))
+        outName = '{}-{}-{}'.format(dataName, label, trainSet)
         dictMaster = basinFull.loadMaster(outName)
         outFolder = basinFull.nameFolder(outName)
         matObs = DF.extractT([code])
         obs1 = DF.extractSubset(matObs, trainSet)
         obs2 = DF.extractSubset(matObs, testSet)
-        tabOut1=pd.DataFrame(index=DF.siteNoLst,columns=epLst)
-        tabOut2=pd.DataFrame(index=DF.siteNoLst,columns=epLst)
+        tabOut1 = pd.DataFrame(index=DF.siteNoLst, columns=epLst)
+        tabOut2 = pd.DataFrame(index=DF.siteNoLst, columns=epLst)
         for ep in epLst:
-            yP1, ycP1 = basinFull.testModel(outName, testSet=trainSet, ep=ep,DF=DF)
-            yP2, ycP2 = basinFull.testModel(outName, testSet=testSet, ep=ep,DF=DF)
+            yP1, ycP1 = basinFull.testModel(
+                outName, testSet=trainSet, ep=ep, DF=DF, batchSize=20
+            )
+            yP2, ycP2 = basinFull.testModel(
+                outName, testSet=testSet, ep=ep, DF=DF, batchSize=20
+            )
             corr1 = utils.stat.calCorr(yP1, obs1)
             corr2 = utils.stat.calCorr(yP2, obs2)
-            tabOut1[ep]=corr1
-            tabOut2[ep]=corr2
-        tabOut1.to_csv(os.path.join(outFolder,'corrEpTrain.csv'))
-        tabOut2.to_csv(os.path.join(outFolder,'corrEpTest.csv'))
-
+            tabOut1[ep] = corr1
+            tabOut2[ep] = corr2
+        tabOut1.to_csv(os.path.join(outFolder, 'corrEpTrain.csv'))
+        tabOut2.to_csv(os.path.join(outFolder, 'corrEpTest.csv'))
 
 
 # errLst1 = list()
@@ -44,10 +47,10 @@ for label in labelLst:
 # errLst3 = list()
 # test for error
 # epLst= range(20,501,20)
-# for label in labelLst:    
-#     for code in codeLst:        
+# for label in labelLst:
+#     for code in codeLst:
 #         for ep in epLst:
-#             dataName = '{}-{}'.format(code, 'B200')            
+#             dataName = '{}-{}'.format(code, 'B200')
 #             outName = '{}-{}-{}'.format(dataName, label, trainSet)
 #             dictMaster = basinFull.loadMaster(outName)
 #             outFolder = basinFull.nameFolder(outName)
