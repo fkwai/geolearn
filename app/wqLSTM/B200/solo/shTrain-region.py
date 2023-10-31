@@ -55,7 +55,6 @@ for code in codeLst:
             mtdXC=mtdXC,
             mtdYC=mtdYC,
             saveEpoch=100,
-            hiddenSize=64,
         )
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
         slurm.submitJobGPU(outName, cmdP.format(outName), nH=8, nM=64)
