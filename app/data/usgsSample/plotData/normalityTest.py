@@ -14,6 +14,13 @@ siteNo='01125100'
 code='00915'
 dfC,dfF=usgs.readSample(siteNo, codeLst=[code], flag=2)
 
+# siteNo='01127000'
+# code='00665'
+# dfC,dfF=usgs.readSample(siteNo, codeLst=[code], flag=2,startDate='1979-01-01')
+# df=dfC.dropna()
+# fig, ax = plt.subplots(1, 1)
+# ax.plot(df.index.values,df[code].values,'*')
+# fig.show()
 
 df=dfC.dropna()
 
