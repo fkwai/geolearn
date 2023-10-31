@@ -8,6 +8,7 @@ import json
 import os
 from hydroDL.master import basinFull
 from hydroDL.master import slurm
+import time
 
 codeLst = usgs.varC
 labelLst = ['QFT2C', 'QT2C', 'FT2QC']
@@ -17,6 +18,7 @@ testSet = 'pkYr5b0'
 epLst = range(20, 501, 20)
 for label in labelLst:
     for code in codeLst:
+        t0 = time.time()
         dataName = '{}-{}'.format(code, 'B200')
         DF = dbBasin.DataFrameBasin('{}-{}'.format(code, 'B200'))
         outName = '{}-{}-{}'.format(dataName, label, trainSet)
@@ -38,6 +40,7 @@ for label in labelLst:
             corr2 = utils.stat.calCorr(yP2, obs2)
             tabOut1[ep] = corr1
             tabOut2[ep] = corr2
+            print('{} {} ep{} {:.2f} '.format(code, label, ep, time.time() - t0))
         tabOut1.to_csv(os.path.join(outFolder, 'corrEpTrain.csv'))
         tabOut2.to_csv(os.path.join(outFolder, 'corrEpTest.csv'))
 
