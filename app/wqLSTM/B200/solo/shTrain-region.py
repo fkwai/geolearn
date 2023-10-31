@@ -7,8 +7,11 @@ from hydroDL.master import basinFull
 trainLst = ['rmYr5b0_HUC{:02d}'.format(h) for h in range(1,18)]
 testLst = ['pkYr5b0_HUC{:02d}'.format(h) for h in range(1,18)]
 label='QFT2C'
-codeLst=['00915', '00618']
 
+codeLst = usgs.varC.copy()
+codeExist=['00915', '00618']
+for code in codeExist:
+    codeLst.remove(code)
 
 def label2var(label, code): # for a code
     varF = ['pr', 'sph', 'srad', 'tmmn', 'tmmx', 'pet', 'etr']
@@ -52,6 +55,7 @@ for code in codeLst:
             mtdXC=mtdXC,
             mtdYC=mtdYC,
             saveEpoch=100,
+            hiddenSize=64,
         )
         cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
         slurm.submitJobGPU(outName, cmdP.format(outName), nH=8, nM=64)

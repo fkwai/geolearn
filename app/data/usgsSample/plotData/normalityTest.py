@@ -55,6 +55,7 @@ fig.show()
 
 import scipy
 from scipy.stats import shapiro,kstest,kurtosis,skew
+import random
 
 kurtosis(data)
 kurtosis(np.log(data))
@@ -62,8 +63,34 @@ kurtosis(np.log(data))
 skew(data)
 skew(np.log(data))
 
+data=df.values.flatten()
+
+random.shuffle(data)
+
+
+random.shuffle(data)
 shapiro(data[:50])
+shapiro(data[:100])
+shapiro(data[:150])
+
+nLst=[50,100,150,200,252]
+data=df.values.flatten()
+random.shuffle(data)
+for n in nLst:
+    res=shapiro(np.log(data[:n]))
+    print('size {} p {}'.format(n,res[1]))
+
+
+shapiro(np.log(data[:50]))
+shapiro(np.log(data[:100]))
 shapiro(np.log(data[:150]))
+shapiro(np.log(data[:200]))
+shapiro(np.log(data))
+
+
+
+shapiro(data)
+shapiro(np.log(data))
 
 data=df.values.flatten()
 xx=data[(data<np.percentile(data,90)) & (data>np.percentile(data,10))]
@@ -75,6 +102,7 @@ import statsmodels.api as sm
 
 from scipy.stats import normaltest,anderson
 data=df.values.flatten()
+data=data[:150]
 normaltest(data)
 normaltest(np.log(data))
 result=anderson(data)

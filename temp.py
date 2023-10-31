@@ -22,3 +22,9 @@ for k in kLst:
     m=np.mean(temp,axis=0)
     _ = ax.plot(np.ones(m.shape)*k, m, 'k*')
 fig.show()
+
+
+file='/home/kuai/work/waterQuality/modelFull/rmTK-B200-QFT2C-rmYr5b0/testP-rmYr5b0-Ep40.npz'
+npz=np.load(file)
+yP=npz['yP']
+
