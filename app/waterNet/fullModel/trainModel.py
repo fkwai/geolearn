@@ -96,5 +96,5 @@ for ep in range(1, 1001):
     optim.step()
     print(ep, loss.item(), flush=True)
     if ep % 50 == 0:
-        modelFile = os.path.join(saveDir, 'wfq2-{}-ep{}'.format(dataName, ep))
+        modelFile = os.path.join(saveDir, 'wfq-{}-ep{}'.format(dataName, ep))
         torch.save(model.state_dict(), modelFile)
