@@ -15,5 +15,6 @@ codeLst = usgs.varC
 cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/wqLSTM/B200/solo/testSoloEpCMD.py -C {} -L {}'
 
 label='QFT2C'
-for code in codeLst:
-    slurm.submitJob('testEp{}'.format(code), cmdP.format(code, label), nH=2, nM=32)
+# for code in codeLst:
+for code in ['00010','00095']:
+    slurm.submitJob('testEp{}'.format(code), cmdP.format(code, label), nH=12, nM=32)

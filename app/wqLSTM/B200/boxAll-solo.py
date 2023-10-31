@@ -94,12 +94,12 @@ mean = np.array([np.nanmean(corr) for corr in corrW2])
 indPlot = np.argsort(mean)
 codeStrLst = list()
 dataPlot = list()
-iL = 0
+iL = 1
 for k in indPlot:
     code = usgs.varC[k]
     codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
-    dataPlot.append([corrW1[k], corrL1[k][iL], corrG1[k][iL]])  # training
-    # dataPlot.append([corrW2[k], corrL2[k][iL], corrG2[k][iL]])  # testing
+    # dataPlot.append([corrW1[k], corrL1[k][iL], corrG1[k][iL]])  # training
+    dataPlot.append([corrW2[k], corrL2[k][iL], corrG2[k][iL]])  # testing
 
 
 fig, axes = figplot.boxPlot(

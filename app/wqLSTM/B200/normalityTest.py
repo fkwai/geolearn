@@ -24,13 +24,48 @@ the=100
 for code in usgs.varC:
     indC=usgs.varC.index(code)
     data=mat[:,:,indC]
+    cnt=count[:,indC]
     k1=kurtosis(data,nan_policy='omit')
     k2=kurtosis(np.log(data),nan_policy='omit')
-    k1[count<the]=np.nan
-    k2[count<the]=np.nan
+    k1[cnt<the]=np.nan
+    k2[cnt<the]=np.nan
     s1=skew(data,nan_policy='omit')
     s2=skew(np.log(data),nan_policy='omit')
-    s1[count<the]=np.nan
-    s2[count<the]=np.nan
+    s1[cnt<the]=np.nan
+    s2[cnt<the]=np.nan
     sLst.append([s1,s2])
     kLst.append([k1,k2])
+
+
+codeStrLst=[usgs.codePdf.loc[code]['shortName'] for code in usgs.varC]
+fig, axes = figplot.boxPlot(
+    kLst,
+    widths=0.5,
+    figsize=(12, 4),
+    label1=codeStrLst,
+    label2=['original', 'log'],
+)
+fig.show()
+
+from hydroDL.post import axplot, figplot, mapplot
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+lat, lon = DF.getGeo()
+
+code='00915'
+indC=usgs.varC.index(code)
+data=mat[:,:,indC]
+cnt=count[:,indC]
+k1=kurtosis(data,nan_policy='omit')
+k2=kurtosis(np.log(data),nan_policy='omit')
+k1[cnt<the]=np.nan
+k2[cnt<the]=np.nan
+s1=skew(data,nan_policy='omit')
+s2=skew(np.log(data),nan_policy='omit')
+s1[cnt<the]=np.nan
+s2[cnt<the]=np.nan
+figM = plt.figure(figsize=(8, 6))
+gsM = gridspec.GridSpec(1, 1)
+axM = mapplot.mapPoint(figM, gsM[0, 0], lat, lon, s2)
+axM.set_title('{} {}'.format(usgs.codePdf.loc[code]['shortName'], code))
+figM.show()

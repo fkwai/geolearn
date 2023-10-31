@@ -28,7 +28,7 @@ codeLst = usgs.varC.copy()
 
 # dictVar=gageII.getVariableDict()
 # dictVar['Regions']
-code = '00618'
+code = '00955'
 dataName = '{}-{}'.format(code, label)
 DF = dbBasin.DataFrameBasin(dataName)
 dfR = gageII.readData(varLst=['HUC8_SITE'], siteNoLst=DF.siteNoLst)
