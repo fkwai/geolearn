@@ -28,8 +28,8 @@ for label in labelLst:
         tabOut1=pd.DataFrame(index=DF.siteNoLst,columns=epLst)
         tabOut2=pd.DataFrame(index=DF.siteNoLst,columns=epLst)
         for ep in epLst:
-            yP1, ycP1 = basinFull.testModel(outName, testSet=trainSet, ep=ep)
-            yP2, ycP2 = basinFull.testModel(outName, testSet=testSet, ep=ep)
+            yP1, ycP1 = basinFull.testModel(outName, testSet=trainSet, ep=ep,DF=DF)
+            yP2, ycP2 = basinFull.testModel(outName, testSet=testSet, ep=ep,DF=DF)
             corr1 = utils.stat.calCorr(yP1, obs1)
             corr2 = utils.stat.calCorr(yP2, obs2)
             tabOut1[ep]=corr1
