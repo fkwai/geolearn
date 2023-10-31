@@ -64,3 +64,24 @@ for dr in drLst:
                     except:
                         print(code, dr, hs, rho, nLayer)
 tab.to_csv('temp.csv')
+
+tabHyper=pd.read_csv('/home/kuai/GitHUB/geolearn/app/wqLSTM/B200/solo/temp.csv',index_col=0)
+tabHyper
+
+columns = ['dr', 'hs', 'rho', 'nLayer', 'ep']
+dataPlot=list()
+for col in columns:
+    temp=list()
+    uv=tabHyper[col].unique()
+    for v in uv:
+        temp.append(tabHyper[tabHyper[col]==v]['corr'].values)
+    dataPlot.append(temp)
+    if col == 'nLayerLst':
+        dataPlot.append([])
+fig, axes = figplot.boxPlot(
+    dataPlot,
+    widths=0.5,
+    figsize=(12, 4),
+    label1=columns    
+)    
+fig.show()
