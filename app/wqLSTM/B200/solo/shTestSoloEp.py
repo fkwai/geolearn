@@ -17,4 +17,4 @@ cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/app/wqLSTM/B200/solo/testSol
 label='QFT2C'
 # for code in codeLst:
 for code in ['00010','00095']:
-    slurm.submitJob('testEp{}'.format(code), cmdP.format(code, label), nH=12, nM=32)
+    slurm.submitJob('testEp{}'.format(code), cmdP.format(code, label), nH=24, nM=32)
