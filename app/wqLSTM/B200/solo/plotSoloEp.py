@@ -30,8 +30,10 @@ for code in codeLst:
         fig, axes = plt.subplots(2, 1)
         axes[0].boxplot(tabOut1.values,showfliers=False)
         axes[1].boxplot(tabOut2.values,showfliers=False)
-        fig.suptitle('{} {}'.format(code, label))
+        fig.suptitle('{} {}'.format(code, usgs.codePdf.loc[code]['shortName']))
         fig.show()
+    except:
+        pass
 
 
 for label in labelLst:

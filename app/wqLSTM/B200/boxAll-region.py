@@ -12,11 +12,43 @@ from hydroDL.app.waterQuality import WRTDS
 import matplotlib
 
 
-labelLst = 'QFT2C'
 trainSet = 'rmYr5b0'
 testSet = 'pkYr5b0'
-epG = 400  # models are killed before 500
-epL = 500
+label='QFT2C'
+hucLst = range(1, 18)
+code='00915'
+
+dataName = '{}-{}'.format(code, 'B200')
+DF = dbBasin.DataFrameBasin(dataName)
+DFA = dbBasin.DataFrameBasin('rmTK-B200')
+
+epG=500
+for code in usgs.varC:
+    outName = '{}-{}-{}'.format(dataName, label, trainSet)
+    yP1, ycP1 = basinFull.testModel(outName, DF=DF, testSet=trainSet, ep=epG,reTest=True)
+    yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=epG, reTest=True)
+
+    yP2.shape
+
+yP2[-1,:,:]
+yP2[-2,:,:]
+# load global solo model
+outName = '{}-{}-{}'.format(dataName, label, trainSet)
+dictMaster = basinFull.loadMaster(outName)
+yP1, ycP1 = basinFull.testModel(outName, DF=DF, testSet=trainSet, ep=epG)
+yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=epG)
+if len(dictMaster['varY']) > 1:
+    yP1 = yP1[:, :, 1:]
+    yP2 = yP2[:, :, 1:]
+# load regional solo model
+
+
+# load WRTDS
+dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
+fileName = '{}-{}-{}'.format('rmTK-B200', trainSet, 'all.npz')
+yW = np.load(os.path.join(dirWRTDS, fileName))['yW']
+yW1 = DFA.extractSubset(yW, trainSet)
+yW2 = DFA.extractSubset(yW, testSet)
 
 # load global model
 DFA = dbBasin.DataFrameBasin('rmTK-B200')
