@@ -90,8 +90,9 @@ def calMAPE(pred, obs):
     mape = np.nanmean(e, axis=0)
     return mape
 
-def calLogMAE(pred, obs):  
-    error = np.exp(np.nanmean(np.abs(np.log(obs/pred))))
+def calLogRMSE(pred, obs):  
+    mask = np.isnan(obs) | np.isnan(pred) 
+    error=np.sqrt(np.nanmean((np.log(obs/pred))**2,axis=0))    
     return error
 
 

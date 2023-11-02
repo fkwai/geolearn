@@ -14,24 +14,17 @@ import matplotlib
 
 trainSet = 'rmYr5b0'
 testSet = 'pkYr5b0'
-label='QFT2C'
+label = 'QFT2C'
 hucLst = range(1, 18)
-code='00915'
+code = '00915'
+epG = 500
+epR = 500
+statFunc=utils.stat.calLogRMSE
 
 dataName = '{}-{}'.format(code, 'B200')
 DF = dbBasin.DataFrameBasin(dataName)
 DFA = dbBasin.DataFrameBasin('rmTK-B200')
 
-epG=500
-for code in usgs.varC:
-    outName = '{}-{}-{}'.format(dataName, label, trainSet)
-    yP1, ycP1 = basinFull.testModel(outName, DF=DF, testSet=trainSet, ep=epG,reTest=True)
-    yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=epG, reTest=True)
-
-    yP2.shape
-
-yP2[-1,:,:]
-yP2[-2,:,:]
 # load global solo model
 outName = '{}-{}-{}'.format(dataName, label, trainSet)
 dictMaster = basinFull.loadMaster(outName)
@@ -40,106 +33,48 @@ yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=epG)
 if len(dictMaster['varY']) > 1:
     yP1 = yP1[:, :, 1:]
     yP2 = yP2[:, :, 1:]
-# load regional solo model
-
 
 # load WRTDS
 dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
 fileName = '{}-{}-{}'.format('rmTK-B200', trainSet, 'all.npz')
-yW = np.load(os.path.join(dirWRTDS, fileName))['yW']
-yW1 = DFA.extractSubset(yW, trainSet)
-yW2 = DFA.extractSubset(yW, testSet)
+yWA = np.load(os.path.join(dirWRTDS, fileName))['yW']
+yWA1 = DFA.extractSubset(yWA, trainSet)
+yWA2 = DFA.extractSubset(yWA, testSet)
+iC=usgs.varC.index(code)
+indSA = [DFA.siteNoLst.index(siteNo) for siteNo in DF.siteNoLst]
 
-# load global model
-DFA = dbBasin.DataFrameBasin('rmTK-B200')
-yGLst1 = list()
-yGLst2 = list()
-for label in labelLst:
-    outName = '{}-{}-{}'.format('rmTK-B200', label, trainSet)
-    dictMaster = basinFull.loadMaster(outName)
-    yP1, ycP1 = basinFull.testModel(outName, DF=DFA, testSet=trainSet, ep=epG)
-    yP2, ycP2 = basinFull.testModel(outName, DF=DFA, testSet=testSet, ep=epG)
-    if dictMaster['varY'][0] == 'streamflow':
-        yP1 = yP1[:, :, 1:]
-        yP2 = yP2[:, :, 1:]
-    yGLst1.append(yP1)
-    yGLst2.append(yP2)
+yW1=yWA1[:,indSA,iC]
+yW2=yWA2[:,indSA,iC]
 
-# load WRTDS
-dirWRTDS = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
-fileName = '{}-{}-{}'.format('rmTK-B200', trainSet, 'all.npz')
-yW = np.load(os.path.join(dirWRTDS, fileName))['yW']
-yW1 = DFA.extractSubset(yW, trainSet)
-yW2 = DFA.extractSubset(yW, testSet)
+# regional model
+huc = 12
+epR = 300
 
+dataPlot1=list()
+dataPlot2=list()
 
-# local model
-corrG1 = list()
-corrG2 = list()
-corrL1 = list()
-corrL2 = list()
-corrW1 = list()
-corrW2 = list()
-strFunc = 'calNash'
-errFunc = getattr(utils.stat, strFunc)
-for iC, code in enumerate(usgs.varC):
-    corrLT1 = list()
-    corrLT2 = list()
-    corrGT1 = list()
-    corrGT2 = list()
-    dataName = '{}-{}'.format(code, 'B200')
-    DF = dbBasin.DataFrameBasin(dataName)
-    matObs = DF.extractT([code])
-    obs1 = DF.extractSubset(matObs, trainSet)
-    obs2 = DF.extractSubset(matObs, testSet)
-    # WRTDS
-    _, indS1, indS2 = utils.intersect(DF.siteNoLst, DFA.siteNoLst, returnIndex=True)
-    _, indT1, indT2 = np.intersect1d(DF.t, DFA.t, return_indices=True)
+for huc in list(range(1,5))+list(range(6,18)):
+    trainRegion = '{}_HUC{:02d}'.format(trainSet, huc)
+    testRegion = '{}_HUC{:02d}'.format(testSet, huc)
+    outName = '{}-{}-{}'.format(dataName, label, trainRegion)
+    yR1, ycR1 = basinFull.testModel(outName, DF=DF, testSet=trainRegion, ep=epR)
+    yR2, ycR2 = basinFull.testModel(outName, DF=DF, testSet=testRegion, ep=epR)
+    obsR1 = DF.extractSubset(DF.c, trainRegion)
+    obsR2 = DF.extractSubset(DF.c, testRegion)
+    yWR1=DF.extractSubset(yW1[:,:,None],trainRegion)
+    yWR2=DF.extractSubset(yW2[:,:,None],testRegion)
+    yPR1=DF.extractSubset(yP1,trainRegion)
+    yPR2=DF.extractSubset(yP2,testRegion)
+    sR1=statFunc(yR1,obsR1)
+    sR2=statFunc(yR2,obsR2)
+    sW1=statFunc(yWR1,obsR1)
+    sW2=statFunc(yWR2,obsR2)
+    sP1=statFunc(yPR1,obsR1)
+    sP2=statFunc(yPR2,obsR2)
+    dataPlot1.append([sR1,sW1,sP1])
+    dataPlot2.append([sR2,sW2,sP2])
 
-    for iL, label in enumerate(labelLst):
-        # local model
-        outName = '{}-{}-{}'.format(dataName, label, trainSet)
-        dictMaster = basinFull.loadMaster(outName)
-        yP1, ycP1 = basinFull.testModel(outName, DF=DF, testSet=trainSet, ep=epL)
-        yP2, ycP2 = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=epL)
-        if len(dictMaster['varY']) > 1:
-            yP1 = yP1[:, :, 1:]
-            yP2 = yP2[:, :, 1:]
-        corrLT1.append(errFunc(yP1[:, indS1, 0][indT1, :], obs1[:, indS1, 0][indT1, :]))
-        corrLT2.append(errFunc(yP2[:, indS1, 0][indT1, :], obs2[:, indS1, 0][indT1, :]))
-        corrGT1.append(
-            errFunc(yGLst1[iL][:, indS2, iC][indT2, :], obs1[:, indS1, 0][indT1, :])
-        )
-        corrGT2.append(
-            errFunc(yGLst2[iL][:, indS2, iC][indT2, :], obs2[:, indS1, 0][indT1, :])
-        )
-    corrW1.append(errFunc(yW1[:, indS2, iC][indT2, :], obs1[:, indS1, 0][indT1, :]))
-    corrW2.append(errFunc(yW2[:, indS2, iC][indT2, :], obs2[:, indS1, 0][indT1, :]))
-    corrL1.append(corrLT1)
-    corrL2.append(corrLT2)
-    corrG1.append(corrGT1)
-    corrG2.append(corrGT2)
-
-
-# box plot
-mean = np.array([np.nanmean(corr) for corr in corrW2])
-indPlot = np.argsort(mean)
-codeStrLst = list()
-dataPlot = list()
-iL = 1
-for k in indPlot:
-    code = usgs.varC[k]
-    codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
-    # dataPlot.append([corrW1[k], corrL1[k][iL], corrG1[k][iL]])  # training
-    dataPlot.append([corrW2[k], corrL2[k][iL], corrG2[k][iL]])  # testing
-
-
-fig, axes = figplot.boxPlot(
-    dataPlot,
-    widths=0.5,
-    figsize=(12, 4),
-    label1=codeStrLst,
-    label2=['WRTDS', 'LSTM-solo', 'LSTM-global'],
-)
-fig.suptitle('{} {}'.format(strFunc, labelLst[iL]))
+fig,axes=figplot.boxPlot(dataPlot1, label2=['Region','WRTDS','Global'])
+fig.show()
+fig,axes=figplot.boxPlot(dataPlot2, label2=['Region','WRTDS','Global'])
 fig.show()
