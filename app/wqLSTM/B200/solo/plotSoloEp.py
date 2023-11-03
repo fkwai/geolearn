@@ -24,8 +24,8 @@ for code in codeLst:
         dataName = '{}-{}'.format(code, 'B200')
         outName = '{}-{}-{}'.format(dataName, label, trainSet)
         outFolder = basinFull.nameFolder(outName)
-        tabOut1 = pd.read_csv(os.path.join(outFolder, 'corrEpTrain.csv'), index_col=0)
-        tabOut2 = pd.read_csv(os.path.join(outFolder, 'corrEpTest.csv'), index_col=0)
+        tabOut1 = pd.read_csv(os.path.join(outFolder, 'nashEpTrain.csv'), index_col=0)
+        tabOut2 = pd.read_csv(os.path.join(outFolder, 'nashEpTest.csv'), index_col=0)
         # boxplot
         fig, axes = plt.subplots(2, 1)
         axes[0].boxplot(tabOut1.values,showfliers=False)

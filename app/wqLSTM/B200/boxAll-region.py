@@ -19,7 +19,7 @@ hucLst = range(1, 18)
 code = '00915'
 epG = 500
 epR = 500
-statFunc=utils.stat.calLogRMSE
+statFunc=utils.stat.calBias
 
 dataName = '{}-{}'.format(code, 'B200')
 DF = dbBasin.DataFrameBasin(dataName)
