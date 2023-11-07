@@ -95,6 +95,17 @@ def calLogRMSE(pred, obs):
     error=np.sqrt(np.nanmean((np.log(obs/pred))**2,axis=0))    
     return error
 
+def calLogNSE(pred, obs):
+    A = np.log(pred.copy())
+    B = np.log(obs.copy())
+    mask = np.isnan(A) | np.isnan(B)
+    A[mask] = np.nan
+    B[mask] = np.nan
+    mA = A - B
+    mB = B - np.nanmean(B, axis=0)
+    p1 = np.nansum(mA**2, axis=0)
+    p2 = np.nansum(mB**2, axis=0)
+    return 1-p1/p2    
 
 
 def calCorrOld(pred, obs):
@@ -127,9 +138,10 @@ def calBias(pred, obs):
 
 
 def calBiasR(pred, obs):
-    u1 = np.nanmean(pred, axis=0)
-    u2 = np.nanmean(obs, axis=0)
-    return u1/u2
+    # u1 = np.nanmean(pred, axis=0)
+    # u2 = np.nanmean(obs, axis=0)
+    bias = np.nanmean(pred-obs, axis=0)/np.nanmean(obs, axis=0)
+    return bias
 
 
 def calVarR(pred, obs):

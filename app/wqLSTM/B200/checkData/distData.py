@@ -11,3 +11,6 @@ from hydroDL.master import slurm
 
 code = '80154'
 DF = dbBasin.DataFrameBasin('{}-{}'.format(code, 'B200'))
+fig,ax=plt.subplots(1,1)
+ax.hist(np.log(DF.c.flatten()), bins=100)
+fig.show()
