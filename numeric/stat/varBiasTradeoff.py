@@ -76,7 +76,8 @@ for polynomial_degree in range(max_polynomial_degree):
     
     biases.append(((mean_y_test_pred - data_test[2]) ** 2).mean())
     variances.append(((y_test_bootstrap_preds - mean_y_test_pred) ** 2).mean())
-    losses.append(((y_test_bootstrap_preds - data_test[1]) ** 2).mean(axis=1).mean())
+    losses.append(((y_test_bootstrap_preds - data_test[1]) ** 
+                   2).mean(axis=1).mean())
 
 best_polynomial_degree = np.argmin(losses)
 

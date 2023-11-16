@@ -70,10 +70,13 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(1, 1)
 ax.plot(yP[:, 0], yTest, '*')
-fig.show()
-
 from hydroDL import utils
 
 rmse, corr = utils.stat.calErr(yP[:, 0],yTest)
 corr
 rmse
+
+import dill
+dill.dump_session('temp.db')
+
+dill.detect.errors(dataOld)

@@ -28,3 +28,16 @@ file='/home/kuai/work/waterQuality/modelFull/rmTK-B200-QFT2C-rmYr5b0/testP-rmYr5
 npz=np.load(file)
 yP=npz['yP']
 
+variables=globals().keys()
+
+import dill
+dill.dump_session('temp.db')
+dill.detect.trace(False)
+
+for key, items in globals().items():
+    print(key)
+    dill.detect.errors(items)
+
+dill.detect.errors(npz)
+
+dill.detect.baditems(npz)
