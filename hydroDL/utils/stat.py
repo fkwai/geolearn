@@ -32,6 +32,12 @@ def calStat(pred, obs):
         outDict = dict(Bias=bias, RMSE=rmse, NSE=nash, Corr=corr)
         return outDict
 
+def calKGE(pred, obs):
+    r=calCorr(pred, obs)
+    alpha=np.nanstd(pred,axis=0)/np.nanstd(obs,axis=0)
+    beta=np.nanmean(pred,axis=0)/np.nanmean(obs,axis=0)
+    kge=1-np.sqrt((r-1)**2+(alpha-1)**2+(beta-1)**2)
+    return kge
 
 # def calNash(pred, obs):
 #     # data in [nT,nS]
@@ -68,6 +74,8 @@ def calCorr(pred, obs):
     p2 = np.sqrt(np.nansum(mA**2, axis=0)*np.nansum(mB**2, axis=0))
     return p1/p2
 
+def calMAE(pred, obs):
+    return np.nanmean(np.abs(pred-obs), axis=0) 
 
 def calSMAPE(pred, obs):
     mask = np.isnan(obs) | np.isnan(pred)
@@ -133,7 +141,8 @@ def calCorrOld(pred, obs):
 
 def calBias(pred, obs):
     # data in [nT,nS,nC]
-    bias = np.nanmean(np.abs(pred-obs), axis=0)
+    # bias = np.nanmean(np.abs(pred-obs), axis=0)
+    bias = np.nanmean(pred, axis=0)-np.nanmean(obs, axis=0)
     return bias
 
 

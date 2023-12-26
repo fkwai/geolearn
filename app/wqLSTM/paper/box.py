@@ -70,6 +70,16 @@ biasL2 = np.nanmean(yP2, axis=0)-np.nanmean(obs2, axis=0)
 biasW1 = np.nanmean(yW1, axis=0)-np.nanmean(obs1, axis=0)
 biasW2 = np.nanmean(yW2, axis=0)-np.nanmean(obs2, axis=0)
 
+nashL1 = utils.stat.calNash(yP1, obs1)
+nashL2 = utils.stat.calNash(yP2, obs2)
+nashW1 = utils.stat.calNash(yW1, obs1)
+nashW2 = utils.stat.calNash(yW2, obs2)
+
+kgeL1 = utils.stat.calKGE(yP1, obs1)
+kgeL2 = utils.stat.calKGE(yP2, obs2)
+kgeW1 = utils.stat.calKGE(yW1, obs1)
+kgeW2 = utils.stat.calKGE(yW2, obs2)
+
 
 # count
 matB = (~np.isnan(DF.c)*~np.isnan(DF.q[:, :, 0:1])
@@ -87,6 +97,10 @@ for bias in [biasL1, biasL2, biasW1, biasW2]:
     bias[matRm] = np.nan
 for smape in [smapeL1, smapeL2, smapeW1, smapeW2]:
     smape[matRm] = np.nan
+for nash in [nashL1, nashL2, nashW1, nashW2]:
+    nash[matRm] = np.nan
+for kge in [kgeL1, kgeL2, kgeW1, kgeW2]:
+    kge[matRm] = np.nan
 # box plot
 matplotlib.rcParams.update({'font.size': 16})
 matplotlib.rcParams.update({'lines.linewidth': 1})
@@ -102,15 +116,18 @@ for k in indPlot:
     codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
     temp.append(code)
     dataPlot.append([corrL2[:, k], corrW2[:, k]])
-
 importlib.reload(usgs)
 strLst = usgs.codeStrPlot(codeStrLst)
 fig, axes = figplot.boxPlot(
     dataPlot, widths=0.5, figsize=(12, 4), label1=strLst)
 plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
 fig.show()
+figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
+fig.savefig(os.path.join(figFolder, 'box_corr'.format(label, trainSet)))
+fig.savefig(os.path.join(figFolder, 'box_corr.svg'.format(label, trainSet)))
 
-# re-order
+
+# mape
 indPlot = np.argsort(np.nanmedian(mapeL2, axis=0))
 codeStrLst = list()
 dataPlot = list()
@@ -129,6 +146,48 @@ fig.show()
 figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
 fig.savefig(os.path.join(figFolder, 'box_mape'.format(label, trainSet)))
 fig.savefig(os.path.join(figFolder, 'box_mape.svg'.format(label, trainSet)))
+
+
+# NSE
+indPlot = np.argsort(np.nanmean(corrL2, axis=0))
+codeStrLst = list()
+dataPlot = list()
+temp = list()
+for k in indPlot:
+    code = codeLst[k]
+    codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
+    temp.append(code)
+    dataPlot.append([nashL2[:, k], nashW2[:, k]])
+importlib.reload(usgs)
+strLst = usgs.codeStrPlot(codeStrLst)
+fig, axes = figplot.boxPlot(
+    dataPlot, widths=0.5, figsize=(12, 4), label1=strLst)
+plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
+fig.show()
+figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
+fig.savefig(os.path.join(figFolder, 'box_nash'.format(label, trainSet)))
+fig.savefig(os.path.join(figFolder, 'box_nash.svg'.format(label, trainSet)))
+
+# KGE
+indPlot = np.argsort(np.nanmedian(kgeW2, axis=0))
+codeStrLst = list()
+dataPlot = list()
+temp = list()
+for k in indPlot:
+    code = codeLst[k]
+    codeStrLst.append(usgs.codePdf.loc[code]['shortName'])
+    temp.append(code)
+    dataPlot.append([kgeL2[:, k], kgeW2[:, k]])
+    print(np.nanmean(kgeL2[:, k]))
+importlib.reload(usgs)
+strLst = usgs.codeStrPlot(codeStrLst)
+fig, axes = figplot.boxPlot(
+    dataPlot, widths=0.5, figsize=(12, 4), label1=strLst)
+plt.subplots_adjust(left=0.05, right=0.97, top=0.9, bottom=0.1)
+fig.show()
+figFolder = r'C:\Users\geofk\work\waterQuality\paper\G200'
+fig.savefig(os.path.join(figFolder, 'box_kge'.format(label, trainSet)))
+fig.savefig(os.path.join(figFolder, 'box_kge.svg'.format(label, trainSet)))
 
 
 # Bias
@@ -183,3 +242,31 @@ for kk, codeG in enumerate(codeGroup):
     fig.show()
     fig.savefig(os.path.join(figFolder, 'box_rmse{}.svg'.format(kk)))
 
+pdfP = pd.DataFrame(index=codeLst, columns=['corr','kge'])
+
+import scipy
+for k, code in enumerate(codeLst):
+    [a, b], _ = utils.rmNan([corrL2[:, k], corrW2[:, k]])
+    s, p = scipy.stats.wilcoxon(a, b)
+    print(code,p)
+    pdfP.at[code, 'corr'] = p
+for k, code in enumerate(codeLst):
+    [a, b], _ = utils.rmNan([kgeL2[:, k], kgeW2[:, k]])
+    s, p = scipy.stats.wilcoxon(a, b)
+    print(code,p)
+    pdfP.at[code, 'kge'] = p
+pdfP.to_csv('temp.csv', sep=',', float_format='{:.2e}')
+
+# mean of no3
+code='00618'
+ic=DF.varC.index(code)
+a=np.nanmean(yW2[:,:,ic],axis=0)
+b=np.nanmean(obs2[:,:,ic],axis=0)
+fig,ax=plt.subplots(1,1)
+# plot log
+ax.loglog(a,b,'*')
+ax.plot([1e-3,1e2],[1e-3,1e2],'k-')
+fig.show()
+
+# rmse
+np.sqrt(np.nanmean((a-b)**2))

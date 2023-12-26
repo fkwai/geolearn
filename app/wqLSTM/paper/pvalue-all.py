@@ -77,4 +77,4 @@ for trainSet, testSet in zip(trainLst, testLst):
         [a, b], _ = utils.rmNan([corrL2[:, k], corrW2[:, k]])
         s, p = scipy.stats.wilcoxon(a, b)
         pdfP.at[code, trainSet] = p
-pdfP.to_csv('temp.csv', sep=',', float_format='{:.2e}'.format())
+pdfP.to_csv('temp2.csv', sep=',', float_format='{:.2e}')

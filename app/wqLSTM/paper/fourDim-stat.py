@@ -83,11 +83,11 @@ for k in range(len(codeLst)):
     ax.plot([a, a], [b, c], c='0.5')
 ax.plot(a, b, 'b*')
 ax.plot(a, c, 'r*')
-# ax.set_xlim([0.2, 1.2])
-# ax.set_ylim([-1.5, 3])
+ax.set_xlim([0.2, 1.2])
+ax.set_ylim([-1, 1])
 # plt.xscale('symlog')
-ax.axhline(0, color='k')
-ax.axvline(0.33, color='k')
+# ax.axhline(0, color='k')
+# ax.axvline(0.33, color='k')
 
 fig.show()
 
