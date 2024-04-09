@@ -25,20 +25,23 @@ def dataTs2End(dataTup, rho):
     return (xE, xcE, None, yE)
 
 
-def dataTs2Range(dataTup, rho,returnInd=False):
+def dataTs2Range(dataTup, rho, returnInd=False):
     # assuming yc is none
     x, xc, y, yc = dataTup
     nt = y.shape[0]
     jL, iL = np.where(~np.isnan(y).any(axis=-1))
     xLst, xcLst, ycLst = list(), list(), list()
+    jLout, iLout = list(), list()
     for j, i in zip(jL, iL):
         if j >= rho and j < nt - rho:
             if x is not None:
                 xLst.append(x[j - rho : j + rho + 1, i, :])
             if xc is not None:
                 xcLst.append(xc[i, :])
-            if yc is None:                
+            if yc is None:
                 ycLst.append(y[j, i, :])
+        iLout.append(i)
+        jLout.append(j)
     xE = np.stack(xLst, axis=0)
     xE = xE.swapaxes(0, 1)
     xcE = np.stack(xcLst, axis=0)
@@ -57,62 +60,62 @@ def wrapMaster(out, optData, optModel, optLoss, optTrain):
 
 
 def readMasterFile(out):
-    mFile = os.path.join(out, 'master.json')
-    with open(mFile, 'r') as fp:
+    mFile = os.path.join(out, "master.json")
+    with open(mFile, "r") as fp:
         mDict = json.load(fp, object_pairs_hook=OrderedDict)
-    print('read master file ' + mFile)
+    print("read master file " + mFile)
     return mDict
 
 
 def writeMasterFile(mDict):
-    out = mDict['out']
+    out = mDict["out"]
     if not os.path.isdir(out):
         os.makedirs(out)
-    mFile = os.path.join(out, 'master.json')
-    with open(mFile, 'w') as fp:
+    mFile = os.path.join(out, "master.json")
+    with open(mFile, "w") as fp:
         json.dump(mDict, fp, indent=4)
-    print('write master file ' + mFile)
+    print("write master file " + mFile)
     return out
 
 
 def fixRootDB(rootDB):
-    if '/' in rootDB:
-        nameDB = rootDB.split('/')[-1]
-    elif '\\' in rootDB:
-        nameDB = rootDB.split('/')[-1]
-    return os.path.join(hydroDL.pathSMAP['dirDB'], nameDB)
+    if "/" in rootDB:
+        nameDB = rootDB.split("/")[-1]
+    elif "\\" in rootDB:
+        nameDB = rootDB.split("/")[-1]
+    return os.path.join(hydroDL.pathSMAP["dirDB"], nameDB)
 
 
 def loadModel(out, epoch=None):
     if epoch is None:
         mDict = readMasterFile(out)
-        epoch = mDict['train']['nEpoch']
+        epoch = mDict["train"]["nEpoch"]
     model = hydroDL.model.train.loadModel(out, epoch)
     return model
 
 
 def namePred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
     mDict = readMasterFile(out)
-    target = mDict['data']['target']
+    target = mDict["data"]["target"]
     if type(target) is not list:
         target = [target]
     nt = len(target)
-    lossName = mDict['loss']['name']
+    lossName = mDict["loss"]["name"]
     if epoch is None:
-        epoch = mDict['train']['nEpoch']
+        epoch = mDict["train"]["nEpoch"]
 
     fileNameLst = list()
     for k in range(nt):
-        testName = '_'.join([subset, str(tRange[0]), str(tRange[1]), 'ep' + str(epoch)])
-        fileName = '_'.join([testName, target[k]])
+        testName = "_".join([subset, str(tRange[0]), str(tRange[1]), "ep" + str(epoch)])
+        fileName = "_".join([testName, target[k]])
         fileNameLst.append(fileName)
-        if lossName == 'hydroDL.model.crit.SigmaLoss':
-            fileName = '_'.join([testName, target[k], 'SigmaX'])
+        if lossName == "hydroDL.model.crit.SigmaLoss":
+            fileName = "_".join([testName, target[k], "SigmaX"])
             fileNameLst.append(fileName)
     if doMC is not False:
         mcFileNameLst = list()
         for fileName in fileNameLst:
-            fileName = '_'.join([testName, target[k], 'SigmaMC' + str(doMC)])
+            fileName = "_".join([testName, target[k], "SigmaMC" + str(doMC)])
             mcFileNameLst.append(fileName)
         fileNameLst = fileNameLst + mcFileNameLst
 
@@ -120,8 +123,8 @@ def namePred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
     filePathLst = list()
     for fileName in fileNameLst:
         if suffix is not None:
-            fileName = fileName + '_' + suffix
-        filePath = os.path.join(out, fileName + '.csv')
+            fileName = fileName + "_" + suffix
+        filePath = os.path.join(out, fileName + ".csv")
         filePathLst.append(filePath)
     return filePathLst
 
@@ -133,7 +136,7 @@ def readPred(out, tRange, subset, epoch=None, doMC=False, suffix=None):
         filePath = filePathLst[k]
         dataPred[:, :, k] = pd.read_csv(filePath, dtype=np.float, header=None).values
     isSigmaX = False
-    if mDict['loss']['name'] == 'hydroDL.model.crit.SigmaLoss':
+    if mDict["loss"]["name"] == "hydroDL.model.crit.SigmaLoss":
         isSigmaX = True
         pred = dataPred[:, :, ::2]
         sigmaX = dataPred[:, :, 1::2]
@@ -155,74 +158,74 @@ def mvobs(data, mvday, rmNan=True):
 
 
 def loadData(optData, readX=True, readY=True):
-    if eval(optData['name']) is hydroDL.data.dbCsv.DataframeCsv:
+    if eval(optData["name"]) is hydroDL.data.dbCsv.DataframeCsv:
         df = hydroDL.data.dbCsv.DataframeCsv(
-            rootDB=optData['rootDB'], subset=optData['subset'], tRange=optData['tRange']
+            rootDB=optData["rootDB"], subset=optData["subset"], tRange=optData["tRange"]
         )
         if readY is True:
             y = df.getDataTs(
-                varLst=optData['target'],
-                doNorm=optData['doNorm'][1],
-                rmNan=optData['rmNan'][1],
+                varLst=optData["target"],
+                doNorm=optData["doNorm"][1],
+                rmNan=optData["rmNan"][1],
             )
         else:
             y = None
 
         if readX is True:
             x = df.getDataTs(
-                varLst=optData['varT'],
-                doNorm=optData['doNorm'][0],
-                rmNan=optData['rmNan'][0],
+                varLst=optData["varT"],
+                doNorm=optData["doNorm"][0],
+                rmNan=optData["rmNan"][0],
             )
             c = df.getDataConst(
-                varLst=optData['varC'],
-                doNorm=optData['doNorm'][0],
-                rmNan=optData['rmNan'][0],
+                varLst=optData["varC"],
+                doNorm=optData["doNorm"][0],
+                rmNan=optData["rmNan"][0],
             )
-            if optData['daObs'] > 0:
-                nday = optData['daObs']
-                sd = utils.time.t2dt(optData['tRange'][0]) - dt.timedelta(days=nday)
-                ed = utils.time.t2dt(optData['tRange'][1]) - dt.timedelta(days=nday)
+            if optData["daObs"] > 0:
+                nday = optData["daObs"]
+                sd = utils.time.t2dt(optData["tRange"][0]) - dt.timedelta(days=nday)
+                ed = utils.time.t2dt(optData["tRange"][1]) - dt.timedelta(days=nday)
                 df = hydroDL.data.dbCsv.DataframeCsv(
-                    rootDB=optData['rootDB'], subset=optData['subset'], tRange=[sd, ed]
+                    rootDB=optData["rootDB"], subset=optData["subset"], tRange=[sd, ed]
                 )
                 obs = df.getDataTs(
-                    varLst=optData['target'],
-                    doNorm=optData['doNorm'][1],
-                    rmNan=optData['rmNan'][1],
+                    varLst=optData["target"],
+                    doNorm=optData["doNorm"][1],
+                    rmNan=optData["rmNan"][1],
                 )
                 x = (x, obs)
         else:
             x = None
             c = None
-    elif eval(optData['name']) is hydroDL.data.camels.DataframeCamels:
+    elif eval(optData["name"]) is hydroDL.data.camels.DataframeCamels:
         df = hydroDL.data.camels.DataframeCamels(
-            subset=optData['subset'], tRange=optData['tRange']
+            subset=optData["subset"], tRange=optData["tRange"]
         )
         x = df.getDataTs(
-            varLst=optData['varT'],
-            doNorm=optData['doNorm'][0],
-            rmNan=optData['rmNan'][0],
+            varLst=optData["varT"],
+            doNorm=optData["doNorm"][0],
+            rmNan=optData["rmNan"][0],
         )
-        y = df.getDataObs(doNorm=optData['doNorm'][1], rmNan=optData['rmNan'][1])
+        y = df.getDataObs(doNorm=optData["doNorm"][1], rmNan=optData["rmNan"][1])
         c = df.getDataConst(
-            varLst=optData['varC'],
-            doNorm=optData['doNorm'][0],
-            rmNan=optData['rmNan'][0],
+            varLst=optData["varC"],
+            doNorm=optData["doNorm"][0],
+            rmNan=optData["rmNan"][0],
         )
     else:
-        raise Exception('unknown database')
+        raise Exception("unknown database")
     return df, x, y, c
 
 
 def train(mDict):
     if mDict is str:
         mDict = readMasterFile(mDict)
-    out = mDict['out']
-    optData = mDict['data']
-    optModel = mDict['model']
-    optLoss = mDict['loss']
-    optTrain = mDict['train']
+    out = mDict["out"]
+    optData = mDict["data"]
+    optModel = mDict["model"]
+    optLoss = mDict["loss"]
+    optTrain = mDict["train"]
 
     # data
     df, x, y, c = loadData(optData)
@@ -234,52 +237,52 @@ def train(mDict):
     ny = y.shape[-1]
 
     # loss
-    if eval(optLoss['name']) is hydroDL.model.crit.SigmaLoss:
-        lossFun = hydroDL.model.crit.SigmaLoss(prior=optLoss['prior'])
-        optModel['ny'] = ny * 2
-    elif eval(optLoss['name']) is hydroDL.model.crit.RmseLoss:
+    if eval(optLoss["name"]) is hydroDL.model.crit.SigmaLoss:
+        lossFun = hydroDL.model.crit.SigmaLoss(prior=optLoss["prior"])
+        optModel["ny"] = ny * 2
+    elif eval(optLoss["name"]) is hydroDL.model.crit.RmseLoss:
         lossFun = hydroDL.model.crit.RmseLoss()
-        optModel['ny'] = ny
-    elif eval(optLoss['name']) is hydroDL.model.crit.NSELoss:
+        optModel["ny"] = ny
+    elif eval(optLoss["name"]) is hydroDL.model.crit.NSELoss:
         lossFun = hydroDL.model.crit.NSELoss()
-        optModel['ny'] = ny
-    elif eval(optLoss['name']) is hydroDL.model.crit.NSELosstest:
+        optModel["ny"] = ny
+    elif eval(optLoss["name"]) is hydroDL.model.crit.NSELosstest:
         lossFun = hydroDL.model.crit.NSELosstest()
-        optModel['ny'] = ny
-    elif eval(optLoss['name']) is hydroDL.model.crit.MSELoss:
+        optModel["ny"] = ny
+    elif eval(optLoss["name"]) is hydroDL.model.crit.MSELoss:
         lossFun = hydroDL.model.crit.MSELoss()
-        optModel['ny'] = ny
+        optModel["ny"] = ny
 
     # model
-    if optModel['nx'] != nx:
-        print('updated nx by input data')
-        optModel['nx'] = nx
-    if eval(optModel['name']) is hydroDL.model.rnn.CudnnLstmModel:
+    if optModel["nx"] != nx:
+        print("updated nx by input data")
+        optModel["nx"] = nx
+    if eval(optModel["name"]) is hydroDL.model.rnn.CudnnLstmModel:
         model = hydroDL.model.rnn.CudnnLstmModel(
-            nx=optModel['nx'], ny=optModel['ny'], hiddenSize=optModel['hiddenSize']
+            nx=optModel["nx"], ny=optModel["ny"], hiddenSize=optModel["hiddenSize"]
         )
-    elif eval(optModel['name']) is hydroDL.model.rnn.LstmCloseModel:
+    elif eval(optModel["name"]) is hydroDL.model.rnn.LstmCloseModel:
         model = hydroDL.model.rnn.LstmCloseModel(
-            nx=optModel['nx'],
-            ny=optModel['ny'],
-            hiddenSize=optModel['hiddenSize'],
+            nx=optModel["nx"],
+            ny=optModel["ny"],
+            hiddenSize=optModel["hiddenSize"],
             fillObs=True,
         )
-    elif eval(optModel['name']) is hydroDL.model.rnn.AnnModel:
+    elif eval(optModel["name"]) is hydroDL.model.rnn.AnnModel:
         model = hydroDL.model.rnn.AnnCloseModel(
-            nx=optModel['nx'], ny=optModel['ny'], hiddenSize=optModel['hiddenSize']
+            nx=optModel["nx"], ny=optModel["ny"], hiddenSize=optModel["hiddenSize"]
         )
-    elif eval(optModel['name']) is hydroDL.model.rnn.AnnCloseModel:
+    elif eval(optModel["name"]) is hydroDL.model.rnn.AnnCloseModel:
         model = hydroDL.model.rnn.AnnCloseModel(
-            nx=optModel['nx'],
-            ny=optModel['ny'],
-            hiddenSize=optModel['hiddenSize'],
+            nx=optModel["nx"],
+            ny=optModel["ny"],
+            hiddenSize=optModel["hiddenSize"],
             fillObs=True,
         )
 
     # train
-    if optTrain['saveEpoch'] > optTrain['nEpoch']:
-        optTrain['saveEpoch'] = optTrain['nEpoch']
+    if optTrain["saveEpoch"] > optTrain["nEpoch"]:
+        optTrain["saveEpoch"] = optTrain["nEpoch"]
 
     # train model
     writeMasterFile(mDict)
@@ -289,9 +292,9 @@ def train(mDict):
         y,
         c,
         lossFun,
-        nEpoch=optTrain['nEpoch'],
-        miniBatch=optTrain['miniBatch'],
-        saveEpoch=optTrain['saveEpoch'],
+        nEpoch=optTrain["nEpoch"],
+        miniBatch=optTrain["miniBatch"],
+        saveEpoch=optTrain["saveEpoch"],
         saveFolder=out,
     )
 
@@ -310,35 +313,35 @@ def test(
 ):
     mDict = readMasterFile(out)
 
-    optData = mDict['data']
-    if not os.path.isdir(optData['rootDB']):
-        optData['rootDB'] = fixRootDB(optData['rootDB'])
-    optData['subset'] = subset
-    optData['tRange'] = tRange
-    if 'damean' not in optData.keys():
-        optData['damean'] = False
-    if 'dameanopt' not in optData.keys():
-        optData['dameanopt'] = 0
-    if 'davar' not in optData.keys():
-        optData['davar'] = 'streamflow'
-    elif type(optData['davar']) is list:
-        optData['davar'] = "".join(optData['davar'])
+    optData = mDict["data"]
+    if not os.path.isdir(optData["rootDB"]):
+        optData["rootDB"] = fixRootDB(optData["rootDB"])
+    optData["subset"] = subset
+    optData["tRange"] = tRange
+    if "damean" not in optData.keys():
+        optData["damean"] = False
+    if "dameanopt" not in optData.keys():
+        optData["dameanopt"] = 0
+    if "davar" not in optData.keys():
+        optData["davar"] = "streamflow"
+    elif type(optData["davar"]) is list:
+        optData["davar"] = "".join(optData["davar"])
 
     # generate file names and run model
     filePathLst = namePred(out, tRange, subset, epoch=epoch, doMC=doMC, suffix=suffix)
-    print('output files:', filePathLst)
+    print("output files:", filePathLst)
     for filePath in filePathLst:
         if not os.path.isfile(filePath):
             reTest = True
     if reTest is True:
-        print('Runing new results')
+        print("Runing new results")
         df, x, obs, c = loadData(optData)
         model = loadModel(out, epoch=epoch)
         hydroDL.model.train.testModel(
             model, x, c, batchSize=batchSize, filePathLst=filePathLst, doMC=doMC
         )
     else:
-        print('Loaded previous results')
+        print("Loaded previous results")
         df, x, obs, c = loadData(optData, readX=False)
 
     # load previous result - readPred
@@ -348,27 +351,27 @@ def test(
         filePath = filePathLst[k]
         dataPred[:, :, k] = pd.read_csv(filePath, dtype=np.float, header=None).values
     isSigmaX = False
-    if mDict['loss']['name'] == 'hydroDL.model.crit.SigmaLoss' or doMC is not False:
+    if mDict["loss"]["name"] == "hydroDL.model.crit.SigmaLoss" or doMC is not False:
         isSigmaX = True
         pred = dataPred[:, :, ::2]
         sigmaX = dataPred[:, :, 1::2]
     else:
         pred = dataPred
 
-    if optData['doNorm'][1] is True:
-        if eval(optData['name']) is hydroDL.data.dbCsv.DataframeCsv:
-            target = optData['target']
-            if type(optData['target']) is not list:
+    if optData["doNorm"][1] is True:
+        if eval(optData["name"]) is hydroDL.data.dbCsv.DataframeCsv:
+            target = optData["target"]
+            if type(optData["target"]) is not list:
                 target = [target]
             pred = df.transform(pred, fieldLst=target, toNorm=False)
             obs = df.transform(obs, fieldLst=target, toNorm=False)
             if isSigmaX is True:
                 sigmaX = df.transform(
-                    sigmaX, fieldLst=target, toNorm=False, opt='sigma'
+                    sigmaX, fieldLst=target, toNorm=False, opt="sigma"
                 )
-        elif eval(optData['name']) is hydroDL.data.camels.DataframeCamels:
-            pred = hydroDL.data.camels.transNorm(pred, 'usgsFlow', toNorm=False)
-            obs = hydroDL.data.camels.transNorm(obs, 'usgsFlow', toNorm=False)
+        elif eval(optData["name"]) is hydroDL.data.camels.DataframeCamels:
+            pred = hydroDL.data.camels.transNorm(pred, "usgsFlow", toNorm=False)
+            obs = hydroDL.data.camels.transNorm(obs, "usgsFlow", toNorm=False)
         if basinnorm is True:
             if type(subset) is list:
                 gageid = np.array(subset)

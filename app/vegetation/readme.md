@@ -35,7 +35,3 @@
 ## train model
 - train and test attention model [code](https://github.com/fkwai/geolearn/blob/master/app/vegetation/attention/data.py)
 
-
-
-
-

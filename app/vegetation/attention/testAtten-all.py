@@ -256,6 +256,9 @@ for k in range(int(10000)):
     optimizer.zero_grad()
     print(k, loss.item())
 
+# test
+
+x2, xc2, y2, yc2 = dataEnd2
 
 fig, ax = plt.subplots(1, 1, figsize=(10, 5))
 ax.plot(yP.detach().numpy(), yT, '*')
