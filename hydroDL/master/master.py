@@ -40,14 +40,15 @@ def dataTs2Range(dataTup, rho, returnInd=False):
                 xcLst.append(xc[i, :])
             if yc is None:
                 ycLst.append(y[j, i, :])
-        iLout.append(i)
-        jLout.append(j)
+            iLout.append(i)
+            jLout.append(j)
     xE = np.stack(xLst, axis=0)
     xE = xE.swapaxes(0, 1)
     xcE = np.stack(xcLst, axis=0)
     ycE = np.stack(ycLst, axis=0)
     if returnInd:
-        return (xE, xcE, None, ycE), (jL, iL)
+        return (xE, xcE, None, ycE), (jLout, iLout)
+        # return (xE, xcE, None, ycE), (jL, iL)
     else:
         return (xE, xcE, None, ycE)
 
