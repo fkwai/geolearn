@@ -56,7 +56,7 @@ for corr in [corrL1, corrL2, corrW1, corrW2]:
     corr[matRm] = np.nan
 
 # load linear/seasonal
-dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\QS\param'
+dirPar = r'C:\Users\geofk\work\waterQuality\modelStat\LR-All\S\param'
 matLR = np.full([len(DF.siteNoLst), len(codeLst)], np.nan)
 for k, code in enumerate(codeLst):
     filePar = os.path.join(dirPar, code)
@@ -66,7 +66,7 @@ matLR[matRm] = np.nan
 
 # load TS
 DF = dbBasin.DataFrameBasin(dataName)
-yP, ycP = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=500)
+yP, ycP = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=1000)
 codeLst = usgs.varC
 # WRTDS
 dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
@@ -78,6 +78,7 @@ dictPlot = dict()
 
 dictPlot['00010'] = ['02035000', '14203500', '11118500']
 dictPlot['00300'] = ['01193500', '07288650', '07050500']
+dictPlot['00300']=['01192500','09251000','02318500']
 
 code = '00300'
 siteLst = dictPlot[code]

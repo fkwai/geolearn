@@ -20,7 +20,8 @@ extentCONUS = [-125, -65, 25, 50]
 def mapPoint(fig, gs, lat, lon, data,
              vRange=None, cmap='jet', s=30, marker='o',
              cb=True, centerZero=False, extent=extentCONUS,
-             projection=ccrs.PlateCarree()):
+             projection=ccrs.PlateCarree(),
+             returnCB=False,**kw):
 
     if np.isnan(data).all():
         print('all nan in data')
@@ -34,10 +35,13 @@ def mapPoint(fig, gs, lat, lon, data,
     ax.coastlines(resolution='auto', color='k')
     ind = np.where(~np.isnan(data))[0]
     cs = ax.scatter(lon[ind], lat[ind], c=data[ind], cmap=cmap,
-                    s=s, marker=marker, vmin=vmin, vmax=vmax)
+                    s=s, marker=marker, vmin=vmin, vmax=vmax,**kw)
     if cb is True:
-        plt.colorbar(cs, orientation='vertical')
-    return ax
+        cb=plt.colorbar(cs, orientation='vertical')
+    if returnCB:
+        return ax,cb
+    else:  
+        return ax
 
 
 def mapGrid(fig, gs, lat, lon, data,

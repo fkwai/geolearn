@@ -65,7 +65,7 @@ for k, code in enumerate(codeLst):
 matLR[matRm] = np.nan
 
 # load TS
-yP, ycP = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=500)
+yP, ycP = basinFull.testModel(outName, DF=DF, testSet=testSet, ep=1000)
 codeLst = usgs.varC
 # WRTDS
 dirRoot = os.path.join(kPath.dirWQ, 'modelStat', 'WRTDS-dbBasin')
@@ -74,8 +74,8 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 
 
 dictPlot = dict()
-dictPlot['00618'] = ['01594440', '06905500', '12510500']
-
+# dictPlot['00618'] = ['01594440', '06905500', '12510500']
+dictPlot['00618']=['01193500','01611500','06426500']
 code = '00618'
 siteLst = dictPlot[code]
 codeStrO = usgs.codePdf.loc[code]['shortName']
