@@ -20,6 +20,9 @@ xm, zm = np.meshgrid(xx, zz)
 slopeX = data.slope_x
 # zm[:, 1:] = zm[:, 1:] + slopeX * xm[:, 1:]
 
+
+run.TimingInfo.DumpInterval
+
 cmap = matplotlib.cm.get_cmap("jet")
 fig, ax = plt.subplots(1, 1)
 hLst = list()
@@ -31,11 +34,10 @@ ax.plot(hLst)
 ax.legend()
 fig.show()
 
-data.time = 0
+data.time = 120
 fig, ax = plt.subplots(1, 1)
 cb = ax.imshow(h)
 fig.colorbar(cb)
-
 fig.show()
 
 tRange = np.arange(nt)
@@ -66,6 +68,21 @@ for t in tRange:
     # storage2=incompressible2+compressible2
     # s2Lst.append(np.mean(storage2))
 
+data.mannings.shape
+
+data.TimingInfo
+
+t = 100
+var = "qflx_infl"
+qflx_infl = parflow.read_pfb(
+    os.path.join(work_dir, "{}.out.{}.{:05d}.pfb".format(run_name, var, t))
+)
+
+
+fig, ax = plt.subplots(1, 1)
+outflow = data.overland_flow_grid()
+cb = ax.imshow(outflow)
+fig.show()
 
 s = np.array(sLst)
 fig, ax = plt.subplots(1, 1)

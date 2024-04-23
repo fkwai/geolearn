@@ -18,10 +18,6 @@ from hydroDL import kPath
 import torch.optim.lr_scheduler as lr_scheduler
 import dill
 
-dataName = "singleDaily"
-df = dbVeg.DataFrameVeg(dataName)
-df.varXC
-
 rho = 45
 dataName = "singleDaily"
 importlib.reload(hydroDL.data.dbVeg)
@@ -39,14 +35,19 @@ np.nanmax(df.x[:, :, 2])
 # calculate position
 varS = ["VV", "VH", "vh_vv"]
 varL = ["SR_B2", "SR_B3", "SR_B4", "SR_B5", "SR_B6", "ndvi", "ndwi", "nirv"]
-varM = ["Fpar", "Lai"]
+varM = ["mod_b{}".format(x) for x in range(1, 8)] + [
+    "myd_b{}".format(x) for x in range(1, 8)
+]
+varF = ["pr", "sph", "srad", "tmmn", "tmmx", "pet", "etr"]
+
 iS = [df.varX.index(var) for var in varS]
 iL = [df.varX.index(var) for var in varL]
 iM = [df.varX.index(var) for var in varM]
+iF = [df.varX.index(var) for var in varF]
 
-pSLst, pLLst, pMLst = list(), list(), list()
+pSLst, pLLst, pMLst, pFLst = list(), list(), list(), list()
 ns = yc.shape[0]
-nMat = np.zeros([yc.shape[0], 3])
+nMat = np.zeros([yc.shape[0], 4])
 for k in range(nMat.shape[0]):
     tempS = x[:, k, iS]
     pS = np.where(~np.isnan(tempS).any(axis=1))[0]
@@ -54,10 +55,13 @@ for k in range(nMat.shape[0]):
     pL = np.where(~np.isnan(tempL).any(axis=1))[0]
     tempM = x[:, k, iM]
     pM = np.where(~np.isnan(tempM).any(axis=1))[0]
+    tempF = x[:, k, iF]
+    pF = np.where(~np.isnan(tempF).any(axis=1))[0]
     pSLst.append(pS)
     pLLst.append(pL)
     pMLst.append(pM)
-    nMat[k, :] = [len(pS), len(pL), len(pM)]
+    pFLst.append(pF)
+    nMat[k, :] = [len(pS), len(pL), len(pM), len(pF)]
 
 np.where(nMat == 0)
 np.sum((np.where(nMat == 0)[1]) == 0)
@@ -70,6 +74,7 @@ nMat = nMat[indKeep, :]
 pSLst = [pSLst[k] for k in indKeep]
 pLLst = [pLLst[k] for k in indKeep]
 pMLst = [pMLst[k] for k in indKeep]
+pFLst = [pFLst[k] for k in indKeep]
 jInd = [jInd[k] for k in indKeep]
 siteIdLst = [siteIdLst[k] for k in jInd]
 
@@ -108,13 +113,17 @@ testInd = dictSubset["testInd_k05"]
 bS = 8
 bL = 6
 bM = 10
+bF = 10
 
 
 def randomSubset(opt="train", batch=1000):
     # random sample within window
     varS = ["VV", "VH", "vh_vv"]
     varL = ["SR_B2", "SR_B3", "SR_B4", "SR_B5", "SR_B6", "ndvi", "ndwi", "nirv"]
-    varM = ["Fpar", "Lai"]
+    varM = ["mod_b{}".format(x) for x in range(1, 8)] + [
+        "myd_b{}".format(x) for x in range(1, 8)
+    ]
+    varF = ["pr", "sph", "srad", "tmmn", "tmmx", "pet", "etr"]
     if opt == "train":
         indSel = np.random.permutation(trainInd)[0:batch]
     else:
@@ -122,32 +131,43 @@ def randomSubset(opt="train", batch=1000):
     iS = [df.varX.index(var) for var in varS]
     iL = [df.varX.index(var) for var in varL]
     iM = [df.varX.index(var) for var in varM]
+    iF = [df.varX.index(var) for var in varF]
     ns = len(indSel)
     rS = np.random.randint(0, nMat[indSel, 0], [bS, ns]).T
     rL = np.random.randint(0, nMat[indSel, 1], [bL, ns]).T
     rM = np.random.randint(0, nMat[indSel, 2], [bM, ns]).T
+    rF = np.random.randint(0, nMat[indSel, 3], [bF, ns]).T
     pS = np.stack([pSLst[indSel[k]][rS[k, :]] for k in range(ns)], axis=0)
     pL = np.stack([pLLst[indSel[k]][rL[k, :]] for k in range(ns)], axis=0)
     pM = np.stack([pMLst[indSel[k]][rM[k, :]] for k in range(ns)], axis=0)
+    pF = np.stack([pFLst[indSel[k]][rF[k, :]] for k in range(ns)], axis=0)
     matS1 = x[:, indSel, :][:, :, iS]
     matL1 = x[:, indSel, :][:, :, iL]
     matM1 = x[:, indSel, :][:, :, iM]
+    matF1 = x[:, indSel, :][:, :, iF]
     xS = np.stack([matS1[pS[k, :], k, :] for k in range(ns)], axis=0)
     xL = np.stack([matL1[pL[k, :], k, :] for k in range(ns)], axis=0)
     xM = np.stack([matM1[pM[k, :], k, :] for k in range(ns)], axis=0)
+    xF = np.stack([matF1[pF[k, :], k, :] for k in range(ns)], axis=0)
     pS = (pS - rho) / rho
     pL = (pL - rho) / rho
     pM = (pM - rho) / rho
-    return (
+    pF = (pF - rho) / rho
+    xTup = (
         torch.tensor(xS, dtype=torch.float32),
         torch.tensor(xL, dtype=torch.float32),
         torch.tensor(xM, dtype=torch.float32),
+        torch.tensor(xF, dtype=torch.float32),
+    )
+    pTup = (
         torch.tensor(pS, dtype=torch.float32),
         torch.tensor(pL, dtype=torch.float32),
         torch.tensor(pM, dtype=torch.float32),
-        torch.tensor(xc[indSel, :], dtype=torch.float32),
-        torch.tensor(yc[indSel, 0], dtype=torch.float32),
+        torch.tensor(pF, dtype=torch.float32),
     )
+    xcOut = torch.tensor(xc[indSel, :], dtype=torch.float32)
+    ycOut = torch.tensor(yc[indSel, 0], dtype=torch.float32)
+    return xTup, pTup, xcOut, ycOut
 
 
 class InputFeature(nn.Module):
@@ -252,20 +272,21 @@ class FinalModel(nn.Module):
 
 
 nh = 32
-xS, xL, xM, pS, pL, pM, xcT, yT = randomSubset()
-nTup = (xS.shape[-1], xL.shape[-1], xM.shape[-1])
-lTup = (xS.shape[1], xL.shape[1], xM.shape[1])
+xTup, pTup, xcT, yT = randomSubset()
+
+nTup = [x.shape[-1] for x in xTup]
+lTup = [x.shape[1] for x in xTup]
 
 # nTup = (xS.shape[-1], xL.shape[-1])
 nxc = xc.shape[-1]
 model = FinalModel(nTup, nxc, nh)
-yP = model((xS, xL, xM), (pS, pL, pM), xcT, lTup)
+yP = model(xTup, pTup, xcT, lTup)
 # yP = model((xS, xL), (pS, pL))
 
 loss_fn = nn.L1Loss(reduction="mean")
 learning_rate = 1e-2
 # optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-optimizer=optim.Adadelta(model.parameters())
+optimizer = optim.Adadelta(model.parameters())
 # scheduler = lr_scheduler.LinearLR(
 #     optimizer, start_factor=1.0, end_factor=0.01, total_iters=500
 # )
@@ -280,18 +301,21 @@ for ep in range(nEp):
     lossEp = 0
     for i in range(nIterEp):
         t0 = time.time()
-        xS, xL, xM, pS, pL, pM, xcT, yT = randomSubset()
+        xTup, pTup, xcT, yT = randomSubset()
+        yP = model(xTup, pTup, xcT, lTup)
+        # xS, xL, xM, pS, pL, pM, xcT, yT = randomSubset()
         t1 = time.time()
         model.zero_grad()
-        yP = model((xS, xL, xM), (pS, pL, pM), xcT, lTup)
+        # yP = model((xS, xL, xM), (pS, pL, pM), xcT, lTup)
+        yP = model(xTup, pTup, xcT, lTup)
         loss = loss_fn(yP, yT)
         loss.backward()
         t2 = time.time()
         lossEp = lossEp + loss.item()
         optimizer.step()
     optimizer.zero_grad()
-    xS, xL, xM, pS, pL, pM, xcT, yT = randomSubset("test")
-    yP = model((xS, xL, xM), (pS, pL, pM), xcT, lTup)
+    xTup, pTup, xcT, yT = randomSubset()
+    yP = model(xTup, pTup, xcT, lTup)
     loss = loss_fn(yP, yT)
     corr = np.corrcoef(yP.detach().numpy(), yT.detach().numpy())[0, 1]
     # if ep > 200:
@@ -327,7 +351,7 @@ iL = [df.varX.index(var) for var in varL]
 iM = [df.varX.index(var) for var in varM]
 yOut = np.zeros(len(testInd))
 
-for k, ind in enumerate(testInd):    
+for k, ind in enumerate(testInd):
     xS = x[pSLst[ind], ind, :][:, iS][None, ...]
     xL = x[pLLst[ind], ind, :][:, iL][None, ...]
     xM = x[pMLst[ind], ind, :][:, iM][None, ...]

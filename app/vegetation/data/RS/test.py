@@ -1,5 +1,6 @@
 import ee
 import pandas as pd
+# ee.Authenticate()
 
 ee.Initialize()
 
