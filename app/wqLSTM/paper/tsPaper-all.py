@@ -237,7 +237,7 @@ for code,codeStr,strLR,unit in zip(codePlotLst,codeStrLst,strLRLst,unitLst):
         titleStr = r'{}) {} of site {} {}={:.2f}; {}={:.2f}'.format(
             figN, codeStr, DF.siteNoLst[ind], '$R_{LSTM}$', statL2[ind, indC], '$R_{WRTDS}$', statW2[ind, indC])
         figP.suptitle(titleStr)
-        # figP.tight_layout()
+        figP.tight_layout()
         figP.show()
         figP.savefig(os.path.join(saveFolder, 'tsYr5_{}_{}'.format(code, siteNo)))
         figP.savefig(os.path.join(

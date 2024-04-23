@@ -289,7 +289,7 @@ def extractVarMtd(varLst):
 def label2var(label, norm=False):
     dictVar = dict(
         F=gridMET.varLst,
-        Q=['streamflow'],
+        Q=['runoff'],
         P=ntn.varLst,
         T=['datenum', 'sinT', 'cosT'],
         R=GLASS.varLst,

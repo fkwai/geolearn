@@ -21,7 +21,7 @@ DF = dbBasin.DataFrameBasin(dataName)
 # load Ca concentration
 code = "00915"
 indC = DF.varC.index(code)
-matC = DF.c[:, indC, :]
+matC = DF.c[:, :, indC]
 # load runoff
 varQ = "runoff"
 matQ = DF.q[:, :, DF.varQ.index(varQ)]
@@ -47,17 +47,43 @@ def funcM():
 
 def funcP(iP, axP):
     print(iP)
-    dataPlot = [
-        matC[:, iP],
-        matQ[:, iP],
-        matF[:, iP],
-    ]
     axT1 = axP.twinx()
     axT2 = axP.twinx()
     axT2.spines["right"].set_position(("outward", 60))
-    axplot.multiTS([axP, axT1, axT2], DF.t, dataPlot)
-    titleStr = "{} {:.2f} {:.2f}".format(DF.siteNoLst[iP])
+    axT2.invert_yaxis()
+    axP.plot(DF.t, matC[:, iP],'r*',label=usgs.getCodeStr(code))
+    axT1.plot(DF.t, matQ[:, iP],'b-',label='runoff')
+    axT2.plot(DF.t, matF[:, iP],'c-',label='precipitation')
+    titleStr = "{}".format(DF.siteNoLst[iP])
     axplot.titleInner(axP, titleStr)
 
 
-# figplot.clickMap(funcM, funcP)
+figplot.clickMap(funcM, funcP)
+
+# train LSTM model
+dataName = 'G200'
+label = 'QFPR2C'
+# DF = dbBasin.DataFrameBasin(dataName)
+rho = 365
+nbatch = 500
+hs = 256
+trainSet = 'rmYr5'
+testSet = 'pkYr5'
+varX = dbBasin.label2var(label.split('2')[0])
+mtdX = dbBasin.io.extractVarMtd(varX)
+varY = dbBasin.label2var(label.split('2')[1])
+mtdY = dbBasin.io.extractVarMtd(varY)
+varXC = gageII.varLst
+mtdXC = dbBasin.io.extractVarMtd(varXC)
+varYC = None
+mtdYC = dbBasin.io.extractVarMtd(varYC)
+outName = '{}-{}-{}-hs{}'.format(dataName, label, trainSet, hs)
+dictP = basinFull.wrapMaster(
+    outName=outName, dataName=dataName, trainSet=trainSet,
+    nEpoch=500, saveEpoch=50, crit='RmseLoss3D',
+    varX=varX, varY=varY, varXC=varXC, varYC=varYC,
+    mtdX=mtdX, mtdY=mtdY, mtdXC=mtdXC, mtdYC=mtdYC,
+    hiddenSize=hs, batchSize=[rho, nbatch])
+# cmdP = 'python /home/users/kuaifang/GitHUB/geolearn/hydroDL/master/cmd/basinFull.py -M {}'
+# slurm.submitJobGPU(outName, cmdP.format(outName), nH=24, nM=64)
+basinFull.trainModel(outName)

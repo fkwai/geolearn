@@ -135,6 +135,7 @@ class DataFrameBasin:
         for var in varLst:
             for dataT, varT in zip(dataTemp, varTemp):
                 if var in varT:
+                    var
                     temp.append(dataT[:, :, varT.index(var)])
         if len(temp) != len(varLst):
             raise Exception('Variable {} not found!'.format(var))
