@@ -35,20 +35,6 @@ matG = DF.g[:, DF.varG.index(varG)]
 # plot
 lat, lon = DF.getGeo()
 
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-
-projection = ccrs.PlateCarree()
-fig = plt.figure(figsize=(6, 4))
-gs = gridspec.GridSpec(1, 2)
-ax = fig.add_subplot(gs, projection=projection)
-ax.set_extent([-125, -65, 25, 50], crs=ccrs.Geodetic())
-
-axM = mapplot.mapPoint(figM, gsM[0, 1], lat, lon, matG)
-axM.set_title("basin area")
-figM.show()
-
 
 def funcM():
     figM = plt.figure(figsize=(6, 4))
@@ -74,4 +60,4 @@ def funcP(iP, axP):
     axplot.titleInner(axP, titleStr)
 
 
-figplot.clickMap(funcM, funcP)
+# figplot.clickMap(funcM, funcP)
