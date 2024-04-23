@@ -48,7 +48,7 @@ def multiYrTS(axes, yrLst, t, dataPlot, cLst='rbk', styLst='--*', legLst=None):
         ind = np.where(bp)[0]
         indLst.append(ind)
     for k in range(ny):
-        print(k)
+        # print(k)
         ind = indLst[k]
         for kk, x in enumerate(dataPlot):
             legStr = None if legLst is None else legLst[kk]
@@ -163,14 +163,14 @@ def plot121(ax, x, y, specP='b*', specL='k-', vR=None):
     _ = ax.plot([vmin, vmax], [vmin, vmax], specL)
 
 
-def scatter121(ax, x, y, c, specL='k-', vR=None, size=None, cmap='viridis'):
+def scatter121(ax, x, y, c, specL='k-', vR=None, size=None, cmap='viridis', **kw):
     if vR is None:
         vmax = None
         vmin = None
     else:
         vmin = vR[0]
         vmax = vR[1]
-    out = ax.scatter(x, y, c=c, s=size, vmin=vmin, vmax=vmax, cmap=cmap)
+    out = ax.scatter(x, y, c=c, s=size, vmin=vmin, vmax=vmax, cmap=cmap,**kw)
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     vmin = np.min([xlim[0], ylim[0]])

@@ -77,7 +77,8 @@ yW = np.load(os.path.join(dirRoot, fileName)+'.npz')['arr_0']
 dictPlot = dict()
 
 # dictPlot['00915'] = ['12323800', '08057200', '02175000']
-dictPlot['00915'] = ['12323800', '07241550', '07241000']
+# dictPlot['00915'] = ['12323800', '07241550', '07241000']
+dictPlot['00915'] = ['12323600','09251000','07227500']
 code = '00915'
 siteLst = dictPlot[code]
 codeStr = usgs.codePdf.loc[code]['shortName']

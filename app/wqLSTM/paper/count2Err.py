@@ -125,7 +125,7 @@ for saveStr, errMat in zip(['corr', 'kge'], [corrL2, kgeL2]):
         
         levels=np.percentile(z,[25,50,75,85,90,95,99,100])
         ax=axes[ix,iy]
-        ax.contourf(xx, yy, z,levels=levels, cmap='viridis')
+        ax.contourf(xx, yy, z,levels=levels, cmap='viridis',alpha=0.8)
         # axes[ix,iy].contourf(xx, yy, z, cmap='viridis')
         ax.plot(cc, rr, '.',markersize=1.5,color='#e41a1c') 
         # ax.plot(x_med,p_med,'k-')
@@ -149,7 +149,6 @@ for saveStr, errMat in zip(['corr', 'kge'], [corrL2, kgeL2]):
 
 # 4 plots
 codePlot=['00300','00915','00618','00945']
-
 for saveStr, errMat in zip(['corr', 'kge'], [corrL2, kgeL2]):
     fig, axes = plt.subplots(2, 2, figsize=(10, 6))
     for kk,code in enumerate(codePlot):
@@ -159,8 +158,13 @@ for saveStr, errMat in zip(['corr', 'kge'], [corrL2, kgeL2]):
         c=np.log10(c)   
         r=errMat[:,ic]
         cc, rr = utils.rmNan([c,r], returnInd=False)
-        c1, c2 = np.nanmin(cc), np.nanmax(cc)
-        r1, r2 = np.nanmin(rr), np.nanmax(rr)        
+        c1,c2=np.log10(80),np.log10(2000)        
+        if saveStr=='kge':
+            r1,r2=-0.5,1
+        elif saveStr=='corr':
+            r1,r2=0,1
+        # c1, c2 = np.nanmin(cc), np.nanmax(cc)
+        # r1, r2 = np.nanmin(rr), np.nanmax(rr)        
         xx = np.linspace(c1, c2, 100)
         yy = np.linspace(r1, r2, 100)
         xm, ym = np.meshgrid(xx, yy)
@@ -168,31 +172,20 @@ for saveStr, errMat in zip(['corr', 'kge'], [corrL2, kgeL2]):
         k = stats.gaussian_kde([cc, rr])
         z = np.reshape(k(p).T, xm.shape)    
         levels=np.percentile(z,[25,50,75,85,90,95,99,100])
-        ax=axes[ix,iy]
-        
-        # find medians
-        # pLst = list()
-        # xLevel=np.array([np.log10(x) for x in range(0,1500,100)])
-        # for l1,l2 in zip(xLevel[:-1],xLevel[1:]):
-        #     ind=np.where((cc>=l1)&(cc<l2))[0]
-        #     pLst.append(np.nanmedian(rr[ind]))
-        # xLst=(xLevel[:-1]+xLevel[1:])/2
-        # x_med,p_med=utils.rmNan([xLst,np.array(pLst)],returnInd=False)
-
-        ax.contourf(xx, yy, z,levels=levels, cmap='viridis')
-        # axes[ix,iy].contourf(xx, yy, z, cmap='viridis')
-        ax.plot(cc, rr, '.',markersize=3,color='#e41a1c') 
-        # ax.plot(x_med,p_med,'k-')
-        major_ticks, major_tick_labels, minor_ticks = generate_log_ticks(c1,c2)   
+        ax=axes[ix,iy]        
+        ax.contourf(xx, yy, z,levels=levels, cmap='viridis',alpha=0.8)        
+        ax.plot(cc, rr, '.',markersize=3,color='#e41a1c')                 
+        major_ticks, major_tick_labels, minor_ticks = generate_log_ticks(1,4)   
         ax.set_xticks(major_ticks)
         ax.set_xticklabels(major_tick_labels)
         ax.set_xticks(minor_ticks, minor=True)
-        titleStr='{}'.format(usgs.codePdf.loc[code]['shortName'])
-        codeStr = usgs.codePdf.loc[code]['shortName']
-        if codeStr in usgs.dictLabel.keys():
-            titleStr=usgs.dictLabel[codeStr]
-        else:
-            titleStr=codeStr
+        ax.set_ylim([r1,r2])
+        ax.set_xlim([c1,c2])
+        if ix==0:
+            ax.set_xticklabels([])
+        if iy==1:
+            ax.set_yticklabels([])            
+        titleStr='{}) {}'.format('ABCD'[kk],usgs.getCodeStr(code))
         ax.text(0.95, 0.05, titleStr, transform=ax.transAxes, fontsize=12,
             verticalalignment='bottom', horizontalalignment='right')
     fig.show()
@@ -214,3 +207,19 @@ cbar.ax.set_ylabel('KGE')
 fig.show()
 plt.savefig(os.path.join(dirPaper, 'count-{}-leg'.format(saveStr)))
 plt.savefig(os.path.join(dirPaper, 'count-{}-leg.svg'.format(saveStr)))
+
+ind1=count1<500
+ind2=count1>=500
+
+a=corrL2.copy()
+b=corrL2.copy()
+a[ind1]=np.nan
+b[ind2]=np.nan
+dataPlot=list()
+for code in codeLst:   
+    ic=codeLst.index(code)   
+    dataPlot.append([a[:,ic],b[:,ic]])
+strLst=usgs.codeStrPlot(codeLst)
+cLst=['#e41a1c','#377eb8']
+fig,axes=figplot.boxPlot(dataPlot, widths=0.5, figsize=(12,4),label1=strLst,cLst=cLst)
+fig.show()

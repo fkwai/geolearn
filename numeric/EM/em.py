@@ -35,3 +35,18 @@ for z_n in Z:
             size=1)
     X = np.vstack((X, x_n))
 X
+
+import matplotlib.pyplot as plt
+fig,ax=plt.subplots(1,1)
+ax.plot(X[:,0],'r-')
+ax.plot(X[:,1],'b-')
+fig.show()
+
+fig,ax=plt.subplots(1,1)
+for a in range(10):
+    p=np.linspace(-2,2,100)
+    # y=1/(1+np.exp(a*(np.log(1-p)-np.log(p))))
+    y=1/(1+np.exp(a*p))
+    ax.plot(p,y,'-',label='a={}'.format(a))
+ax.legend()
+fig.show()
