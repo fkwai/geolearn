@@ -16,9 +16,7 @@ import time
 outFile = os.path.join(kPath.dirVeg, 'NFMD', 'NFMD_single.json')
 with open(outFile, 'r') as fp:
     dictLst = json.load(fp)
-dfSite = pd.DataFrame(
-    columns=['siteId', 'siteName', 'state', 'fuel', 'gacc', 'lat', 'lon']
-)
+dfSite = pd.DataFrame(columns=['siteId', 'siteName', 'state', 'fuel', 'gacc', 'lat', 'lon'])
 for k, siteDict in enumerate(dictLst):
     dfSite.loc[k] = [
         siteDict['siteId'],
@@ -37,9 +35,10 @@ sd = '2015-01-01'
 ed = '2023-03-01'
 
 
-def download(colStr, scale, dfSite):
-    outFolder = os.path.join(kPath.dirVeg, 'RS', '{}-{}m'.format(colStr, scale))
-    col = getattr(product, colStr)(sd, ed)
+def download(p, saveStr, scale, dfSite):
+    outFolder = os.path.join(kPath.dirVeg, 'RS', '{}-{}m'.format(saveStr, scale))
+    # col = getattr(product, colStr)(sd, ed)
+    col = product.getCol(p, sd, ed)
     if not os.path.exists(outFolder):
         os.mkdir(outFolder)
     for ind, row in dfSite.iterrows():
@@ -48,15 +47,17 @@ def download(colStr, scale, dfSite):
         lat = row['lat']
         lon = row['lon']
         fileName = os.path.join(outFolder, siteId + '.csv')
-        if not os.path.exists(fileName):            
+        if not os.path.exists(fileName):
             geometry = ee.Geometry.Point([lon, lat])
             region = col.getRegion(geometry, int(scale)).getInfo()
             df = geeutils.record2df(region)
             df.to_csv(fileName, index=False)
-            print(colStr, scale, siteId, time.time() - t0)
+            print(p, scale, siteId, time.time() - t0)
 
 
-productLst = ['MYD09GA', 'MOD09GA']
+# productLst = ['MYD09GA', 'MOD09GA']
+productLst = ['MODIS/061/MCD43A4']
+saveLst = ['MCD43A4']
 scale = 500
-for p in productLst:
-    download(p, scale, dfSite)
+for p, saveStr in zip(productLst, saveLst):
+    download(p, saveStr, scale, dfSite)

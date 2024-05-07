@@ -8,15 +8,20 @@ import matplotlib
 from hydroDL import kPath
 import parflow.tools.hydrology as pfhydro
 
-nt = 120
+# nt = 24*30*6
+nt = 24*30
 
 # mesh
 run_name = '15060202'
+# run_name = "10180001"
+
 work_dir = os.path.join(kPath.dirParflow, run_name, 'outputs')
 run = Run.from_definition(os.path.join(work_dir, run_name + '.pfidb'))
 data = run.data_accessor
 dx, dy, dz = data.dx, data.dy, data.dz
 nz, ny, nx = data.shape
+data.shshape = [10, ny, nx]
+
 xx = np.arange(0, nx + 1) * dx
 zz = np.insert(np.cumsum(dz), 0, 0)
 xm, zm = np.meshgrid(xx, zz)
@@ -63,7 +68,7 @@ storage = data.subsurface_storage
 pond = data.surface_storage
 s0 = storage.sum() + pond.sum()
 f = 3.6
-mat = np.zeros([nt, 5])
+mat = np.zeros([nt, 6])
 temp = 0
 for k in range(nt):
     data.time = k + 1
@@ -74,19 +79,28 @@ for k in range(nt):
     s1 = storage.sum() + pond.sum()
     # s1 = storage.sum()
     evap = data.clm_output('qflx_evap_tot')
+    # swe= data.clm_output('swe_out')
     p = data.clm_forcing('APCP')
     mat[k, 0] = s1 - s0
     mat[k, 1] = (evap * maskS).sum() * dx * dy * f
     mat[k, 2] = outflow * f
     mat[k, 3] = (p * maskS).sum() * dx * dy * f
-    temp = temp - mat[k, 2] - mat[k, 1] + mat[k, 3]
-    mat[k, 4] = temp
+    # mat[k, 4] = (swe * maskS).sum() * dx * dy * f
+    temp = temp - mat[k, 2] - mat[k, 1] + mat[k, 3] 
+    mat[k, 5] = temp
 fig, ax = plt.subplots(1, 1)
 ax.plot(mat[:, 1], label='evap')
 ax.plot(mat[:, 2], label='outflow')
 ax.plot(mat[:, 3], label='prcp')
 ax.plot(mat[:, 0], label='storage')
-ax.plot(mat[:, 4], label='storage calculated')
+ax.plot(mat[:, -1], label='storage calculated')
+ax.legend()
+fig.show()
+
+
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(mat[:, 2],mat[:, 0],'*-')
 ax.legend()
 fig.show()
 
@@ -94,9 +108,9 @@ fig.show()
 slopeX = data.slope_x
 slopeY = data.slope_y
 
-data.elevation
-data.t = 100
-outflow = data.overland_flow_grid()
-fig,ax=plt.subplots(1,1)
-ax.pcolor(outflow)
-fig.show()
+# data.elevation
+# data.t = 100
+# outflow = data.overland_flow_grid()
+# fig,ax=plt.subplots(1,1)
+# ax.pcolor(outflow)
+# fig.show()
