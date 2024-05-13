@@ -13,7 +13,8 @@ nfmdFile = os.path.join(kPath.dirVeg, "NFMD", "NFMD_single.json")
 sd = "2016-10-15"
 ed = "2021-12-15"
 dataName = "singleDaily-MG"
-gridName = 'modisgrid'
+# gridName = 'modisgrid'
+gridName = 'nadgrid'
 
 dirLandsat = os.path.join(kPath.dirVeg, "RS", "landsat8-{}".format(gridName))
 dirSentinel = os.path.join(kPath.dirVeg, "RS", "sentinel1-{}".format(gridName))
