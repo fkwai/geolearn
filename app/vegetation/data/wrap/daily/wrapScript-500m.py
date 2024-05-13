@@ -12,8 +12,13 @@ from osgeo import ogr, gdal
 nfmdFile = os.path.join(kPath.dirVeg, "NFMD", "NFMD_single.json")
 sd = "2016-10-15"
 ed = "2021-12-15"
-dataName = "single"
-scale = 500
+dataName = "singleDaily-MG"
+gridName = 'modisgrid'
+
+dirLandsat = os.path.join(kPath.dirVeg, "RS", "landsat8-{}".format(gridName))
+dirSentinel = os.path.join(kPath.dirVeg, "RS", "sentinel1-{}".format(gridName))
+dirModis = os.path.join(kPath.dirVeg, "RS", "MCD43A4-{}".format(gridName))
+
 
 # load NFMD json
 tAll = pd.date_range(sd, ed, freq="D")
@@ -45,23 +50,16 @@ for siteDict in dictLst:
     matNFMD[:, k] = temp["v"].values
 
 # landsat
-dirLandsat = os.path.join(kPath.dirVeg, "RS", "landsat8-{}m".format(scale))
 varL = ["SR_B2", "SR_B3", "SR_B4", "SR_B5", "SR_B6"]
 matL = np.full([len(tAll), len(siteIdLst), len(varL)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirLandsat, siteId + ".csv"))
-    cloud_shadow = [328, 392, 840, 904, 1350]
-    cloud = [352, 368, 416, 432, 480, 864, 880, 928, 944, 992]
-    high_confidence_cloud = [480, 992]
-    all_masked_values = cloud_shadow + cloud + high_confidence_cloud
-    df = df[~df["QA_PIXEL"].isin(all_masked_values)]
     df.index = pd.to_datetime(df["time"]).dt.date.astype("datetime64[D]")
     df = df[varL].groupby(df.index).mean()
     temp = pd.DataFrame(index=tAll).join(df)
     matL[:, siteIdLst.index(siteId), :] = temp.values
 
 # sentinel
-dirSentinel = os.path.join(kPath.dirVeg, "RS", "sentinel1-{}m".format(scale))
 varS = ["VV", "VH"]
 matS = np.full([len(tAll), len(siteIdLst), len(varS)], np.nan)
 for siteId in siteIdLst:
@@ -71,30 +69,8 @@ for siteId in siteIdLst:
     temp = pd.DataFrame(index=tAll).join(df)
     matS[:, siteIdLst.index(siteId), :] = temp.values
 
-# modis Aqua and Terra
-dirAqua = os.path.join(kPath.dirVeg, "RS", "MOD09GA-{}m".format(scale))
-dirTerra = os.path.join(kPath.dirVeg, "RS", "MYD09GA-{}m".format(scale))
-varM = ["sur_refl_b0{}".format(x) for x in range(1, 8)]
-matM = np.full([len(tAll), len(siteIdLst), len(varM)], np.nan)
-prodLst = ["Aqua", "Terra"]
-dictModis = dict()
-for label, dirModis in zip(prodLst, [dirAqua, dirTerra]):
-    matM = np.full([len(tAll), len(siteIdLst), len(varM)], np.nan)
-    for siteId in siteIdLst:
-        df = pd.read_csv(os.path.join(dirModis, siteId + ".csv"))
-        df.index = pd.to_datetime(df["time"]).dt.date.astype("datetime64[D]")
-        df = df[varM].groupby(df.index).mean()
-        temp = pd.DataFrame(index=tAll).join(df)
-        matM[:, siteIdLst.index(siteId), :] = temp.values
-    dictModis[label] = matM
-matMA = np.concatenate([dictModis["Aqua"], dictModis["Terra"]], axis=-1)
-varMA = ["mod_b{}".format(x) for x in range(1, 8)] + ["myd_b{}".format(x) for x in range(1, 8)]
-
 # modis Adjusted
-dirModis = os.path.join(kPath.dirVeg, "RS", "MCD43A4-{}m".format(scale))
-varM = ["Nadir_Reflectance_Band{}".format(x) for x in range(1, 8)] + [
-    "BRDF_Albedo_Band_Mandatory_Quality_Band{}".format(x) for x in range(1, 8)
-]
+varM = ["Nadir_Reflectance_Band{}".format(x) for x in range(1, 8)]
 matM = np.full([len(tAll), len(siteIdLst), len(varM)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirModis, siteId + ".csv"))
@@ -102,9 +78,7 @@ for siteId in siteIdLst:
     df = df[varM].groupby(df.index).mean()
     temp = pd.DataFrame(index=tAll).join(df)
     matM[:, siteIdLst.index(siteId), :] = temp.values
-    dictModis[label] = matM
-matMA2 = matM
-varMA2 = ["MCD43A4_b{}".format(x) for x in range(1, 8)] + ["MCD43A4_qual_b{}".format(x) for x in range(1, 8)]
+varM = ["MCD43A4_b{}".format(x) for x in range(1, 8)]
 
 # read forcing
 varF = ["pr", "sph", "srad", "tmmn", "tmmx", "pet", "etr"]
@@ -191,14 +165,13 @@ varSA = varS + ["vh_vv"]
 
 
 # combine
-varX = varSA + varLA + varMA + varMA2 + varF
-matX = np.concatenate([matSA, matLA, matMA.matMA2, matF], axis=-1)
+varX = varSA + varLA + varM + varF
+matX = np.concatenate([matSA, matLA, matM, matF], axis=-1)
 varY = ["LFMC"]
 matY = matNFMD[:, :, None]
 varXC = varConst + varLC
 matXC = np.concatenate([matConst, matLC], axis=-1)
 
-dataName = "singleDaily-{}m".format(scale)
 outFolder = os.path.join(kPath.dirVeg, "model", "data", dataName)
 if not os.path.exists(outFolder):
     os.mkdir(outFolder)

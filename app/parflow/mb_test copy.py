@@ -9,19 +9,25 @@ from hydroDL import kPath
 import parflow.tools.hydrology as pfhydro
 
 # nt = 24*30*6
-nt = 24*30
+nt = 24*30*3
 
-# mesh
-run_name = '15060202'
-# run_name = "10180001"
+# run_name ='03140106'
+# run_name ='05120209'
+# run_name ='10180001'
+# run_name ='11140102'
+run_name ='14080103'
+# run_name ='15060202'
+
 
 work_dir = os.path.join(kPath.dirParflow, run_name, 'outputs')
 run = Run.from_definition(os.path.join(work_dir, run_name + '.pfidb'))
 data = run.data_accessor
 dx, dy, dz = data.dx, data.dy, data.dz
-nz, ny, nx = data.shape
-data.shshape = [10, ny, nx]
 
+
+# temp=np.array([0.1,0.1,0.1,0.1,0.1,0.1,0.1])
+# data.dz=np.concatenate([dz,temp])
+nz, ny, nx = data.shape
 xx = np.arange(0, nx + 1) * dx
 zz = np.insert(np.cumsum(dz), 0, 0)
 xm, zm = np.meshgrid(xx, zz)

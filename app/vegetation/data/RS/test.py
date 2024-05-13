@@ -18,8 +18,13 @@ a.getInfo()
 col = ee.ImageCollection('MODIS/061/MCD43A4')
 proj = col.mosaic().projection()
 grid = col.geometry().coveringGrid(proj)
+a=col.geometry()
+b=a.coveringGrid(proj)
+b.getInfo()
+grid.getInfo()
+t=col.mosaic().reduceRegion(reducer=ee.Reducer.mean(), geometry=grid)
 
-
+t.getInfo()
 def record2df(record):
     df = pd.DataFrame.from_records(record[1:], columns=record[0])
     # df.drop('id', axis=1, inplace=True)

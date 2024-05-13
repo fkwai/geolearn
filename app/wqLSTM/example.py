@@ -17,6 +17,21 @@ dataName = "G200"
 DF = dbBasin.DataFrameBasin(dataName)
 
 
+code = '80154'
+siteLst=['08334000','08340500','08353000','09382000','09397300']
+siteId='08334000'
+
+indC = DF.varC.index(code)
+for site in siteLst:
+    indS = DF.siteNoLst.index(site)
+    v = DF.c[:, indS, indC]
+    t=DF.t
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(t, v,'*')
+    ax.set_title(site)
+    fig.show()
+
+
 # explain of DataFrameBasin
 # load Ca concentration
 code = "00915"

@@ -5,10 +5,10 @@ import numpy as np
 import matplotlib
 from hydroDL import kPath
 
-nt = 120
+nt = 360
 
 # mesh
-run_name = 'LW'
+run_name = 'LW2'
 work_dir = os.path.join(kPath.dirParflow, run_name)
 run = Run.from_definition(os.path.join(work_dir, run_name + '.pfidb'))
 data = run.data_accessor
@@ -71,6 +71,12 @@ ax.plot(mat[:, 4], label='storage calculated')
 ax.legend()
 fig.show()
 
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(mat[:, 2],mat[:, 0],'*-')
+ax.legend()
+fig.show()
+
 # mat[:, 0] / mat[:, -1]
 
 # subsurface
@@ -95,7 +101,7 @@ for k in range(nt):
     mat[k, 0] = s1 - s0
     mat[k, 1] = (evap * maskS).sum() * dx * dy * f
     mat[k, 2] = outflow.sum()
-    mat[k, 3] = (p * maskS).sum() * dx * dy * f
+    mat[k, 3] = (infl * maskS).sum() * dx * dy * f
     temp = temp - mat[k, 2] - mat[k, 1] + mat[k, 3]
     mat[k, 4] = temp
 fig, ax = plt.subplots(1, 1)

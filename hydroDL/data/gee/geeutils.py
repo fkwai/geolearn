@@ -19,6 +19,3 @@ def record2df(record):
     df.time = df.time / 1000
     df['time'] = pd.to_datetime(df['time'], unit='s')
     df['time'] = df['time'].dt.floor('S')
-    # df.rename(columns={'time': 'date'}, inplace=True)
-    df = df.sort_values(by='time')
-    return df

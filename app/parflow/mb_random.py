@@ -8,6 +8,8 @@ from hydroDL import kPath
 nt = 240
 
 # mesh
+fig, ax = plt.subplots(1, 1)
+
 for seed in range(3):
     run_name = 'LW2-{}'.format(seed)
 
@@ -33,6 +35,7 @@ for seed in range(3):
     pond = data.surface_storage
     s0 = storage.sum() + pond.sum()
     mat = np.zeros([nt, 5])
+    matD= np.zeros([int(nt/24), 5])
     temp = 0
     for k in range(nt):
         data.time = k + 1
@@ -49,21 +52,26 @@ for seed in range(3):
         mat[k, 3] = (p * maskS).sum() * dx * dy * f
         temp = temp - mat[k, 2] - mat[k, 1] + mat[k, 3]
         mat[k, 4] = temp
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(mat[:, 1], label='evap')
-    ax.plot(mat[:, 2], label='outflow')
-    ax.plot(mat[:, 3], label='prcp')
-    ax.plot(mat[:, 0], label='storage')
-    ax.plot(mat[:, 4], label='storage calculated')
-    ax.legend()
-    fig.show()
+    # hourly mat to daily matD
+    matTemp=mat.T.reshape([5,int(nt/24),24])
+    matD=np.mean(matTemp,axis=-1).T
+    ax.plot(mat[:, 0],mat[:, 2],'.',label='case {}'.format(seed))
+    ax.plot(matD[:, 0],matD[:, 2],'*-',label='case {}'.format(seed))
+
+    
+    # fig, ax = plt.subplots(1, 1)
+    # ax.plot(mat[:, 1], label='evap')
+    # ax.plot(mat[:, 2], label='outflow')
+    # ax.plot(mat[:, 3], label='prcp')
+    # ax.plot(mat[:, 0], label='storage')
+    # ax.plot(mat[:, 4], label='storage calculated')
+    # ax.legend()
+    # fig.show()
 
 
 
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(mat[:, 2],mat[:, 0],'*-')
-    ax.legend()
-    fig.show()
+ax.legend()
+fig.show()
 
 
 file = '/home/kuai/work/parflow/LW/input/NLDAS/NLDAS.APCP.000097_to_000120.pfb'
