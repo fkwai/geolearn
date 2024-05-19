@@ -136,5 +136,5 @@ for opt in optLst:
             if not os.path.exists(fileName):
                 data = col.filterBounds(bb).map(lambda image: getMean(image, bb, scale)).getInfo()
                 df = feature2df(data)
-                df.to_csv(os.path.join(outFolder, siteId + '.csv'), index=False)
+                df.to_csv(os.path.join(outFolder, siteId + '.csv'))
             print('{} {} {} {:.2f} {:.2f}'.format(k, siteId, strTemp, time.time() - t0, time.time() - t1))

@@ -99,9 +99,9 @@ dxM = projM['transform'][0]
 dyM = projM['transform'][4]
 
 
-# generate BB
+# from modis BB
 t0 = time.time()
-for k, siteId in enumerate(dfSite.index.tolist()):
+for k, siteId in enumerate(dfSite.index.tolist()[:1]):
     lat = dfSite.loc[siteId]['lat']
     lon = dfSite.loc[siteId]['lon']
     point = ee.Geometry.Point([lon, lat])
@@ -121,8 +121,8 @@ for k, siteId in enumerate(dfSite.index.tolist()):
     for col, strTemp, scale in zip([colM, colL, colS], [strM, strL, strS], [500, 30, 10]):
         outFolder = os.path.join(kPath.dirVeg, 'RS', '{}-modisgrid'.format(strTemp))
         fileName = os.path.join(outFolder, siteId + '.csv')
-        if not os.path.exists(fileName):
-            data = col.filterBounds(bb).map(lambda image: getMean(image, bb, scale)).getInfo()
-            df = feature2df(data)
-            df.to_csv(os.path.join(outFolder, siteId + '.csv'), index=False)
+        # if not os.path.exists(fileName):
+        data = col.filterBounds(bb).map(lambda image: getMean(image, bb, scale)).getInfo()
+        df = feature2df(data)
+        df.to_csv(os.path.join(outFolder, siteId + '.csv'))
         print('{} {} {} {:.2f} {:.2f}'.format(k, siteId, strTemp, time.time() - t0, time.time() - t1))
