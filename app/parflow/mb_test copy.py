@@ -14,8 +14,8 @@ nt = 24*30*3
 # run_name ='03140106'
 # run_name ='05120209'
 # run_name ='10180001'
-# run_name ='11140102'
-run_name ='14080103'
+run_name ='11140102'
+# run_name ='14080103'
 # run_name ='15060202'
 
 
@@ -36,11 +36,12 @@ maskS = data.mask[0, :, :]
 maskS[maskS > 0] = 1
 maskS = maskS.astype(bool)
 
-data.time = 120
+data.time = 100
 temp = data.wtd
-temp[~maskS] = np.nan
+# temp[~maskS] = np.nan
 fig, ax = plt.subplots(1, 1)
 cb = ax.pcolor(temp)
+ax.set_title('wtd huc {}'.format(run_name))
 fig.colorbar(cb)
 fig.show()
 

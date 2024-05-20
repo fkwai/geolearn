@@ -88,7 +88,8 @@ colS = (
     .filter(ee.Filter.listContains("transmitterReceiverPolarisation", "VH"))
 )
 
-optLst = ['nadgrid', 'modisgrid']
+# optLst = ['nadgrid', 'modisgrid']
+optLst = ['modisgrid']
 
 for opt in optLst:
     for strTemp in [strS, strM, strL]:
@@ -98,9 +99,9 @@ for opt in optLst:
     if opt == 'nadgrid':
         proj = ee.Projection('EPSG:5072').getInfo()
     elif opt == 'modisgrid':
-        projM = colM.first().projection().getInfo()
-        dxM = projM['transform'][0]
-        dyM = projM['transform'][4]
+        proj = colM.first().projection().getInfo()
+        dxM = proj['transform'][0]
+        dyM = proj['transform'][4]
 
     t0 = time.time()
     for k, siteId in enumerate(dfSite.index.tolist()):
@@ -117,7 +118,7 @@ for opt in optLst:
             x2 = x1 + 500
             y2 = y1 + 500
         elif opt == 'modisgrid':
-            pointM = point.transform(projM['crs'])
+            pointM = point.transform(proj['crs'])
             x, y = pointM.getInfo()['coordinates']
             xmod = np.mod(x, dxM)
             ymod = np.mod(y, dyM)

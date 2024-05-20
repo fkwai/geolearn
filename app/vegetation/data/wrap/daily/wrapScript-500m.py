@@ -12,9 +12,10 @@ from osgeo import ogr, gdal
 nfmdFile = os.path.join(kPath.dirVeg, "NFMD", "NFMD_single.json")
 sd = "2016-10-15"
 ed = "2021-12-15"
-dataName = "singleDaily-MG"
 # gridName = 'modisgrid'
 gridName = 'nadgrid'
+dataName = "singleDaily-{}".format(gridName)
+
 
 dirLandsat = os.path.join(kPath.dirVeg, "RS", "landsat8-{}".format(gridName))
 dirSentinel = os.path.join(kPath.dirVeg, "RS", "sentinel1-{}".format(gridName))
@@ -51,11 +52,11 @@ for siteDict in dictLst:
     matNFMD[:, k] = temp["v"].values
 
 # landsat
-varL = ["SR_B2", "SR_B3", "SR_B4", "SR_B5", "SR_B6"]
+varL = ["SR_B{}".format(x) for x in range(1, 8)]
 matL = np.full([len(tAll), len(siteIdLst), len(varL)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirLandsat, siteId + ".csv"))
-    df.index = pd.to_datetime(df["time"]).dt.date.astype("datetime64[D]")
+    df.index = pd.to_datetime(df["date"]).dt.date.astype("datetime64[D]")    
     df = df[varL].groupby(df.index).mean()
     temp = pd.DataFrame(index=tAll).join(df)
     matL[:, siteIdLst.index(siteId), :] = temp.values
@@ -65,7 +66,7 @@ varS = ["VV", "VH"]
 matS = np.full([len(tAll), len(siteIdLst), len(varS)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirSentinel, siteId + ".csv"))
-    df.index = pd.to_datetime(df["time"]).dt.date.astype("datetime64[D]")
+    df.index = pd.to_datetime(df["date"]).dt.date.astype("datetime64[D]")
     df = df[varS].groupby(df.index).mean()
     temp = pd.DataFrame(index=tAll).join(df)
     matS[:, siteIdLst.index(siteId), :] = temp.values
@@ -75,7 +76,7 @@ varM = ["Nadir_Reflectance_Band{}".format(x) for x in range(1, 8)]
 matM = np.full([len(tAll), len(siteIdLst), len(varM)], np.nan)
 for siteId in siteIdLst:
     df = pd.read_csv(os.path.join(dirModis, siteId + ".csv"))
-    df.index = pd.to_datetime(df["time"]).dt.date.astype("datetime64[D]")
+    df.index = pd.to_datetime(df["date"]).dt.date.astype("datetime64[D]")
     df = df[varM].groupby(df.index).mean()
     temp = pd.DataFrame(index=tAll).join(df)
     matM[:, siteIdLst.index(siteId), :] = temp.values
@@ -179,3 +180,9 @@ if not os.path.exists(outFolder):
 outFile = os.path.join(outFolder, "data.npz")
 np.savez(outFile, t=tAll, varY=varY, y=matY, varX=varX, x=matX, varXC=varXC, xc=matXC)
 dfSite.to_csv(os.path.join(outFolder, "site.csv"), index=False)
+
+# check for nan
+np.where(np.isnan(matY))
+indNan=np.where(np.isnan(matX))
+for k in range(len(varX)):
+    print(varX[k], np.sum(np.isnan(matX[:, :, k])/len(tAll)/len(siteIdLst)))

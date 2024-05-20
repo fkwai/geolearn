@@ -73,7 +73,8 @@ p2 = ax.bar(np.arange(matC.shape[0]), matC[:, 1], bottom=matC[:, 0], label="angl
 fig.legend()
 fig.show()
 
-
+matC.sum(axis=0)
+52620/(52620+40383)
 # sentinel angle
 from matplotlib import cm
 

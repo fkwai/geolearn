@@ -12,6 +12,8 @@ nt = 120
 
 # mesh
 run_name = '15060202'
+run_name = "10180001"
+
 work_dir = os.path.join(kPath.dirParflow, run_name, 'outputs')
 run = Run.from_definition(os.path.join(work_dir, run_name + '.pfidb'))
 data = run.data_accessor

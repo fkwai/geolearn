@@ -19,7 +19,7 @@ import torch.optim.lr_scheduler as lr_scheduler
 import dill
 
 rho = 45
-dataName = "singleDaily-modisgrid"
+dataName = "singleDaily-MG"
 importlib.reload(hydroDL.data.dbVeg)
 df = dbVeg.DataFrameVeg(dataName)
 df.varX
