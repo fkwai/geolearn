@@ -129,7 +129,7 @@ for b0,b,c,ylim,saveStr in zip(b0Lst,bLst,cLst,ylimLst,strLst):
                     linestyle='dashed', linewidth=0.5)
             ax.plot(aa, [b[k], b[k]], color=colorG,
                     linestyle='dashed', linewidth=0.5)
-        # ax.set_ylim(ylim)
+        ax.set_ylim(ylim)
     ax.axhline(0, color='k')
     ax.axvline(0.33, color='k')
     ax.set_xlabel('simplicity')
