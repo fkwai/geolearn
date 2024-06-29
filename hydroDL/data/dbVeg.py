@@ -34,7 +34,7 @@ class DataFrameVeg(Dataframe):
         self.y = npz['y']
         self.xc = npz['xc']
         self.yc = None
-        info = pd.read_csv(os.path.join(saveFolder, 'info.csv'))
+        info = pd.read_csv(os.path.join(saveFolder, 'site.csv'))
         self.siteIdLst = info['siteId'].tolist()
         self.t = npz['t']
         self.lat = info['lat'].values

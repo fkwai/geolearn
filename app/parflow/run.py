@@ -10,20 +10,17 @@ import hf_hydrodata as hf
 from hydroDL import kPath
 
 # make huc an arguments
-
-
-
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("huc", help="HUC code")
+    args = parser.parse_args()
+    huc = args.huc
 
 
 hf.register_api_pin("geofkwai@gmail.com", "0323")
-# huc = "10180001"
-# huc = "14080103"
-huc = "05120209"
 run_name = huc
 
-# provide a way to create a subset from the conus domain (huc, lat/lon bbox currently supported)
-# huc_list = ["15060202"]
-# huc_list = ["10180001"]
 
 huc_list = [huc]
 # provide information about the datasets you want to access for run inputs using the data catalog
@@ -81,8 +78,8 @@ file_name = "pf_indicator.pfb"
 data = list(read_pfb(os.path.join(static_write_dir, file_name)))[7]
 print(data.shape)
 
-plt.imshow(data, cmap="Reds", origin="lower")
-plt.colorbar()
+# plt.imshow(data, cmap="Reds", origin="lower")
+# plt.colorbar()
 # plt.show()
 
 runscript_path = st.edit_runscript_for_subset(

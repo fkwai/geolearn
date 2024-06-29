@@ -34,3 +34,8 @@ def MYD09GA(sd, ed, product="MODIS/061/MYD09GA"):
 def MOD09GA(sd, ed, product="MODIS/061/MOD09GA"):
     col = ee.ImageCollection(product).filterDate(sd, ed)
     return col
+
+
+def getCol(product, sd, ed):
+    col = ee.ImageCollection(product).filterDate(sd, ed)
+    return col
