@@ -73,7 +73,7 @@ def funcP(iP, axP):
     axplot.titleInner(axP, titleStr)
 
 
-figplot.clickMap(funcM, funcP)
+# figplot.clickMap(funcM, funcP)
 
 # train LSTM model
 dataName = 'G200'

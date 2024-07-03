@@ -12,8 +12,8 @@ from osgeo import ogr, gdal
 nfmdFile = os.path.join(kPath.dirVeg, "NFMD", "NFMD_single.json")
 sd = "2016-10-15"
 ed = "2021-12-15"
-# gridName = 'modisgrid'
-gridName = 'nadgrid'
+gridName = 'modisgrid'
+# gridName = 'nadgrid'
 dataName = "singleDaily-{}".format(gridName)
 
 
@@ -123,6 +123,16 @@ for k, (key, value) in enumerate(dictConst.items()):
     temp = get_value(os.path.join(kPath.dirVeg, "const", value), lon, lat)
     matConst[:, k] = temp
 varConst = list(dictConst.keys())
+
+
+var='canopyHeight'
+fileName=os.path.join(kPath.dirVeg, "const", dictConst[var])
+ds = gdal.Open(fileName)
+gt = ds.GetGeoTransform()
+print(gt)
+
+
+
 
 # land cover
 fileName = os.path.join(kPath.dirRaw, "NLCD", "2016", "nlcd_2016.tif")
