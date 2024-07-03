@@ -87,7 +87,7 @@ matplotlib.rcParams.update({'lines.linewidth': 1})
 matplotlib.rcParams.update({'lines.markersize': 5})
 
 lat, lon = DF.getGeo()
-code = '00010'
+code = '00945'
 indC = codeLst.index(code)
 indS = np.where(~matRm[:, indC])[0]
 importlib.reload(figplot)

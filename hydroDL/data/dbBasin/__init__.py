@@ -134,8 +134,7 @@ class DataFrameBasin:
         dataTemp = [self.q, self.f, self.c]
         for var in varLst:
             for dataT, varT in zip(dataTemp, varTemp):
-                if var in varT:
-                    var
+                if var in varT:                    
                     temp.append(dataT[:, :, varT.index(var)])
         if len(temp) != len(varLst):
             raise Exception('Variable {} not found!'.format(var))
@@ -157,6 +156,9 @@ class DataFrameBasin:
         subsetFile = os.path.join(self.saveFolder, 'subset.json')
         dictSubset = self.loadSubset()
         if type(mask) is np.ndarray:
+            
+            
+            
             maskFile = os.path.join(self.saveFolder, 'mask', name + '.npy')
             np.save(maskFile, mask)
             mask = True
