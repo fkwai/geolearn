@@ -32,6 +32,7 @@ if hostName == "AW-m17":
     dirUsgs = r"F:\USGS"
     dirWQ = r"C:\Users\geofk\work\waterQuality"
     dirCode = r"C:\Users\geofk\work\GitHUB\geolearn"
+    dirVeg = r"C:\Users\geofk\work\vegetation"
     # dirWQ = r'C:\Users\geofk\work\example\waterQuality'
     # dirData = r'C:\Users\geofk\work\example\data'
 
