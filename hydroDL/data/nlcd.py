@@ -1,6 +1,6 @@
 
 
-dataCode = {
+dictCode = {
     11:'Open water',
     12:'Perennial ice/snow',
     21:'Developed, open space',

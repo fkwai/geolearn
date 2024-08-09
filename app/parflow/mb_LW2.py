@@ -32,6 +32,26 @@ maskS = mask[0, :, :]
 #     os.path.join(work_dir, '{}.out.{}.{:05d}.pfb'.format(run_name, var, t))
 # )
 
+# velocity
+velx = data._pfb_to_array(f'{data._name}.out.velx.{data._ts}.pfb')
+vely = data._pfb_to_array(f'{data._name}.out.vely.{data._ts}.pfb')
+velz = data._pfb_to_array(f'{data._name}.out.velz.{data._ts}.pfb')
+
+# plot each z
+temp = velz.copy()
+# temp=kmeanX
+fig, ax = plt.subplots(2, 5, figsize=(18, 5))
+temp[data.mask == 0] = np.nan
+vmax = np.nanmax(temp)
+vmin = np.nanmin(temp)
+for k in range(10):
+    iy, ix = utils.index2d(k, 2, 5)
+    cb = ax[iy, ix].pcolor(temp[k, :, :], vmax=vmax, vmin=vmin)
+    # cb = ax[iy, ix].pcolor(temp[k, :, :])
+    ax[iy, ix].set_xticklabels([])
+    ax[iy, ix].set_yticklabels([])
+    fig.colorbar(cb)
+fig.show()
 
 file = '/home/kuai/work/parflow/LW/input/NLDAS/NLDAS.APCP.000097_to_000120.pfb'
 p = parflow.read_pfb(file)

@@ -23,13 +23,19 @@ ed = '2023-03-01'
 productM = 'MODIS/061/MCD43A4'
 colM = ee.ImageCollection(productM).filterDate(sd, ed)
 # optLst = ['nadgrid', 'modisgrid']
-optLst = ['nadgrid']
+optLst = ['modisgrid']
 outFolder = os.path.join(kPath.dirVeg, 'const')
 
-nlcd2016 = ee.Image('USGS/NLCD_RELEASES/2019_REL/NLCD/2016').select('landcover')
-scale2016 = nlcd2016.projection().nominalScale().getInfo()
-nlcd2019 = ee.Image('USGS/NLCD_RELEASES/2019_REL/NLCD/2016').select('landcover')
-scale2019 = nlcd2016.projection().nominalScale().getInfo()
+# selected dataset
+clay = ee.Image('projects/sat-io/open-datasets/polaris/clay_mean/clay_0_5')
+sand = ee.Image('projects/sat-io/open-datasets/polaris/sand_mean/sand_0_5')
+silt = ee.Image('projects/sat-io/open-datasets/polaris/silt_mean/silt_0_5')
+scaleS = clay.projection().nominalScale().getInfo()
+
+canopyHeight = ee.Image("users/nlang/ETH_GlobalCanopyHeight_2020_10m_v1")
+scaleC = canopyHeight.projection().nominalScale().getInfo()
+codeLst = ['clay', 'sand', 'silt', 'canopyHeight']
+
 for opt in optLst:
     if opt == 'nadgrid':
         proj = ee.Projection('EPSG:5072').getInfo()
@@ -37,16 +43,20 @@ for opt in optLst:
         proj = colM.first().projection().getInfo()
         dxM = proj['transform'][0]
         dyM = proj['transform'][4]
-    errLst=list()
+    errLst = list()
     latAll = tabCrd['lat'].values
     lonAll = tabCrd['lon'].values
-    codeLst = list(hydroDL.data.nlcd.dictCode.keys())
-    dfTemp = pd.DataFrame(index=tabCrd.index, columns=codeLst).fillna(0)
-    df = tabCrd[['lat', 'lon']].join(dfTemp)
-    df2016 = df.copy()
-    df2019 = df.copy()
+    outFile = os.path.join(outFolder, 'soil-{}.csv'.format(opt))
+    if os.path.exists(outFile):
+        df = pd.read_csv(outFile, index_col=0)
+        siteResume = df[codeLst].last_valid_index()
+        kResume = tabCrd.index.tolist().index(siteResume)
+    else:
+        dfTemp = pd.DataFrame(index=tabCrd.index, columns=codeLst).fillna(0)
+        df = tabCrd[['lat', 'lon']].join(dfTemp)
+        kResume = 0
     t0 = time.time()
-    for k, siteId in enumerate(tabCrd.index.tolist()):
+    for k, siteId in enumerate(tabCrd.index.tolist()[kResume:]):
         # siteId=dfSite.index.tolist()[0]
         lat = tabCrd.loc[siteId]['lat']
         lon = tabCrd.loc[siteId]['lon']
@@ -74,16 +84,19 @@ for opt in optLst:
             raise Exception('point not in bb')
         bb = ee.Geometry.Rectangle([x1, y1, x2, y2], proj['crs'], False)
         t1 = time.time()
-        for df, nlcd, scale in zip([df2016, df2019], [nlcd2016, nlcd2019], [scale2016, scale2019]):
-            try:
-                data = nlcd2019.reduceRegion(reducer=ee.Reducer.toList(), geometry=bb, scale=scale).getInfo()
-                values, counts = np.unique(data['landcover'], return_counts=True)
-                for v, c in zip(values, counts):
-                    df.at[siteId, v] = c
-                print('{} {} {:.2f} {:.2f}'.format(k, siteId, time.time() - t0, time.time() - t1))
-            except Exception:
-                print('error {}'.format(siteId))
-                errLst.append(siteId)
-    df2016.to_csv(os.path.join(outFolder, 'nlcd2016-{}.csv'.format(opt)))
-    df2019.to_csv(os.path.join(outFolder, 'nlcd2019-{}.csv'.format(opt)))
-
+        clayMean = clay.reduceRegion(reducer=ee.Reducer.mean(), geometry=bb, scale=scaleS).getInfo()
+        sandMean = sand.reduceRegion(reducer=ee.Reducer.mean(), geometry=bb, scale=scaleS).getInfo()
+        siltMean = silt.reduceRegion(reducer=ee.Reducer.mean(), geometry=bb, scale=scaleS).getInfo()
+        chMean = canopyHeight.reduceRegion(reducer=ee.Reducer.mean(), geometry=bb, scale=scaleC).getInfo()
+        df.at[siteId, 'clay'] = clayMean['b1']
+        df.at[siteId, 'sand'] = sandMean['b1']
+        df.at[siteId, 'silt'] = siltMean['b1']
+        df.at[siteId, 'canopyHeight'] = chMean['b1']
+        print(
+            '{} {} {} {:.2f} {:.2f}'.format(
+                k, siteId, datetime.now().strftime("%H:%M:%S"), time.time() - t0, time.time() - t1
+            )
+        )
+        if k % 20 == 0:
+            df.to_csv(outFile)
+    df.to_csv(outFile)

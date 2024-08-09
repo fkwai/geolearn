@@ -524,6 +524,7 @@ run.Solver.WriteSiloEvapTrans = False
 run.Solver.WriteSiloEvapTransSum = False
 run.Solver.WriteSiloOverlandSum = False
 run.Solver.WriteSiloCLM = False
+run.Solver.PrintVelocities = True
 
 # -----------------------------------------------------------------------------
 # Exact solution specification for error calculations

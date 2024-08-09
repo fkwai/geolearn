@@ -36,13 +36,25 @@ maskS = maskS.astype(bool)
 data.time = 1440
 temp = data.wtd
 temp[~maskS] = np.nan
+# temp[temp>0]=1
 fig, ax = plt.subplots(1, 1)
 ind = np.where(temp == 0)
 cb = ax.pcolor(temp)
 ax.plot(ind[1], ind[0], 'r*')
-
 fig.colorbar(cb)
 fig.show()
+
+infi = data.clm_output('qflx_infl')
+fig, ax = plt.subplots(1, 1)
+temp= data.surface_storage
+
+# temp[temp>0]=0
+temp[~maskS] = np.nan
+cb = ax.pcolor(temp)
+# ax.plot(ind[1], ind[0], 'r*')
+fig.colorbar(cb)
+fig.show()
+
 
 
 outflow = data.overland_flow_grid()
@@ -53,7 +65,6 @@ fig.show()
 
 
 # balance for subsurface storage
-# total storage
 data.time = 0
 storage = data.subsurface_storage
 s0 = storage.sum()
@@ -82,11 +93,9 @@ ax.plot(mat[:, 4], label='storage calculated')
 ax.legend()
 fig.show()
 
-temp = mat[:, 2]
-temp[temp < 0] = 0
 fig, ax = plt.subplots(1, 1)
-ax.plot(mat[:, 0] + np.cumsum(mat[:, 1]), label='storage - evap')
-ax.plot(np.cumsum(temp), label='infi')
+ax.plot(tAry,mat[:, 0] + np.cumsum(mat[:, 1]), label='storage - evap')
+ax.plot(tAry,np.cumsum(mat[:, 2]), label='infi')
 ax.legend()
 fig.show()
 

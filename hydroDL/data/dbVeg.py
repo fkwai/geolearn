@@ -16,7 +16,7 @@ import json
 
 
 def caseFolder(caseName):
-    return os.path.join(kPath.dirVeg, 'model', 'data', caseName)
+    return os.path.join(kPath.dirVeg, 'model', 'data', caseName)+
 
 
 class DataFrameVeg(Dataframe):

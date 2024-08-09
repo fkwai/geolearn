@@ -53,8 +53,8 @@ krel = (1 - ahnm1 / (opahn) ** m) ** 2 / opahn ** (m / 2)
 
 
 fig, ax = plt.subplots(1, 1)
-temp = opahn
+temp = krel.copy()
 temp[data.mask == 0] = np.nan
-cb = ax.pcolor(temp[0, :, :])
+cb = ax.pcolor(temp[5, :, :])
 fig.colorbar(cb)
 fig.show()

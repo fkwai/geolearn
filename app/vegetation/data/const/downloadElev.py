@@ -11,6 +11,8 @@ import json
 import time
 import numpy as np
 import hydroDL.data.nlcd
+from datetime import datetime
+
 
 # load location
 crdFile = os.path.join(kPath.dirVeg, 'NFMD', 'NFMDsite.csv')
@@ -23,13 +25,14 @@ ed = '2023-03-01'
 productM = 'MODIS/061/MCD43A4'
 colM = ee.ImageCollection(productM).filterDate(sd, ed)
 # optLst = ['nadgrid', 'modisgrid']
-optLst = ['nadgrid']
+optLst = ['modisgrid']
 outFolder = os.path.join(kPath.dirVeg, 'const')
+dataset = ee.Image('USGS/3DEP/10m')
+elevation = dataset.select('elevation')
+slope = ee.Terrain.slope(elevation)
+scale = dataset.projection().nominalScale().getInfo()
+codeLst = ['elevMean', 'slopeMean', 'elevPoint', 'slopePoint']
 
-nlcd2016 = ee.Image('USGS/NLCD_RELEASES/2019_REL/NLCD/2016').select('landcover')
-scale2016 = nlcd2016.projection().nominalScale().getInfo()
-nlcd2019 = ee.Image('USGS/NLCD_RELEASES/2019_REL/NLCD/2016').select('landcover')
-scale2019 = nlcd2016.projection().nominalScale().getInfo()
 for opt in optLst:
     if opt == 'nadgrid':
         proj = ee.Projection('EPSG:5072').getInfo()
@@ -37,16 +40,20 @@ for opt in optLst:
         proj = colM.first().projection().getInfo()
         dxM = proj['transform'][0]
         dyM = proj['transform'][4]
-    errLst=list()
+    errLst = list()
     latAll = tabCrd['lat'].values
     lonAll = tabCrd['lon'].values
-    codeLst = list(hydroDL.data.nlcd.dictCode.keys())
-    dfTemp = pd.DataFrame(index=tabCrd.index, columns=codeLst).fillna(0)
-    df = tabCrd[['lat', 'lon']].join(dfTemp)
-    df2016 = df.copy()
-    df2019 = df.copy()
+    outFile = os.path.join(outFolder, 'elev-{}.csv'.format(opt))
+    if os.path.exists(outFile):
+        df = pd.read_csv(outFile, index_col=0)
+        siteResume = df[codeLst].last_valid_index()
+        kResume = tabCrd.index.tolist().index(siteResume)
+    else:
+        dfTemp = pd.DataFrame(index=tabCrd.index, columns=codeLst)
+        df = tabCrd[['lat', 'lon']].join(dfTemp)
+        kResume = 0
     t0 = time.time()
-    for k, siteId in enumerate(tabCrd.index.tolist()):
+    for k, siteId in enumerate(tabCrd.index.tolist()[kResume:]):
         # siteId=dfSite.index.tolist()[0]
         lat = tabCrd.loc[siteId]['lat']
         lon = tabCrd.loc[siteId]['lon']
@@ -74,16 +81,21 @@ for opt in optLst:
             raise Exception('point not in bb')
         bb = ee.Geometry.Rectangle([x1, y1, x2, y2], proj['crs'], False)
         t1 = time.time()
-        for df, nlcd, scale in zip([df2016, df2019], [nlcd2016, nlcd2019], [scale2016, scale2019]):
-            try:
-                data = nlcd2019.reduceRegion(reducer=ee.Reducer.toList(), geometry=bb, scale=scale).getInfo()
-                values, counts = np.unique(data['landcover'], return_counts=True)
-                for v, c in zip(values, counts):
-                    df.at[siteId, v] = c
-                print('{} {} {:.2f} {:.2f}'.format(k, siteId, time.time() - t0, time.time() - t1))
-            except Exception:
-                print('error {}'.format(siteId))
-                errLst.append(siteId)
-    df2016.to_csv(os.path.join(outFolder, 'nlcd2016-{}.csv'.format(opt)))
-    df2019.to_csv(os.path.join(outFolder, 'nlcd2019-{}.csv'.format(opt)))
+        elevM = elevation.reduceRegion(reducer=ee.Reducer.mean(), geometry=bb, scale=scale).getInfo()
+        slopeM = slope.reduceRegion(reducer=ee.Reducer.mean(), geometry=bb, scale=scale).getInfo()
+        elevP = elevation.reduceRegion(reducer=ee.Reducer.mean(), geometry=pointM, scale=scale).getInfo()
+        slopeP = slope.reduceRegion(reducer=ee.Reducer.mean(), geometry=pointM, scale=scale).getInfo()
 
+        df.at[siteId, 'elevMean'] = elevM['elevation']
+        df.at[siteId, 'slopeMean'] = slopeM['slope']
+        df.at[siteId, 'elevPoint'] = elevP['elevation']
+        df.at[siteId, 'slopePoint'] = slopeP['slope']
+
+        print(
+            '{} {} {} {:.2f} {:.2f}'.format(
+                k, siteId, datetime.now().strftime("%H:%M:%S"), time.time() - t0, time.time() - t1
+            )
+        )
+        if k % 20 == 0:
+            df.to_csv(outFile)
+    df.to_csv(outFile)

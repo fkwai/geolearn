@@ -19,7 +19,7 @@ sd = "2005-10-01"
 ed = "2006-10-01"
 tAry = pd.date_range(start=sd, end=ed, freq='H')[:-1]
 
-
+work_dir=r'/home/kuai/GitHUB/EcoSLIM/Examples/ParFlow_MixedBCs/mixedBCs_hillslope2D_transient'
 work_dir = os.path.join(kPath.dirParflow, run_name, 'outputs')
 run = Run.from_definition(os.path.join(work_dir, run_name + '.pfidb'))
 data = run.data_accessor
@@ -42,14 +42,14 @@ velz = data._pfb_to_array(f'{data._name}.out.velz.{data._ts}.pfb')
 qi = dx * dy * velz[-1, :, :]
 
 fig, ax = plt.subplots(1, 1)
-temp = velz[-2, :, :].copy()
+temp = velz[1, :, :].copy()
 # temp[~maskS] = np.nan
 cb = ax.pcolor(temp)
 fig.colorbar(cb)
 fig.show()
 
 fig, ax = plt.subplots(1, 1)
-temp = pressure[-2, :, :].copy()
+temp = saturation[-1, :, :].copy()
 temp[~maskS] = np.nan
 cb = ax.pcolor(temp)
 fig.colorbar(cb)
@@ -64,8 +64,8 @@ for k in range(nt):
     velz = data._pfb_to_array(f'{data._name}.out.velz.{data._ts}.pfb')
     for kk in range(11):
         temp = velz[kk, :, :]
-        temp[~maskS] = np.nan
-        mat[k, kk] = np.sum(velz[kk, :, :])
+        temp[~maskS] = np.nan        
+        mat[k, kk] = np.nansum(temp)
 cmap = plt.cm.jet
 cLst = cmap(np.linspace(0, 1, 11))
 fig, ax = plt.subplots(1, 1)

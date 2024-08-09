@@ -95,7 +95,7 @@ for k in range(nt):
     mat[k, 1] = (evap * maskS).sum() * dx * dy * f
     mat[k, 5] = (swe * maskS).sum() * dx * dy / 1000
     mat[k, 2] = outflow
-    mat[k, 3] = (p * maskS).sum() * dx * dy * f
+    mat[k, 3] = (p * maskS).sum() * dx * dy * fz
     temp = temp - mat[k, 2] - mat[k, 1] + mat[k, 3]
     mat[k, 4] = temp
 fig, ax = plt.subplots(1, 1)

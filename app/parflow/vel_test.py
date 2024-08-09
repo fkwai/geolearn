@@ -35,12 +35,13 @@ maskS = maskS.astype(bool)
 mask = data.mask.astype(bool)
 
 
-data.time = 1440
+data.time = 2400
 pressure = data.pressure
 saturation = data.saturation
 permX = data.computed_permeability_x
-permY = data.computed_permeability_x
-permZ = data.computed_permeability_x
+permY = data.computed_permeability_y
+permZ = data.computed_permeability_z
+porosity=data.computed_porosity
 velx = data._pfb_to_array(f'{data._name}.out.velx.{data._ts}.pfb')
 vely = data._pfb_to_array(f'{data._name}.out.vely.{data._ts}.pfb')
 velz = data._pfb_to_array(f'{data._name}.out.velz.{data._ts}.pfb')
@@ -50,6 +51,26 @@ gradX = np.diff(temp, axis=2) / dx
 gradY = np.diff(temp, axis=1) / dx
 gradZ = np.diff(temp, axis=0) / dx
 
+fig, ax = plt.subplots(1, 1)
+temp = porosity[-5, :, :].copy()
+temp[~maskS] = np.nan
+cb = ax.pcolor(temp)
+fig.colorbar(cb)
+fig.show()
+
+fig, ax = plt.subplots(1, 1)
+temp = gradY[0, :, :]*permY[0, :-1, :]
+temp[~maskS] = np.nan
+cb = ax.pcolor(temp)
+fig.colorbar(cb)
+fig.show()
+
+fig, ax = plt.subplots(1, 1)
+temp = velz[1, :, :].copy()
+# temp[~maskS] = np.nan
+cb = ax.pcolor(temp)
+fig.colorbar(cb)
+fig.show()
 
 qi = dx * dy * velz[-1, :, :]
 
@@ -60,18 +81,6 @@ cb = ax.pcolor(temp)
 fig.colorbar(cb)
 fig.show()
 
-temp = pressure.copy()
-temp[~mask] = np.nan
-gradX = np.diff(temp, axis=2) / dx
-gradY = np.diff(temp, axis=1) / dx
-gradZ = np.diff(temp, axis=0) / dx
-
-fig, ax = plt.subplots(1, 1)
-temp = gradY[0, :, :].copy()
-temp[~maskS] = np.nan
-cb = ax.pcolor(temp)
-fig.colorbar(cb)
-fig.show()
 
 data.time = 1440
 
